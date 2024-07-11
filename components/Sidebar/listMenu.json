@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "name": "Daily",
+      "link": "pages/daily"
+    },
+    {
+      "name": "Weekly",
+      "link": "pages/weekly"
+    }
+  ]
+}
