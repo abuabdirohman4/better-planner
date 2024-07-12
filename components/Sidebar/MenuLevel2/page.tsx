@@ -28,7 +28,7 @@ export default function MenuLevel2({
         <li>
           <button
             type="button"
-            className="mb-2 flex w-full items-center rounded-lg p-2 pl-11 text-base font-semibold transition ease-in-out hover:bg-blue-3"
+            className="mb-2 flex w-full items-center rounded-lg p-2 pl-11 text-base font-semibold transition ease-in-out hover:bg-primary"
             onClick={() => {
               setdropdown(!dropdown);
             }}
@@ -48,8 +48,8 @@ export default function MenuLevel2({
                   href={`${link}/${menu.link}`}
                   className={
                     pathname == `${link}/${menu.link}`
-                      ? "mb-2 flex w-full items-center rounded-lg bg-blue-3 p-2 pl-[4.5rem] text-base font-semibold"
-                      : "mb-2 flex w-full items-center rounded-lg p-2 pl-[4.5rem] text-base font-semibold hover:bg-blue-3 "
+                      ? "mb-2 flex w-full items-center rounded-lg bg-primary p-2 pl-[4.5rem] text-base font-semibold"
+                      : "mb-2 flex w-full items-center rounded-lg p-2 pl-[4.5rem] text-base font-semibold hover:bg-primary "
                   }
                 >
                   <FontAwesomeIcon icon={faCircle} className="" />
@@ -67,8 +67,8 @@ export default function MenuLevel2({
             href={link}
             className={
               pathname === `${link}`
-                ? "mb-2 flex w-full items-center rounded-lg bg-blue-3 p-2 pl-11 text-base font-semibold"
-                : "mb-2 flex w-full items-center rounded-lg p-2 pl-11 text-base font-semibold hover:bg-blue-3 "
+                ? "mb-2 flex w-full items-center rounded-lg bg-primary p-2 pl-11 text-base font-semibold"
+                : "mb-2 flex w-full items-center rounded-lg p-2 pl-11 text-base font-semibold hover:bg-primary "
             }
           >
             <div>

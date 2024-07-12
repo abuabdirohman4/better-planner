@@ -3,10 +3,10 @@ import React from "react";
 
 export const Navbar = () => {
   return (
-    <nav className="rounded border-gray-200 bg-blue-3 px-2 py-2.5">
+    <nav className="rounded border-gray-200 bg-primary px-2 py-2.5">
       <div className="mx-3 flex flex-wrap items-center justify-between">
         <div className="flex items-center">
-          <ul className="mt-4 mt-0 flex flex-row space-x-3 rounded-lg">
+          <ul className="flex flex-row my-4 space-x-3 rounded-lg">
             <li className="rounded border border-white px-2 py-1 hover:bg-[#5ab6e0]">
               <a
                 href="#"
@@ -29,7 +29,7 @@ export const Navbar = () => {
         </div>
         <div className="flex w-auto items-center gap-3">
           <p className="text-white">Abu Abdirohman</p>
-          <div className="dropdown-end dropdown">
+          <div className="dropdown-end dropdown flex items-center">
             <button
               tabIndex={0}
               type="button"
@@ -45,10 +45,10 @@ export const Navbar = () => {
               />
             </button>
             {/* <!-- Dropdown menu --> */}
-            <div
+            {/* <div
               tabIndex={0}
               className="dropdown-content z-50 w-32 my-3 list-none divide-y divide-gray-100 rounded bg-white text-base shadow"
-            >
+            > */}
               {/* <div className="px-4 py-3">
                 <span className="block truncate text-sm text-gray-900">
                   Anthony Lauly
@@ -72,7 +72,7 @@ export const Navbar = () => {
                   </a>
                 </li>
               </ul> */}
-            </div>
+            {/* </div> */}
           </div>
         </div>
       </div>

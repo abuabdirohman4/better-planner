@@ -18,11 +18,11 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   // const Sidebar = (children: ReactNode) => {
   const menus: Menu[] = listMenu.data;
   const pathname = usePathname();
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
   return (
     <div className="flex">
       <aside
-        className={`z-30 bg-teal-400 duration-1000 ease-in-out ${
+        className={`z-30 duration-1000 ease-in-out ${
           showSidebar ? "w-80" : "w-[72px]"
         }`}
       >
@@ -36,7 +36,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               icon={faBars}
               className={`${
                 showSidebar && "ml-[80%]"
-              } cursor-pointer bg-blue-2 py-3 px-4 text-2xl text-white duration-1000 ease-in-out hover:brightness-125`}
+              } cursor-pointer bg-primary py-3 px-4 text-2xl text-white duration-1000 ease-in-out hover:brightness-125`}
               onClick={() => {
                 setShowSidebar(!showSidebar);
               }}
@@ -48,8 +48,8 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                 href="/"
                 className={
                   pathname == "/"
-                    ? `mb-4 flex items-center truncate rounded-lg bg-blue-3 p-2 text-base font-semibold`
-                    : `mb-4 flex items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-blue-3`
+                    ? `mb-4 flex items-center truncate rounded-lg bg-primary p-2 text-base font-semibold`
+                    : `mb-4 flex items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-primary`
                 }
               >
                 <FontAwesomeIcon icon={faCircle} className="ml-1" />

@@ -42,7 +42,7 @@ export default function MenuLevel1({
         <li>
           <button
             type="button"
-            className={`mb-4 flex w-full items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-blue-3`}
+            className={`mb-4 flex w-full items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-primary`}
             onClick={() => {
               setdropdown(!dropdown);
               setCollapse(!collapse);
@@ -76,8 +76,8 @@ export default function MenuLevel1({
             href={`/${link}`}
             className={
               pathname == `/${link}`
-                ? "mb-4 flex w-full items-center truncate rounded-lg bg-blue-3 p-2 text-base font-semibold"
-                : "mb-4 flex w-full items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-blue-3"
+                ? "mb-4 flex w-full items-center truncate rounded-lg bg-primary p-2 text-base font-semibold"
+                : "mb-4 flex w-full items-center truncate rounded-lg p-2 text-base font-semibold hover:bg-primary"
             }
           >
             <FontAwesomeIcon icon={faCircle} className="ml-1" />
