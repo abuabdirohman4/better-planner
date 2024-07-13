@@ -22,7 +22,10 @@ export async function GET({ params }: { params: { id: string } }) {
   }
 }
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const taskId = parseInt(params.id, 10);
 
   if (isNaN(taskId)) {
@@ -30,6 +33,20 @@ export async function DELETE({ params }: { params: { id: string } }) {
   }
 
   try {
+    // Cek apakah task ada
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    // Hapus semua entri terkait di tabel TimeLog
+    await prisma.timeLog.deleteMany({
+      where: { taskId },
+    });
+
     await prisma.task.delete({
       where: { id: taskId },
     });

@@ -9,21 +9,25 @@ const ItemType = "TASK";
 interface TaskItemProps {
   task: Task;
   index: number;
+  previousTaskIndentLevel: number | null;
   moveTask: (dragIndex: number, hoverIndex: number) => void;
   onUpdate: () => void;
-  onAddChild: (parentId: number, title: string) => void;
   onDelete: () => void;
   onIndent: (taskId: number, newIndentLevel: number) => void;
+  inputRef: (el: HTMLInputElement | null) => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
 }
 
 const TaskItem = ({
   task,
   index,
+  previousTaskIndentLevel,
   moveTask,
   onUpdate,
-  onAddChild,
   onIndent,
   onDelete,
+  inputRef,
+  onKeyDown,
 }: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -66,18 +70,35 @@ const TaskItem = ({
   };
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
-    console.log("handleKeyDown");
+    onKeyDown(e);
     if (e.key === "Enter") {
       handleSave();
-    } else if (e.key === "Tab") {
-      console.log("Tab")
+    } else if (e.key === "Tab" && !e.shiftKey) {
       e.preventDefault();
-      const newIndentLevel = task.indentLevel + 1;
-      await axios.put(`/api/tasks/${task.id}`, {
-        ...task,
-        indentLevel: newIndentLevel,
-      });
-      onIndent(task.id, newIndentLevel);
+      if (
+        previousTaskIndentLevel !== null &&
+        task.indentLevel <= previousTaskIndentLevel
+      ) {
+        const newIndentLevel = task.indentLevel + 1;
+        await axios.put(`/api/tasks/${task.id}`, {
+          ...task,
+          indentLevel: newIndentLevel,
+        });
+        onIndent(task.id, newIndentLevel);
+      }
+    } else if (e.key === "Tab" && e.shiftKey) {
+      e.preventDefault();
+      if (task.indentLevel > 0) {
+        const newIndentLevel = task.indentLevel - 1;
+        await axios.put(`/api/tasks/${task.id}`, {
+          ...task,
+          indentLevel: newIndentLevel,
+        });
+        onIndent(task.id, newIndentLevel);
+      }
+    } else if ((e.key === "Backspace" || e.key === "Delete") && title.trim() === "") {
+      e.preventDefault();
+      onDelete();
     }
   };
 
@@ -95,6 +116,7 @@ const TaskItem = ({
         ></div>
       </div>
       <input
+        ref={inputRef}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
