@@ -59,7 +59,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, description, dueDate, completed } = body;
+    const { title, description, dueDate, completed, index, indentLevel } = body;
 
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
@@ -68,6 +68,8 @@ export async function PUT(
         description: description ?? null,
         dueDate: new Date(dueDate),
         completed,
+        index,
+        indentLevel,
       },
     });
 

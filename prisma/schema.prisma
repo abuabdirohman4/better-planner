@@ -34,12 +34,14 @@ model User {
 
 model Task {
   id          Int       @id @default(autoincrement())
+  index       Int? // Kolom baru untuk menyimpan urutan task
   title       String
   description String?
   dueDate     DateTime
   completed   Boolean   @default(false)
   userId      Int
   parentId    Int? // Tambahkan ini untuk relasi anak
+  indentLevel Int       @default(0) // Kolom untuk tingkat indentasi
   parent      Task?     @relation("TaskChildren", fields: [parentId], references: [id])
   children    Task[]    @relation("TaskChildren")
   user        User      @relation(fields: [userId], references: [id])

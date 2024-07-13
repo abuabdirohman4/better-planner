@@ -4,11 +4,13 @@ const prisma = new PrismaClient();
 
 export type Task = {
   id: number;
+  index: number;
   title: string;
   description?: string | null;
   dueDate: Date;
   completed: boolean;
   userId: number;
+  indentLevel: number;
 };
 
 // export type Task = PrismaClient["task"];

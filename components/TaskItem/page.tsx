@@ -1,19 +1,63 @@
 "use client";
-import { useState } from "react";
-import axios from "axios";
 import { Task } from "@/types";
+import axios from "axios";
+import { useRef, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
+
+const ItemType = "TASK";
 
 interface TaskItemProps {
   task: Task;
+  index: number;
+  moveTask: (dragIndex: number, hoverIndex: number) => void;
   onUpdate: () => void;
   onAddChild: (parentId: number, title: string) => void;
   onDelete: () => void;
+  onIndent: (taskId: number, newIndentLevel: number) => void;
 }
 
-const TaskItem = ({ task, onUpdate, onAddChild, onDelete }: TaskItemProps) => {
+const TaskItem = ({
+  task,
+  index,
+  moveTask,
+  onUpdate,
+  onAddChild,
+  onIndent,
+  onDelete,
+}: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  const [, drop] = useDrop({
+    accept: ItemType,
+    hover(item: { index: number }) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      moveTask(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemType,
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  drag(drop(ref));
 
   const handleSave = async () => {
     await axios.put(`/api/tasks/${task.id}`, { ...task, title, description });
@@ -21,43 +65,43 @@ const TaskItem = ({ task, onUpdate, onAddChild, onDelete }: TaskItemProps) => {
     onUpdate();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
+    console.log("handleKeyDown");
     if (e.key === "Enter") {
       handleSave();
     } else if (e.key === "Tab") {
+      console.log("Tab")
       e.preventDefault();
-      onAddChild(task.id, "");
+      const newIndentLevel = task.indentLevel + 1;
+      await axios.put(`/api/tasks/${task.id}`, {
+        ...task,
+        indentLevel: newIndentLevel,
+      });
+      onIndent(task.id, newIndentLevel);
     }
   };
 
   return (
-    <div className="flex items-center justify-between mb-2 p-2 border rounded hover:bg-gray-100">
-      <div className="flex-1">
-        {isEditing ? (
-          <>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full border p-1 mb-1"
-            />
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border p-1 mb-1"
-            />
-          </>
-        ) : (
-          <>
-            <h3 className={`text-lg ${task.completed ? "line-through" : ""}`}>
-              {task.title}
-            </h3>
-            <p>{task.description}</p>
-          </>
-        )}
+    <div
+      className={`flex items-center justify-between p-2 ${
+        isDragging ? "bg-gray-300" : ""
+      }`}
+      style={{ marginLeft: task.indentLevel * 20 }}
+    >
+      <div className={`relative group cursor-pointer bg-white`} ref={ref}>
+        <div className="w-2 h-2 bg-black rounded-full"></div>
+        <div
+          className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out`}
+        ></div>
       </div>
-      <div className="flex items-center space-x-2">
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="block pl-3 w-full text-gray-900 bg-transparent appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+      />
+      {/* <div className="flex items-center space-x-2">
         {isEditing ? (
           <button
             onClick={handleSave}
@@ -79,7 +123,7 @@ const TaskItem = ({ task, onUpdate, onAddChild, onDelete }: TaskItemProps) => {
         >
           Delete
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

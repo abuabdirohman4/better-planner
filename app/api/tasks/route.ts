@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { title, description, dueDate, parentId } = body;
-    const userId = 1
+    const userId = 1;
 
     // Validasi data
     if (!title || !dueDate || !userId) {
