@@ -22,12 +22,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex">
       <aside
-        className={`z-30 duration-1000 ease-in-out ${
+        className={`z-30 duration-1000 ease-in-out bg-blue-1 ${
           showSidebar ? "w-80" : "w-[72px]"
         }`}
       >
         <div
-          className={`min-h-screen bg-blue-1 pb-10 pt-3 text-white duration-1000 ease-in-out ${
+          className={`min-h-screen pb-10 pt-3 text-white duration-1000 ease-in-out ${
             showSidebar ? "px-5" : "px-4"
           }`}
         >
