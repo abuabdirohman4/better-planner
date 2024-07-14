@@ -8,6 +8,9 @@ export async function GET() {
   const tasks = await prisma.task.findMany({
     where: { parentId: null },
     include: { children: true },
+    orderBy: {
+      index: "asc", // Atau 'desc' jika ingin urutan menurun
+    },
   });
   return NextResponse.json(tasks, { status: 200 });
 }
@@ -15,7 +18,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, description, dueDate, parentId } = body;
+    const { title, description, dueDate, parentId, index } = body;
     const userId = 1;
 
     // Validasi data
@@ -30,6 +33,7 @@ export async function POST(req: NextRequest) {
         dueDate: new Date(dueDate),
         user: { connect: { id: userId } },
         parent: parentId ? { connect: { id: parentId } } : undefined,
+        index,
       },
     });
 

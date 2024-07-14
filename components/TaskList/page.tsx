@@ -12,10 +12,23 @@ const TaskList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState<string>("");
   const taskRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusNext, setFocusNext] = useState<boolean>(false);
 
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  useEffect(() => {
+    if (focusNext && taskRefs.current[tasks.length - 1]) {
+      const newTaskIndex = tasks.length - 1;
+      taskRefs.current[newTaskIndex]?.focus();
+      setFocusNext(false);
+
+      // Trigger the Arrow Down event
+      const event = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      taskRefs.current[newTaskIndex]?.dispatchEvent(event);
+    }
+  }, [focusNext, tasks]);
 
   const fetchTasks = async () => {
     const response = await axios.get("/api/tasks");
@@ -27,14 +40,19 @@ const TaskList = () => {
       title: newTask,
       dueDate: new Date(),
       userId: 1,
+      index: tasks.length,
     }); // Gantilah userId sesuai dengan logika Anda
     setTasks([...tasks, response.data]);
     setNewTask("");
+    setFocusNext(true); // Set focusNext to true
   };
 
-  const handleDelete = async (taskId: number) => {
+  const handleDelete = async (taskId: number, index: number) => {
     await axios.delete(`/api/tasks/${taskId}`);
     fetchTasks();
+    if (index > 0) {
+      taskRefs.current[index - 1]?.focus();
+    }
   };
 
   const moveTask = (dragIndex: number, hoverIndex: number) => {
@@ -73,7 +91,7 @@ const TaskList = () => {
           moveTask={moveTask}
           onUpdate={fetchTasks}
           onIndent={handleIndent}
-          onDelete={() => handleDelete(task.id)}
+          onDelete={() => handleDelete(task.id, index)}
           inputRef={(el) => (taskRefs.current[index] = el)}
           onKeyDown={(e) => handleKeyDown(e, index)}
         />
@@ -106,7 +124,7 @@ const TaskList = () => {
         <div className="ml-0.5 py-2 flex">
           <FontAwesomeIcon
             icon={faPlus}
-            className="hover:bg-gray-400 rounded-full w-3 h-3 p-1 pt-1.5"
+            className="hover:bg-gray-300 rounded-full w-3 h-3 p-1 pt-1.5"
             onClick={addTask}
           />
         </div>
