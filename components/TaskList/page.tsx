@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import TaskItem from "../TaskItem/page";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -21,7 +23,6 @@ const TaskList = () => {
   };
 
   const addTask = async () => {
-    if (newTask.trim() === "") return;
     const response = await axios.post("/api/tasks", {
       title: newTask,
       dueDate: new Date(),
@@ -102,18 +103,13 @@ const TaskList = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4 text-black">To-Do List</h1>
         <div>{renderTasks(tasks)}</div>
-        <input
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              addTask();
-            }
-          }}
-          className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-          placeholder="Add a new task..."
-        />
+        <div className="ml-0.5 py-2 flex">
+          <FontAwesomeIcon
+            icon={faPlus}
+            className="hover:bg-gray-400 rounded-full w-3 h-3 p-1 pt-1.5"
+            onClick={addTask}
+          />
+        </div>
       </div>
     </DndProvider>
   );

@@ -29,9 +29,9 @@ const TaskItem = ({
   inputRef,
   onKeyDown,
 }: TaskItemProps) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
+  const [isFocused, setIsFocused] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -65,7 +65,6 @@ const TaskItem = ({
 
   const handleSave = async () => {
     await axios.put(`/api/tasks/${task.id}`, { ...task, title, description });
-    setIsEditing(false);
     onUpdate();
   };
 
@@ -96,7 +95,10 @@ const TaskItem = ({
         });
         onIndent(task.id, newIndentLevel);
       }
-    } else if ((e.key === "Backspace" || e.key === "Delete") && title.trim() === "") {
+    } else if (
+      (e.key === "Backspace" || e.key === "Delete") &&
+      title.trim() === ""
+    ) {
       e.preventDefault();
       onDelete();
     }
@@ -121,31 +123,11 @@ const TaskItem = ({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         className="block pl-3 w-full text-gray-900 bg-transparent appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+        placeholder={`${isFocused ? "Add a new task..." : ""}`}
       />
-      {/* <div className="flex items-center space-x-2">
-        {isEditing ? (
-          <button
-            onClick={handleSave}
-            className="bg-green-500 text-white p-1 rounded"
-          >
-            Save
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-blue-500 text-white p-1 rounded"
-          >
-            Edit
-          </button>
-        )}
-        <button
-          onClick={onDelete}
-          className="bg-red-500 text-white p-1 rounded"
-        >
-          Delete
-        </button>
-      </div> */}
     </div>
   );
 };

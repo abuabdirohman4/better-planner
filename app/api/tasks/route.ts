@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const userId = 1;
 
     // Validasi data
-    if (!title || !dueDate || !userId) {
+    if (typeof title !== "string" || !dueDate || !userId) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
         description: description ?? null, // Berikan nilai default jika undefined
         dueDate: new Date(dueDate),
         user: { connect: { id: userId } },
-        // parentId: parentId ?? null,
         parent: parentId ? { connect: { id: parentId } } : undefined,
       },
     });
