@@ -15,6 +15,8 @@ const BulletPointInput: React.FC = () => {
   const activeInputIndex = useRef<number | null>(null);
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const cursorPosition = useRef<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const addBulletPoint = (index: number) => {
     const newBulletPoints = [...bulletPoints];
@@ -63,14 +65,14 @@ const BulletPointInput: React.FC = () => {
   };
 
   const moveBulletPoint = (dragIndex: number, hoverIndex: number) => {
-    cursorPosition.current =
-      inputRefs.current[dragIndex]?.selectionStart || null;
     const dragBulletPoint = bulletPoints[dragIndex];
     const newBulletPoints = [...bulletPoints];
     newBulletPoints.splice(dragIndex, 1);
     newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
     setBulletPoints(newBulletPoints);
     activeInputIndex.current = hoverIndex;
+    setDragIndex(null);
+    setHoverIndex(null);
   };
 
   const BulletPointItem: React.FC<{
@@ -83,9 +85,20 @@ const BulletPointInput: React.FC = () => {
       accept: "bulletPoint",
       hover: (item: { index: number }) => {
         if (item.index !== index) {
-          moveBulletPoint(item.index, index);
-          item.index = index;
+          if (hoverIndex !== index) {
+            setHoverIndex(index);
+          }
+        } else {
+          if (hoverIndex !== null) {
+            setHoverIndex(null); // Clear hover index if hovering over the same item
+          }
         }
+      },
+      drop: (item: { index: number }) => {
+        if (item.index !== index) {
+          moveBulletPoint(item.index, index);
+        }
+        setHoverIndex(null); // Clear hover index after drop
       },
     });
 
@@ -100,26 +113,38 @@ const BulletPointInput: React.FC = () => {
     drag(drop(ref));
 
     return (
-      <div
-        ref={ref}
-        className={`mb-2 flex items-start ${isDragging ? "opacity-50" : ""}`}
-      >
-        <span
-          className="mr-2"
-          style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
+      <>
+        {hoverIndex === index && (
+          <div className="border-t-2 border-blue-500 my-1"></div>
+        )}
+        <div
+          ref={ref}
+          className={`mb-2 flex items-start ${isDragging ? "opacity-50" : ""}`}
+          style={{
+            opacity: isDragging ? 0.5 : 1,
+            backgroundColor: dragIndex === index ? "#e0e0e0" : "transparent",
+          }}
         >
-          •
-        </span>
-        <textarea
-          ref={(el) => (inputRefs.current[index] = el)}
-          placeholder="Add new task"
-          value={bulletPoint.text}
-          onChange={(e) => handleInputChange(index, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          rows={1}
-          className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+          <span
+            className="mr-2"
+            style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
+          >
+            •
+          </span>
+          <textarea
+            ref={(el) => {
+              inputRefs.current[index] = el;
+              return el;
+            }}
+            placeholder="Add new task"
+            value={bulletPoint.text}
+            onChange={(e) => handleInputChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            rows={1}
+            className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </>
     );
   };
 
