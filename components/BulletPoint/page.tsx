@@ -1,4 +1,6 @@
 "use client";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useRef, useEffect } from "react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -119,18 +121,23 @@ const BulletPointInput: React.FC = () => {
         )}
         <div
           ref={ref}
-          className={`mb-2 flex items-start ${isDragging ? "opacity-50" : ""}`}
+          className={`mb-2 ml-1.5 flex items-start items-center ${
+            isDragging ? "opacity-50" : ""
+          }`}
           style={{
             opacity: isDragging ? 0.5 : 1,
-            backgroundColor: dragIndex === index ? "#e0e0e0" : "transparent",
+            backgroundColor: dragIndex === index ? "red" : "transparent",
           }}
         >
-          <span
-            className="mr-2"
+          <div
+            className={`relative group cursor-pointer bg-white`}
             style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
           >
-            •
-          </span>
+            <div className="w-2 h-2 bg-black rounded-full"></div>
+            <div
+              className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out`}
+            ></div>
+          </div>
           <textarea
             ref={(el) => {
               inputRefs.current[index] = el;
@@ -140,7 +147,7 @@ const BulletPointInput: React.FC = () => {
             onChange={(e) => handleInputChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             rows={1}
-            className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`block pl-3 w-full text-gray-900 bg-transparent resize-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer`}
           />
         </div>
       </>
@@ -164,13 +171,8 @@ const BulletPointInput: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-4">
-        <button
-          onClick={() => addBulletPoint(bulletPoints.length - 1)}
-          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          +
-        </button>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4 text-black">To-Do List</h1>
         {bulletPoints.map((bulletPoint, index) => (
           <BulletPointItem
             key={index}
@@ -179,6 +181,13 @@ const BulletPointInput: React.FC = () => {
             moveBulletPoint={moveBulletPoint}
           />
         ))}
+        <div className="flex py-2">
+          <FontAwesomeIcon
+            icon={faPlus}
+            className="hover:bg-gray-300 rounded-full w-3 h-3 p-1 pt-1.5"
+            onClick={() => addBulletPoint(bulletPoints.length - 1)}
+          />
+        </div>
       </div>
     </DndProvider>
   );
