@@ -134,7 +134,6 @@ const BulletPointInput: React.FC = () => {
           <textarea
             ref={(el) => {
               inputRefs.current[index] = el;
-              return el;
             }}
             placeholder="Add new task"
             value={bulletPoint.text}
