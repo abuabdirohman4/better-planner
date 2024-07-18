@@ -92,7 +92,7 @@ const BulletPointInput: React.FC = () => {
           }
         } else {
           if (hoverIndex !== null) {
-            setHoverIndex(null); // Clear hover index if hovering over the same item
+            setHoverIndex(null);
           }
         }
       },
@@ -100,7 +100,7 @@ const BulletPointInput: React.FC = () => {
         if (item.index !== index) {
           moveBulletPoint(item.index, index);
         }
-        setHoverIndex(null); // Clear hover index after drop
+        setHoverIndex(null);
       },
     });
 
@@ -110,7 +110,16 @@ const BulletPointInput: React.FC = () => {
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
       }),
+      end: () => {
+        setDragIndex(null);
+      },
     });
+
+    useEffect(() => {
+      if (isDragging) {
+        setDragIndex(index);
+      }
+    }, [isDragging, index]);
 
     drag(drop(ref));
 
@@ -122,12 +131,8 @@ const BulletPointInput: React.FC = () => {
         <div
           ref={ref}
           className={`mb-2 ml-1.5 flex items-start items-center ${
-            isDragging ? "opacity-50" : ""
-          }`}
-          style={{
-            opacity: isDragging ? 0.5 : 1,
-            backgroundColor: dragIndex === index ? "red" : "transparent",
-          }}
+            dragIndex === index ? "red" : "transparent"
+          } ${isDragging ? "opcacity-0" : "opcacity-100"}`}
         >
           <div
             className={`relative group cursor-pointer bg-white`}
