@@ -17,7 +17,6 @@ const BulletPointInput: React.FC = () => {
   const cursorPosition = useRef<number | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const dragImageRef = useRef<HTMLDivElement | null>(null);
 
   const addBulletPoint = (index: number) => {
     const newBulletPoints = [...bulletPoints];
@@ -67,11 +66,9 @@ const BulletPointInput: React.FC = () => {
 
   const onDragStart = (index: number, e: React.DragEvent) => {
     setDragIndex(index);
-    if (dragImageRef.current) {
-      e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
-    }
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.dropEffect = "move";
+    // Hide the default drag image
+    const dragImage = document.createElement("div");
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
   };
 
   const onDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -79,8 +76,7 @@ const BulletPointInput: React.FC = () => {
     setHoverIndex(index);
   };
 
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const onDrop = () => {
     if (dragIndex !== null && hoverIndex !== null) {
       const updated = [...bulletPoints];
       const [draggedItem] = updated.splice(dragIndex, 1);
@@ -113,14 +109,7 @@ const BulletPointInput: React.FC = () => {
         <div
           key={index}
           draggable
-          onDragStart={(e) => {
-            onDragStart(index, e);
-            e.currentTarget.classList.add("dragging"); // Tambahkan kelas CSS 'dragging'
-          }}
-          onDragEnd={() => {
-            setDragIndex(null);
-            setHoverIndex(null);
-          }}
+          onDragStart={(e) => onDragStart(index, e)}
           onDragOver={(e) => onDragOver(e, index)}
           onDrop={onDrop}
           className={`mb-2 ml-1.5 flex items-start transition-opacity duration-200 ${
@@ -156,16 +145,6 @@ const BulletPointInput: React.FC = () => {
           onClick={() => addBulletPoint(bulletPoints.length - 1)}
         />
       </div>
-      <div
-        ref={dragImageRef}
-        style={{
-          position: "absolute",
-          top: "-1000px",
-          left: "-1000px",
-          width: "0px",
-          height: "0px",
-        }}
-      ></div>
     </div>
   );
 };
