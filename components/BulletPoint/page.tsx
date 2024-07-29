@@ -2,6 +2,8 @@
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useRef, useEffect } from "react";
+import { useDrag, useDrop, DndProvider, DragPreviewImage } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 interface BulletPoint {
   text: string;
@@ -17,7 +19,7 @@ const BulletPointInput: React.FC = () => {
   const cursorPosition = useRef<number | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const dragImageRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const addBulletPoint = (index: number) => {
     const newBulletPoints = [...bulletPoints];
@@ -65,30 +67,114 @@ const BulletPointInput: React.FC = () => {
     activeInputIndex.current = index;
   };
 
-  const onDragStart = (index: number, e: React.DragEvent) => {
-    setDragIndex(index);
-    if (dragImageRef.current) {
-      e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
-    }
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const onDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
-    e.preventDefault();
-    setHoverIndex(index);
-  };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (dragIndex !== null && hoverIndex !== null) {
-      const updated = [...bulletPoints];
-      const [draggedItem] = updated.splice(dragIndex, 1);
-      updated.splice(hoverIndex, 0, draggedItem);
-      setBulletPoints(updated);
-    }
+  const moveBulletPoint = (dragIndex: number, hoverIndex: number) => {
+    const dragBulletPoint = bulletPoints[dragIndex];
+    const newBulletPoints = [...bulletPoints];
+    newBulletPoints.splice(dragIndex, 1);
+    newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
+    setBulletPoints(newBulletPoints);
+    activeInputIndex.current = hoverIndex;
     setDragIndex(null);
     setHoverIndex(null);
+  };
+
+  const BulletPointItem: React.FC<{
+    bulletPoint: BulletPoint;
+    index: number;
+    moveBulletPoint: (dragIndex: number, hoverIndex: number) => void;
+  }> = ({ bulletPoint, index, moveBulletPoint }) => {
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [, drop] = useDrop({
+      accept: "bulletPoint",
+      hover: (item: { index: number }) => {
+        if (item.index !== index) {
+          if (hoverIndex !== index) {
+            setHoverIndex(index);
+          }
+        } else {
+          if (hoverIndex !== null) {
+            setHoverIndex(null);
+          }
+        }
+      },
+      drop: (item: { index: number }) => {
+        if (item.index !== index) {
+          moveBulletPoint(item.index, index);
+        }
+        setHoverIndex(null);
+      },
+    });
+
+    const [{ isDragging }, drag, preview] = useDrag({
+      type: "bulletPoint",
+      item: { index },
+      previewOptions: {
+        offsetX: 0,
+        offsetY: 0,
+      },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      end: () => {
+        setDragIndex(null);
+      },
+    });
+
+    useEffect(() => {
+      if (isDragging) {
+        setDragIndex(index);
+        // document.body.style.cursor = "grabbing";
+        // document.body.classList.add("cursor-grabbing");
+        // if (containerRef.current) {
+        //   containerRef.current.classList.add("cursor-grabbing");
+        // }
+        document.body.style.cursor = "move";
+      } else {
+        // document.body.classList.remove("cursor-grabbing");
+        document.body.removeAttribute("style");
+      }
+    }, [isDragging, index]);
+
+    drag(drop(ref));
+
+    return (
+      <>
+        <DragPreviewImage connect={preview} src="bullet.svg" />
+        {hoverIndex === index && (
+          <div className="border-t-2 border-blue-500 my-1"></div>
+        )}
+        <div
+          ref={ref}
+          className={`mb-2 ml-1.5 flex items-start items-center cursor-pointer ${
+            dragIndex === index ? "bg-gray-300" : "bg-transparent"
+          } ${isDragging ? "opcacity-0" : "opcacity-100"} 
+           
+            `}
+        >
+          <div
+            // className={`relative group cursor-pointer bg-white`}
+            className={`relative group bg-white `}
+            style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
+          >
+            <div className="w-2 h-2 bg-black rounded-full"></div>
+            <div
+              className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out`}
+            ></div>
+          </div>
+          <textarea
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            placeholder="Add new task"
+            value={bulletPoint.text}
+            onChange={(e) => handleInputChange(index, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            rows={1}
+            className="block pl-3 w-full text-gray-900 bg-transparent resize-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+          />
+        </div>
+      </>
+    );
   };
 
   useEffect(() => {
@@ -107,66 +193,26 @@ const BulletPointInput: React.FC = () => {
   }, [bulletPoints]);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-black">To-Do List</h1>
-      {bulletPoints.map((bulletPoint, index) => (
-        <div
-          key={index}
-          draggable
-          onDragStart={(e) => {
-            onDragStart(index, e);
-            e.currentTarget.classList.add("dragging"); // Tambahkan kelas CSS 'dragging'
-          }}
-          onDragEnd={() => {
-            setDragIndex(null);
-            setHoverIndex(null);
-          }}
-          onDragOver={(e) => onDragOver(e, index)}
-          onDrop={onDrop}
-          className={`mb-2 ml-1.5 flex items-start transition-opacity duration-200 ${
-            dragIndex === index ? "bg-gray-300" : "bg-transparent"
-          }`}
-          style={{
-            borderTop: hoverIndex === index ? "2px solid blue" : "none",
-          }}
-        >
-          <div
-            className="mr-2"
-            style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
-          >
-            •
-          </div>
-          <textarea
-            ref={(el) => {
-              inputRefs.current[index] = el;
-            }}
-            placeholder="Add new task"
-            value={bulletPoint.text}
-            onChange={(e) => handleInputChange(index, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            rows={1}
-            className="block pl-3 w-full text-gray-900 bg-transparent resize-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+    <DndProvider backend={HTML5Backend}>
+      <div className="container mx-auto p-4" ref={containerRef}>
+        <h1 className="text-2xl font-bold mb-4 text-black">To-Do List</h1>
+        {bulletPoints.map((bulletPoint, index) => (
+          <BulletPointItem
+            key={index}
+            bulletPoint={bulletPoint}
+            index={index}
+            moveBulletPoint={moveBulletPoint}
+          />
+        ))}
+        <div className="flex py-2">
+          <FontAwesomeIcon
+            icon={faPlus}
+            className="hover:bg-gray-300 rounded-full w-3 h-3 p-1 pt-1.5"
+            onClick={() => addBulletPoint(bulletPoints.length - 1)}
           />
         </div>
-      ))}
-      <div className="flex py-2">
-        <FontAwesomeIcon
-          icon={faPlus}
-          className="hover:bg-gray-300 rounded-full w-3 h-3 p-1 pt-1.5 cursor-pointer"
-          onClick={() => addBulletPoint(bulletPoints.length - 1)}
-        />
       </div>
-      <div
-        ref={dragImageRef}
-        style={{
-          position: "absolute",
-          top: "-1000px",
-          left: "-1000px",
-          width: "0px",
-          height: "0px",
-        }}
-      ></div>
-    </div>
+    </DndProvider>
   );
 };
 
