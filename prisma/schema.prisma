@@ -32,28 +32,30 @@ model User {
 //   timeLogs    TimeLog[]
 // }
 
-model Task {
-  id          Int       @id @default(autoincrement())
-  index       Int? // Kolom baru untuk menyimpan urutan task
-  title       String
-  description String?
-  dueDate     DateTime
-  createdAt   DateTime  @default(now()) // Field baru untuk menyimpan waktu pembuatan task
-  updatedAt   DateTime  @updatedAt
-  completed   Boolean   @default(false)
-  userId      Int
-  parentId    Int? // Tambahkan ini untuk relasi anak
-  indentLevel Int       @default(0) // Kolom untuk tingkat indentasi
-  parent      Task?     @relation("TaskChildren", fields: [parentId], references: [id])
-  children    Task[]    @relation("TaskChildren")
-  user        User      @relation(fields: [userId], references: [id])
-  TimeLog     TimeLog[]
-}
+// model Task {
+//   id          Int       @id @default(autoincrement())
+//   index       Int? // Kolom baru untuk menyimpan urutan task
+//   title       String
+//   description String?
+//   dueDate     DateTime
+//   createdAt   DateTime  @default(now()) // Field baru untuk menyimpan waktu pembuatan task
+//   updatedAt   DateTime  @updatedAt
+//   completed   Boolean   @default(false)
+//   userId      Int
+//   parentId    Int? // Tambahkan ini untuk relasi anak
+//   indentLevel Int       @default(0) // Kolom untuk tingkat indentasi
+//   parent      Task?     @relation("TaskChildren", fields: [parentId], references: [id])
+//   children    Task[]    @relation("TaskChildren")
+//   user        User      @relation(fields: [userId], references: [id])
+//   TimeLog     TimeLog[]
+// }
 
-model TimeLog {
-  id        Int       @id @default(autoincrement())
-  startTime DateTime
-  endTime   DateTime?
-  task      Task      @relation(fields: [taskId], references: [id])
-  taskId    Int
+model Task {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  id        Int      @id @default(autoincrement())
+  text      String
+  indent    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

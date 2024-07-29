@@ -1,12 +1,12 @@
 {
   "data": [
     {
-      "name": "Daily",
-      "link": "pages/daily"
+      "name": "High Focus Goal",
+      "link": "pages/high-focus-goal"
     },
     {
-      "name": "Weekly",
-      "link": "pages/weekly"
+      "name": "Daily",
+      "link": "pages/daily"
     }
   ]
 }
