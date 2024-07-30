@@ -34,13 +34,14 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { id, text, indent } = body;
+    const { text, indent, order } = body;
 
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
         text,
         indent,
+        order,
       },
     });
 
@@ -65,7 +66,6 @@ export async function DELETE(
   }
 
   try {
-    // Cek apakah task ada
     const task = await prisma.task.findUnique({
       where: { id: taskId },
     });
@@ -73,11 +73,6 @@ export async function DELETE(
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-
-    // Hapus semua entri terkait di tabel TimeLog
-    // await prisma.timeLog.deleteMany({
-    //   where: { taskId },
-    // });
 
     await prisma.task.delete({
       where: { id: taskId },

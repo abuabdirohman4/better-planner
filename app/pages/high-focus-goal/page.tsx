@@ -29,7 +29,11 @@ export default function HighFocusGoal() {
 
   const addBulletPoint = async (index: number) => {
     const newIndent = index >= 0 ? bulletPoints[index].indent : 0;
-    const newBulletPoint = { text: "", indent: newIndent };
+    const newOrder =
+      bulletPoints.length > 0
+        ? bulletPoints[bulletPoints.length - 1].order + 1
+        : 0;
+    const newBulletPoint = { text: "", indent: newIndent, order: newOrder };
     const response = await fetch("/api/bulletPoints", {
       method: "POST",
       headers: {
@@ -143,7 +147,29 @@ export default function HighFocusGoal() {
       const newBulletPoints = [...bulletPoints];
       newBulletPoints.splice(dragIndex, 1);
       newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
-      setBulletPoints(newBulletPoints);
+
+      // Update the order field
+      const reorderedBulletPoints = newBulletPoints.map(
+        (bulletPoint, index) => ({
+          ...bulletPoint,
+          order: index,
+        })
+      );
+
+      setBulletPoints(reorderedBulletPoints);
+
+      for (const bulletPoint of reorderedBulletPoints) {
+        if (bulletPoint.id) {
+          fetch(`/api/bulletPoints/${bulletPoint.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(bulletPoint),
+          });
+        }
+      }
+
       activeInputIndex.current = hoverIndex;
       setDragIndex(null);
       setHoverIndex(null);

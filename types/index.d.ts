@@ -21,4 +21,5 @@ export interface BulletPoint {
   id?: number;
   text: string;
   indent: number;
+  order: number;
 }
