@@ -106,17 +106,17 @@ export default function HighFocusGoal() {
       e.preventDefault();
       if (index > 0) {
         activeInputIndex.current = index - 1;
-        cursorPosition.current =
-          inputRefs.current[index - 1]?.selectionStart || 0;
+        cursorPosition.current = 0; // Reset cursor to start
         inputRefs.current[index - 1]?.focus();
+        inputRefs.current[index - 1]?.setSelectionRange(0, 0); // Set cursor position to start
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       if (index < bulletPoints.length - 1) {
         activeInputIndex.current = index + 1;
-        cursorPosition.current =
-          inputRefs.current[index + 1]?.selectionStart || 0;
+        cursorPosition.current = 0; // Reset cursor to start
         inputRefs.current[index + 1]?.focus();
+        inputRefs.current[index + 1]?.setSelectionRange(0, 0); // Set cursor position to start
       }
     }
   };
