@@ -6,41 +6,47 @@ import { useDrag, useDrop, DndProvider, DragPreviewImage } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
 interface BulletPoint {
-  id: number;
+  id?: number;
   text: string;
   indent: number;
 }
 
-const HighFocusGoal: React.FC = () => {
+export default function HighFocusGoal() {
   const [bulletPoints, setBulletPoints] = useState<BulletPoint[]>([]);
-  const activeInputIndex = useRef<number | null>(null);
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const activeInputIndex = useRef<number | null>(null);
   const cursorPosition = useRef<number | null>(null);
+
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchBulletPoints();
   }, []);
 
   const fetchBulletPoints = async () => {
-    const response = await fetch('/api/bulletPoints');
+    const response = await fetch("/api/bulletPoints");
     const data = await response.json();
     setBulletPoints(data);
   };
 
   const addBulletPoint = async (index: number) => {
-    const newBulletPoint = { text: "", indent: bulletPoints[index].indent };
-    const response = await fetch('/api/bulletPoints', {
-      method: 'POST',
+    const newIndent = index >= 0 ? bulletPoints[index].indent : 0;
+    const newBulletPoint = { text: "", indent: newIndent };
+    const response = await fetch("/api/bulletPoints", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(newBulletPoint),
     });
     const data = await response.json();
-    setBulletPoints([...bulletPoints.slice(0, index + 1), data, ...bulletPoints.slice(index + 1)]);
+    const updatedBulletPoints = [
+      ...bulletPoints.slice(0, index + 1),
+      data,
+      ...bulletPoints.slice(index + 1),
+    ];
+    setBulletPoints(updatedBulletPoints);
     activeInputIndex.current = index + 1;
   };
 
@@ -49,14 +55,18 @@ const HighFocusGoal: React.FC = () => {
     const newBulletPoints = [...bulletPoints];
     newBulletPoints[index].text = value;
     setBulletPoints(newBulletPoints);
+    console.log("newBulletPoints", newBulletPoints);
 
-    await fetch('/api/bulletPoints', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newBulletPoints[index]),
-    });
+    const taskId = newBulletPoints[index].id;
+    if (newBulletPoints[index].id) {
+      await fetch(`/api/bulletPoints/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newBulletPoints[index]),
+      });
+    }
 
     activeInputIndex.current = index;
   };
@@ -87,13 +97,16 @@ const HighFocusGoal: React.FC = () => {
     newBulletPoints[index].indent = newIndent;
     setBulletPoints(newBulletPoints);
 
-    await fetch('/api/bulletPoints', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newBulletPoints[index]),
-    });
+    const taskId = newBulletPoints[index].id;
+    if (newBulletPoints[index].id) {
+      await fetch(`/api/bulletPoints/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newBulletPoints[index]),
+      });
+    }
 
     activeInputIndex.current = index;
   };
@@ -109,11 +122,15 @@ const HighFocusGoal: React.FC = () => {
     setHoverIndex(null);
   };
 
-  const BulletPointItem: React.FC<{
+  const BulletPointItem = ({
+    bulletPoint,
+    index,
+    moveBulletPoint,
+  }: {
     bulletPoint: BulletPoint;
     index: number;
     moveBulletPoint: (dragIndex: number, hoverIndex: number) => void;
-  }> = ({ bulletPoint, index, moveBulletPoint }) => {
+  }) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const [, drop] = useDrop({
       accept: "bulletPoint",
@@ -164,7 +181,7 @@ const HighFocusGoal: React.FC = () => {
 
     return (
       <>
-        <DragPreviewImage connect={preview} src="bullet.svg" />
+        <DragPreviewImage connect={preview} src="/bullet.svg" />
         {hoverIndex === index && (
           <div className="border-t-2 border-blue-500 my-1"></div>
         )}
@@ -172,7 +189,7 @@ const HighFocusGoal: React.FC = () => {
           ref={ref}
           className={`mb-2 ml-1.5 flex items-start items-center cursor-pointer ${
             dragIndex === index ? "bg-gray-300" : "bg-transparent"
-          } ${isDragging ? "opcacity-0" : "opcacity-100"} 
+          } ${isDragging ? "opacity-0" : "opacity-100"} 
            
             `}
         >
@@ -218,7 +235,7 @@ const HighFocusGoal: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="container mx-auto p-4" ref={containerRef}>
+      <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4 text-black">High Focus Goal</h1>
         {bulletPoints.map((bulletPoint, index) => (
           <BulletPointItem
@@ -238,6 +255,4 @@ const HighFocusGoal: React.FC = () => {
       </div>
     </DndProvider>
   );
-};
-
-export default HighFocusGoal;
+}
