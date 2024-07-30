@@ -6,6 +6,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import BulletPointItem from "./item";
 import { BulletPoint } from "@/types";
+import debounce from "lodash/debounce";
 
 export default function HighFocusGoal() {
   const [bulletPoints, setBulletPoints] = useState<BulletPoint[]>([]);
@@ -44,27 +45,40 @@ export default function HighFocusGoal() {
     ];
     setBulletPoints(updatedBulletPoints);
     activeInputIndex.current = index + 1;
+    cursorPosition.current = 0; // Reset cursor position
   };
 
-  const handleInputChange = async (index: number, value: string) => {
-    cursorPosition.current = inputRefs.current[index]?.selectionStart || null;
-    const newBulletPoints = [...bulletPoints];
-    newBulletPoints[index].text = value;
-    setBulletPoints(newBulletPoints);
-    console.log("newBulletPoints", newBulletPoints);
-
-    const taskId = newBulletPoints[index].id;
-    if (newBulletPoints[index].id) {
+  const updateBulletPoint = async (bulletPoint: BulletPoint) => {
+    const taskId = bulletPoint.id;
+    if (taskId) {
       await fetch(`/api/bulletPoints/${taskId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newBulletPoints[index]),
+        body: JSON.stringify(bulletPoint),
       });
     }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedUpdateBulletPoint = useCallback(
+    debounce(updateBulletPoint, 500),
+    [updateBulletPoint]
+  );
+  // const debounceUpdateBulletPoint = useCallback(
+  //   debounce((bulletPoint) => updateBulletPoint(bulletPoint), 500),
+  //   []
+  // );
+
+  const handleInputChange = (index: number, value: string) => {
+    const newBulletPoints = [...bulletPoints];
+    newBulletPoints[index].text = value;
+    setBulletPoints(newBulletPoints);
 
     activeInputIndex.current = index;
+    cursorPosition.current = inputRefs.current[index]?.selectionStart || null;
+    debouncedUpdateBulletPoint(newBulletPoints[index]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -94,7 +108,7 @@ export default function HighFocusGoal() {
     setBulletPoints(newBulletPoints);
 
     const taskId = newBulletPoints[index].id;
-    if (newBulletPoints[index].id) {
+    if (taskId) {
       await fetch(`/api/bulletPoints/${taskId}`, {
         method: "PUT",
         headers: {
@@ -134,6 +148,26 @@ export default function HighFocusGoal() {
         }
       }
     }
+  }, [bulletPoints]);
+
+  useEffect(() => {
+    const handleFocus = (e: FocusEvent) => {
+      const index = inputRefs.current.findIndex((input) => input === e.target);
+      if (index !== -1) {
+        activeInputIndex.current = index;
+      }
+    };
+
+    const inputs = inputRefs.current;
+    inputs.forEach((input) => {
+      input?.addEventListener("focus", handleFocus);
+    });
+
+    return () => {
+      inputs.forEach((input) => {
+        input?.removeEventListener("focus", handleFocus);
+      });
+    };
   }, [bulletPoints]);
 
   return (
