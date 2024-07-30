@@ -144,9 +144,24 @@ export default function HighFocusGoal() {
   const moveBulletPoint = useCallback(
     (dragIndex: number, hoverIndex: number) => {
       const dragBulletPoint = bulletPoints[dragIndex];
+      const draggedChildren = [];
+      for (let i = dragIndex + 1; i < bulletPoints.length; i++) {
+        if (bulletPoints[i].indent > dragBulletPoint.indent) {
+          draggedChildren.push(bulletPoints[i]);
+        } else {
+          break;
+        }
+      }
+
       const newBulletPoints = [...bulletPoints];
-      newBulletPoints.splice(dragIndex, 1);
-      newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
+      newBulletPoints.splice(dragIndex, draggedChildren.length + 1);
+
+      newBulletPoints.splice(
+        hoverIndex,
+        0,
+        dragBulletPoint,
+        ...draggedChildren
+      );
 
       // Update the order field
       const reorderedBulletPoints = newBulletPoints.map(
