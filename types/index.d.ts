@@ -16,3 +16,9 @@ export type Task = {
 // export type Task = PrismaClient["task"];
 export type TimeLog = PrismaClient["timeLog"];
 export type User = PrismaClient["user"];
+
+export interface BulletPoint {
+  id?: number;
+  text: string;
+  indent: number;
+}

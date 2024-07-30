@@ -1,15 +1,11 @@
 "use client";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState, useRef, useEffect } from "react";
-import { useDrag, useDrop, DndProvider, DragPreviewImage } from "react-dnd";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-
-interface BulletPoint {
-  id?: number;
-  text: string;
-  indent: number;
-}
+import BulletPointItem from "./item";
+import { BulletPoint } from "@/types";
 
 export default function HighFocusGoal() {
   const [bulletPoints, setBulletPoints] = useState<BulletPoint[]>([]);
@@ -111,112 +107,19 @@ export default function HighFocusGoal() {
     activeInputIndex.current = index;
   };
 
-  const moveBulletPoint = (dragIndex: number, hoverIndex: number) => {
-    const dragBulletPoint = bulletPoints[dragIndex];
-    const newBulletPoints = [...bulletPoints];
-    newBulletPoints.splice(dragIndex, 1);
-    newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
-    setBulletPoints(newBulletPoints);
-    activeInputIndex.current = hoverIndex;
-    setDragIndex(null);
-    setHoverIndex(null);
-  };
-
-  const BulletPointItem = ({
-    bulletPoint,
-    index,
-    moveBulletPoint,
-  }: {
-    bulletPoint: BulletPoint;
-    index: number;
-    moveBulletPoint: (dragIndex: number, hoverIndex: number) => void;
-  }) => {
-    const ref = useRef<HTMLDivElement | null>(null);
-    const [, drop] = useDrop({
-      accept: "bulletPoint",
-      hover: (item: { index: number }) => {
-        if (item.index !== index) {
-          if (hoverIndex !== index) {
-            setHoverIndex(index);
-          }
-        } else {
-          if (hoverIndex !== null) {
-            setHoverIndex(null);
-          }
-        }
-      },
-      drop: (item: { index: number }) => {
-        if (item.index !== index) {
-          moveBulletPoint(item.index, index);
-        }
-        setHoverIndex(null);
-      },
-    });
-
-    const [{ isDragging }, drag, preview] = useDrag({
-      type: "bulletPoint",
-      item: { index },
-      previewOptions: {
-        offsetX: 0,
-        offsetY: 0,
-      },
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-      end: () => {
-        setDragIndex(null);
-      },
-    });
-
-    useEffect(() => {
-      if (isDragging) {
-        setDragIndex(index);
-        document.body.style.cursor = "move";
-      } else {
-        document.body.removeAttribute("style");
-      }
-    }, [isDragging, index]);
-
-    drag(drop(ref));
-
-    return (
-      <>
-        <DragPreviewImage connect={preview} src="/bullet.svg" />
-        {hoverIndex === index && (
-          <div className="border-t-2 border-blue-500 my-1"></div>
-        )}
-        <div
-          ref={ref}
-          className={`mb-2 ml-1.5 flex items-start items-center cursor-pointer ${
-            dragIndex === index ? "bg-gray-300" : "bg-transparent"
-          } ${isDragging ? "opacity-0" : "opacity-100"} 
-           
-            `}
-        >
-          <div
-            className={`relative group bg-white `}
-            style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
-          >
-            <div className="w-2 h-2 bg-black rounded-full"></div>
-            <div
-              className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out`}
-            ></div>
-          </div>
-          <textarea
-            ref={(el) => {
-              inputRefs.current[index] = el;
-            }}
-            placeholder="Add new task"
-            value={bulletPoint.text}
-            onChange={(e) => handleInputChange(index, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            rows={1}
-            className="block pl-3 w-full text-gray-900 bg-transparent resize-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-          />
-        </div>
-      </>
-    );
-  };
+  const moveBulletPoint = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      const dragBulletPoint = bulletPoints[dragIndex];
+      const newBulletPoints = [...bulletPoints];
+      newBulletPoints.splice(dragIndex, 1);
+      newBulletPoints.splice(hoverIndex, 0, dragBulletPoint);
+      setBulletPoints(newBulletPoints);
+      activeInputIndex.current = hoverIndex;
+      setDragIndex(null);
+      setHoverIndex(null);
+    },
+    [bulletPoints]
+  );
 
   useEffect(() => {
     if (activeInputIndex.current !== null) {
@@ -243,6 +146,13 @@ export default function HighFocusGoal() {
             bulletPoint={bulletPoint}
             index={index}
             moveBulletPoint={moveBulletPoint}
+            inputRefs={inputRefs}
+            handleInputChange={handleInputChange}
+            handleKeyDown={handleKeyDown}
+            setHoverIndex={setHoverIndex}
+            hoverIndex={hoverIndex}
+            setDragIndex={setDragIndex}
+            dragIndex={dragIndex}
           />
         ))}
         <div className="flex py-2">
