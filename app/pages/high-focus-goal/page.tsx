@@ -98,6 +98,22 @@ export default function HighFocusGoal() {
       if (bulletPoints[index].indent > 0) {
         changeIndent(index, bulletPoints[index].indent - 1);
       }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (index > 0) {
+        activeInputIndex.current = index - 1;
+        cursorPosition.current =
+          inputRefs.current[index - 1]?.selectionStart || 0;
+        inputRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (index < bulletPoints.length - 1) {
+        activeInputIndex.current = index + 1;
+        cursorPosition.current =
+          inputRefs.current[index + 1]?.selectionStart || 0;
+        inputRefs.current[index + 1]?.focus();
+      }
     }
   };
 
