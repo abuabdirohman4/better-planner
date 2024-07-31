@@ -7,6 +7,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import BulletPointItem from "./item";
 import { BulletPoint } from "@/types";
 import debounce from "lodash/debounce";
+import axios from "axios";
 
 export default function HighFocusGoal() {
   const [bulletPoints, setBulletPoints] = useState<BulletPoint[]>([]);
@@ -52,6 +53,14 @@ export default function HighFocusGoal() {
     cursorPosition.current = 0; // Reset cursor position
   };
 
+  const handleDelete = async (taskId: number, index: number) => {
+    await axios.delete(`/api/bulletPoints/${taskId}`);
+    fetchBulletPoints();
+    if (index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
   const updateBulletPoint = async (bulletPoint: BulletPoint) => {
     const taskId = bulletPoint.id;
     if (taskId) {
@@ -89,6 +98,12 @@ export default function HighFocusGoal() {
     if (e.key === "Enter") {
       e.preventDefault();
       addBulletPoint(index);
+    } else if (
+      (e.key === "Backspace" || e.key === "Delete") &&
+      bulletPoints[index].text.trim() === ""
+    ) {
+      e.preventDefault();
+      handleDelete(Number(bulletPoints[index].id), index);
     } else if (e.key === "Tab" && !e.shiftKey) {
       e.preventDefault();
       if (
