@@ -5,7 +5,11 @@
       "link": "pages/high-focus-goal"
     },
     {
-      "name": "Daily",
+      "name": "Weekly Sync",
+      "link": "pages/weekly"
+    },
+    {
+      "name": "Daily Sync",
       "link": "pages/daily"
     }
   ]

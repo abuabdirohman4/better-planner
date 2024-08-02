@@ -99,7 +99,6 @@ const BulletPointItem = ({
         </div>
         <textarea
           ref={(el) => {
-            // console.log("el", el);
             inputRefs.current[index] = el;
           }}
           placeholder="Add new task"

@@ -242,10 +242,46 @@ export default function HighFocusGoal() {
     };
   }, [bulletPoints]);
 
+  const Milestone = () => {
+    return (
+      <div className="mb-2 ml-1.5 flex items-start items-center cursor-pointer">
+        <div className="relative group bg-white">
+          <div className="w-2 h-2 bg-black rounded-full"></div>
+          <div className="absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out"></div>
+        </div>
+        <textarea
+          placeholder="Add new task"
+          // value={bulletPoint.text}
+          // onChange={(e) => handleInputChange(index, e.target.value)}
+          rows={1}
+          className="block pl-3 w-full text-gray-900 bg-transparent resize-none appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+        />
+      </div>
+    );
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4 text-black">High Focus Goal</h1>
+        <p className="mb-2">
+          3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :
+        </p>
+        <Milestone />
+        <Milestone />
+        <Milestone />
+        <p className="mb-2">Langkah selanjutnya untuk mencapai Milestone 1 :</p>
+        <Milestone />
+        <Milestone />
+        <Milestone />
+        <p className="mb-2">Langkah selanjutnya untuk mencapai Milestone 2 :</p>
+        <Milestone />
+        <Milestone />
+        <Milestone />
+        <p className="mb-2">Langkah selanjutnya untuk mencapai Milestone 3 :</p>
+        <Milestone />
+        <Milestone />
+        <Milestone />
         {bulletPoints.map((bulletPoint, index) => (
           <BulletPointItem
             key={bulletPoint.id}
