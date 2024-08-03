@@ -2,22 +2,18 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const addPeriodsToDatabase = async () => {
+export const addPeriodsToDatabase = async (year: number = 2024) => {
   const periods = [];
 
-  const startYear = 2024;
-  const endYear = 2024;
+  const startYear = year;
+  const endYear = year;
 
   for (let year = startYear; year <= endYear; year++) {
-    console.log("masuk looping?");
     for (let quarter = 1; quarter <= 4; quarter++) {
       const startDate = getStartDateOfQuarter(year, quarter);
       const endDate = getEndDateOfQuarter(startDate);
-      // const startDateString = startDate.toDateString();
-      // const endDateString = startDate.toDateString();
       periods.push({ year, quarter, startDate, endDate });
     }
-    // console.log("periods", periods);
   }
 
   for (const period of periods) {
@@ -38,7 +34,8 @@ const addPeriodsToDatabase = async () => {
     });
   }
 
-  console.log("Periods have been added to the database.");
+  const res = "Periods have been added to the database.";
+  return res;
 };
 
 const getStartDateOfQuarter = (year: number, quarter: number) => {
