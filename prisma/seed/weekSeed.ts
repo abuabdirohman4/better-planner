@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const addWeeksToDatabase = async () => {
+export const addWeeksToDatabase = async () => {
   const periods = await prisma.period.findMany();
   const weeks = [];
 
@@ -14,10 +14,10 @@ const addWeeksToDatabase = async () => {
 
       weeks.push({
         year: period.year,
+        quarter: period.quarter,
         week: weekNumber,
         startDate,
         endDate,
-        periodId: period.id,
       });
 
       currentDate.setDate(currentDate.getDate() + 7); // Move to the next week
@@ -27,9 +27,9 @@ const addWeeksToDatabase = async () => {
   for (const week of weeks) {
     await prisma.week.upsert({
       where: {
-        year_periodId_week: {
+        year_quarter_week: {
           year: week.year,
-          periodId: week.periodId,
+          quarter: week.quarter,
           week: week.week,
         },
       },
@@ -39,15 +39,15 @@ const addWeeksToDatabase = async () => {
       },
       create: {
         year: week.year,
+        quarter: week.quarter,
         week: week.week,
         startDate: week.startDate,
         endDate: week.endDate,
-        periodId: week.periodId,
       },
     });
   }
 
-  console.log("Weeks have been added to the database.");
+  return "Weeks have been added to the database.";
 };
 
 const getStartDateOfWeek = (date: Date): Date => {

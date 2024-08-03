@@ -34,8 +34,7 @@ export const addPeriodsToDatabase = async (year: number = 2024) => {
     });
   }
 
-  const res = "Periods have been added to the database.";
-  return res;
+  return "Periods have been added to the database.";
 };
 
 const getStartDateOfQuarter = (year: number, quarter: number) => {

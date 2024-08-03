@@ -33,7 +33,7 @@ model Period {
   startDate           DateTime
   endDate             DateTime
   StatusHighFocusGoal StatusHighFocusGoal[]
-  Week                Week[]
+  // Week                Week[]
 
   @@unique([year, quarter])
 }
@@ -108,7 +108,6 @@ model Task {
   HighFocusGoal   HighFocusGoal? @relation(fields: [highFocusGoalId], references: [id])
   highFocusGoalId Int?
   Day             Day[]
-  Week            Week[]
   TimeLog         TimeLog[]
   TaskWeek        TaskWeek[]
   createdAt       DateTime       @default(now())
@@ -127,7 +126,7 @@ model TimeLog {
 
 model ToDontList {
   id       Int    @id @default(autoincrement())
-  client   Client @relation(fields: [clientId], references: [id])
+  Client   Client @relation(fields: [clientId], references: [id])
   clientId Int
   name     String
   order    Int
@@ -136,7 +135,7 @@ model ToDontList {
 
 model BrainDump {
   id       Int      @id @default(autoincrement())
-  client   Client   @relation(fields: [clientId], references: [id])
+  Client   Client   @relation(fields: [clientId], references: [id])
   clientId Int
   text     String
   day      DateTime
@@ -145,29 +144,29 @@ model BrainDump {
 model Day {
   id     Int      @id @default(autoincrement())
   taskId Int
-  task   Task     @relation(fields: [taskId], references: [id])
+  Task   Task     @relation(fields: [taskId], references: [id])
   date   DateTime
 }
 
 model Week {
   id        Int        @id @default(autoincrement())
   year      Int
+  quarter   Int
   week      Int
   startDate DateTime
   endDate   DateTime
-  periodId  Int?
-  period    Period?    @relation(fields: [periodId], references: [id])
-  taskWeeks TaskWeek[]
-  Task      Task?      @relation(fields: [taskId], references: [id])
-  taskId    Int?
+  // periodId  Int?
+  // Period    Period?    @relation(fields: [periodId], references: [id])
+  TaskWeeks TaskWeek[]
 
-  @@unique([year, periodId, week])
+  // @@unique([year, periodId, week])
+  @@unique([year, quarter, week])
 }
 
 model TaskWeek {
   id     Int  @id @default(autoincrement())
   taskId Int
-  task   Task @relation(fields: [taskId], references: [id])
+  Task   Task @relation(fields: [taskId], references: [id])
   weekId Int
-  week   Week @relation(fields: [weekId], references: [id])
+  Week   Week @relation(fields: [weekId], references: [id])
 }

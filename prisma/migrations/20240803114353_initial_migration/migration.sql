@@ -59,16 +59,24 @@ CREATE TABLE "StatusHighFocusGoal" (
 );
 
 -- CreateTable
-CREATE TABLE "SDC" (
+CREATE TABLE "SelfDevelopmentCurriculum" (
     "id" SERIAL NOT NULL,
     "clientId" INTEGER NOT NULL,
     "skill" TEXT NOT NULL,
-    "highFocusGoalId" INTEGER NOT NULL,
     "order" INTEGER NOT NULL,
-    "books" JSONB NOT NULL,
-    "workshops" JSONB NOT NULL,
+    "highFocusGoalId" INTEGER NOT NULL,
 
-    CONSTRAINT "SDC_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SelfDevelopmentCurriculum_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Knowledge" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "SelfDevelopmentCurriculumId" INTEGER NOT NULL,
+
+    CONSTRAINT "Knowledge_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -135,11 +143,10 @@ CREATE TABLE "Day" (
 CREATE TABLE "Week" (
     "id" SERIAL NOT NULL,
     "year" INTEGER NOT NULL,
+    "quarter" INTEGER NOT NULL,
     "week" INTEGER NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL,
-    "periodId" INTEGER,
-    "taskId" INTEGER,
 
     CONSTRAINT "Week_pkey" PRIMARY KEY ("id")
 );
@@ -155,6 +162,12 @@ CREATE TABLE "TaskWeek" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Client_email_key" ON "Client"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Period_year_quarter_key" ON "Period"("year", "quarter");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Week_year_quarter_week_key" ON "Week"("year", "quarter", "week");
 
 -- AddForeignKey
 ALTER TABLE "Vision" ADD CONSTRAINT "Vision_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -172,10 +185,13 @@ ALTER TABLE "StatusHighFocusGoal" ADD CONSTRAINT "StatusHighFocusGoal_highFocusG
 ALTER TABLE "StatusHighFocusGoal" ADD CONSTRAINT "StatusHighFocusGoal_periodId_fkey" FOREIGN KEY ("periodId") REFERENCES "Period"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SDC" ADD CONSTRAINT "SDC_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SelfDevelopmentCurriculum" ADD CONSTRAINT "SelfDevelopmentCurriculum_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SDC" ADD CONSTRAINT "SDC_highFocusGoalId_fkey" FOREIGN KEY ("highFocusGoalId") REFERENCES "HighFocusGoal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SelfDevelopmentCurriculum" ADD CONSTRAINT "SelfDevelopmentCurriculum_highFocusGoalId_fkey" FOREIGN KEY ("highFocusGoalId") REFERENCES "HighFocusGoal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Knowledge" ADD CONSTRAINT "Knowledge_SelfDevelopmentCurriculumId_fkey" FOREIGN KEY ("SelfDevelopmentCurriculumId") REFERENCES "SelfDevelopmentCurriculum"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Task" ADD CONSTRAINT "Task_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -194,12 +210,6 @@ ALTER TABLE "BrainDump" ADD CONSTRAINT "BrainDump_clientId_fkey" FOREIGN KEY ("c
 
 -- AddForeignKey
 ALTER TABLE "Day" ADD CONSTRAINT "Day_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Week" ADD CONSTRAINT "Week_periodId_fkey" FOREIGN KEY ("periodId") REFERENCES "Period"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Week" ADD CONSTRAINT "Week_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TaskWeek" ADD CONSTRAINT "TaskWeek_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
