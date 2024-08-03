@@ -14,49 +14,160 @@ datasource db {
   // url      = env("POSTGRES_PRISMA_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  tasks Task[]
+model Client {
+  id                        Int                         @id @default(autoincrement())
+  email                     String                      @unique
+  name                      String?
+  Vision                    Vision[]
+  HighFocusGoal             HighFocusGoal[]
+  SelfDevelopmentCurriculum SelfDevelopmentCurriculum[]
+  Task                      Task[]
+  ToDontList                ToDontList[]
+  BrainDump                 BrainDump[]
 }
 
-// model Task {
-//   id          Int       @id @default(autoincrement())
-//   title       String
-//   description String?
-//   dueDate     DateTime
-//   completed   Boolean   @default(false)
-//   user        User      @relation(fields: [userId], references: [id])
-//   userId      Int
-//   timeLogs    TimeLog[]
-// }
+model Period {
+  id                  Int                   @id @default(autoincrement())
+  year                Int
+  quarter             Int
+  startDate           DateTime
+  endDate             DateTime
+  StatusHighFocusGoal StatusHighFocusGoal[]
+  Week                Week[]
 
-// model Task {
-//   id          Int       @id @default(autoincrement())
-//   index       Int? // Kolom baru untuk menyimpan urutan task
-//   title       String
-//   description String?
-//   dueDate     DateTime
-//   createdAt   DateTime  @default(now()) // Field baru untuk menyimpan waktu pembuatan task
-//   updatedAt   DateTime  @updatedAt
-//   completed   Boolean   @default(false)
-//   userId      Int
-//   parentId    Int? // Tambahkan ini untuk relasi anak
-//   indentLevel Int       @default(0) // Kolom untuk tingkat indentasi
-//   parent      Task?     @relation("TaskChildren", fields: [parentId], references: [id])
-//   children    Task[]    @relation("TaskChildren")
-//   user        User      @relation(fields: [userId], references: [id])
-//   TimeLog     TimeLog[]
-// }
+  @@unique([year, quarter])
+}
+
+model VisionCategory {
+  id     Int      @id @default(autoincrement())
+  name   String
+  Vision Vision[]
+}
+
+model Vision {
+  id             Int            @id @default(autoincrement())
+  Client         Client         @relation(fields: [clientId], references: [id])
+  clientId       Int
+  name           String?
+  period         String?
+  category       Int
+  VisionCategory VisionCategory @relation(fields: [category], references: [id])
+}
+
+model HighFocusGoal {
+  id                        Int                         @id @default(autoincrement())
+  Client                    Client                      @relation(fields: [clientId], references: [id])
+  clientId                  Int
+  name                      String
+  motivation                String
+  Task                      Task[]
+  SelfDevelopmentCurriculum SelfDevelopmentCurriculum[]
+  StatusHighFocusGoal       StatusHighFocusGoal[]
+}
+
+model StatusHighFocusGoal {
+  id              Int           @id @default(autoincrement())
+  HighFocusGoal   HighFocusGoal @relation(fields: [highFocusGoalId], references: [id])
+  highFocusGoalId Int
+  Period          Period        @relation(fields: [periodId], references: [id])
+  periodId        Int
+  point           Int
+  priority        Int
+}
+
+model SelfDevelopmentCurriculum {
+  id              Int           @id @default(autoincrement())
+  client          Client        @relation(fields: [clientId], references: [id])
+  clientId        Int
+  skill           String
+  order           Int
+  highFocusGoalId Int
+  HighFocusGoal   HighFocusGoal @relation(fields: [highFocusGoalId], references: [id])
+  Knowledge       Knowledge[]
+}
+
+model Knowledge {
+  id                          Int                       @id @default(autoincrement())
+  name                        String
+  type                        String // ['Book', 'Workshop']
+  SelfDevelopmentCurriculum   SelfDevelopmentCurriculum @relation(fields: [SelfDevelopmentCurriculumId], references: [id])
+  SelfDevelopmentCurriculumId Int
+}
 
 model Task {
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  id        Int      @id @default(autoincrement())
-  text      String
-  indent    Int
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int            @id @default(autoincrement())
+  client          Client         @relation(fields: [clientId], references: [id])
+  clientId        Int
+  name            String
+  indent          Int            @default(0)
+  order           Int            @default(0)
+  completed       Boolean        @default(false)
+  isMilestone     Boolean        @default(false)
+  milestoneId     Int?
+  isHighFocusGoal Boolean        @default(false)
+  HighFocusGoal   HighFocusGoal? @relation(fields: [highFocusGoalId], references: [id])
+  highFocusGoalId Int?
+  Day             Day[]
+  Week            Week[]
+  TimeLog         TimeLog[]
+  TaskWeek        TaskWeek[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TimeLog {
+  id        Int       @id @default(autoincrement())
+  task      Task      @relation(fields: [taskId], references: [id])
+  taskId    Int
+  journal   String?
+  startTime DateTime
+  endTime   DateTime?
+  duration  DateTime?
+}
+
+model ToDontList {
+  id       Int    @id @default(autoincrement())
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId Int
+  name     String
+  order    Int
+  week     Json
+}
+
+model BrainDump {
+  id       Int      @id @default(autoincrement())
+  client   Client   @relation(fields: [clientId], references: [id])
+  clientId Int
+  text     String
+  day      DateTime
+}
+
+model Day {
+  id     Int      @id @default(autoincrement())
+  taskId Int
+  task   Task     @relation(fields: [taskId], references: [id])
+  date   DateTime
+}
+
+model Week {
+  id        Int        @id @default(autoincrement())
+  year      Int
+  week      Int
+  startDate DateTime
+  endDate   DateTime
+  periodId  Int?
+  period    Period?    @relation(fields: [periodId], references: [id])
+  taskWeeks TaskWeek[]
+  Task      Task?      @relation(fields: [taskId], references: [id])
+  taskId    Int?
+
+  @@unique([year, periodId, week])
+}
+
+model TaskWeek {
+  id     Int  @id @default(autoincrement())
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id])
+  weekId Int
+  week   Week @relation(fields: [weekId], references: [id])
 }
