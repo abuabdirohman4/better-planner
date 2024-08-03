@@ -1,30 +1,30 @@
-import { prisma } from "@/utils/prisma";
+import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { addPeriodsToDatabase } from "@/prisma/seed/periodSeed";
 import { validateField } from "../helper";
 
 export async function GET(req: NextRequest) {
-   try {
-     const { searchParams } = new URL(req.url);
-     const year = searchParams.get("year");
-     const quarter = searchParams.get("quarter");
+  try {
+    const { searchParams } = new URL(req.url);
+    const year = searchParams.get("year");
+    const quarter = searchParams.get("quarter");
 
-     const where: Record<string, any> = {};
-     if (year) where.year = parseInt(year, 10);
-     if (quarter) where.quarter = parseInt(quarter, 10);
+    const where: Record<string, any> = {};
+    if (year) where.year = parseInt(year, 10);
+    if (quarter) where.quarter = parseInt(quarter, 10);
 
-     const res = await prisma.period.findMany({
-       where,
-     });
+    const res = await prisma.period.findMany({
+      where,
+    });
 
-     return NextResponse.json(res, { status: 200 });
-   } catch (error) {
-     console.error("Error fetching data:", error);
-     return NextResponse.json(
-       { error: "Internal Server Error" },
-       { status: 500 }
-     );
-   }
+    return NextResponse.json(res, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching period:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(res, { status: 200 });
   } catch (error) {
-    console.error("Error creating data:", error);
+    console.error("Error creating period:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

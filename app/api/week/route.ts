@@ -1,4 +1,4 @@
-import { prisma } from "@/utils/prisma";
+import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { addWeeksToDatabase } from "@/prisma/seed/weekSeed";
 
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(res, { status: 200 });
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching week:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -33,7 +33,7 @@ export async function POST() {
     const res = await addWeeksToDatabase();
     return NextResponse.json(res, { status: 200 });
   } catch (error) {
-    console.error("Error creating data:", error);
+    console.error("Error creating week:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

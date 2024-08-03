@@ -33,7 +33,6 @@ model Period {
   startDate           DateTime
   endDate             DateTime
   StatusHighFocusGoal StatusHighFocusGoal[]
-  // Week                Week[]
 
   @@unique([year, quarter])
 }
@@ -77,7 +76,7 @@ model StatusHighFocusGoal {
 
 model SelfDevelopmentCurriculum {
   id              Int           @id @default(autoincrement())
-  client          Client        @relation(fields: [clientId], references: [id])
+  Client          Client        @relation(fields: [clientId], references: [id])
   clientId        Int
   skill           String
   order           Int
@@ -96,7 +95,7 @@ model Knowledge {
 
 model Task {
   id              Int            @id @default(autoincrement())
-  client          Client         @relation(fields: [clientId], references: [id])
+  Client          Client         @relation(fields: [clientId], references: [id])
   clientId        Int
   name            String
   indent          Int            @default(0)
@@ -130,7 +129,8 @@ model ToDontList {
   clientId Int
   name     String
   order    Int
-  week     Json
+  Week     Week   @relation(fields: [weekId], references: [id])
+  weekId   Int
 }
 
 model BrainDump {
@@ -149,17 +149,15 @@ model Day {
 }
 
 model Week {
-  id        Int        @id @default(autoincrement())
-  year      Int
-  quarter   Int
-  week      Int
-  startDate DateTime
-  endDate   DateTime
-  // periodId  Int?
-  // Period    Period?    @relation(fields: [periodId], references: [id])
-  TaskWeeks TaskWeek[]
+  id         Int          @id @default(autoincrement())
+  year       Int
+  quarter    Int
+  week       Int
+  startDate  DateTime
+  endDate    DateTime
+  TaskWeeks  TaskWeek[]
+  ToDontList ToDontList[]
 
-  // @@unique([year, periodId, week])
   @@unique([year, quarter, week])
 }
 
