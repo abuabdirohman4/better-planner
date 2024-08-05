@@ -5,7 +5,6 @@ import { useState } from "react";
 
 const BulletPointInput: React.FC = () => {
   const [bulletPoints, setBulletPoints] = useState<string[]>([""]);
-  console.log("bulletPoints", bulletPoints);
 
   const addBulletPoint = () => {
     setBulletPoints([...bulletPoints, ""]);

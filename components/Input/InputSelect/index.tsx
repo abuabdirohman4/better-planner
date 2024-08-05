@@ -19,6 +19,7 @@ type SelectProps = {
 };
 
 const Select = dynamic(() => import("react-select"), {
+  ssr: false,
   // loading: () => <SkeletonText row={2} />,
 });
 

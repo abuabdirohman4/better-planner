@@ -20,10 +20,11 @@ export default function Home() {
       const res = await fetchPeriod({ year: year });
 
       if (res.status === 200) {
-        // set active period
-        const periodId = getSession(SESSIONKEY.periodId);
-        if (periodId) {
-          setPeriodActive(periodId);
+        // set active period & title
+        const periodName = getSession(SESSIONKEY.periodName);
+        if (periodName) {
+          setPeriodActive(periodName);
+          setTitle(periodName);
         }
 
         // set period option
@@ -34,24 +35,13 @@ export default function Home() {
           const end = format(subDays(period.endDate, 7), "d MMMM yyyy", {
             locale: id,
           });
-          return `Q${period.quarter}-${period.year} (${start} - ${end})`;
+          return `${period.name} (${start} - ${end})`;
         };
         const options = res.data.map((period: Period) => ({
-          value: period.id,
+          value: period.name,
           label: formatLabel(period),
         }));
         setPeriodOptions(options);
-
-        // set title
-        const now = new Date();
-        for (const period of res.data) {
-          const startDate = new Date(period.startDate);
-          const endDate = new Date(period.endDate);
-
-          if (now >= startDate && now <= endDate) {
-            setTitle(`Q${period.quarter}-${period.year}`);
-          }
-        }
       }
     };
     fetchData();
@@ -70,7 +60,8 @@ export default function Home() {
               (option) => option.value === periodActive
             )}
             onChange={(selected: any) => {
-              setSession(SESSIONKEY.periodId, selected.value);
+              setSession(SESSIONKEY.periodName, selected.value);
+              setTitle(selected.value);
             }}
           />
         </div>

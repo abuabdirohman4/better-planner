@@ -11,7 +11,6 @@ export async function fetchWeek(filter: WeekFilter = {}): Promise<any> {
     if (filter.periodName !== undefined) params.periodName = filter.periodName;
     if (filter.week !== undefined) params.week = filter.week;
 
-    console.log("params", params);
     return await getData({
       url: "/week",
       params,

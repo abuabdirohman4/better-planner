@@ -4,7 +4,6 @@ import { addPeriodsToDatabase } from "@/prisma/seed/periodSeed";
 import { validateField } from "../helper";
 
 export async function GET(req: NextRequest) {
-  console.log('coba')
   try {
     const { searchParams } = new URL(req.url);
     const periodName = searchParams.get("periodName");
@@ -16,7 +15,6 @@ export async function GET(req: NextRequest) {
     if (year) where.year = parseInt(year, 10);
     if (quarter) where.quarter = parseInt(quarter, 10);
 
-    console.log("where ini", where);
     const res = await prisma.period.findMany({
       where,
     });

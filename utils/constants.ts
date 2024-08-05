@@ -2,7 +2,7 @@ import { StylesConfig } from "react-select";
 
 export const SESSIONKEY = {
   clientId: "clientId",
-  periodId: "periodId",
+  periodName: "periodName",
 };
 
 export const LOCALKEY = {
