@@ -9,7 +9,6 @@ export interface BulletPoint {
   order: number;
 }
 
-// Client Model
 export interface Client {
   id: number;
   email: string;
@@ -22,7 +21,6 @@ export interface Client {
   BrainDump?: BrainDump[];
 }
 
-// Period Model
 export interface Period {
   id: number;
   year: number;
@@ -32,14 +30,12 @@ export interface Period {
   StatusHighFocusGoal?: StatusHighFocusGoal[];
 }
 
-// VisionCategory Model
 export interface VisionCategory {
   id: number;
   name: string;
   Vision?: Vision[];
 }
 
-// Vision Model
 export interface Vision {
   id: number;
   Client: Client;
@@ -50,7 +46,6 @@ export interface Vision {
   VisionCategory: VisionCategory;
 }
 
-// HighFocusGoal Model
 export interface HighFocusGoal {
   id: number;
   Client: Client;
@@ -62,7 +57,6 @@ export interface HighFocusGoal {
   StatusHighFocusGoal?: StatusHighFocusGoal[];
 }
 
-// StatusHighFocusGoal Model
 export interface StatusHighFocusGoal {
   id: number;
   HighFocusGoal: HighFocusGoal;
@@ -73,7 +67,6 @@ export interface StatusHighFocusGoal {
   priority: number;
 }
 
-// SelfDevelopmentCurriculum Model
 export interface SelfDevelopmentCurriculum {
   id: number;
   Client: Client;
@@ -85,16 +78,14 @@ export interface SelfDevelopmentCurriculum {
   Knowledge?: Knowledge[];
 }
 
-// Knowledge Model
 export interface Knowledge {
   id: number;
   name: string;
-  type: 'Book' | 'Workshop'; // Enum values
+  type: "Book" | "Workshop"; // Enum values
   SelfDevelopmentCurriculum: SelfDevelopmentCurriculum;
   SelfDevelopmentCurriculumId: number;
 }
 
-// Task Model
 export interface Task {
   id: number;
   Client: Client;
@@ -115,7 +106,6 @@ export interface Task {
   updatedAt: Date;
 }
 
-// TimeLog Model
 export interface TimeLog {
   id: number;
   task: Task;
@@ -126,17 +116,16 @@ export interface TimeLog {
   duration?: Date;
 }
 
-// ToDontList Model
 export interface ToDontList {
   id: number;
   Client: Client;
   clientId: number;
   name: string;
   order: number;
-  week: any; // Replace with proper type if known
+  Week: Week;
+  weekId: number;
 }
 
-// BrainDump Model
 export interface BrainDump {
   id: number;
   Client: Client;
@@ -145,7 +134,6 @@ export interface BrainDump {
   day: Date;
 }
 
-// Day Model
 export interface Day {
   id: number;
   taskId: number;
@@ -153,7 +141,6 @@ export interface Day {
   date: Date;
 }
 
-// Week Model
 export interface Week {
   id: number;
   year: number;
@@ -164,11 +151,15 @@ export interface Week {
   TaskWeeks?: TaskWeek[];
 }
 
-// TaskWeek Model
 export interface TaskWeek {
   id: number;
   taskId: number;
   Task: Task;
   weekId: number;
   Week: Week;
+}
+
+export interface ReactSelect {
+  value: number | string;
+  label: string;
 }

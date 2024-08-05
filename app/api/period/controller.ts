@@ -11,15 +11,13 @@ export async function fetchPeriod(filter: PeriodFilter = {}): Promise<any> {
     if (filter.year !== undefined) params.year = filter.year;
     if (filter.quarter !== undefined) params.quarter = filter.quarter;
 
-    console.log("params", params);
-    const res = await getData({
+    return await getData({
       url: "/period",
       params,
     });
-    return res.data;
   } catch (error) {
-    console.error("Error fetching periods:", error);
-    throw new Error("Failed to fetch periods");
+    console.error("Error fetching period:", error);
+    throw new Error("Failed to fetch period");
   }
 }
 
