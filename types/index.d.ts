@@ -13,27 +13,32 @@ export interface Client {
   id: number;
   email: string;
   name?: string;
-  Vision?: Vision[];
-  HighFocusGoal?: HighFocusGoal[];
-  SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
-  Task?: Task[];
-  ToDontList?: ToDontList[];
-  BrainDump?: BrainDump[];
+  periodName: string;
+  Period: Period;
+  Vision: Vision[];
+  HighFocusGoal: HighFocusGoal[];
+  SelfDevelopmentCurriculum: SelfDevelopmentCurriculum[];
+  Task: Task[];
+  ToDontList: ToDontList[];
+  BrainDump: BrainDump[];
 }
 
 export interface Period {
   id: number;
+  name: string;
   year: number;
   quarter: number;
   startDate: Date;
   endDate: Date;
-  StatusHighFocusGoal?: StatusHighFocusGoal[];
+  StatusHighFocusGoal: StatusHighFocusGoal[];
+  Client: Client[];
+  Week: Week[];
 }
 
 export interface VisionCategory {
   id: number;
   name: string;
-  Vision?: Vision[];
+  Vision: Vision[];
 }
 
 export interface Vision {
@@ -41,8 +46,9 @@ export interface Vision {
   Client: Client;
   clientId: number;
   name?: string;
-  period?: string;
   category: number;
+  startDate: Date;
+  endDate: Date;
   VisionCategory: VisionCategory;
 }
 
@@ -52,9 +58,9 @@ export interface HighFocusGoal {
   clientId: number;
   name: string;
   motivation: string;
-  Task?: Task[];
-  SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
-  StatusHighFocusGoal?: StatusHighFocusGoal[];
+  Task: Task[];
+  SelfDevelopmentCurriculum: SelfDevelopmentCurriculum[];
+  StatusHighFocusGoal: StatusHighFocusGoal[];
 }
 
 export interface StatusHighFocusGoal {
@@ -62,7 +68,7 @@ export interface StatusHighFocusGoal {
   HighFocusGoal: HighFocusGoal;
   highFocusGoalId: number;
   Period: Period;
-  periodId: number;
+  periodName: string;
   point: number;
   priority: number;
 }
@@ -75,7 +81,7 @@ export interface SelfDevelopmentCurriculum {
   order: number;
   highFocusGoalId: number;
   HighFocusGoal: HighFocusGoal;
-  Knowledge?: Knowledge[];
+  Knowledge: Knowledge[];
 }
 
 export interface Knowledge {
@@ -99,9 +105,9 @@ export interface Task {
   isHighFocusGoal: boolean;
   HighFocusGoal?: HighFocusGoal;
   highFocusGoalId?: number;
-  Day?: Day[];
-  TimeLog?: TimeLog[];
-  TaskWeek?: TaskWeek[];
+  Day: Day[];
+  TimeLog: TimeLog[];
+  TaskWeek: TaskWeek[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -143,12 +149,13 @@ export interface Day {
 
 export interface Week {
   id: number;
-  year: number;
-  quarter: number;
+  Period: Period;
+  periodName: string;
   week: number;
   startDate: Date;
   endDate: Date;
-  TaskWeeks?: TaskWeek[];
+  TaskWeeks: TaskWeek[];
+  ToDontList: ToDontList[];
 }
 
 export interface TaskWeek {

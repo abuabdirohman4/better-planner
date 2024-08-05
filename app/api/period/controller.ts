@@ -1,6 +1,7 @@
 import { getData, postData } from "@/utils/apiClient";
 
 interface PeriodFilter {
+  periodName?: string;
   year?: number;
   quarter?: number;
 }
@@ -8,6 +9,7 @@ interface PeriodFilter {
 export async function fetchPeriod(filter: PeriodFilter = {}): Promise<any> {
   try {
     const params: Record<string, any> = {};
+    if (filter.periodName !== undefined) params.periodName = filter.periodName;
     if (filter.year !== undefined) params.year = filter.year;
     if (filter.quarter !== undefined) params.quarter = filter.quarter;
 

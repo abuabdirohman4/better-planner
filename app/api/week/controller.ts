@@ -1,18 +1,17 @@
 import { getData, postData } from "@/utils/apiClient";
 
 interface WeekFilter {
-  year?: number;
-  quarter?: number;
+  periodName?: string;
   week?: number;
 }
 
 export async function fetchWeek(filter: WeekFilter = {}): Promise<any> {
   try {
     const params: Record<string, any> = {};
-    if (filter.year !== undefined) params.year = filter.year;
-    if (filter.quarter !== undefined) params.quarter = filter.quarter;
+    if (filter.periodName !== undefined) params.periodName = filter.periodName;
     if (filter.week !== undefined) params.week = filter.week;
 
+    console.log("params", params);
     return await getData({
       url: "/week",
       params,

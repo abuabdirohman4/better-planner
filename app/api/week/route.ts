@@ -5,13 +5,11 @@ import { addWeeksToDatabase } from "@/prisma/seed/weekSeed";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const year = searchParams.get("year");
-    const quarter = searchParams.get("quarter");
+    const periodName = searchParams.get("periodName");
     const week = searchParams.get("week");
 
     const where: Record<string, any> = {};
-    if (year) where.year = parseInt(year, 10);
-    if (quarter) where.quarter = parseInt(quarter, 10);
+    if (periodName) where.periodName = periodName;
     if (week) where.week = parseInt(week, 10);
 
     const res = await prisma.week.findMany({

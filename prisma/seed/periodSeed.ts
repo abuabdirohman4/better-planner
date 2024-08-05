@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/configs/prisma";
 
 export const addPeriodsToDatabase = async (year: number = 2024) => {
   const periods = [];
@@ -12,7 +10,8 @@ export const addPeriodsToDatabase = async (year: number = 2024) => {
     for (let quarter = 1; quarter <= 4; quarter++) {
       const startDate = getStartDateOfQuarter(year, quarter);
       const endDate = getEndDateOfQuarter(startDate);
-      periods.push({ year, quarter, startDate, endDate });
+      const name = `Q${quarter}-${year}`;
+      periods.push({ name, year, quarter, startDate, endDate });
     }
   }
 
@@ -26,6 +25,7 @@ export const addPeriodsToDatabase = async (year: number = 2024) => {
       },
       update: {},
       create: {
+        name: period.name,
         year: period.year,
         quarter: period.quarter,
         startDate: period.startDate,

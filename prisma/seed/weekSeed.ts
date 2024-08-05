@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/configs/prisma";
 
 export const addWeeksToDatabase = async () => {
   const periods = await prisma.period.findMany();
@@ -13,8 +11,7 @@ export const addWeeksToDatabase = async () => {
       const endDate = getEndDateOfWeek(startDate);
 
       weeks.push({
-        year: period.year,
-        quarter: period.quarter,
+        name: period.name,
         week: weekNumber,
         startDate,
         endDate,
@@ -27,9 +24,8 @@ export const addWeeksToDatabase = async () => {
   for (const week of weeks) {
     await prisma.week.upsert({
       where: {
-        year_quarter_week: {
-          year: week.year,
-          quarter: week.quarter,
+        periodName_week: {
+          periodName: week.name,
           week: week.week,
         },
       },
@@ -38,8 +34,7 @@ export const addWeeksToDatabase = async () => {
         endDate: week.endDate,
       },
       create: {
-        year: week.year,
-        quarter: week.quarter,
+        periodName: week.name,
         week: week.week,
         startDate: week.startDate,
         endDate: week.endDate,

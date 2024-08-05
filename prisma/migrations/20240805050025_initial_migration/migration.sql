@@ -3,6 +3,7 @@ CREATE TABLE "Client" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
+    "periodName" TEXT NOT NULL,
 
     CONSTRAINT "Client_pkey" PRIMARY KEY ("id")
 );
@@ -10,6 +11,7 @@ CREATE TABLE "Client" (
 -- CreateTable
 CREATE TABLE "Period" (
     "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
     "year" INTEGER NOT NULL,
     "quarter" INTEGER NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
@@ -31,8 +33,9 @@ CREATE TABLE "Vision" (
     "id" SERIAL NOT NULL,
     "clientId" INTEGER NOT NULL,
     "name" TEXT,
-    "period" TEXT,
     "category" INTEGER NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Vision_pkey" PRIMARY KEY ("id")
 );
@@ -51,7 +54,7 @@ CREATE TABLE "HighFocusGoal" (
 CREATE TABLE "StatusHighFocusGoal" (
     "id" SERIAL NOT NULL,
     "highFocusGoalId" INTEGER NOT NULL,
-    "periodId" INTEGER NOT NULL,
+    "periodName" TEXT NOT NULL,
     "point" INTEGER NOT NULL,
     "priority" INTEGER NOT NULL,
 
@@ -115,7 +118,7 @@ CREATE TABLE "ToDontList" (
     "clientId" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "order" INTEGER NOT NULL,
-    "week" JSONB NOT NULL,
+    "weekId" INTEGER NOT NULL,
 
     CONSTRAINT "ToDontList_pkey" PRIMARY KEY ("id")
 );
@@ -142,8 +145,7 @@ CREATE TABLE "Day" (
 -- CreateTable
 CREATE TABLE "Week" (
     "id" SERIAL NOT NULL,
-    "year" INTEGER NOT NULL,
-    "quarter" INTEGER NOT NULL,
+    "periodName" TEXT NOT NULL,
     "week" INTEGER NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3) NOT NULL,
@@ -164,10 +166,16 @@ CREATE TABLE "TaskWeek" (
 CREATE UNIQUE INDEX "Client_email_key" ON "Client"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Period_name_key" ON "Period"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Period_year_quarter_key" ON "Period"("year", "quarter");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Week_year_quarter_week_key" ON "Week"("year", "quarter", "week");
+CREATE UNIQUE INDEX "Week_periodName_week_key" ON "Week"("periodName", "week");
+
+-- AddForeignKey
+ALTER TABLE "Client" ADD CONSTRAINT "Client_periodName_fkey" FOREIGN KEY ("periodName") REFERENCES "Period"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Vision" ADD CONSTRAINT "Vision_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -182,7 +190,7 @@ ALTER TABLE "HighFocusGoal" ADD CONSTRAINT "HighFocusGoal_clientId_fkey" FOREIGN
 ALTER TABLE "StatusHighFocusGoal" ADD CONSTRAINT "StatusHighFocusGoal_highFocusGoalId_fkey" FOREIGN KEY ("highFocusGoalId") REFERENCES "HighFocusGoal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StatusHighFocusGoal" ADD CONSTRAINT "StatusHighFocusGoal_periodId_fkey" FOREIGN KEY ("periodId") REFERENCES "Period"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StatusHighFocusGoal" ADD CONSTRAINT "StatusHighFocusGoal_periodName_fkey" FOREIGN KEY ("periodName") REFERENCES "Period"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SelfDevelopmentCurriculum" ADD CONSTRAINT "SelfDevelopmentCurriculum_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -206,10 +214,16 @@ ALTER TABLE "TimeLog" ADD CONSTRAINT "TimeLog_taskId_fkey" FOREIGN KEY ("taskId"
 ALTER TABLE "ToDontList" ADD CONSTRAINT "ToDontList_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "ToDontList" ADD CONSTRAINT "ToDontList_weekId_fkey" FOREIGN KEY ("weekId") REFERENCES "Week"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "BrainDump" ADD CONSTRAINT "BrainDump_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Day" ADD CONSTRAINT "Day_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Week" ADD CONSTRAINT "Week_periodName_fkey" FOREIGN KEY ("periodName") REFERENCES "Period"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TaskWeek" ADD CONSTRAINT "TaskWeek_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

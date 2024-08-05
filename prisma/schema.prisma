@@ -18,6 +18,8 @@ model Client {
   id                        Int                         @id @default(autoincrement())
   email                     String                      @unique
   name                      String?
+  periodName                String
+  Period                    Period                      @relation(fields: [periodName], references: [name])
   Vision                    Vision[]
   HighFocusGoal             HighFocusGoal[]
   SelfDevelopmentCurriculum SelfDevelopmentCurriculum[]
@@ -28,11 +30,14 @@ model Client {
 
 model Period {
   id                  Int                   @id @default(autoincrement())
+  name                String                @unique
   year                Int
   quarter             Int
   startDate           DateTime
   endDate             DateTime
   StatusHighFocusGoal StatusHighFocusGoal[]
+  Client              Client[]
+  Week                Week[]
 
   @@unique([year, quarter])
 }
@@ -48,8 +53,9 @@ model Vision {
   Client         Client         @relation(fields: [clientId], references: [id])
   clientId       Int
   name           String?
-  period         String?
   category       Int
+  startDate      DateTime
+  endDate        DateTime
   VisionCategory VisionCategory @relation(fields: [category], references: [id])
 }
 
@@ -68,8 +74,8 @@ model StatusHighFocusGoal {
   id              Int           @id @default(autoincrement())
   HighFocusGoal   HighFocusGoal @relation(fields: [highFocusGoalId], references: [id])
   highFocusGoalId Int
-  Period          Period        @relation(fields: [periodId], references: [id])
-  periodId        Int
+  Period          Period        @relation(fields: [periodName], references: [name])
+  periodName      String
   point           Int
   priority        Int
 }
@@ -150,15 +156,15 @@ model Day {
 
 model Week {
   id         Int          @id @default(autoincrement())
-  year       Int
-  quarter    Int
+  Period     Period       @relation(fields: [periodName], references: [name])
+  periodName String
   week       Int
   startDate  DateTime
   endDate    DateTime
   TaskWeeks  TaskWeek[]
   ToDontList ToDontList[]
 
-  @@unique([year, quarter, week])
+  @@unique([periodName, week])
 }
 
 model TaskWeek {
