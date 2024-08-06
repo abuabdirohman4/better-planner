@@ -6,26 +6,87 @@ import { SESSIONKEY } from "@/utils/constants";
 import { getSession } from "@/utils/session";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { format } from "date-fns";
+import { addDays, format, subDays } from "date-fns";
 import { id } from "date-fns/locale";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 export default function Daily() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [today, setToday] = useState<{ value: Date; label: string }>();
+  const [weeks, setWeeks] = useState<Week[]>([]);
   const [weekOptions, setWeekOptions] = useState<ReactSelect[]>([]);
   const [weekSelected, setWeekSelected] = useState<{
     id: number;
     value: number;
+    startDate: Date;
+    endDate: Date;
   }>();
-  const [today, setToday] = useState<string>();
-  const [isLoading, setIsLoading] = useState(true);
+
+  const handleChangeWeek = async (weekActive: Week) => {
+    // set week
+    setWeekSelected({
+      id: weekActive.id,
+      value: weekActive.week,
+      startDate: weekActive.startDate,
+      endDate: weekActive.endDate,
+    });
+
+    // set day
+    const tempToday = new Date();
+    const startDate = new Date(weekActive.startDate);
+    const endDate = new Date(weekActive.endDate);
+    if (tempToday >= startDate && tempToday <= endDate) {
+      setToday({
+        value: tempToday,
+        label: format(tempToday, "cccc, d MMMM yyyy", {
+          locale: id,
+        }),
+      });
+    } else {
+      setToday({
+        value: weekActive.startDate,
+        label: format(new Date(weekActive.startDate), "cccc, d MMMM yyyy", {
+          locale: id,
+        }),
+      });
+    }
+  };
+
+  const handleChangeDay = (direction: "Back" | "Forward") => {
+    const startDate = weekSelected?.startDate
+      ? new Date(weekSelected.startDate)
+      : new Date();
+    const endDate = weekSelected?.endDate
+      ? new Date(weekSelected.endDate)
+      : new Date();
+    setToday((prevToday) => {
+      let tempToday = prevToday ? new Date(prevToday.value) : new Date();
+      if (direction === "Back") {
+        tempToday = subDays(tempToday, 1);
+        if (startDate && tempToday < startDate) {
+          tempToday = endDate;
+        }
+      } else if (direction === "Forward") {
+        tempToday = addDays(tempToday, 1);
+        if (endDate && tempToday > endDate) {
+          tempToday = startDate;
+        }
+      }
+
+      return {
+        value: tempToday,
+        label: format(tempToday, "cccc, d MMMM yyyy", { locale: id }),
+      };
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       const weeksActive = getSession(SESSIONKEY.weeksActive);
-      const weekActive = getSession(SESSIONKEY.weekActive);
-      if (weeksActive && weekActive) {
+      if (weeksActive) {
+        setWeeks(weeksActive);
         const options = weeksActive.map((week: Week) => ({
           value: week.id,
           label: `Week ${week.week}`,
@@ -36,25 +97,11 @@ export default function Daily() {
               Number(a.value) - Number(b.value)
           )
         );
-        setWeekSelected({ id: weekActive.id, value: weekActive.week });
+      }
 
-        // set day
-        const tempToday = new Date();
-        const startDate = new Date(weekActive.startDate);
-        const endDate = new Date(weekActive.endDate);
-        if (tempToday >= startDate && tempToday <= endDate) {
-          setToday(
-            format(tempToday, "cccc, d MMMM yyyy", {
-              locale: id,
-            })
-          );
-        } else {
-          setToday(
-            format(new Date(weekActive.startDate), "cccc, d MMMM yyyy", {
-              locale: id,
-            })
-          );
-        }
+      const weekActive = getSession(SESSIONKEY.weekActive);
+      if (weekActive) {
+        handleChangeWeek(weekActive);
       }
       setIsLoading(false);
     };
@@ -75,25 +122,35 @@ export default function Daily() {
               placeholder="Select Week"
               options={weekOptions}
               defaultValue={weekOptions.find(
-                (option) => option.value === weekSelected?.id
+                (item) => item.value === weekSelected?.id
               )}
-              // onChange={(selected: any) => {
-              //   setSession(SESSIONKEY.periodActive, selected.value);
-              //   setTitle(selected.value);
-              // }}
+              onChange={(selected: any) => {
+                const weekActive = weeks.find(
+                  (item: Week) => item.id === selected.value
+                );
+                if (weekActive) {
+                  handleChangeWeek(weekActive);
+                }
+              }}
             />
           </div>
         </div>
         <div className="absolute right-10 mt-2 flex gap-2">
           <div className="flex flex-col mt-1">
-            <div className="text-right">{today?.split(", ")[0]}</div>
-            <div>{today?.split(", ")[1]}</div>
+            <div className="text-right">{today?.label.split(", ")[0]}</div>
+            <div>{today?.label.split(", ")[1]}</div>
           </div>
           <div className="flex gap-4">
-            <button className="bg-white px-4 py-2 rounded-md border border-gray-200 hover:cursor-pointer hover:bg-gray-100">
+            <button
+              className="bg-white px-4 py-2 rounded-md border border-gray-200 hover:cursor-pointer hover:bg-gray-100"
+              onClick={() => handleChangeDay("Back")}
+            >
               <IoIosArrowBack className="text-2xl" />
             </button>
-            <button className="bg-white px-4 py-2 rounded-md border border-gray-200 hover:cursor-pointer hover:bg-gray-100">
+            <button
+              className="bg-white px-4 py-2 rounded-md border border-gray-200 hover:cursor-pointer hover:bg-gray-100"
+              onClick={() => handleChangeDay("Forward")}
+            >
               <IoIosArrowForward className="text-2xl" />
             </button>
           </div>

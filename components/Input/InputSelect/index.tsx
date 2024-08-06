@@ -37,7 +37,6 @@ function InputSelect({
   required,
   validation,
 }: SelectProps) {
-  console.log("defaultValue", defaultValue);
   return (
     <div className="mb-6">
       <label htmlFor={name} className="mb-2 block text-gray-1">

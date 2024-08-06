@@ -114,6 +114,7 @@ model Task {
   highFocusGoalId Int?
   Day             Day[]
   TimeLog         TimeLog[]
+  TaskDay         TaskDay[]
   TaskWeek        TaskWeek[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -173,4 +174,11 @@ model TaskWeek {
   Task   Task @relation(fields: [taskId], references: [id])
   weekId Int
   Week   Week @relation(fields: [weekId], references: [id])
+}
+
+model TaskDay {
+  id     Int      @id @default(autoincrement())
+  taskId Int
+  Task   Task     @relation(fields: [taskId], references: [id])
+  date   DateTime
 }
