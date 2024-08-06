@@ -1,5 +1,4 @@
 "use client";
-import { fetchWeek } from "@/app/api/week/controller";
 import InputChecbox from "@/components/Input/InputCheckbox/page";
 import { Week } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
@@ -11,9 +10,8 @@ import { useEffect, useState } from "react";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 export default function Weekly() {
-  const date = new Date();
-  const year = date.getFullYear();
   const [currentWeek, setCurrentWeek] = useState<{
+    id: number;
     week: number;
     startDate: string;
     endDate: string;
@@ -22,7 +20,6 @@ export default function Weekly() {
 
   const handleChangeWeek = (direction: "Back" | "Forward") => {
     if (currentWeek) {
-      console.log("direction", direction);
       let tempCurrentWeek = currentWeek?.week;
       if (direction === "Back") {
         tempCurrentWeek = currentWeek?.week - 1;
@@ -38,6 +35,7 @@ export default function Weekly() {
       const selectedWeek = weeks?.find((item) => item.week == tempCurrentWeek);
       if (selectedWeek) {
         setCurrentWeek({
+          id: selectedWeek.id,
           week: selectedWeek.week,
           startDate: format(selectedWeek.startDate, "d MMMM yyyy", {
             locale: id,
@@ -52,38 +50,24 @@ export default function Weekly() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // get active period
-      const periodActive = getSession(SESSIONKEY.periodName);
-      if (periodActive) {
-        const res = await fetchWeek({ periodName: periodActive });
-
-        if (res.status === 200) {
-          console.log("res.data", res.data);
-          setWeeks(res.data);
-
-          // set title
-          const today = new Date();
-          for (const week of res.data) {
-            const startDate = new Date(week.startDate);
-            const endDate = new Date(week.endDate);
-
-            if (today >= startDate && today <= endDate) {
-              setCurrentWeek({
-                week: week.week,
-                startDate: format(week.startDate, "d MMMM yyyy", {
-                  locale: id,
-                }),
-                endDate: format(week.endDate, "d MMMM yyyy", {
-                  locale: id,
-                }),
-              });
-            }
-          }
-        }
+      const weeksActive = getSession(SESSIONKEY.weeksActive);
+      const weekActive = getSession(SESSIONKEY.weekActive);
+      if (weeksActive && weekActive) {
+        setWeeks(weeksActive);
+        setCurrentWeek({
+          id: weekActive.id,
+          week: weekActive.week,
+          startDate: format(weekActive.startDate, "d MMMM yyyy", {
+            locale: id,
+          }),
+          endDate: format(weekActive.endDate, "d MMMM yyyy", {
+            locale: id,
+          }),
+        });
       }
     };
     fetchData();
-  }, [year]);
+  }, []);
 
   return (
     <div className="container mx-auto p-4">

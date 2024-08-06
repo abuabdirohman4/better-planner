@@ -6,13 +6,13 @@ import { StylesConfig } from "react-select";
 type SelectProps = {
   name: string;
   style?: StylesConfig;
-  label: string;
+  label?: string;
   placeholder?: string;
   options: ReactSelect[];
   isClearable?: boolean;
   menuIsOpen?: boolean;
   disabled?: boolean;
-  defaultValue?: ReactSelect;
+  defaultValue?: ReactSelect | number;
   onChange?: (selected: any) => void;
   required?: boolean;
   validation?: string | number;
@@ -37,6 +37,7 @@ function InputSelect({
   required,
   validation,
 }: SelectProps) {
+  console.log("defaultValue", defaultValue);
   return (
     <div className="mb-6">
       <label htmlFor={name} className="mb-2 block text-gray-1">
