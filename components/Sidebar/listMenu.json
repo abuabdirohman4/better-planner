@@ -1,6 +1,10 @@
 {
   "data": [
     {
+      "name": "12 Week Goal",
+      "link": "pages/12-week-goals"
+    },
+    {
       "name": "High Focus Goal",
       "link": "pages/high-focus-goal"
     },

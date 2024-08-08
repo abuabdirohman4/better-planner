@@ -107,9 +107,7 @@ model Task {
   indent          Int            @default(0)
   order           Int            @default(0)
   completed       Boolean        @default(false)
-  isMilestone     Boolean        @default(false)
   milestoneId     Int?
-  isHighFocusGoal Boolean        @default(false)
   HighFocusGoal   HighFocusGoal? @relation(fields: [highFocusGoalId], references: [id])
   highFocusGoalId Int?
   Day             Day[]

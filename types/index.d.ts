@@ -53,14 +53,14 @@ export interface Vision {
 }
 
 export interface HighFocusGoal {
-  id: number;
-  Client: Client;
-  clientId: number;
-  name: string;
-  motivation: string;
-  Task: Task[];
-  SelfDevelopmentCurriculum: SelfDevelopmentCurriculum[];
-  StatusHighFocusGoal: StatusHighFocusGoal[];
+  id?: number;
+  // Client: Client;
+  // clientId: number;
+  name?: string;
+  motivation?: string;
+  // Task: Task[];
+  SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
+  StatusHighFocusGoal?: StatusHighFocusGoal[];
 }
 
 export interface StatusHighFocusGoal {
@@ -93,23 +93,21 @@ export interface Knowledge {
 }
 
 export interface Task {
-  id: number;
-  Client: Client;
+  id?: number;
+  // Client: Client;
   clientId: number;
   name: string;
   indent: number;
   order: number;
   completed: boolean;
-  isMilestone: boolean;
+  // isMilestone: boolean;
   milestoneId?: number;
-  isHighFocusGoal: boolean;
-  HighFocusGoal?: HighFocusGoal;
+  // isHighFocusGoal: boolean;
+  // HighFocusGoal?: HighFocusGoal;
   highFocusGoalId?: number;
-  Day: Day[];
-  TimeLog: TimeLog[];
-  TaskWeek: TaskWeek[];
-  createdAt: Date;
-  updatedAt: Date;
+  // Day: Day[];
+  // TimeLog: TimeLog[];
+  // TaskWeek: TaskWeek[];
 }
 
 export interface TimeLog {

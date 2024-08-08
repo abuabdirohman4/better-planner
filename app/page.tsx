@@ -1,12 +1,13 @@
 "use client";
 import InputSelect from "@/components/Input/InputSelect";
 import { Period, ReactSelect, Week } from "@/types";
+import { SESSIONKEY } from "@/utils/constants";
+import { getSession, setSession } from "@/utils/session";
 import { format, subDays } from "date-fns";
 import { id } from "date-fns/locale";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { fetchPeriod } from "./api/period/controller";
-import { getSession, setSession } from "@/utils/session";
-import { SESSIONKEY } from "@/utils/constants";
 import { fetchWeek } from "./api/week/controller";
 
 export default function Home() {
@@ -95,25 +96,36 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="p-4">
-        <h1 className="text-4xl mb-8">Period {title}</h1>
-        <div className="w-1/3">
-          <InputSelect
-            label="Select Period"
-            name=""
-            options={periodOptions}
-            defaultValue={periodOptions.find(
-              (option) => option.value === periodActive
-            )}
-            onChange={(selected: any) => {
-              fetchDataWeeks(selected.value);
-              setSession(SESSIONKEY.periodActive, selected.value);
-              setTitle(selected.value);
-            }}
+    <main className="container mx-auto p-4">
+      {/* HEADER */}
+      <div className="text-center mb-4">
+        <h1 className="text-2xl font-bold text-black">Period {title}</h1>
+        <div className="flex justify-center mt-2">
+          <Image
+            width={0}
+            height={0}
+            src="/title.svg"
+            alt="title"
+            className="w-40 h-auto"
+            priority
           />
         </div>
-      </main>
-    </div>
+      </div>
+      <div className="w-1/3">
+        <InputSelect
+          label="Select Period"
+          name=""
+          options={periodOptions}
+          defaultValue={periodOptions.find(
+            (option) => option.value === periodActive
+          )}
+          onChange={(selected: any) => {
+            fetchDataWeeks(selected.value);
+            setSession(SESSIONKEY.periodActive, selected.value);
+            setTitle(selected.value);
+          }}
+        />
+      </div>
+    </main>
   );
 }

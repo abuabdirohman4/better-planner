@@ -1,28 +1,26 @@
+"use client";
+import { SESSIONKEY } from "@/utils/constants";
+import { getSession } from "@/utils/session";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 export const Navbar = () => {
+  const [periodActive, setPeriodActive] = useState<string>();
+  useEffect(() => {
+    setPeriodActive(getSession(SESSIONKEY.periodActive));
+  }, []);
+
   return (
-    <nav className="rounded border-gray-200 bg-primary px-2 py-2.5">
+    <nav className="rounded border-gray-200 bg-primary px-2">
       <div className="mx-3 flex flex-wrap items-center justify-between">
         <div className="flex items-center">
           <ul className="flex flex-row my-4 space-x-3 rounded-lg">
             <li className="rounded border border-white px-2 py-1 hover:bg-[#5ab6e0]">
               <a
-                href="#"
+                href="/"
                 className="hover:text- block py-2 pl-3 pr-4 text-white "
               >
-                Sales
-              </a>
-            </li>
-            <li className="rounded border border-white px-2 py-1 hover:bg-[#5ab6e0]">
-              <a href="#" className="block py-2 pl-3 pr-4 text-white">
-                Purchase
-              </a>
-            </li>
-            <li className="rounded border border-white px-2 py-1 hover:bg-[#5ab6e0]">
-              <a href="#" className="block py-2 pl-3 pr-4 text-white">
-                Expense
+                Period {periodActive}
               </a>
             </li>
           </ul>
@@ -49,12 +47,12 @@ export const Navbar = () => {
               tabIndex={0}
               className="dropdown-content z-50 w-32 my-3 list-none divide-y divide-gray-100 rounded bg-white text-base shadow"
             > */}
-              {/* <div className="px-4 py-3">
+            {/* <div className="px-4 py-3">
                 <span className="block truncate text-sm text-gray-900">
                   Anthony Lauly
                 </span>
               </div> */}
-              {/* <ul className="py-1">
+            {/* <ul className="py-1">
                 <li>
                   <a
                     href="#"

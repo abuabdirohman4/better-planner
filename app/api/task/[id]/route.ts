@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function GET({ params }: { params: { id: string } }) {
   const taskId = parseInt(params.id, 10);
@@ -76,17 +74,15 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { title, description, dueDate, completed, index, indentLevel } = body;
+    const { name, completed, order, indent } = body;
 
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
-        title,
-        description: description ?? null,
-        dueDate: new Date(dueDate),
+        name,
         completed,
-        index,
-        indentLevel,
+        order,
+        indent,
       },
     });
 

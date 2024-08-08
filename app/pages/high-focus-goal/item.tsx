@@ -1,25 +1,27 @@
-import { BulletPoint } from "@/types";
-import React, { useRef, useEffect } from "react";
-import { useDrag, useDrop, DragPreviewImage } from "react-dnd";
+import { Task } from "@/types";
+import React, { useEffect, useRef } from "react";
+import { DragPreviewImage, useDrag, useDrop } from "react-dnd";
 
 interface BulletPointItemProps {
-  bulletPoint: BulletPoint;
+  bulletPoint: Task;
   index: number;
-  moveBulletPoint: (dragIndex: number, hoverIndex: number) => void;
   inputRefs: React.MutableRefObject<(HTMLTextAreaElement | null)[]>;
+  orderType?: "bullet" | "number" | "alphabet";
+  moveBulletPoint: (dragIndex: number, hoverIndex: number) => void;
   handleInputChange: (index: number, value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent, index: number) => void;
   setHoverIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  hoverIndex: number | null;
+  hoverIndex?: number | null;
   setDragIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  dragIndex: number | null;
+  dragIndex?: number | null;
 }
 
 const BulletPointItem = ({
   bulletPoint,
   index,
-  moveBulletPoint,
   inputRefs,
+  orderType = "bullet",
+  moveBulletPoint,
   handleInputChange,
   handleKeyDown,
   setHoverIndex,
@@ -89,20 +91,31 @@ const BulletPointItem = ({
         `}
       >
         <div
-          className={`relative group bg-white `}
+          className={`relative group`}
           style={{ marginLeft: `${bulletPoint.indent * 20}px` }}
         >
-          <div className="w-2 h-2 bg-black rounded-full"></div>
-          <div
-            className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-gray-300 transition-all duration-300 ease-in-out`}
-          ></div>
+          {orderType === "bullet" ? (
+            <>
+              <div className="w-2 h-2 bg-black rounded-full"></div>
+              <div
+                className={`absolute -left-1.5 -top-1.5 inset-0 w-5 h-5 rounded-full border-[6px] border-transparent group-hover:border-primary group-hover:bg-white transition-all duration-300 ease-in-out`}
+              ></div>
+            </>
+          ) : (
+            <div className="w-8 text-center flex-shrink-0 rounded-lg border bg-primary text-white border-white hover:bg-white hover:text-primary hover:border-primary transition-all duration-300 ease-in-out">
+              {orderType === "alphabet"
+                ? String.fromCharCode(65 + index)
+                : orderType === "number" && index + 1}
+              .
+            </div>
+          )}
         </div>
         <textarea
           ref={(el) => {
             inputRefs.current[index] = el;
           }}
           placeholder="Add new task"
-          value={bulletPoint.text}
+          value={bulletPoint.name}
           onChange={(e) => handleInputChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(e, index)}
           rows={1}
