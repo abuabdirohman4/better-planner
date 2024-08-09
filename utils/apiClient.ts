@@ -9,20 +9,19 @@ type Props = {
   payload?: {};
 };
 
-export async function getData({
-  url,
-  params,
-  token,
-}: Props): Promise<AxiosResponse> {
+export async function getData({ url, params, token }: Props): Promise<any> {
   try {
-    return await axios.get(`${url}`, {
+    // console.log("Making GET request to:", url);
+    const response: AxiosResponse = await axios.get(url, {
       params,
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: token ? `Bearer ${token}` : undefined,
       },
     });
+    // console.log("getData response:", response.data);
+    return response;
   } catch (error) {
-    console.log(error);
+    console.error("Error in getData:", error);
     throw error;
   }
 }
@@ -34,36 +33,49 @@ export async function postData({
   formData,
 }: Props): Promise<any> {
   try {
-    return await axios.post(`${url}`, payload, {
+    // console.log("Making POST request to:", url);
+    const response: AxiosResponse = await axios.post(`${url}`, payload, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: token ? `Bearer ${token}` : undefined,
         "Content-Type": formData ? "multipart/form-data" : "application/json",
       },
     });
+    // console.log("postData response:", response.data);
+    return response;
   } catch (error) {
-    console.log(error);
+    console.error("Error in postData:", error);
     return error;
   }
 }
 
-export async function putData({ url, payload }: Props) {
+export async function putData({ url, payload, token }: Props): Promise<any> {
   try {
-    return await axios.put(`${url}`, payload);
+    // console.log("Making PUT request to:", url);
+    const response: AxiosResponse = await axios.put(url, payload, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+    });
+    // console.log("putData response:", response.data);
+    return response;
   } catch (error) {
-    console.log(error);
-    return error;
+    console.error("Error in putData:", error);
+    throw error;
   }
 }
 
 export async function deleteData({ url, token }: Props): Promise<any> {
   try {
-    return await axios.delete(`${url}`, {
+    // console.log("Making DELETE request to:", url);
+    const response: AxiosResponse = await axios.delete(url, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: token ? `Bearer ${token}` : undefined,
       },
     });
+    // console.log("deleteData response:", response.data);
+    return response;
   } catch (error) {
-    console.log(error);
-    return error;
+    console.error("Error in deleteData:", error);
+    throw error;
   }
 }

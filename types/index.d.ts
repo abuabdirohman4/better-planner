@@ -10,17 +10,9 @@ export interface BulletPoint {
 }
 
 export interface Client {
-  id: number;
-  email: string;
+  email?: string;
   name?: string;
   periodName: string;
-  Period: Period;
-  Vision: Vision[];
-  HighFocusGoal: HighFocusGoal[];
-  SelfDevelopmentCurriculum: SelfDevelopmentCurriculum[];
-  Task: Task[];
-  ToDontList: ToDontList[];
-  BrainDump: BrainDump[];
 }
 
 export interface Period {
@@ -53,7 +45,6 @@ export interface Vision {
 }
 
 export interface HighFocusGoal {
-  id?: number;
   // Client: Client;
   // clientId: number;
   name?: string;

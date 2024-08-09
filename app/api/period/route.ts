@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const quarter = searchParams.get("quarter");
 
     const where: Record<string, any> = {};
-    if (periodName) where.periodName = periodName;
+    if (periodName) where.name = periodName;
     if (year) where.year = parseInt(year, 10);
     if (quarter) where.quarter = parseInt(quarter, 10);
 

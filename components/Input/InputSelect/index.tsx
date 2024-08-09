@@ -19,6 +19,11 @@ type SelectProps = {
   validation?: string | number;
 };
 
+const Select = dynamic(() => import("react-select"), {
+  ssr: false,
+  // loading: () => <SkeletonText row={2} />,
+});
+
 function InputSelect({
   name,
   style,
@@ -31,14 +36,8 @@ function InputSelect({
   defaultValue,
   onChange,
   required,
-  ssr = false,
   validation,
 }: SelectProps) {
-  const Select = dynamic(() => import("react-select"), {
-    ssr,
-    // loading: () => <SkeletonText row={2} />,
-  });
-
   return (
     <div className="mb-6">
       <label htmlFor={name} className="mb-2 block text-gray-1">
