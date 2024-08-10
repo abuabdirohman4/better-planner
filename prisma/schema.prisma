@@ -78,6 +78,7 @@ model StatusHighFocusGoal {
   periodName      String
   point           Int
   priority        Int
+  completed       Boolean       @default(false)
 }
 
 model SelfDevelopmentCurriculum {
@@ -85,9 +86,10 @@ model SelfDevelopmentCurriculum {
   Client          Client        @relation(fields: [clientId], references: [id])
   clientId        Int
   skill           String
-  order           Int
-  highFocusGoalId Int
+  order           Int           @default(0)
+  completed       Boolean       @default(false)
   HighFocusGoal   HighFocusGoal @relation(fields: [highFocusGoalId], references: [id])
+  highFocusGoalId Int
   Knowledge       Knowledge[]
 }
 
@@ -119,13 +121,13 @@ model Task {
 }
 
 model TimeLog {
-  id        Int       @id @default(autoincrement())
-  task      Task      @relation(fields: [taskId], references: [id])
+  id        Int      @id @default(autoincrement())
+  task      Task     @relation(fields: [taskId], references: [id])
   taskId    Int
   journal   String?
   startTime DateTime
-  endTime   DateTime?
-  duration  DateTime?
+  endTime   DateTime
+  duration  DateTime
 }
 
 model ToDontList {
