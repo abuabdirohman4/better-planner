@@ -10,100 +10,110 @@ export interface BulletPoint {
 }
 
 export interface Client {
+  id?: number;
   email?: string;
   name?: string;
   periodName: string;
+  Period?: Period;
+  Vision?: Vision[];
+  HighFocusGoal?: HighFocusGoal[];
+  SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
+  Task?: Task[];
+  ToDontList?: ToDontList[];
+  BrainDump?: BrainDump[];
 }
 
 export interface Period {
-  id: number;
+  id?: number;
   name: string;
   year: number;
   quarter: number;
   startDate: Date;
   endDate: Date;
-  StatusHighFocusGoal: StatusHighFocusGoal[];
-  Client: Client[];
-  Week: Week[];
+  StatusHighFocusGoal?: StatusHighFocusGoal[];
+  Client?: Client[];
+  Week?: Week[];
 }
 
 export interface VisionCategory {
-  id: number;
+  id?: number;
   name: string;
-  Vision: Vision[];
+  Vision?: Vision[];
 }
 
 export interface Vision {
-  id: number;
-  Client: Client;
-  clientId: number;
+  id?: number;
+  Client?: Client;
+  clientId?: number;
   name?: string;
   category: number;
   startDate: Date;
   endDate: Date;
-  VisionCategory: VisionCategory;
+  VisionCategory?: VisionCategory;
 }
 
 export interface HighFocusGoal {
-  // Client: Client;
-  // clientId: number;
-  name?: string;
+  id?: number;
+  Client?: Client;
+  clientId?: number;
+  name: string;
   motivation?: string;
-  // Task: Task[];
+  Task?: Task[];
   SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
   StatusHighFocusGoal?: StatusHighFocusGoal[];
 }
 
 export interface StatusHighFocusGoal {
-  id: number;
-  HighFocusGoal: HighFocusGoal;
+  id?: number;
+  HighFocusGoal?: HighFocusGoal;
   highFocusGoalId: number;
-  Period: Period;
+  Period?: Period;
   periodName: string;
   point: number;
   priority: number;
 }
 
 export interface SelfDevelopmentCurriculum {
-  id: number;
-  Client: Client;
-  clientId: number;
+  id?: number;
+  Client?: Client;
+  clientId?: number;
   skill: string;
   order: number;
   highFocusGoalId: number;
-  HighFocusGoal: HighFocusGoal;
-  Knowledge: Knowledge[];
+  HighFocusGoal?: HighFocusGoal;
+  Knowledge?: Knowledge[];
 }
 
 export interface Knowledge {
-  id: number;
+  id?: number;
   name: string;
   type: "Book" | "Workshop"; // Enum values
-  SelfDevelopmentCurriculum: SelfDevelopmentCurriculum;
+  SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum;
   SelfDevelopmentCurriculumId: number;
 }
 
 export interface Task {
   id?: number;
-  // Client: Client;
-  clientId: number;
+  Client?: Client;
+  clientId?: number;
   name: string;
-  indent: number;
-  order: number;
-  completed: boolean;
-  // isMilestone: boolean;
+  indent?: number;
+  order?: number;
+  completed?: boolean;
   milestoneId?: number;
-  // isHighFocusGoal: boolean;
-  // HighFocusGoal?: HighFocusGoal;
+  HighFocusGoal?: HighFocusGoal;
   highFocusGoalId?: number;
-  // Day: Day[];
-  // TimeLog: TimeLog[];
-  // TaskWeek: TaskWeek[];
+  Day?: Day[];
+  TimeLog?: TimeLog[];
+  TaskDay?: TaskDay[];
+  TaskWeek?: TaskWeek[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface TimeLog {
-  id: number;
-  task: Task;
+  id?: number;
+  task?: Task;
   taskId: number;
   journal?: string;
   startTime: Date;
@@ -112,47 +122,47 @@ export interface TimeLog {
 }
 
 export interface ToDontList {
-  id: number;
-  Client: Client;
-  clientId: number;
+  id?: number;
+  Client?: Client;
+  clientId?: number;
   name: string;
-  order: number;
-  Week: Week;
+  order?: number;
+  Week?: Week;
   weekId: number;
 }
 
 export interface BrainDump {
-  id: number;
-  Client: Client;
-  clientId: number;
+  id?: number;
+  Client?: Client;
+  clientId?: number;
   text: string;
   day: Date;
 }
 
 export interface Day {
-  id: number;
+  id?: number;
   taskId: number;
-  Task: Task;
+  Task?: Task;
   date: Date;
 }
 
 export interface Week {
-  id: number;
-  Period: Period;
+  id?: number;
+  Period?: Period;
   periodName: string;
   week: number;
   startDate: Date;
   endDate: Date;
-  TaskWeeks: TaskWeek[];
-  ToDontList: ToDontList[];
+  TaskWeeks?: TaskWeek[];
+  ToDontList?: ToDontList[];
 }
 
 export interface TaskWeek {
-  id: number;
+  id?: number;
   taskId: number;
-  Task: Task;
+  Task?: Task;
   weekId: number;
-  Week: Week;
+  Week?: Week;
 }
 
 export interface ReactSelect {
