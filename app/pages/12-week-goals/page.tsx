@@ -1,5 +1,6 @@
 "use client";
-import { fetchHighFocusGoal } from "@/app/api/high-focus-goal/controller";
+import { fetchHighFocusGoals } from "@/app/api/high-focus-goals/controller";
+import TaskItem from "@/components/Tasks/item";
 import { Task } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession } from "@/utils/session";
@@ -7,10 +8,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import BulletPointItem from "../high-focus-goal/item";
 
 export default function TwelveWeekGoals() {
-  const [bulletPoints, setBulletPoints] = useState<Task[]>(Array(10).fill({}));
+  const [taks, setTasks] = useState<Task[]>(Array(10).fill({}));
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
 
   const fetchDataHighFocusGoal = async ({
@@ -18,7 +18,7 @@ export default function TwelveWeekGoals() {
   }: {
     periodName: string;
   }) => {
-    const res = await fetchHighFocusGoal({ periodName });
+    const res = await fetchHighFocusGoals({ periodName });
     if (res.status == 200) {
       console.log("res.data", res.data);
       const fetchedData = res.data;
@@ -26,7 +26,7 @@ export default function TwelveWeekGoals() {
         ...fetchedData,
         ...Array(10 - fetchedData.length).fill({}),
       ];
-      setBulletPoints(combinedData);
+      setTasks(combinedData);
     }
   };
 
@@ -57,15 +57,15 @@ export default function TwelveWeekGoals() {
 
         {/* CONTENT */}
         <ul>
-          {bulletPoints.map((bulletPoint, index) => (
+          {taks.map((task, index) => (
             <div key={index}>
-              <BulletPointItem
-                key={bulletPoint.id}
-                bulletPoint={bulletPoint}
+              <TaskItem
+                key={task.id}
+                task={task}
                 index={index}
                 inputRefs={inputRefs}
                 orderType="alphabet"
-                moveBulletPoint={() => {}}
+                moveTask={() => {}}
                 handleInputChange={() => {}}
                 handleKeyDown={() => {}}
                 setHoverIndex={() => {}}

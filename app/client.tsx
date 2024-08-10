@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Client, ReactSelect, Week } from "@/types";
+import { fetchWeeks } from "@/app/api/weeks/controller";
+import InputSelect from "@/components/Input/InputSelect";
+import { ReactSelect, Week } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession, setSession } from "@/utils/session";
-import InputSelect from "@/components/Input/InputSelect";
-import { fetchWeek } from "@/app/api/week/controller";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { updateClient } from "./api/clients/controller";
 
 interface HomeClientProps {
@@ -22,7 +22,7 @@ export default function HomeClient({
 
   const fetchDataWeeks = async (periodActive: string) => {
     if (periodActive) {
-      const res = await fetchWeek({ periodName: periodActive });
+      const res = await fetchWeeks({ periodName: periodActive });
       if (res.status === 200) {
         setSession(SESSIONKEY.weeksActive, res.data);
         setSession(
