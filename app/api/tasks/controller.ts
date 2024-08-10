@@ -7,7 +7,7 @@ interface TaskFilter {
   milestoneId?: number;
 }
 
-export async function fetchTask(filter: TaskFilter = {}): Promise<any> {
+export async function fetchTasks(filter: TaskFilter = {}): Promise<any> {
   try {
     const params: Record<string, any> = {};
     if (filter.periodName !== undefined) params.periodName = filter.periodName;
@@ -17,7 +17,7 @@ export async function fetchTask(filter: TaskFilter = {}): Promise<any> {
       params.milestoneId = filter.milestoneId;
 
     return await getData({
-      url: "/high-focus-goal",
+      url: "/high-focus-goals",
       params,
     });
   } catch (error) {
@@ -29,7 +29,7 @@ export async function fetchTask(filter: TaskFilter = {}): Promise<any> {
 export async function createTask(payload: Task) {
   try {
     return await postData({
-      url: `/task`,
+      url: `/tasks`,
       payload: payload,
     });
   } catch (error) {

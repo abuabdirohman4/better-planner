@@ -6,12 +6,12 @@ import { validateField } from "../helper";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const periodName = searchParams.get("periodName");
+    const name = searchParams.get("name");
     const year = searchParams.get("year");
     const quarter = searchParams.get("quarter");
 
     const where: Record<string, any> = {};
-    if (periodName) where.name = periodName;
+    if (name) where.name = name;
     if (year) where.year = parseInt(year, 10);
     if (quarter) where.quarter = parseInt(quarter, 10);
 

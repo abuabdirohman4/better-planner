@@ -5,14 +5,14 @@ interface WeekFilter {
   week?: number;
 }
 
-export async function fetchWeek(filter: WeekFilter = {}): Promise<any> {
+export async function fetchWeeks(filter: WeekFilter = {}): Promise<any> {
   try {
     const params: Record<string, any> = {};
     if (filter.periodName !== undefined) params.periodName = filter.periodName;
     if (filter.week !== undefined) params.week = filter.week;
 
     return await getData({
-      url: "/week",
+      url: "/weeks",
       params,
     });
   } catch (error) {
@@ -24,7 +24,7 @@ export async function fetchWeek(filter: WeekFilter = {}): Promise<any> {
 export async function createWeek() {
   try {
     return await postData({
-      url: `/week`,
+      url: `/weeks`,
     });
   } catch (error) {
     console.error("Error creating week:", error);
