@@ -29,8 +29,7 @@ const TaskItem = ({
   inputRef,
   onKeyDown,
 }: TaskItemProps) => {
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description || "");
+  const [title, setTitle] = useState(task.name);
   const [isFocused, setIsFocused] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -64,7 +63,7 @@ const TaskItem = ({
   drag(drop(ref));
 
   const handleSave = async () => {
-    await axios.put(`/api/tasks/${task.id}`, { ...task, title, description });
+    await axios.put(`/api/tasks/${task.id}`, { ...task, title });
     onUpdate();
   };
 
@@ -76,9 +75,11 @@ const TaskItem = ({
       e.preventDefault();
       if (
         previousTaskIndentLevel !== null &&
-        task.indentLevel <= previousTaskIndentLevel
+        task.id &&
+        task.indent &&
+        task.indent <= previousTaskIndentLevel
       ) {
-        const newIndentLevel = task.indentLevel + 1;
+        const newIndentLevel = task.indent + 1;
         await axios.put(`/api/tasks/${task.id}`, {
           ...task,
           indentLevel: newIndentLevel,
@@ -87,8 +88,8 @@ const TaskItem = ({
       }
     } else if (e.key === "Tab" && e.shiftKey) {
       e.preventDefault();
-      if (task.indentLevel > 0) {
-        const newIndentLevel = task.indentLevel - 1;
+      if (task.id && task.indent && task.indent > 0) {
+        const newIndentLevel = task.indent - 1;
         await axios.put(`/api/tasks/${task.id}`, {
           ...task,
           indentLevel: newIndentLevel,
@@ -109,7 +110,7 @@ const TaskItem = ({
       className={`flex items-center justify-between p-2 ${
         isDragging ? "bg-gray-300" : ""
       }`}
-      style={{ marginLeft: task.indentLevel * 20 }}
+      style={{ marginLeft: task.indent && task.indent * 20 }}
     >
       <div className={`relative group cursor-pointer bg-white`} ref={ref}>
         <div className="w-2 h-2 bg-black rounded-full"></div>
