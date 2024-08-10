@@ -1,9 +1,9 @@
-import { Task } from "@/types";
+import { HighFocusGoal, Task } from "@/types";
 import React, { useEffect, useRef } from "react";
 import { DragPreviewImage, useDrag, useDrop } from "react-dnd";
 
 interface TaskItemProps {
-  task: Task;
+  task: Task | HighFocusGoal;
   index: number;
   inputRefs: React.MutableRefObject<(HTMLTextAreaElement | null)[]>;
   orderType?: "bullet" | "number" | "alphabet";
@@ -92,7 +92,7 @@ const TaskItem = ({
       >
         <div
           className={`relative group`}
-          style={{ marginLeft: `${task.indent * 20}px` }}
+          style={{ marginLeft: `${('indent' in task && task.indent) ? task.indent * 20 : 0}px` }}
         >
           {orderType === "bullet" ? (
             <>

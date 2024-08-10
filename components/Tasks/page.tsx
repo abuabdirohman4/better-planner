@@ -1,7 +1,6 @@
 "use client";
 import { Task } from "@/types";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { putData } from "@/utils/apiClient";
 import axios from "axios";
 import debounce from "lodash/debounce";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -9,8 +8,20 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import TaskItem from "./item";
 
-export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+export interface Props<T> {
+  type: "12WG" | "HFG" | "SDC" | "WG" | "TDL" | "DF" | "TL" | "12WS";
+  sourceTasks: T[];
+  allowIndent?: boolean;
+  endpoint: string;
+}
+
+export default function Tasks<T extends Task>({
+  type,
+  sourceTasks,
+  allowIndent = true,
+  endpoint,
+}: Props<T>) {
+  const [tasks, setTasks] = useState(sourceTasks);
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const activeInputIndex = useRef<number | null>(null);
   const cursorPosition = useRef<number | null>(null);
@@ -18,17 +29,16 @@ export default function Tasks() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  const fetchTasks = async () => {
-    const response = await fetch("/api/tasks");
-    const data = await response.json();
-    setTasks(data);
-  };
+  const fetchTasks = useCallback(async () => {
+    setTasks(sourceTasks);
+  }, [sourceTasks]);
 
   const addTask = async (index: number) => {
     const newIndent = index >= 0 ? tasks[index].indent : 0;
-    const newOrder = tasks.length > 0 ? tasks[tasks.length - 1].order + 1 : 0;
+    const newOrder =
+      tasks.length > 0 ? (tasks[tasks.length - 1].order ?? 0) + 1 : 0;
     const newTask = { text: "", indent: newIndent, order: newOrder };
-    const response = await fetch("/api/tasks", {
+    const response = await fetch(`/api/${endpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,23 +57,24 @@ export default function Tasks() {
   };
 
   const handleDelete = async (taskId: number, index: number) => {
-    await axios.delete(`/api/tasks/${taskId}`);
+    await axios.delete(`/api/${endpoint}/${taskId}`);
     fetchTasks();
     if (index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const updateTask = async (task: Task) => {
-    const taskId = task.id;
-    if (taskId) {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(task),
-      });
+  const updateTask = async (payload: Task) => {
+    if (payload.id) {
+      try {
+        return await putData({
+          url: `/${endpoint}/${payload.id}`,
+          payload,
+        });
+      } catch (error) {
+        console.error("Error updating task:", error);
+        throw new Error("Failed to update task");
+      }
     }
   };
 
@@ -91,16 +102,20 @@ export default function Tasks() {
       tasks[index].name.trim() === ""
     ) {
       e.preventDefault();
-      handleDelete(Number(tasks[index].id), index);
-    } else if (e.key === "Tab" && !e.shiftKey) {
-      e.preventDefault();
-      if (tasks[index].indent < (tasks[index - 1]?.indent ?? 0) + 1) {
-        changeIndent(index, tasks[index].indent + 1);
+      if (type !== "12WG") {
+        handleDelete(Number(tasks[index].id), index);
       }
-    } else if (e.key === "Tab" && e.shiftKey) {
-      e.preventDefault();
-      if (tasks[index].indent > 0) {
-        changeIndent(index, tasks[index].indent - 1);
+    } else if (allowIndent && tasks[index].indent) {
+      if (e.key === "Tab" && !e.shiftKey) {
+        e.preventDefault();
+        if (tasks[index].indent < (tasks[index - 1]?.indent ?? 0) + 1) {
+          changeIndent(index, tasks[index].indent + 1);
+        }
+      } else if (e.key === "Tab" && e.shiftKey) {
+        e.preventDefault();
+        if (tasks[index].indent > 0) {
+          changeIndent(index, tasks[index].indent - 1);
+        }
       }
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -129,7 +144,7 @@ export default function Tasks() {
 
     const taskId = newTasks[index].id;
     if (taskId) {
-      await fetch(`/api/tasks/${taskId}`, {
+      await fetch(`/api/${endpoint}/${taskId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -145,11 +160,14 @@ export default function Tasks() {
     (dragIndex: number, hoverIndex: number) => {
       const dragTask = tasks[dragIndex];
       const draggedChildren = [];
-      for (let i = dragIndex + 1; i < tasks.length; i++) {
-        if (tasks[i].indent > dragTask.indent) {
-          draggedChildren.push(tasks[i]);
-        } else {
-          break;
+      if (allowIndent && dragTask.indent) {
+        for (let i = dragIndex + 1; i < tasks.length; i++) {
+          const taskIndent = tasks[i].indent ?? 0;
+          if (taskIndent > dragTask.indent) {
+            draggedChildren.push(tasks[i]);
+          } else {
+            break;
+          }
         }
       }
 
@@ -168,7 +186,7 @@ export default function Tasks() {
 
       for (const task of reorderedTasks) {
         if (task.id) {
-          fetch(`/api/tasks/${task.id}`, {
+          fetch(`/api/${endpoint}/${task.id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -182,37 +200,39 @@ export default function Tasks() {
       setDragIndex(null);
       setHoverIndex(null);
     },
-    [tasks]
+    [tasks, endpoint, allowIndent]
   );
 
   useEffect(() => {
+    // Focus on the active input field if an active index exists
     if (activeInputIndex.current !== null) {
       const input = inputRefs.current[activeInputIndex.current];
       if (input) {
-        input.focus();
+        input.focus(); // Set focus to the active input field
         if (cursorPosition.current !== null) {
           input.setSelectionRange(
             cursorPosition.current,
             cursorPosition.current
-          );
+          ); // Set the cursor position
         }
       }
     }
-  }, [tasks]);
 
-  useEffect(() => {
+    // Event listener to update the activeInputIndex when an input field is focused
     const handleFocus = (e: FocusEvent) => {
       const index = inputRefs.current.findIndex((input) => input === e.target);
       if (index !== -1) {
-        activeInputIndex.current = index;
+        activeInputIndex.current = index; // Update the active input index
       }
     };
 
+    // Add focus event listener to all input fields
     const inputs = inputRefs.current;
     inputs.forEach((input) => {
       input?.addEventListener("focus", handleFocus);
     });
 
+    // Cleanup the event listeners when the component unmounts or when inputs change
     return () => {
       inputs.forEach((input) => {
         input?.removeEventListener("focus", handleFocus);
@@ -222,32 +242,27 @@ export default function Tasks() {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [fetchTasks, sourceTasks]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <>
       {tasks.map((task, index) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          index={index}
-          moveTask={moveTask}
-          inputRefs={inputRefs}
-          handleInputChange={handleInputChange}
-          handleKeyDown={handleKeyDown}
-          setHoverIndex={setHoverIndex}
-          hoverIndex={hoverIndex}
-          setDragIndex={setDragIndex}
-          dragIndex={dragIndex}
-        />
+        <DndProvider backend={HTML5Backend} key={index}>
+          <TaskItem
+            key={task.id}
+            task={task}
+            index={index}
+            moveTask={moveTask}
+            inputRefs={inputRefs}
+            handleInputChange={handleInputChange}
+            handleKeyDown={handleKeyDown}
+            setHoverIndex={setHoverIndex}
+            hoverIndex={hoverIndex}
+            setDragIndex={setDragIndex}
+            dragIndex={dragIndex}
+          />
+        </DndProvider>
       ))}
-      <div className="flex py-2">
-        <FontAwesomeIcon
-          icon={faPlus}
-          className="hover:bg-gray-300 rounded-full w-3 h-3 p-1 pt-1.5"
-          onClick={() => addTask(tasks.length - 1)}
-        />
-      </div>
-    </DndProvider>
+    </>
   );
 }
