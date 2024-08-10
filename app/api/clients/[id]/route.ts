@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const client = await prisma.client.findUnique({
+    const res = await prisma.client.findUnique({
       where: { id: clientId },
       include: {
         Period: true,
@@ -23,11 +23,11 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!client) {
+    if (!res) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
-    return NextResponse.json(client, { status: 200 });
+    return NextResponse.json(res, { status: 200 });
   } catch (error) {
     console.error("Error fetching client:", error);
     return NextResponse.json(
@@ -47,12 +47,12 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const updatedClient = await prisma.client.update({
+    const res = await prisma.client.update({
       where: { id: clientId },
       data: { email, name, periodName },
     });
 
-    return NextResponse.json(updatedClient, { status: 200 });
+    return NextResponse.json(res, { status: 200 });
   } catch (error) {
     console.error("Error updating client:", error);
     return NextResponse.json(
@@ -87,3 +87,5 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+
+

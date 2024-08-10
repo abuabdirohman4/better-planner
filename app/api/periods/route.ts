@@ -31,9 +31,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { year } = body;
-
+    const { year } = await req.json();
+    
     validateField(year);
 
     const res = await addPeriodsToDatabase(parseInt(year, 10));

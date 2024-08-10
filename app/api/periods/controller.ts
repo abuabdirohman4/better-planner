@@ -1,12 +1,12 @@
 import { getData, postData } from "@/utils/apiClient";
 
-interface PeriodFilter {
+interface FetchFilter {
   name?: string;
   year?: number;
   quarter?: number;
 }
 
-export async function fetchPeriods(params: PeriodFilter): Promise<any> {
+export async function fetchPeriods(params: FetchFilter): Promise<any> {
   try {
     return await getData({
       url: "/periods",
