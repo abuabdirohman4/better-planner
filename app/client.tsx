@@ -89,6 +89,8 @@ export default function HomeClient({
           }}
         />
       </div>
+      <p>Create Sync Planner In This Period</p>
+      <button>Create</button>
     </>
   );
 }
