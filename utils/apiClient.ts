@@ -11,7 +11,7 @@ type Props = {
 
 export async function getData({ url, params, token }: Props): Promise<any> {
   try {
-    // console.log("Making GET request to:", url);
+    console.log("Making GET request to:", url);
     const response: AxiosResponse = await axios.get(url, {
       params,
       headers: {
@@ -33,7 +33,7 @@ export async function postData({
   formData,
 }: Props): Promise<any> {
   try {
-    // console.log("Making POST request to:", url);
+    console.log("Making POST request to:", url);
     const response: AxiosResponse = await axios.post(`${url}`, payload, {
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
@@ -50,7 +50,7 @@ export async function postData({
 
 export async function putData({ url, payload, token }: Props): Promise<any> {
   try {
-    // console.log("Making PUT request to:", url);
+    console.log("Making PUT request to:", url);
     const response: AxiosResponse = await axios.put(url, payload, {
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
@@ -66,7 +66,7 @@ export async function putData({ url, payload, token }: Props): Promise<any> {
 
 export async function deleteData({ url, token }: Props): Promise<any> {
   try {
-    // console.log("Making DELETE request to:", url);
+    console.log("Making DELETE request to:", url);
     const response: AxiosResponse = await axios.delete(url, {
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
