@@ -2,8 +2,8 @@ import { fetchPeriods } from "@/app/api/periods/controller";
 import { Client, Period } from "@/types";
 import { format, subDays } from "date-fns";
 import { id } from "date-fns/locale";
+import { fetchClient } from "./api/clients/controller";
 import HomeClient from "./client";
-import { fetchClient, fetchClients } from "./api/clients/controller";
 
 async function fetchData(year: number) {
   // periodOptions

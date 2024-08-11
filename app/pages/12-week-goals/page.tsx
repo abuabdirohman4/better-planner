@@ -17,7 +17,6 @@ export default function TwelveWeekGoals() {
   }) => {
     const res = await fetchHighFocusGoals({ periodName });
     if (res.status == 200) {
-      console.log("res.data", res.data);
       const fetchedData = res.data;
       const combinedData = [
         ...fetchedData,

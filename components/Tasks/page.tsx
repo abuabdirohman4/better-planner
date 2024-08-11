@@ -1,6 +1,8 @@
 "use client";
-import { Task } from "@/types";
-import { putData } from "@/utils/apiClient";
+import { HighFocusGoal, Task } from "@/types";
+import { postData, putData } from "@/utils/apiClient";
+import { SESSIONKEY } from "@/utils/constants";
+import { getSession } from "@/utils/session";
 import axios from "axios";
 import debounce from "lodash/debounce";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -15,13 +17,17 @@ export interface Props<T> {
   endpoint: string;
 }
 
+function isHighFocusGoal(task: any): task is HighFocusGoal {
+  return (task as HighFocusGoal) ? true : false;
+}
+
 export default function Tasks<T extends Task>({
   type,
   sourceTasks,
   allowIndent = true,
   endpoint,
 }: Props<T>) {
-  const [tasks, setTasks] = useState(sourceTasks);
+  const [tasks, setTasks] = useState<T[]>(sourceTasks);
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const activeInputIndex = useRef<number | null>(null);
   const cursorPosition = useRef<number | null>(null);
@@ -64,7 +70,7 @@ export default function Tasks<T extends Task>({
     }
   };
 
-  const updateTask = async (payload: Task) => {
+  const updateTask = async (payload: T) => {
     if (payload.id) {
       try {
         return await putData({
@@ -78,19 +84,46 @@ export default function Tasks<T extends Task>({
     }
   };
 
+  const insertTask = async (payload: T) => {
+    try {
+      return await postData({
+        url: `/${endpoint}`,
+        payload,
+      });
+    } catch (error) {
+      console.error("Error updating task:", error);
+      throw new Error("Failed to update task");
+    }
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedUpdateTask = useCallback(debounce(updateTask, 500), [
     updateTask,
   ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedInsertTask = useCallback(debounce(insertTask, 500), [
+    insertTask,
+  ]);
 
-  const handleInputChange = (index: number, value: string) => {
+  const handleInputChange = async (index: number, value: string) => {
     const newTasks = [...tasks];
-    newTasks[index].name = value;
-    setTasks(newTasks);
+    if (newTasks[index]) {
+      newTasks[index].name = value;
+      if (!newTasks[index].id && value.trim() !== "") {
+        // A new task is created only when the task does not have an ID and there is input entered.
+        if (type === "12WG" && isHighFocusGoal(newTasks[index])) {
+          newTasks[index].clientId = 1;
+          newTasks[index].periodName = getSession(SESSIONKEY.periodActive);
+        }
+        await debouncedInsertTask(newTasks[index]);
+      } else if (newTasks[index].id) {
+        // If the task already exists, update the task.
+        debouncedUpdateTask(newTasks[index]);
+      }
 
-    activeInputIndex.current = index;
-    cursorPosition.current = inputRefs.current[index]?.selectionStart || null;
-    debouncedUpdateTask(newTasks[index]);
+      activeInputIndex.current = index;
+      cursorPosition.current = inputRefs.current[index]?.selectionStart || null;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -249,7 +282,6 @@ export default function Tasks<T extends Task>({
       {tasks.map((task, index) => (
         <DndProvider backend={HTML5Backend} key={index}>
           <TaskItem
-            key={task.id}
             task={task}
             index={index}
             moveTask={moveTask}

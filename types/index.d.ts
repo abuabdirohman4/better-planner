@@ -41,7 +41,7 @@ export interface HighFocusGoal {
   completed: boolean;
   // Task?: Task[];
   // SelfDevelopmentCurriculum?: SelfDevelopmentCurriculum[];
-  // StatusHighFocusGoal?: StatusHighFocusGoal[];
+  StatusHighFocusGoal?: StatusHighFocusGoal[];
 }
 
 export interface StatusHighFocusGoal {

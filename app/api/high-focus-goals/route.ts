@@ -1,6 +1,6 @@
 import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { validateFields } from "../helper";
+import { validateField } from "../helper";
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,18 +41,18 @@ export async function POST(req: NextRequest) {
     const { clientId, name, motivation, periodName, point, priority } =
       await req.json();
 
-    validateFields([clientId, name, motivation, periodName, point, priority]);
+    validateField(clientId);
 
     const res = await prisma.highFocusGoal.create({
       data: {
         clientId,
         name,
-        motivation,
+        motivation: motivation ?? "",
         StatusHighFocusGoal: {
           create: {
             periodName,
-            point,
-            priority,
+            point: point ?? 0,
+            priority: priority ?? 0,
           },
         },
       },
