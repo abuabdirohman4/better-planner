@@ -39,11 +39,11 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const url = new URL(req.url);
-  const highFocusGoalId = parseInt(url.pathname.split("/").pop()!, 10);
-  const { name, motivation, StatusHighFocusGoal } = await req.json();
+  const id = parseInt(url.pathname.split("/").pop()!, 10);
+  const { name, motivation, order, StatusHighFocusGoal } = await req.json();
   const { periodName, point, priority } = StatusHighFocusGoal[0];
 
-  if (isNaN(highFocusGoalId)) {
+  if (isNaN(id)) {
     return NextResponse.json(
       { error: "Invalid HighFocusGoal ID" },
       { status: 400 }
@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest) {
   try {
     // const res = null;
     const res = await prisma.highFocusGoal.update({
-      where: { id: highFocusGoalId },
+      where: { id },
       data: {
         name,
         motivation,
@@ -64,7 +64,7 @@ export async function PUT(req: NextRequest) {
                 (
                   await prisma.statusHighFocusGoal.findFirst({
                     where: {
-                      highFocusGoalId: highFocusGoalId,
+                      highFocusGoalId: id,
                       periodName: periodName,
                     },
                     select: { id: true },
@@ -80,6 +80,7 @@ export async function PUT(req: NextRequest) {
               periodName: periodName,
               point: point,
               priority: priority,
+              order: order,
             },
           },
         },
@@ -98,9 +99,10 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const url = new URL(req.url);
-  const highFocusGoalId = parseInt(url.pathname.split("/").pop()!, 10);
+  const id = parseInt(url.pathname.split("/").pop()!, 10);
+  const { periodName } = await req.json();
 
-  if (isNaN(highFocusGoalId)) {
+  if (isNaN(id)) {
     return NextResponse.json(
       { error: "Invalid HighFocusGoal ID" },
       { status: 400 }
@@ -108,16 +110,59 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    await prisma.highFocusGoal.delete({
-      where: { id: highFocusGoalId },
+    // Langkah 1: Cek dan hapus dari tabel StatusHighFocusGoal
+    const statusHighFocusGoal = await prisma.statusHighFocusGoal.findFirst({
+      where: {
+        highFocusGoalId: id,
+        periodName,
+      },
     });
 
-    return NextResponse.json(
-      { message: "HighFocusGoal deleted successfully" },
-      { status: 204 }
-    );
+    if (statusHighFocusGoal) {
+      await prisma.statusHighFocusGoal.delete({
+        where: {
+          id: statusHighFocusGoal.id,
+        },
+      });
+
+      // Langkah 2: Cek apakah masih ada entri lain dengan highFocusGoalId yang sama di StatusHighFocusGoal
+      const remainingStatus = await prisma.statusHighFocusGoal.findFirst({
+        where: {
+          highFocusGoalId: id,
+        },
+      });
+
+      if (remainingStatus) {
+        // Jika ada entri lain dengan highFocusGoalId yang sama, tidak perlu hapus dari HighFocusGoal
+        console.log(
+          '"StatusHighFocusGoal deleted successfully, but HighFocusGoal not deleted as there are remaining references."'
+        );
+      }
+    }
+
+    // Langkah 3: Jika tidak ada entri dengan highFocusGoalId di StatusHighFocusGoal, hapus dari HighFocusGoal
+    const highFocusGoal = await prisma.highFocusGoal.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (highFocusGoal) {
+      const res = await prisma.highFocusGoal.delete({
+        where: {
+          id,
+        },
+      });
+
+      return NextResponse.json(res, { status: 204 });
+    } else {
+      return NextResponse.json(
+        { error: "HighFocusGoal not found" },
+        { status: 404 }
+      );
+    }
   } catch (error) {
-    console.error("Error deleting high focus goal:", error);
+    console.error("Error deleting:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

@@ -17,11 +17,26 @@ export default function TwelveWeekGoals() {
   }) => {
     const res = await fetchHighFocusGoals({ periodName });
     if (res.status == 200) {
-      const fetchedData = res.data;
+      const fetchedData = res.data.map((task: HighFocusGoal) => ({
+        id: task.id,
+        clientId: task.clientId,
+        motivation: task.name,
+        name: task.name,
+        order: task.StatusHighFocusGoal && task.StatusHighFocusGoal[0].order,
+        priority:
+          task.StatusHighFocusGoal && task.StatusHighFocusGoal[0].priority,
+        point: task.StatusHighFocusGoal && task.StatusHighFocusGoal[0].point,
+        completed:
+          task.StatusHighFocusGoal && task.StatusHighFocusGoal[0].completed,
+        StatusHighFocusGoal: task.StatusHighFocusGoal,
+      }));
       const combinedData = [
         ...fetchedData,
         ...Array(10 - fetchedData.length).fill({}),
       ];
+      combinedData.sort(
+        (a: HighFocusGoal, b: HighFocusGoal) => Number(a.order) - Number(b.order)
+      );
       setTasks(combinedData);
     }
   };
@@ -56,6 +71,7 @@ export default function TwelveWeekGoals() {
         sourceTasks={tasks}
         endpoint="high-focus-goals"
         allowIndent={false}
+        orderType="alphabet"
       />
     </div>
   );

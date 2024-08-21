@@ -7,6 +7,7 @@ type Props = {
   token?: string;
   formData?: boolean;
   payload?: {};
+  data?: {};
 };
 
 export async function getData({ url, params, token }: Props): Promise<any> {
@@ -64,15 +65,16 @@ export async function putData({ url, payload, token }: Props): Promise<any> {
   }
 }
 
-export async function deleteData({ url, token }: Props): Promise<any> {
+export async function deleteData({ url, data, token }: Props): Promise<any> {
   try {
     console.log("Making DELETE request to:", url);
     const response: AxiosResponse = await axios.delete(url, {
+      data, 
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
+        "Content-Type": "application/json", // Pastikan tipe konten yang benar
       },
     });
-    // console.log("deleteData response:", response.data);
     return response;
   } catch (error) {
     console.error("Error in deleteData:", error);

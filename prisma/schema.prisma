@@ -74,10 +74,11 @@ model StatusHighFocusGoal {
   id              Int           @id @default(autoincrement())
   HighFocusGoal   HighFocusGoal @relation(fields: [highFocusGoalId], references: [id])
   highFocusGoalId Int
-  Period          Period        @relation(fields: [periodName], references: [name])
-  periodName      String
-  point           Int
-  priority        Int
+  Period          Period?        @relation(fields: [periodName], references: [name])
+  periodName      String?
+  order           Int           @default(0)
+  point           Int           @default(0)
+  priority        Int           @default(0)
   completed       Boolean       @default(false)
 }
 

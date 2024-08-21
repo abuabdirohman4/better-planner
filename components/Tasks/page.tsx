@@ -1,6 +1,6 @@
 "use client";
 import { HighFocusGoal, Task } from "@/types";
-import { postData, putData } from "@/utils/apiClient";
+import { deleteData, postData, putData } from "@/utils/apiClient";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession } from "@/utils/session";
 import axios from "axios";
@@ -15,6 +15,7 @@ export interface Props<T> {
   sourceTasks: T[];
   allowIndent?: boolean;
   endpoint: string;
+  orderType?: "bullet" | "number" | "alphabet";
 }
 
 function isHighFocusGoal(task: any): task is HighFocusGoal {
@@ -24,8 +25,9 @@ function isHighFocusGoal(task: any): task is HighFocusGoal {
 export default function Tasks<T extends Task>({
   type,
   sourceTasks,
-  allowIndent = true,
   endpoint,
+  allowIndent = true,
+  orderType = "bullet",
 }: Props<T>) {
   const [tasks, setTasks] = useState<T[]>(sourceTasks);
   const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
@@ -62,31 +64,39 @@ export default function Tasks<T extends Task>({
     cursorPosition.current = 0; // Reset cursor position
   };
 
-  const handleDelete = async (taskId: number, index: number) => {
-    await axios.delete(`/api/${endpoint}/${taskId}`);
-    fetchTasks();
-    if (index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const updateTask = async (payload: T) => {
-    if (payload.id) {
-      try {
-        return await putData({
-          url: `/${endpoint}/${payload.id}`,
-          payload,
-        });
-      } catch (error) {
-        console.error("Error updating task:", error);
-        throw new Error("Failed to update task");
-      }
-    }
-  };
-
-  const insertTask = async (payload: T) => {
+  const handleDelete = async (taskId: number) => {
     try {
-      return await postData({
+      await deleteData({
+        url: `/${endpoint}/${taskId}`,
+        data: { periodName: getSession(SESSIONKEY.periodActive) },
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      throw new Error("Failed to delete task");
+    }
+  };
+
+  const updateTask = useCallback(
+    async (payload: T) => {
+      if (payload.id) {
+        try {
+          return await putData({
+            url: `/${endpoint}/${payload.id}`,
+            payload,
+          });
+        } catch (error) {
+          console.error("Error updating task:", error);
+          throw new Error("Failed to update task");
+        }
+      }
+    },
+    [endpoint]
+  );
+
+  const insertTask = async (payload: T, index: number) => {
+    try {
+      const res = await postData({
         url: `/${endpoint}`,
         payload,
       });
@@ -115,10 +125,11 @@ export default function Tasks<T extends Task>({
           newTasks[index].clientId = 1;
           newTasks[index].periodName = getSession(SESSIONKEY.periodActive);
         }
-        await debouncedInsertTask(newTasks[index]);
+        await debouncedInsertTask(newTasks[index], index);
       } else if (newTasks[index].id) {
         // If the task already exists, update the task.
         debouncedUpdateTask(newTasks[index]);
+        setTasks(newTasks);
       }
 
       activeInputIndex.current = index;
@@ -136,7 +147,7 @@ export default function Tasks<T extends Task>({
     ) {
       e.preventDefault();
       if (type !== "12WG") {
-        handleDelete(Number(tasks[index].id), index);
+        handleDelete(Number(tasks[index].id));
       }
     } else if (allowIndent && tasks[index].indent) {
       if (e.key === "Tab" && !e.shiftKey) {
@@ -190,7 +201,7 @@ export default function Tasks<T extends Task>({
   };
 
   const moveTask = useCallback(
-    (dragIndex: number, hoverIndex: number) => {
+    async (dragIndex: number, hoverIndex: number) => {
       const dragTask = tasks[dragIndex];
       const draggedChildren = [];
       if (allowIndent && dragTask.indent) {
@@ -219,13 +230,7 @@ export default function Tasks<T extends Task>({
 
       for (const task of reorderedTasks) {
         if (task.id) {
-          fetch(`/api/${endpoint}/${task.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(task),
-          });
+          await updateTask(task);
         }
       }
 
@@ -233,7 +238,7 @@ export default function Tasks<T extends Task>({
       setDragIndex(null);
       setHoverIndex(null);
     },
-    [tasks, endpoint, allowIndent]
+    [tasks, allowIndent, updateTask]
   );
 
   useEffect(() => {
@@ -286,6 +291,7 @@ export default function Tasks<T extends Task>({
             index={index}
             moveTask={moveTask}
             inputRefs={inputRefs}
+            orderType={orderType}
             handleInputChange={handleInputChange}
             handleKeyDown={handleKeyDown}
             setHoverIndex={setHoverIndex}

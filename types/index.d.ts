@@ -52,6 +52,7 @@ export interface StatusHighFocusGoal {
   periodName: string;
   point: number;
   order: number;
+  priority: number;
   completed: boolean;
 }
 
@@ -72,4 +73,23 @@ export interface Task {
   TaskWeek?: TaskWeek[];
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface Week {
+  id: number;
+  Period?: Period;
+  periodName: string;
+  week: number;
+  startDate: Date;
+  endDate: Date;
+  TaskWeeks?: TaskWeek[];
+  ToDontList?: ToDontList[];
+}
+
+export interface TaskWeek {
+  id?: number;
+  taskId: number;
+  Task?: Task;
+  weekId: number;
+  Week?: Week;
 }
