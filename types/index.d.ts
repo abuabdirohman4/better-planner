@@ -1,6 +1,13 @@
 export interface ReactSelect {
   value: number | string;
   label: string;
+  data?: any;
+}
+
+export interface PeriodActive {
+  name: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface Client {

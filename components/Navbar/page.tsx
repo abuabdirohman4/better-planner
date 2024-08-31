@@ -7,7 +7,8 @@ import React, { useEffect, useState } from "react";
 export const Navbar = () => {
   const [periodActive, setPeriodActive] = useState<string>();
   useEffect(() => {
-    setPeriodActive(getSession(SESSIONKEY.periodActive));
+    const sessionPeriodActive = getSession(SESSIONKEY.periodActive);
+    if (sessionPeriodActive) setPeriodActive(sessionPeriodActive.name);
   }, []);
 
   return (

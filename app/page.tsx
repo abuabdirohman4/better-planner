@@ -1,5 +1,5 @@
 import { fetchPeriods } from "@/app/api/periods/controller";
-import { Client, Period } from "@/types";
+import { Client, Period, PeriodActive,  } from "@/types";
 import { format, subDays } from "date-fns";
 import { id } from "date-fns/locale";
 import { fetchClient } from "./api/clients/controller";
@@ -19,23 +19,35 @@ async function fetchData(year: number) {
   const periodOptions = periods.map((period) => ({
     value: period.name,
     label: formatLabel(period),
+    data: {
+      startDate: period.startDate,
+      endDate: period.endDate,
+    },
   }));
 
   // periodActive
   const clientRes = await fetchClient(1);
   const client: Client = clientRes.status === 200 ? clientRes.data : [];
-  let periodActive = "";
-  if (client.periodName) {
-    periodActive = client.periodName;
-  } else {
-    const today = new Date();
-    for (const period of periods) {
-      const startDate = new Date(period.startDate);
-      const endDate = new Date(period.endDate);
-      if (today >= startDate && today <= endDate) {
-        periodActive = period.name;
-        break;
-      }
+  let periodActive: PeriodActive = {
+    name: "",
+  };
+  const today = new Date();
+  for (const period of periods) {
+    const startDate = new Date(period.startDate);
+    const endDate = new Date(period.endDate);
+
+    if (client.periodName && client.periodName === period.name) {
+      periodActive = {
+        name: period.name,
+        startDate: period.startDate,
+        endDate: period.endDate,
+      };
+    } else if (today >= startDate && today <= endDate) {
+      periodActive = {
+        name: period.name,
+        startDate: startDate,
+        endDate: endDate,
+      };
     }
   }
 

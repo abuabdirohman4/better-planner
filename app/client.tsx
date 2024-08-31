@@ -11,14 +11,14 @@ import { updateClient } from "./api/clients/controller";
 
 interface HomeClientProps {
   periodOptions: ReactSelect[];
-  initialPeriodActive: string;
+  initialPeriodActive: { name: string; startDate?: Date; endDate?: Date };
 }
 
 export default function HomeClient({
   periodOptions,
   initialPeriodActive,
 }: HomeClientProps) {
-  const [title, setTitle] = useState<string>(initialPeriodActive);
+  const [title, setTitle] = useState<string>(initialPeriodActive.name);
 
   const fetchDataWeeks = async (periodActive: string) => {
     if (periodActive) {
@@ -51,10 +51,10 @@ export default function HomeClient({
   useEffect(() => {
     const sessionPeriodActive = getSession(SESSIONKEY.periodActive);
     if (sessionPeriodActive) {
-      setTitle(sessionPeriodActive);
+      setTitle(sessionPeriodActive.name);
     } else {
       setSession(SESSIONKEY.periodActive, initialPeriodActive);
-      fetchDataWeeks(initialPeriodActive);
+      fetchDataWeeks(initialPeriodActive.name);
     }
   }, [initialPeriodActive]);
 
@@ -79,11 +79,20 @@ export default function HomeClient({
           name=""
           options={periodOptions}
           defaultValue={periodOptions.find(
-            (option) => option.value === initialPeriodActive
+            (option) => option.value === initialPeriodActive.name
           )}
           onChange={(selected: any) => {
             fetchDataWeeks(selected.value);
-            setSession(SESSIONKEY.periodActive, selected.value);
+            const periodActive = periodOptions.find(
+              (option) => option.value === selected.value
+            );
+            if (periodActive) {
+              setSession(SESSIONKEY.periodActive, {
+                name: periodActive.value,
+                startDate: periodActive.data.startDate,
+                endDate: periodActive.data.endDate,
+              });
+            }
             setTitle(selected.value);
             updateDataClient(selected.value);
           }}

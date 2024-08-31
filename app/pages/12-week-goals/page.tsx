@@ -1,14 +1,17 @@
 "use client";
 import { fetchHighFocusGoals } from "@/app/api/high-focus-goals/controller";
 import Tasks from "@/components/Tasks/page";
-import { HighFocusGoal } from "@/types";
+import { HighFocusGoal, PeriodActive } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession } from "@/utils/session";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
 export default function TwelveWeekGoals() {
   const [tasks, setTasks] = useState<HighFocusGoal[]>(Array(10).fill({}));
+  const [periodActive, setPeriodActive] = useState<PeriodActive>();
 
   const fetchDataHighFocusGoal = async ({
     periodName,
@@ -35,15 +38,19 @@ export default function TwelveWeekGoals() {
         ...Array(10 - fetchedData.length).fill({}),
       ];
       combinedData.sort(
-        (a: HighFocusGoal, b: HighFocusGoal) => Number(a.order) - Number(b.order)
+        (a: HighFocusGoal, b: HighFocusGoal) =>
+          Number(a.order) - Number(b.order)
       );
       setTasks(combinedData);
     }
   };
 
   useEffect(() => {
-    const periodActive = getSession(SESSIONKEY.periodActive);
-    fetchDataHighFocusGoal({ periodName: periodActive });
+    const sessionPeriodActive = getSession(SESSIONKEY.periodActive);
+    if (sessionPeriodActive) {
+      setPeriodActive(sessionPeriodActive);
+      fetchDataHighFocusGoal({ periodName: sessionPeriodActive.name });
+    }
   }, []);
   return (
     <div className="container mx-auto p-4">
@@ -61,8 +68,20 @@ export default function TwelveWeekGoals() {
         </div>
       </div>
       <div className="mb-4">
-        <div>MULAI : </div>
-        <div>AKHIR : </div>
+        <div>
+          MULAI :{" "}
+          {periodActive?.startDate &&
+            format(periodActive.startDate, "d MMMM yyyy", {
+              locale: id,
+            })}
+        </div>
+        <div>
+          AKHIR :{" "}
+          {periodActive?.endDate &&
+            format(periodActive.endDate, "d MMMM yyyy", {
+              locale: id,
+            })}
+        </div>
       </div>
 
       {/* CONTENT */}
