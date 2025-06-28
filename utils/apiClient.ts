@@ -69,7 +69,7 @@ export async function deleteData({ url, data, token }: Props): Promise<any> {
   try {
     console.log("Making DELETE request to:", url);
     const response: AxiosResponse = await axios.delete(url, {
-      data, 
+      data,
       headers: {
         Authorization: token ? `Bearer ${token}` : undefined,
         "Content-Type": "application/json", // Pastikan tipe konten yang benar
@@ -81,3 +81,104 @@ export async function deleteData({ url, data, token }: Props): Promise<any> {
     throw error;
   }
 }
+
+// Client API functions
+export const updateClientAPI = async (
+  id: number,
+  data: { periodName?: string; email?: string; name?: string }
+) => {
+  try {
+    const response = await fetch(`/api/clients?id=${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return {
+      status: response.status,
+      data: await response.json(),
+    };
+  } catch (error) {
+    console.error("Error updating client:", error);
+    return {
+      status: 500,
+      data: null,
+    };
+  }
+};
+
+export const fetchClientsAPI = async () => {
+  try {
+    const response = await fetch("/api/clients");
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return {
+      status: response.status,
+      data: await response.json(),
+    };
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return {
+      status: 500,
+      data: [],
+    };
+  }
+};
+
+export const fetchClientAPI = async (id: number) => {
+  try {
+    const response = await fetch(`/api/clients?id=${id}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return {
+      status: response.status,
+      data: await response.json(),
+    };
+  } catch (error) {
+    console.error("Error fetching client:", error);
+    return {
+      status: 500,
+      data: null,
+    };
+  }
+};
+
+export const fetchHighFocusGoalsAPI = async (params: {
+  periodName?: string;
+}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.periodName) {
+      queryParams.append("periodName", params.periodName);
+    }
+
+    const response = await fetch(`/api/high-focus-goals?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return {
+      status: response.status,
+      data: await response.json(),
+    };
+  } catch (error) {
+    console.error("Error fetching high focus goals:", error);
+    return {
+      status: 500,
+      data: [],
+    };
+  }
+};

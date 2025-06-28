@@ -1,5 +1,5 @@
-import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { googleSheetsService, SHEET_NAMES } from "@/configs/googleSheets";
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,28 +7,19 @@ export async function GET(req: NextRequest) {
     const periodName = searchParams.get("periodName");
     const highFocusGoalId = searchParams.get("highFocusGoalId");
     const milestoneId = searchParams.get("milestoneId");
-
-    const where: Record<string, any> = {};
-    const include: Record<string, any> = {};
-    if (highFocusGoalId) where.highFocusGoalId = parseInt(highFocusGoalId, 10);
-    if (milestoneId) where.milestoneId = parseInt(milestoneId, 10);
-
-    if (periodName) {
-      where.HighFocusGoal = {
-        StatusHighFocusGoal: {
-          some: {
-            Period: {
-              name: periodName,
-            },
-          },
-        },
-      };
+    let tasks = await googleSheetsService.getAll(SHEET_NAMES.TASKS);
+    if (highFocusGoalId) {
+      tasks = tasks.filter(
+        (t: any) => String(t.highFocusGoalId) === String(highFocusGoalId)
+      );
     }
-    const res = await prisma.task.findMany({
-      where,
-      include,
-    });
-    return NextResponse.json(res, { status: 200 });
+    if (milestoneId) {
+      tasks = tasks.filter(
+        (t: any) => String(t.milestoneId) === String(milestoneId)
+      );
+    }
+    // periodName filter is not directly supported, needs join logic if required
+    return NextResponse.json(tasks, { status: 200 });
   } catch (error) {
     console.error("Error fetching period:", error);
     return NextResponse.json(
@@ -52,32 +43,18 @@ export async function POST(req: NextRequest) {
       highFocusGoalId,
     } = body;
     const clientId = 1;
-
-    const res = await prisma.task.create({
-      data: {
-        name,
-        indent,
-        order,
-        completed,
-        isMilestone,
-        milestoneId,
-        isHighFocusGoal,
-        HighFocusGoal: highFocusGoalId
-          ? {
-              connect: {
-                id: highFocusGoalId,
-              },
-            }
-          : undefined,
-        Client: {
-          connect: {
-            id: clientId,
-          },
-        },
-      },
+    const task = await googleSheetsService.create(SHEET_NAMES.TASKS, {
+      name,
+      indent,
+      order,
+      completed,
+      isMilestone,
+      milestoneId,
+      isHighFocusGoal,
+      highFocusGoalId,
+      clientId,
     });
-
-    return NextResponse.json(res, { status: 200 });
+    return NextResponse.json(task, { status: 200 });
   } catch (error) {
     console.error("Error creating task:", error);
     return NextResponse.json(

@@ -1,5 +1,5 @@
-import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { googleSheetsService, SHEET_NAMES } from "@/configs/googleSheets";
 
 export async function GET({ params }: { params: { id: string } }) {
   const taskId = parseInt(params.id, 10);
@@ -9,7 +9,7 @@ export async function GET({ params }: { params: { id: string } }) {
   }
 
   try {
-    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    const task = await googleSheetsService.getById(SHEET_NAMES.TASKS, taskId);
     return NextResponse.json(task, { status: 200 });
   } catch (error) {
     console.error("Error fetch task:", error);
@@ -31,23 +31,13 @@ export async function DELETE(
   }
 
   try {
-    // Cek apakah task ada
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-    });
+    const task = await googleSheetsService.getById(SHEET_NAMES.TASKS, taskId);
 
     if (!task) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    // Hapus semua entri terkait di tabel TimeLog
-    await prisma.timeLog.deleteMany({
-      where: { taskId },
-    });
-
-    await prisma.task.delete({
-      where: { id: taskId },
-    });
+    await googleSheetsService.delete(SHEET_NAMES.TASKS, taskId);
 
     return NextResponse.json(
       { message: "Task deleted successfully" },
@@ -76,15 +66,16 @@ export async function PUT(
     const body = await req.json();
     const { name, completed, order, indent } = body;
 
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: {
+    const updatedTask = await googleSheetsService.update(
+      SHEET_NAMES.TASKS,
+      taskId,
+      {
         name,
         completed,
         order,
         indent,
-      },
-    });
+      }
+    );
 
     return NextResponse.json(updatedTask, { status: 200 });
   } catch (error) {

@@ -35,3 +35,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Google Sheets credentials
+google-credentials.json
+google-credentials-*.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs
+*.log

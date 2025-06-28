@@ -8,6 +8,7 @@ import HomeClient from "./client";
 async function fetchData(year: number) {
   // periodOptions
   const periodRes = await fetchPeriods({ year });
+  console.log("periodRes", periodRes);
   const periods: Period[] = periodRes.status === 200 ? periodRes.data : [];
   const formatLabel = (period: Period) => {
     const start = format(period.startDate, "d MMMM yyyy", { locale: id });
@@ -60,6 +61,7 @@ async function fetchData(year: number) {
 export default async function Home() {
   const date = new Date();
   const year = date.getFullYear();
+  console.log("year", year);
   const { periodOptions, periodActive } = await fetchData(year);
 
   return (

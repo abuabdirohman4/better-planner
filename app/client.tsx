@@ -5,9 +5,9 @@ import InputSelect from "@/components/Input/InputSelect";
 import { ReactSelect, Week } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession, setSession } from "@/utils/session";
+import { updateClientAPI } from "@/utils/apiClient";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { updateClient } from "./api/clients/controller";
 
 interface HomeClientProps {
   periodOptions: ReactSelect[];
@@ -43,7 +43,7 @@ export default function HomeClient({
   };
 
   const updateDataClient = async (periodName: string) => {
-    const updateRes = await updateClient(1, { periodName });
+    const updateRes = await updateClientAPI(1, { periodName });
     updateRes.status === 200 &&
       console.log("update client", updateRes.status, updateRes.statusText);
   };

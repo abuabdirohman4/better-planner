@@ -1,9 +1,9 @@
 "use client";
-import { fetchHighFocusGoals } from "@/app/api/high-focus-goals/controller";
 import Tasks from "@/components/Tasks/page";
 import { HighFocusGoal, PeriodActive } from "@/types";
 import { SESSIONKEY } from "@/utils/constants";
 import { getSession } from "@/utils/session";
+import { fetchHighFocusGoalsAPI } from "@/utils/apiClient";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
@@ -18,7 +18,7 @@ export default function TwelveWeekGoals() {
   }: {
     periodName: string;
   }) => {
-    const res = await fetchHighFocusGoals({ periodName });
+    const res = await fetchHighFocusGoalsAPI({ periodName });
     if (res.status == 200) {
       const fetchedData = res.data.map((task: HighFocusGoal) => ({
         id: task.id,

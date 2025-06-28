@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node prisma/seed/index.ts"
+    "seed": "ts-node prisma/seed/index.ts",
+    "init-sheets": "ts-node scripts/init-spreadsheet.ts",
+    "setup-sheets": "ts-node scripts/setup-google-sheets.ts",
+    "migrate-env": "ts-node scripts/migrate-env.ts",
+    "create-sheets": "ts-node scripts/create-sheets.ts",
+    "upload-csv": "ts-node scripts/upload-csv-data.ts",
+    "upload-specific": "ts-node scripts/upload-specific-tables.ts",
+    "upload-direct": "ts-node scripts/upload-direct.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
@@ -18,8 +25,11 @@
     "@prisma/client": "^5.16.2",
     "@types/lodash": "^4.17.7",
     "axios": "^1.7.2",
+    "csv-parser": "^3.2.0",
     "date-fns": "^3.6.0",
     "debounce-promise": "^3.1.2",
+    "dotenv": "^16.5.0",
+    "googleapis": "^133.0.0",
     "lodash": "^4.17.21",
     "next": "14.2.5",
     "react": "^18",

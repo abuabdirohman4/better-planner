@@ -1,12 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
+import { googleSheetsService, SHEET_NAMES } from "@/configs/googleSheets";
 
 export async function GET() {
-  const bulletPoints = await prisma.task.findMany({
-    orderBy: { order: "asc" },
-  });
+  const bulletPoints = await googleSheetsService.getAll(SHEET_NAMES.TASKS);
   return NextResponse.json(bulletPoints, { status: 200 });
 }
 
@@ -15,22 +11,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { text, indent } = body;
     const userId = 1;
-
-    const lastTask = await prisma.task.findFirst({
-      orderBy: { order: "desc" },
+    // Find last order
+    const allTasks = await googleSheetsService.getAll(SHEET_NAMES.TASKS);
+    const lastTask = allTasks.sort(
+      (a, b) => (b.order ?? 0) - (a.order ?? 0)
+    )[0];
+    const newOrder = lastTask ? Number(lastTask.order) + 1 : 0;
+    const task = await googleSheetsService.create(SHEET_NAMES.TASKS, {
+      userId,
+      text,
+      indent,
+      order: newOrder,
     });
-
-    const newOrder = lastTask ? lastTask.order + 1 : 0;
-
-    const task = await prisma.task.create({
-      data: {
-        user: { connect: { id: userId } },
-        text,
-        indent,
-        order: newOrder,
-      },
-    });
-
     return NextResponse.json(task, { status: 200 });
   } catch (error) {
     console.error("Error creating task:", error);

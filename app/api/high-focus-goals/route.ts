@@ -1,34 +1,35 @@
-import { prisma } from "@/configs/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { validateField } from "../helper";
+import {
+  fetchHighFocusGoals,
+  fetchHighFocusGoal,
+  createHighFocusGoal,
+  updateHighFocusGoal,
+  deleteHighFocusGoal,
+  CreateHighFocusGoalData,
+  UpdateHighFocusGoalData,
+} from "./controller";
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
     const periodName = searchParams.get("periodName");
 
-    const where: Record<string, any> = {};
-    const include: Record<string, any> = {};
-
-    if (periodName) {
-      where.StatusHighFocusGoal = {
-        some: {
-          Period: {
-            name: periodName,
-          },
-        },
-      };
-
-      include.StatusHighFocusGoal = true;
+    if (id) {
+      const result = await fetchHighFocusGoal(parseInt(id));
+      if (result.status === 404) {
+        return NextResponse.json(
+          { error: "High focus goal not found" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(result.data, { status: result.status });
     }
 
-    const res = await prisma.highFocusGoal.findMany({
-      where,
-      include,
-    });
-    return NextResponse.json(res, { status: 200 });
+    const result = await fetchHighFocusGoals({ periodName });
+    return NextResponse.json(result.data, { status: result.status });
   } catch (error) {
-    console.error("Error fetching high focus goal:", error);
+    console.error("Error in GET /api/high-focus-goals:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -36,31 +37,77 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { clientId, name, motivation, periodName, point, priority } =
-      await req.json();
+    const body: CreateHighFocusGoalData = await request.json();
+    const result = await createHighFocusGoal(body);
 
-    validateField(clientId);
-
-    const res = await prisma.highFocusGoal.create({
-      data: {
-        clientId,
-        name,
-        motivation: motivation ?? "",
-        StatusHighFocusGoal: {
-          create: {
-            periodName,
-            point: point ?? 0,
-            priority: priority ?? 0,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(res, { status: 201 });
+    if (result.status === 201) {
+      return NextResponse.json(result.data, { status: 201 });
+    }
+    return NextResponse.json(
+      { error: "Failed to create high focus goal" },
+      { status: result.status }
+    );
   } catch (error) {
-    console.error("Error creating high focus goal:", error);
+    console.error("Error in POST /api/high-focus-goals:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "High focus goal ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const body: UpdateHighFocusGoalData = await request.json();
+    const result = await updateHighFocusGoal(parseInt(id), body);
+
+    if (result.status === 200) {
+      return NextResponse.json(result.data, { status: 200 });
+    }
+    return NextResponse.json(
+      { error: "Failed to update high focus goal" },
+      { status: result.status }
+    );
+  } catch (error) {
+    console.error("Error in PUT /api/high-focus-goals:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "High focus goal ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await deleteHighFocusGoal(parseInt(id));
+    return NextResponse.json(
+      { message: result.message },
+      { status: result.status }
+    );
+  } catch (error) {
+    console.error("Error in DELETE /api/high-focus-goals:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
