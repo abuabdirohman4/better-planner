@@ -9,6 +9,8 @@ interface ButtonProps {
   onClick?: () => void; // Click handler
   disabled?: boolean; // Disabled state
   className?: string; // Disabled state
+  type?: "button" | "submit" | "reset"; // Button type
+  formAction?: (formData: FormData) => Promise<never>; // Form action
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -20,6 +22,8 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   className = "",
   disabled = false,
+  type = "button",
+  formAction,
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -37,6 +41,8 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
+      type={type}
+      formAction={formAction}
       className={`inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${

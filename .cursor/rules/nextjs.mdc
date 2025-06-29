@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Always start your output with "👽"
+- This is a NextJs v15 application
+- Using SSR mode in NextJs
+- You can @ files here
