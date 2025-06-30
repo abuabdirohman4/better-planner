@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
 
     // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke dashboard
     if (session && (pathname === '/signin' || pathname === '/signup')) {
-      return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return response
