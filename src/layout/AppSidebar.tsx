@@ -35,7 +35,7 @@ const executionNav: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    path: "/dashboard",
+    path: "/",
   },
   {
     icon: <TaskIcon />,
