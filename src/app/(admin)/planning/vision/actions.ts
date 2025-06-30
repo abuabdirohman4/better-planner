@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { LIFE_AREAS } from './constants';
 
 // Ambil semua visi milik user yang sedang login
 export async function getVisions() {
@@ -16,22 +17,24 @@ export async function getVisions() {
   return data;
 }
 
-// Upsert visi untuk user dan area tertentu
+// Upsert visi untuk semua area kehidupan sekaligus
 export async function upsertVision(formData: FormData) {
   'use server';
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  const life_area = formData.get('life_area') as string;
-  const vision_3_5_year = formData.get('vision_3_5_year') as string;
-  const vision_10_year = formData.get('vision_10_year') as string;
-  await supabase
-    .from('visions')
-    .upsert({
-      user_id: user.id,
-      life_area,
-      vision_3_5_year,
-      vision_10_year,
-    }, { onConflict: 'user_id,life_area' });
+
+  for (const area of LIFE_AREAS) {
+    const vision_3_5_year = formData.get(`${area}-vision_3_5_year`) as string;
+    const vision_10_year = formData.get(`${area}-vision_10_year`) as string;
+    await supabase
+      .from('visions')
+      .upsert({
+        user_id: user.id,
+        life_area: area,
+        vision_3_5_year,
+        vision_10_year,
+      }, { onConflict: 'user_id,life_area' });
+  }
   revalidatePath('/planning/vision');
 } 
