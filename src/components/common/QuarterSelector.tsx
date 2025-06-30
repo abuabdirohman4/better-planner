@@ -4,7 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
-import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "@/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
 
 // Helper: get week of year
 function getWeekOfYear(date: Date) {
@@ -117,9 +117,8 @@ const QuarterSelector: React.FC = () => {
           aria-expanded={isOpen}
         >
           <span>{`Q${quarter} ${year}`}</span>
-          {/* <ChevronDownIcon className="w-5 h-5 ml-1" /> */}
         </button>
-        <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <Dropdown className="w-32" isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <div className="max-h-64 overflow-y-auto">
             {options.map((opt) => (
               <DropdownItem
@@ -127,8 +126,8 @@ const QuarterSelector: React.FC = () => {
                 onClick={() => handleSelect(opt.year, opt.quarter)}
                 className={
                   opt.year === year && opt.quarter === quarter
-                    ? "bg-brand-100 dark:bg-brand-900/30 font-semibold"
-                    : ""
+                    ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center"
+                    : "!text-center"
                 }
               >
                 {`Q${opt.quarter} ${opt.year}`}
