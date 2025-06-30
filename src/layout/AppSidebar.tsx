@@ -47,7 +47,7 @@ const planningNav: NavItem[] = [
   {
     icon: <EyeIcon />,
     name: "Vision",
-    path: "/vision",
+    path: "/planning/vision",
   },
   {
     icon: <TaskIcon />,
