@@ -1,3 +1,4 @@
+import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
 import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 
 export const metadata = {
@@ -7,9 +8,11 @@ export const metadata = {
 
 export default function Page() {
   return  (
-    <div className="max-w-none w-full">
-    <TwelveWeekGoalsLoader />;
-  </div>
-  )
-  
+    <>
+      <TwelveWeekGoalsRedirector />
+      <div className="max-w-none w-full">
+        <TwelveWeekGoalsLoader />
+      </div>
+    </>
+  );
 } 
