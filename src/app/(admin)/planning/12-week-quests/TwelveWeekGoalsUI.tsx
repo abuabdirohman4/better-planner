@@ -17,7 +17,7 @@ interface Quest {
   title: string;
 }
 
-export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuests?: { id?: string, title: string }[] }) {
+export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false }: { initialQuests?: { id?: string, title: string }[], loading?: boolean }) {
   // State utama
   const [quests, setQuests] = useState<Quest[]>(
     QUEST_LABELS.map(label => ({ label, title: "" }))
@@ -37,6 +37,14 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
       setQuests(QUEST_LABELS.map(label => ({ label, title: "" })));
     }
   }, [initialQuests]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[700px]">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-brand-600"></div>
+      </div>
+    );
+  }
 
   // Handler input quest
   const handleQuestTitleChange = (idx: number, value: string) => {
@@ -78,7 +86,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
               <div key={q.label} className="flex items-center gap-3">
                 <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
                 <input
-                  className="flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
+                  className="flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
                   placeholder={`Judul Quest ${q.label}`}
                   value={q.title}
                   onChange={e => handleQuestTitleChange(idx, e.target.value)}
@@ -99,7 +107,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
                   <th className="border px-2 py-1 bg-gray-50"></th>
                   {quests.map((q) => (
                     <th key={q.label} className="border px-2 py-1 bg-gray-50 font-bold">
-                      {q.label}<br /><span className="font-normal text-[10px]">{q.title || <span className="text-gray-300">(kosong)</span>}</span>
+                      {q.label}
                     </th>
                   ))}
                 </tr>
@@ -107,10 +115,10 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
               <tbody>
                 {quests.map((rowQ, i) => (
                   <tr key={rowQ.label}>
-                    <th className="border px-2 py-1 bg-gray-50 font-bold text-left">{rowQ.label}<br /><span className="font-normal text-[10px]">{rowQ.title || <span className="text-gray-300">(kosong)</span>}</span></th>
+                    <th className="border px-2 py-1 bg-gray-50 font-bold text-left">{rowQ.label}</th>
                     {quests.map((colQ, j) => {
                       if (i === j) {
-                        return <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center">-</td>;
+                        return <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center"></td>;
                       }
                       if (i < j) {
                         const key = `${rowQ.label}-${colQ.label}`;
@@ -144,9 +152,15 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
                       const key = `${colQ.label}-${rowQ.label}`;
                       const winner = pairwiseResults[key];
                       return (
-                        <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
+                        <>
+                        {winner ? <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
+                          <span className="font-bold">{winner}</span>
+                        </td> : <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center"></td>}
+                        {/* <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
                           {winner ? <span className="font-bold">{winner}</span> : ''}
-                        </td>
+                        </td> */}
+                        {/* <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center">-</td> */}
+                        </>
                       );
                     })}
                   </tr>

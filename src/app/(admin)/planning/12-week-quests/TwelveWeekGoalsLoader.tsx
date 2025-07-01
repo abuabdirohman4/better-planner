@@ -48,10 +48,13 @@ export default function TwelveWeekGoalsLoader() {
   const qParam = searchParams.get("q");
   const { year, quarter } = parseQParam(qParam);
   const [quests, setQuests] = useState<{ id?: string; title: string }[]>([]);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
+    setLoading(true);
     getUncommittedQuests(year, quarter).then(result => {
       setQuests(result);
+      setLoading(false);
     });
   }, [year, quarter]);
-  return <TwelveWeekGoalsUI initialQuests={quests} />;
+  return <TwelveWeekGoalsUI initialQuests={quests} loading={loading} />;
 } 
