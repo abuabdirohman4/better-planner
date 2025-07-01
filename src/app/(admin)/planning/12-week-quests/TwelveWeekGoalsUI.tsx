@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
-import { addMultipleQuests, updateQuests } from "../quests/actions";
+import { addMultipleQuests, updateQuests, commitTopQuests } from "../quests/actions";
 import { useSearchParams } from "next/navigation";
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
+import { Modal } from '@/components/ui/modal';
+import ButtonSpinner from '@/components/ui/spinner/ButtonSpinner';
+import Spinner from "@/components/ui/spinner/Spinner";
 
 // Komponen ini adalah client UI/presentasi dan interaksi utama untuk 12 Week Goals.
 // - Menerima data quest dari parent (props initialQuests).
@@ -21,21 +24,56 @@ interface Quest {
   title: string;
 }
 
+interface RankedQuest extends Quest {
+  score: number;
+}
+
 export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false }: { initialQuests?: { id?: string, title: string }[], loading?: boolean }) {
+  const searchParams = useSearchParams();
+  // Ambil info kuartal dari URL
+  const qParam = searchParams.get("q");
+  let year = new Date().getFullYear();
+  let quarter = 1;
+  if (qParam) {
+    const match = qParam.match(/(\d{4})-Q([1-4])/);
+    if (match) {
+      year = parseInt(match[1]);
+      quarter = parseInt(match[2]);
+    }
+  }
+  const localKey = `better-planner-pairwise-${year}-Q${quarter}`;
+
   // State utama
   const [quests, setQuests] = useState<Quest[]>(
     QUEST_LABELS.map(label => ({ label, title: "" }))
   );
   const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
-  const [ranking, setRanking] = useState<{ label: string, title: string, score: number }[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [ranking, setRanking] = useState<RankedQuest[] | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [highlightEmpty, setHighlightEmpty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const searchParams = useSearchParams();
+  const [committing, setCommitting] = useState(false);
+  const [commitChecked, setCommitChecked] = useState(false);
+
+  // Load pairwise dari localStorage saat mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(localKey);
+      if (saved) {
+        setPairwiseResults(JSON.parse(saved));
+      }
+    } catch {}
+  }, [localKey]);
+
+  // Simpan pairwise ke localStorage setiap kali berubah
+  useEffect(() => {
+    try {
+      localStorage.setItem(localKey, JSON.stringify(pairwiseResults));
+    } catch {}
+  }, [pairwiseResults, localKey]);
 
   useEffect(() => {
     if (initialQuests && initialQuests.length > 0) {
-      // Pad ke 10 quest, label A-J
       const padded = QUEST_LABELS.map((label, idx) => {
         const q = initialQuests[idx];
         return q ? { id: q.id, label, title: q.title } : { label, title: "" };
@@ -46,7 +84,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     }
   }, [initialQuests]);
 
-  // Otomatis hitung ranking setiap pairwiseResults berubah, tapi JANGAN urutkan quests
+  // Kalkulasi ranking
   useEffect(() => {
     const filledQuests = quests.filter(q => q.title.trim() !== "");
     if (filledQuests.length < 2) {
@@ -58,15 +96,22 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     Object.values(pairwiseResults).forEach(winner => {
       if (scores[winner] !== undefined) scores[winner] += 1;
     });
-    const result = quests.map(q => ({ ...q, score: scores[q.label] || 0 }))
-      .sort((a, b) => b.score - a.score);
+    // Mapping id dari initialQuests ke ranking
+    const result = quests.map((q, idx) => {
+      const initial = initialQuests[idx];
+      return {
+        ...q,
+        score: scores[q.label] || 0,
+        id: initial?.id,
+      };
+    }).sort((a, b) => b.score - a.score);
     setRanking(result);
-  }, [pairwiseResults, quests.length]);
+  }, [pairwiseResults, quests.length, quests, initialQuests]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[700px]">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-brand-600"></div>
+        <Spinner size={32} />
       </div>
     );
   }
@@ -79,7 +124,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
       return next;
     });
     setHighlightEmpty(false);
-    setError(null);
   };
 
   // Handler klik tombol perbandingan
@@ -95,7 +139,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
   const handleReset = () => {
     setPairwiseResults({});
     setRanking(null);
-    setError(null);
     setHighlightEmpty(false);
   };
 
@@ -105,22 +148,10 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     const questsWithId = quests.filter(q => q.id);
     const newQuests = quests.filter(q => !q.id && q.title.trim() !== "");
     try {
-      // Update semua quest yang punya id (meskipun title kosong)
       if (questsWithId.length > 0) {
         await updateQuests(questsWithId.map(q => ({ id: q.id!, title: q.title })));
       }
-      // Insert quest baru (tanpa id, dan title tidak kosong)
       if (newQuests.length > 0) {
-        const qParam = searchParams.get("q");
-        let year = new Date().getFullYear();
-        let quarter = 1;
-        if (qParam) {
-          const match = qParam.match(/(\d{4})-Q([1-4])/);
-          if (match) {
-            year = parseInt(match[1]);
-            quarter = parseInt(match[2]);
-          }
-        }
         await addMultipleQuests(newQuests.map(q => q.title), year, quarter);
       }
       CustomToast.success("Quest berhasil disimpan/diupdate!");
@@ -131,6 +162,22 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     setSaving(false);
   };
 
+  // Handler komit main quest
+  const handleCommit = async () => {
+    if (!ranking) return;
+    setCommitting(true);
+    try {
+      const topQuestIds = ranking.filter(q => q.id).slice(0, 3).map(q => q.id!);
+      await commitTopQuests(topQuestIds);
+      localStorage.removeItem(localKey);
+      CustomToast.success("Main Quest berhasil dikomit!");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal commit main quest.";
+      CustomToast.error(errorMsg);
+    }
+    setCommitting(false);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 py-8 w-full max-w-none px-4 md:px-12">
       {/* Kiri: Input Quest */}
@@ -138,7 +185,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
         <ComponentCard className="text-center" title="10 Quests (Achievement Goal & End Result)" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
           <div className="space-y-4">
             {quests.map((q, idx) => {
-              // Cari ranking index quest ini (berdasarkan skor)
               let rankIdx = -1;
               let score = 0;
               if (ranking) {
@@ -148,7 +194,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                   score = found.score;
                 }
               }
-              // Highlight 3 teratas hanya jika score > 0
               const highlight = rankIdx > -1 && rankIdx < 3 && score > 0;
               return (
                 <div
@@ -163,7 +208,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                     onChange={e => handleQuestTitleChange(idx, e.target.value)}
                     required
                   />
-                  {/* Score box kanan atas */}
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 mr-2">
                     <span className="inline-block min-w-[28px] px-2 py-0.5 rounded bg-gray-200 text-xs font-bold text-gray-700 border border-gray-300 text-center select-none">
                       {score}
@@ -185,12 +229,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
           >
             {saving ? (
               <>
-                <span className="inline-block mr-2 align-middle animate-spin">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                  </svg>
-                </span>
+                <ButtonSpinner />
                 Menyimpan...
               </>
             ) : "Simpan"}
@@ -226,7 +265,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                         return (
                           <td key={colQ.label} className="border px-1 py-1 text-center">
                             {winner ? (
-                              <span className="font-bold text-lg text-brand-400">{winner}</span>
+                              <span className="font-bold text-[16px] text-brand-400">{winner}</span>
                             ) : (
                               <div className="flex gap-1 justify-center">
                                 <Button
@@ -264,21 +303,61 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
           </div>
         </ComponentCard>
         <div className="mt-4 flex gap-2">
-          {error && (
-            <div className="mt-3 text-red-600 font-semibold text-sm">{error}</div>
-          )}
-          <div className="flex gap-2 mx-10 items-end w-full">
+          <Button
+            type="button"
+            size="md"
+            variant="primary"
+            className="w-full"
+            onClick={() => setShowModal(true)}
+          >
+            Hitung & Urutkan Prioritas
+          </Button>
+          <Button
+            type="button"
+            size="md"
+            variant="outline"
+            onClick={handleReset}
+            className="w-full"
+          >
+            Reset Matrix & Ranking
+          </Button>
+        </div>
+        {/* Modal hasil ranking 3 teratas */}
+        <Modal isOpen={showModal} onClose={() => setShowModal(false)} className="max-w-lg w-full mx-auto py-5">
+          <div className="p-6">
+            <h3 className="font-bold text-xl mb-4 text-center">Main Quest</h3>
+            <ol className="list-decimal pl-6 space-y-3">
+              {ranking && ranking.slice(0, 3).map((q, idx) => (
+                <li key={q.label} className="font-semibold text-lg flex items-center gap-2">
+                  <span>{idx + 1}.</span>
+                  <span>{q.title || <span className="text-gray-400">(kosong)</span>}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-6 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="commit-check"
+                checked={commitChecked}
+                onChange={e => setCommitChecked(e.target.checked)}
+                className="mr-2"
+              />
+              <label htmlFor="commit-check" className="text-sm">Saya yakin ingin menjadikan 3 Quest teratas ini sebagai Main Quest saya di quarter ini!</label>
+            </div>
             <Button
               type="button"
               size="md"
-              variant="outline"
-              onClick={handleReset}
-              className="w-full"
+              variant="primary"
+              className="mt-4 w-full"
+              disabled={!commitChecked || committing}
+              onClick={handleCommit}
             >
-              Reset Matrix & Ranking
+              {committing ? (
+                <ButtonSpinner />
+              ) : 'Lanjutkan'}
             </Button>
           </div>
-        </div>
+        </Modal>
       </div>
     </div>
   );
