@@ -46,6 +46,23 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     }
   }, [initialQuests]);
 
+  // Otomatis hitung ranking setiap pairwiseResults berubah, tapi JANGAN urutkan quests
+  useEffect(() => {
+    const filledQuests = quests.filter(q => q.title.trim() !== "");
+    if (filledQuests.length < 2) {
+      setRanking(null);
+      return;
+    }
+    const scores: { [label: string]: number } = {};
+    quests.forEach(q => { scores[q.label] = 0; });
+    Object.values(pairwiseResults).forEach(winner => {
+      if (scores[winner] !== undefined) scores[winner] += 1;
+    });
+    const result = quests.map(q => ({ ...q, score: scores[q.label] || 0 }))
+      .sort((a, b) => b.score - a.score);
+    setRanking(result);
+  }, [pairwiseResults, quests.length]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[700px]">
@@ -72,27 +89,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
       ...prev,
       [key]: winner === 'row' ? quests[row].label : quests[col].label
     }));
-  };
-
-  // Kalkulasi skor kemenangan
-  const handleCalculateRanking = () => {
-    const filledQuests = quests.filter(q => q.title.trim() !== "");
-    if (filledQuests.length < 2) {
-      setError("Minimal 2 quest harus diisi untuk melakukan perbandingan dan ranking.");
-      setHighlightEmpty(true);
-      setRanking(null);
-      return;
-    }
-    setError(null);
-    setHighlightEmpty(false);
-    const scores: { [label: string]: number } = {};
-    quests.forEach(q => { scores[q.label] = 0; });
-    Object.values(pairwiseResults).forEach(winner => {
-      if (scores[winner] !== undefined) scores[winner] += 1;
-    });
-    const result = quests.map(q => ({ ...q, score: scores[q.label] || 0 }))
-      .sort((a, b) => b.score - a.score);
-    setRanking(result);
   };
 
   // Reset matrix & ranking
@@ -139,20 +135,43 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     <div className="grid grid-cols-1 md:grid-cols-12 py-8 w-full max-w-none px-4 md:px-12">
       {/* Kiri: Input Quest */}
       <div className="col-span-1 md:col-span-4">
-        <ComponentCard title="My 10 Quests (Achievement Goal & End Result)" className="text-center">
+        <ComponentCard className="text-center" title="10 Quests (Achievement Goal & End Result)" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
           <div className="space-y-4">
-            {quests.map((q, idx) => (
-              <div key={q.label} className="flex items-center gap-3">
-                <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
-                <input
-                  className={`flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 ${highlightEmpty && !q.title.trim() ? 'border-red-500 ring-2 ring-red-200' : ''}`}
-                  placeholder={`Quest ${idx+1}`}
-                  value={q.title}
-                  onChange={e => handleQuestTitleChange(idx, e.target.value)}
-                  required
-                />
-              </div>
-            ))}
+            {quests.map((q, idx) => {
+              // Cari ranking index quest ini (berdasarkan skor)
+              let rankIdx = -1;
+              let score = 0;
+              if (ranking) {
+                const found = ranking.find((r) => r.label === q.label);
+                if (found) {
+                  rankIdx = ranking.indexOf(found);
+                  score = found.score;
+                }
+              }
+              // Highlight 3 teratas hanya jika score > 0
+              const highlight = rankIdx > -1 && rankIdx < 3 && score > 0;
+              return (
+                <div
+                  key={q.label}
+                  className={`flex items-center gap-3 relative rounded transition-colors ${highlight ? 'bg-brand-100 border border-brand-400' : ''}`}
+                >
+                  <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
+                  <input
+                    className={`flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 ${highlightEmpty && !q.title.trim() ? 'border-red-500 ring-2 ring-red-200' : ''}`}
+                    placeholder={`Quest ${idx+1}`}
+                    value={q.title}
+                    onChange={e => handleQuestTitleChange(idx, e.target.value)}
+                    required
+                  />
+                  {/* Score box kanan atas */}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 mr-2">
+                    <span className="inline-block min-w-[28px] px-2 py-0.5 rounded bg-gray-200 text-xs font-bold text-gray-700 border border-gray-300 text-center select-none">
+                      {score}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </ComponentCard>
         <div className="mt-4 flex gap-2 mx-10">
@@ -180,12 +199,12 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
       </div>
       {/* Kanan: Matriks Perbandingan */}
       <div className="col-span-1 md:col-span-8">
-        <ComponentCard title="HIGHEST FIRST" className="text-center">
+        <ComponentCard className="text-center" title="HIGHEST FIRST" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
           <div className="overflow-x-auto">
             <table className="min-w-max border-collapse border text-xs">
               <thead>
                 <tr>
-                  <th className="border px-1 py-1 w-12 bg-gray-50"></th>
+                  <th className="border px-1 py-1 w-16 bg-gray-50"></th>
                   {quests.map((q) => (
                     <th key={q.label} className="border px-1 py-1 w-24 bg-gray-50 font-bold">
                       {q.label}
@@ -207,7 +226,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                         return (
                           <td key={colQ.label} className="border px-1 py-1 text-center">
                             {winner ? (
-                              <span className="font-bold text-brand-600">{winner}</span>
+                              <span className="font-bold text-lg text-brand-400">{winner}</span>
                             ) : (
                               <div className="flex gap-1 justify-center">
                                 <Button
@@ -233,13 +252,9 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                           </td>
                         );
                       }
-                      // i > j
-                      const key = `${colQ.label}-${rowQ.label}`;
-                      const winner = pairwiseResults[key];
+                      // i > j: cell bawah, tampilkan kotak abu-abu kosong
                       return (
-                        <td key={colQ.label} className="border px-1 py-1 text-center text-gray-500">
-                          {winner ? <span className="font-bold">{winner}</span> : ''}
-                        </td>
+                        <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>
                       );
                     })}
                   </tr>
@@ -248,43 +263,21 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
             </table>
           </div>
         </ComponentCard>
-          <div className="mt-4 flex gap-2">
-            {error && (
-              <div className="mt-3 text-red-600 font-semibold text-sm">{error}</div>
-            )}
-            <div className="flex gap-2 mx-10 items-end w-full">
-              <Button
-                type="button"
-                size="md"
-                variant="primary"
-                onClick={handleCalculateRanking}
-                disabled={saving}
-                className="w-full"
-              >
-                Hitung & Urutkan Prioritas
-              </Button>
-              <Button
-                type="button"
-                size="md"
-                variant="outline"
-                onClick={handleReset}
-                className="w-full"
-              >
-                Reset Matrix & Ranking
-              </Button>
-            </div>
-            {ranking && (
-              <div className="mt-6">
-                <h3 className="font-bold mb-2">Ranking Quest Berdasarkan Kemenangan:</h3>
-                <ol className="list-decimal pl-6 space-y-1">
-                  {ranking.map((q) => (
-                    <li key={q.label} className="font-semibold text-brand-700">
-                      {q.label} - {q.title || <span className="text-gray-400">(kosong)</span>} <span className="text-gray-500 font-normal">({q.score} kemenangan)</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
+        <div className="mt-4 flex gap-2">
+          {error && (
+            <div className="mt-3 text-red-600 font-semibold text-sm">{error}</div>
+          )}
+          <div className="flex gap-2 mx-10 items-end w-full">
+            <Button
+              type="button"
+              size="md"
+              variant="outline"
+              onClick={handleReset}
+              className="w-full"
+            >
+              Reset Matrix & Ranking
+            </Button>
+          </div>
         </div>
       </div>
     </div>
