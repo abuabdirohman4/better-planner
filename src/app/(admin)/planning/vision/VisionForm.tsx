@@ -64,7 +64,8 @@ export default function VisionForm({ visions }: VisionFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="overflow-x-auto">
+      {/* Desktop Table Layout */}
+      <div className="overflow-x-auto hidden sm:block">
         <table className="min-w-full border rounded-xl bg-white dark:bg-gray-900">
           <thead>
             <tr className="bg-gray-100 dark:bg-gray-800">
@@ -110,8 +111,38 @@ export default function VisionForm({ visions }: VisionFormProps) {
           </tbody>
         </table>
       </div>
+      {/* Mobile Card Layout */}
+      <div className="block sm:hidden space-y-4">
+        {LIFE_AREAS.map((area) => (
+          <div key={area} className="border rounded-xl bg-white dark:bg-gray-900 p-4">
+            <div className="font-semibold mb-2 text-center text-gray-800 dark:text-white/90">{area}</div>
+            <Label htmlFor={`${area}-vision_3_5_year`} className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Visi 3-5 Tahun
+            </Label>
+            <textarea
+              id={`${area}-vision_3_5_year`}
+              name={`${area}-vision_3_5_year`}
+              className="w-full rounded-lg border px-4 py-2.5 text-sm mb-3"
+              value={formData[`${area}-vision_3_5_year`] || ''}
+              onChange={(e) => handleInputChange(`${area}-vision_3_5_year`, e.target.value)}
+              rows={3}
+            />
+            <Label htmlFor={`${area}-vision_10_year`} className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Visi 10 Tahun
+            </Label>
+            <textarea
+              id={`${area}-vision_10_year`}
+              name={`${area}-vision_10_year`}
+              className="w-full rounded-lg border px-4 py-2.5 text-sm"
+              value={formData[`${area}-vision_10_year`] || ''}
+              onChange={(e) => handleInputChange(`${area}-vision_10_year`, e.target.value)}
+              rows={3}
+            />
+          </div>
+        ))}
+      </div>
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className='w-full sm:w-auto'>
           {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
         </Button>
       </div>
