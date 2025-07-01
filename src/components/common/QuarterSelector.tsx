@@ -10,13 +10,27 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
 function getWeekOfYear(date: Date) {
   const start = new Date(date.getFullYear(), 0, 1);
   const diff = (date.getTime() - start.getTime()) / 86400000;
-  // 0 = Sunday, 1 = Monday, ...
   const day = start.getDay() || 7;
   return Math.ceil((diff + day) / 7);
 }
 
-// Helper: get current quarter and year
-function getCurrentQuarterYear() {
+// Helper: parse q param (e.g. 2025-Q2)
+function parseQParam(q: string | null): { year: number; quarter: number } {
+  if (!q) {
+    const now = new Date();
+    const week = getWeekOfYear(now);
+    let quarter = 1;
+    if (week >= 1 && week <= 13) quarter = 1;
+    else if (week >= 14 && week <= 26) quarter = 2;
+    else if (week >= 27 && week <= 39) quarter = 3;
+    else quarter = 4;
+    return { year: now.getFullYear(), quarter };
+  }
+  const match = q.match(/(\d{4})-Q([1-4])/);
+  if (match) {
+    return { year: parseInt(match[1]), quarter: parseInt(match[2]) };
+  }
+  // fallback
   const now = new Date();
   const week = getWeekOfYear(now);
   let quarter = 1;
@@ -27,17 +41,6 @@ function getCurrentQuarterYear() {
   return { year: now.getFullYear(), quarter };
 }
 
-// Helper: parse q param (e.g. 2025-Q2)
-function parseQParam(q: string | null): { year: number; quarter: number } {
-  if (!q) return getCurrentQuarterYear();
-  const match = q.match(/(\d{4})-Q([1-4])/);
-  if (match) {
-    return { year: parseInt(match[1]), quarter: parseInt(match[2]) };
-  }
-  return getCurrentQuarterYear();
-}
-
-// Helper: format q param
 function formatQParam(year: number, quarter: number) {
   return `${year}-Q${quarter}`;
 }
@@ -75,13 +78,9 @@ const QuarterSelector: React.FC = () => {
   const qParam = searchParams.get("q");
   const { year, quarter } = parseQParam(qParam);
 
-  // Dropdown open state (local, not for value)
   const [isOpen, setIsOpen] = useState(false);
-
-  // Generate options for dropdown
   const options = useMemo(() => generateQuarterOptions({ year, quarter }), [year, quarter]);
 
-  // Handler: set q param in URL
   const setQuarter = (y: number, q: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("q", formatQParam(y, q));
@@ -89,7 +88,6 @@ const QuarterSelector: React.FC = () => {
     setIsOpen(false);
   };
 
-  // Handler: left/right
   const handlePrev = () => {
     const prev = getPrevQuarter(year, quarter);
     setQuarter(prev.year, prev.quarter);
@@ -98,8 +96,6 @@ const QuarterSelector: React.FC = () => {
     const next = getNextQuarter(year, quarter);
     setQuarter(next.year, next.quarter);
   };
-
-  // Handler: dropdown select
   const handleSelect = (y: number, q: number) => {
     setQuarter(y, q);
   };
