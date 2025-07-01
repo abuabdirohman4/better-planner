@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
+import { addMultipleQuests, updateQuests } from "../quests/actions";
+import { useSearchParams } from "next/navigation";
+import Button from '@/components/ui/button/Button';
+import CustomToast from '@/components/ui/toast/CustomToast';
 
 // Komponen ini adalah client UI/presentasi dan interaksi utama untuk 12 Week Goals.
 // - Menerima data quest dari parent (props initialQuests).
@@ -24,6 +28,10 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
   );
   const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
   const [ranking, setRanking] = useState<{ label: string, title: string, score: number }[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [highlightEmpty, setHighlightEmpty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (initialQuests && initialQuests.length > 0) {
@@ -53,6 +61,8 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
       next[idx] = { ...next[idx], title: value };
       return next;
     });
+    setHighlightEmpty(false);
+    setError(null);
   };
 
   // Handler klik tombol perbandingan
@@ -66,6 +76,15 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
 
   // Kalkulasi skor kemenangan
   const handleCalculateRanking = () => {
+    const filledQuests = quests.filter(q => q.title.trim() !== "");
+    if (filledQuests.length < 2) {
+      setError("Minimal 2 quest harus diisi untuk melakukan perbandingan dan ranking.");
+      setHighlightEmpty(true);
+      setRanking(null);
+      return;
+    }
+    setError(null);
+    setHighlightEmpty(false);
     const scores: { [label: string]: number } = {};
     quests.forEach(q => { scores[q.label] = 0; });
     Object.values(pairwiseResults).forEach(winner => {
@@ -76,18 +95,58 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
     setRanking(result);
   };
 
+  // Reset matrix & ranking
+  const handleReset = () => {
+    setPairwiseResults({});
+    setRanking(null);
+    setError(null);
+    setHighlightEmpty(false);
+  };
+
+  // Handler simpan/update quest
+  const handleSaveQuests = async () => {
+    setSaving(true);
+    const questsWithId = quests.filter(q => q.id);
+    const newQuests = quests.filter(q => !q.id && q.title.trim() !== "");
+    try {
+      // Update semua quest yang punya id (meskipun title kosong)
+      if (questsWithId.length > 0) {
+        await updateQuests(questsWithId.map(q => ({ id: q.id!, title: q.title })));
+      }
+      // Insert quest baru (tanpa id, dan title tidak kosong)
+      if (newQuests.length > 0) {
+        const qParam = searchParams.get("q");
+        let year = new Date().getFullYear();
+        let quarter = 1;
+        if (qParam) {
+          const match = qParam.match(/(\d{4})-Q([1-4])/);
+          if (match) {
+            year = parseInt(match[1]);
+            quarter = parseInt(match[2]);
+          }
+        }
+        await addMultipleQuests(newQuests.map(q => q.title), year, quarter);
+      }
+      CustomToast.success("Quest berhasil disimpan/diupdate!");
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan quest.";
+      CustomToast.error(errorMsg);
+    }
+    setSaving(false);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 max-w-6xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-12 py-8 w-full max-w-none px-4 md:px-12">
       {/* Kiri: Input Quest */}
-      <div>
-        <ComponentCard title="Masukkan 10 Kandidat Quest (A-J)">
-          <div className="space-y-4">
+      <div className="col-span-1 md:col-span-4">
+        <ComponentCard title="My 10 Quests (Achievement Goal & End Result)" className="text-center">
+          <div className="space-y-4.5">
             {quests.map((q, idx) => (
               <div key={q.label} className="flex items-center gap-3">
                 <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
                 <input
-                  className="flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
-                  placeholder={`Judul Quest ${q.label}`}
+                  className={`flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 ${highlightEmpty && !q.title.trim() ? 'border-red-500 ring-2 ring-red-200' : ''}`}
+                  placeholder={`Quest ${idx+1}`}
                   value={q.title}
                   onChange={e => handleQuestTitleChange(idx, e.target.value)}
                   required
@@ -96,17 +155,39 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
             ))}
           </div>
         </ComponentCard>
+        <div className="mt-4 flex gap-2 mx-10">
+          <Button
+            type="button"
+            size="md"
+            variant="primary"
+            onClick={handleSaveQuests}
+            disabled={saving}
+            className="w-full"
+          >
+            {saving ? (
+              <>
+                <span className="inline-block mr-2 align-middle animate-spin">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                </span>
+                Menyimpan...
+              </>
+            ) : "Simpan"}
+          </Button>
+        </div>
       </div>
       {/* Kanan: Matriks Perbandingan */}
-      <div>
-        <ComponentCard title="Matriks Perbandingan Biner (A-J)">
+      <div className="col-span-1 md:col-span-8">
+        <ComponentCard title="HIGHEST FIRST" className="text-center">
           <div className="overflow-x-auto">
             <table className="min-w-max border-collapse border text-xs">
               <thead>
                 <tr>
-                  <th className="border px-2 py-1 bg-gray-50"></th>
+                  <th className="border px-2 py-1 w-14 bg-gray-50"></th>
                   {quests.map((q) => (
-                    <th key={q.label} className="border px-2 py-1 bg-gray-50 font-bold">
+                    <th key={q.label} className={`border px-2 py-1 ${q.label == 'A' ? 'w-14' : 'w-24'} bg-gray-50 font-bold`}>
                       {q.label}
                     </th>
                   ))}
@@ -115,7 +196,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
               <tbody>
                 {quests.map((rowQ, i) => (
                   <tr key={rowQ.label}>
-                    <th className="border px-2 py-1 bg-gray-50 font-bold text-left">{rowQ.label}</th>
+                    <th className="border px-2 py-1 w-10 h-14 bg-gray-50 font-bold text-center">{rowQ.label}</th>
                     {quests.map((colQ, j) => {
                       if (i === j) {
                         return <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center"></td>;
@@ -129,20 +210,24 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                               <span className="font-bold text-brand-600">{winner}</span>
                             ) : (
                               <div className="flex gap-1 justify-center">
-                                <button
+                                <Button
                                   type="button"
-                                  className="px-2 py-1 rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  size="sm"
+                                  variant="outline"
+                                  className="px-2 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                   onClick={() => handlePairwiseClick(i, j, 'row')}
                                 >
                                   {rowQ.label}
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
-                                  className="px-2 py-1 rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  size="sm"
+                                  variant="outline"
+                                  className="px-2 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                   onClick={() => handlePairwiseClick(i, j, 'col')}
                                 >
                                   {colQ.label}
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </td>
@@ -152,15 +237,9 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                       const key = `${colQ.label}-${rowQ.label}`;
                       const winner = pairwiseResults[key];
                       return (
-                        <>
-                        {winner ? <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
-                          <span className="font-bold">{winner}</span>
-                        </td> : <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center"></td>}
-                        {/* <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
+                        <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
                           {winner ? <span className="font-bold">{winner}</span> : ''}
-                        </td> */}
-                        {/* <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center">-</td> */}
-                        </>
+                        </td>
                       );
                     })}
                   </tr>
@@ -168,28 +247,45 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
               </tbody>
             </table>
           </div>
-          <div className="mt-6">
-            <button
-              type="button"
-              className="w-full py-2 rounded bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm"
-              onClick={handleCalculateRanking}
-            >
-              Hitung & Urutkan Prioritas
-            </button>
-          </div>
-          {ranking && (
-            <div className="mt-6">
-              <h3 className="font-bold mb-2">Ranking Quest Berdasarkan Kemenangan:</h3>
-              <ol className="list-decimal pl-6 space-y-1">
-                {ranking.map((q) => (
-                  <li key={q.label} className="font-semibold text-brand-700">
-                    {q.label} - {q.title || <span className="text-gray-400">(kosong)</span>} <span className="text-gray-500 font-normal">({q.score} kemenangan)</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
         </ComponentCard>
+          <div className="mt-4 flex gap-2">
+            {error && (
+              <div className="mt-3 text-red-600 font-semibold text-sm">{error}</div>
+            )}
+            <div className="flex gap-2 mx-10 items-end w-full">
+              <Button
+                type="button"
+                size="md"
+                variant="primary"
+                onClick={handleCalculateRanking}
+                disabled={saving}
+                className="w-full"
+              >
+                Hitung & Urutkan Prioritas
+              </Button>
+              <Button
+                type="button"
+                size="md"
+                variant="outline"
+                onClick={handleReset}
+                className="w-full"
+              >
+                Reset Matrix & Ranking
+              </Button>
+            </div>
+            {ranking && (
+              <div className="mt-6">
+                <h3 className="font-bold mb-2">Ranking Quest Berdasarkan Kemenangan:</h3>
+                <ol className="list-decimal pl-6 space-y-1">
+                  {ranking.map((q) => (
+                    <li key={q.label} className="font-semibold text-brand-700">
+                      {q.label} - {q.title || <span className="text-gray-400">(kosong)</span>} <span className="text-gray-500 font-normal">({q.score} kemenangan)</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );

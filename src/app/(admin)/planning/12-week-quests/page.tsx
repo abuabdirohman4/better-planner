@@ -6,5 +6,10 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <TwelveWeekGoalsLoader />;
+  return  (
+    <div className="max-w-none w-full">
+    <TwelveWeekGoalsLoader />;
+  </div>
+  )
+  
 } 
