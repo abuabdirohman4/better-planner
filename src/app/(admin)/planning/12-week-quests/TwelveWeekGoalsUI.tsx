@@ -140,7 +140,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
       {/* Kiri: Input Quest */}
       <div className="col-span-1 md:col-span-4">
         <ComponentCard title="My 10 Quests (Achievement Goal & End Result)" className="text-center">
-          <div className="space-y-4.5">
+          <div className="space-y-4">
             {quests.map((q, idx) => (
               <div key={q.label} className="flex items-center gap-3">
                 <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
@@ -185,9 +185,9 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
             <table className="min-w-max border-collapse border text-xs">
               <thead>
                 <tr>
-                  <th className="border px-2 py-1 w-14 bg-gray-50"></th>
+                  <th className="border px-1 py-1 w-12 bg-gray-50"></th>
                   {quests.map((q) => (
-                    <th key={q.label} className={`border px-2 py-1 ${q.label == 'A' ? 'w-14' : 'w-24'} bg-gray-50 font-bold`}>
+                    <th key={q.label} className="border px-1 py-1 w-24 bg-gray-50 font-bold">
                       {q.label}
                     </th>
                   ))}
@@ -196,16 +196,16 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
               <tbody>
                 {quests.map((rowQ, i) => (
                   <tr key={rowQ.label}>
-                    <th className="border px-2 py-1 w-10 h-14 bg-gray-50 font-bold text-center">{rowQ.label}</th>
+                    <th className="border px-1 py-1 w-10 h-14 bg-gray-50 font-bold text-center">{rowQ.label}</th>
                     {quests.map((colQ, j) => {
                       if (i === j) {
-                        return <td key={colQ.label} className="border px-2 py-1 bg-gray-100 text-center"></td>;
+                        return <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>;
                       }
                       if (i < j) {
                         const key = `${rowQ.label}-${colQ.label}`;
                         const winner = pairwiseResults[key];
                         return (
-                          <td key={colQ.label} className="border px-2 py-1 text-center">
+                          <td key={colQ.label} className="border px-1 py-1 text-center">
                             {winner ? (
                               <span className="font-bold text-brand-600">{winner}</span>
                             ) : (
@@ -214,7 +214,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="px-2 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  className="px-1 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                   onClick={() => handlePairwiseClick(i, j, 'row')}
                                 >
                                   {rowQ.label}
@@ -223,7 +223,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  className="px-2 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  className="px-1 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                   onClick={() => handlePairwiseClick(i, j, 'col')}
                                 >
                                   {colQ.label}
@@ -237,7 +237,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], loading = false 
                       const key = `${colQ.label}-${rowQ.label}`;
                       const winner = pairwiseResults[key];
                       return (
-                        <td key={colQ.label} className="border px-2 py-1 text-center text-gray-500">
+                        <td key={colQ.label} className="border px-1 py-1 text-center text-gray-500">
                           {winner ? <span className="font-bold">{winner}</span> : ''}
                         </td>
                       );
