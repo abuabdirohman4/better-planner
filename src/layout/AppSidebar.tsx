@@ -52,22 +52,22 @@ const planningNav: NavItem[] = [
   {
     icon: <TaskIcon />,
     name: "12 Week Quests",
-    path: "/12-week-quests",
+    path: "/planning/12-week-quests",
   },
   {
     icon: <PieChartIcon />,
     name: "Main Quests",
-    path: "/main-quests",
+    path: "/planning/main-quests",
   },
   {
     icon: <DocsIcon />,
     name: "Self Development Curriculum",
-    path: "/curriculum",
+    path: "/planning/curriculum",
   },
   {
     icon: <ShootingStarIcon />,
     name: "Best Week",
-    path: "/best-week",
+    path: "/planning/best-week",
   },
 ];
 

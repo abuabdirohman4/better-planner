@@ -3,7 +3,7 @@ import { signOut } from '@/app/(full-width-pages)/(auth)/actions'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: "Better Planner Dashboard",
+  title: "Dashboard | Better Planner",
   description: "Dashboard untuk aplikasi Better Planner",
 };
 
