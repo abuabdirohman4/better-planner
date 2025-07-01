@@ -1,0 +1,120 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
+import { upsertVision } from './actions';
+import { LIFE_AREAS } from './constants';
+import Button from '@/components/ui/button/Button';
+import Label from '@/components/form/Label';
+
+type Vision = {
+  life_area: string;
+  vision_3_5_year?: string;
+  vision_10_year?: string;
+};
+
+interface VisionFormProps {
+  visions: Vision[];
+}
+
+export default function VisionForm({ visions }: VisionFormProps) {
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize form data from visions
+  useEffect(() => {
+    const initialData: Record<string, string> = {};
+    LIFE_AREAS.forEach(area => {
+      const vision = visions.find(v => v.life_area === area);
+      initialData[`${area}-vision_3_5_year`] = vision?.vision_3_5_year || '';
+      initialData[`${area}-vision_10_year`] = vision?.vision_10_year || '';
+    });
+    setFormData(initialData);
+  }, [visions]);
+
+  const handleInputChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Create FormData from our state
+      const formDataObj = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataObj.append(key, value);
+      });
+
+      // Call server action
+      await upsertVision(formDataObj);
+
+      // Show success toast
+      showSuccessToast('Data visi berhasil disimpan!');
+    } catch {
+      showErrorToast('Gagal menyimpan data', 'Terjadi kesalahan saat menyimpan data');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border rounded-xl bg-white dark:bg-gray-900">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-800">
+              <th className="w-64 px-4 py-3 text-left font-semibold">Area Kehidupan</th>
+              <th className="px-4 py-3 text-left font-semibold">Visi 3-5 Tahun</th>
+              <th className="px-4 py-3 text-left font-semibold">Visi 10 Tahun</th>
+            </tr>
+          </thead>
+          <tbody>
+            {LIFE_AREAS.map((area) => (
+              <tr key={area} className="border-t border-gray-200 dark:border-gray-800">
+                <td className="w-64 px-4 py-3 align-top font-medium text-gray-800 dark:text-white/90 whitespace-nowrap">
+                  {area}
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <Label htmlFor={`${area}-vision_3_5_year`} className="sr-only">
+                    Visi 3-5 Tahun
+                  </Label>
+                  <textarea
+                    id={`${area}-vision_3_5_year`}
+                    name={`${area}-vision_3_5_year`}
+                    className="w-full rounded-lg border px-4 py-2.5 text-sm"
+                    value={formData[`${area}-vision_3_5_year`] || ''}
+                    onChange={(e) => handleInputChange(`${area}-vision_3_5_year`, e.target.value)}
+                    rows={3}
+                  />
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <Label htmlFor={`${area}-vision_10_year`} className="sr-only">
+                    Visi 10 Tahun
+                  </Label>
+                  <textarea
+                    id={`${area}-vision_10_year`}
+                    name={`${area}-vision_10_year`}
+                    className="w-full rounded-lg border px-4 py-2.5 text-sm"
+                    value={formData[`${area}-vision_10_year`] || ''}
+                    onChange={(e) => handleInputChange(`${area}-vision_10_year`, e.target.value)}
+                    rows={3}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+        </Button>
+      </div>
+    </form>
+  );
+} 

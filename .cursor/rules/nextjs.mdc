@@ -4,6 +4,7 @@ globs:
 alwaysApply: true
 ---
 Always start your output with "👽"
-- This is a NextJs v15 application
-- Using SSR mode in NextJs
+- This is a NextJs v15 application using the App Router.
+- Default to React Server Components and Dynamic Rendering.
+- CRITICAL: For any Server Component that uses `searchParams`, you MUST read its properties at the very top of the function, BEFORE any `await` calls. This is to prevent the `sync-dynamic-apis` error.
 - You can @ files here
