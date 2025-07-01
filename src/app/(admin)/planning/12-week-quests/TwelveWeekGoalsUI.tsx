@@ -25,7 +25,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
   const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
   const [ranking, setRanking] = useState<{ label: string, title: string, score: number }[] | null>(null);
 
-  // Auto-populasi quest dari initialQuests saat mount
   useEffect(() => {
     if (initialQuests && initialQuests.length > 0) {
       // Pad ke 10 quest, label A-J
@@ -34,6 +33,8 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
         return q ? { id: q.id, label, title: q.title } : { label, title: "" };
       });
       setQuests(padded);
+    } else {
+      setQuests(QUEST_LABELS.map(label => ({ label, title: "" })));
     }
   }, [initialQuests]);
 
@@ -75,7 +76,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [] }: { initialQuest
           <div className="space-y-4">
             {quests.map((q, idx) => (
               <div key={q.label} className="flex items-center gap-3">
-                <span className="w-6 text-right font-bold">{q.label}.</span>
+                <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
                 <input
                   className="flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800"
                   placeholder={`Judul Quest ${q.label}`}
