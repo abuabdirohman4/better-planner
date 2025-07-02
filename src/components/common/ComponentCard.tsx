@@ -5,6 +5,7 @@ interface ComponentCardProps {
   children: React.ReactNode;
   className?: string; // Additional custom classes for styling
   classNameTitle?: string; // Additional custom classes for styling
+  classNameHeader?: string; // Additional custom classes for styling
   desc?: string; // Description text
 }
 
@@ -13,6 +14,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   children,
   className = "",
   classNameTitle = "",
+  classNameHeader = "",
   desc = "",
 }) => {
   return (
@@ -20,7 +22,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
       className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
     >
       {/* Card Header */}
-      <div className="px-6 py-5">
+      <div className={`px-6 py-5 ${classNameHeader}`}>
         <h3 className={`text-base font-medium text-gray-800 dark:text-white/90 ${classNameTitle}`}>
           {title}
         </h3>

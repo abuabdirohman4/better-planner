@@ -75,7 +75,7 @@ export default function MainQuestsClient() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-2 md:px-0">
+    <div className="max-w-7xl mx-auto px-2 md:px-0">
       <h1 className="text-2xl text-center font-bold mb-6">Main Quests</h1>
       <div className="mb-6">
         <div className="flex justify-evenly border-b border-gray-200 dark:border-gray-700">
@@ -85,7 +85,7 @@ export default function MainQuestsClient() {
               className={`px-4 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
               onClick={() => setActiveTab(idx)}
             >
-              QUEST #{idx + 1}
+              HIGH FOCUS GOAL #{idx + 1}
             </button>
           ))}
         </div>
