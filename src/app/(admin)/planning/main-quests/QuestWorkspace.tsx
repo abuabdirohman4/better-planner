@@ -66,28 +66,34 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       <div className="space-y-4 mb-4">
         {loadingMilestones ? (
           <p className="text-gray-400">Memuat milestone...</p>
-        ) : milestones && milestones.length > 0 ? (
-          milestones.map((milestone: Milestone) => (
-            <MilestoneItem key={milestone.id} milestone={milestone} />
-          ))
         ) : (
-          <p className="text-gray-400">Belum ada milestone.</p>
+          Array.from({ length: 3 }).map((_, idx) => {
+            const milestone = milestones[idx];
+            if (milestone) {
+              return <MilestoneItem key={milestone.id} milestone={milestone} />;
+            } else {
+              return (
+                <div key={idx} className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-between min-h-[56px]">
+                  <form onSubmit={handleSubmit} className="flex gap-2 w-full">
+                    <InputField
+                      name="title"
+                      placeholder="Tambah milestone baru..."
+                      required
+                      className="flex-1"
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      disabled={loading}
+                    />
+                    <Button type="submit" size="sm" variant="primary" disabled={loading}>
+                      {loading ? 'Menambah...' : 'Tambah'}
+                    </Button>
+                  </form>
+                </div>
+              );
+            }
+          })
         )}
       </div>
-      <form onSubmit={handleSubmit} className="flex gap-2 mt-2">
-        <InputField
-          name="title"
-          placeholder="Tambah milestone baru..."
-          required
-          className="flex-1"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          disabled={loading}
-        />
-        <Button type="submit" size="sm" variant="primary" disabled={loading}>
-          {loading ? 'Menambah...' : 'Tambah'}
-        </Button>
-      </form>
     </ComponentCard>
   );
 } 

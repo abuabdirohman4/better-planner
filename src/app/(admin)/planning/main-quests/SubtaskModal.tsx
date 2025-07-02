@@ -5,6 +5,7 @@ import InputField from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import CustomToast from '@/components/ui/toast/CustomToast';
+import { updateTask } from '../quests/actions';
 
 interface Subtask {
   id: string;
@@ -17,6 +18,9 @@ export default function SubtaskModal({ open, onClose, parentTaskId, milestoneId,
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingSubtasks, setLoadingSubtasks] = useState(true);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editSubtaskValue, setEditSubtaskValue] = useState('');
+  const [editSubtaskLoading, setEditSubtaskLoading] = useState(false);
 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
@@ -89,6 +93,33 @@ export default function SubtaskModal({ open, onClose, parentTaskId, milestoneId,
     }
   };
 
+  const handleEditSubtask = (subtask: Subtask) => {
+    setEditingSubtaskId(subtask.id);
+    setEditSubtaskValue(subtask.title);
+  };
+
+  const handleEditSubtaskCancel = () => {
+    setEditingSubtaskId(null);
+    setEditSubtaskValue('');
+  };
+
+  const handleEditSubtaskSave = async (subtask: Subtask) => {
+    if (!editSubtaskValue.trim()) return;
+    setEditSubtaskLoading(true);
+    try {
+      await updateTask(subtask.id, editSubtaskValue);
+      setEditingSubtaskId(null);
+      setEditSubtaskValue('');
+      fetchSubtasks();
+      if (onSubtasksChanged) onSubtasksChanged();
+      CustomToast.success('Sub-tugas berhasil diupdate');
+    } catch (e) {
+      CustomToast.error('Gagal update sub-tugas');
+    } finally {
+      setEditSubtaskLoading(false);
+    }
+  };
+
   return (
     <Modal isOpen={open} onClose={onClose} showCloseButton>
       <div className="p-4 min-w-[320px] max-w-[400px]">
@@ -100,7 +131,24 @@ export default function SubtaskModal({ open, onClose, parentTaskId, milestoneId,
             subtasks.map((subtask) => (
               <label key={subtask.id} className="flex items-center gap-2 cursor-pointer select-none">
                 <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
-                <span className={subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}>{subtask.title}</span>
+                {editingSubtaskId === subtask.id ? (
+                  <>
+                    <input
+                      className="border rounded px-2 py-1 text-sm mr-2"
+                      value={editSubtaskValue}
+                      onChange={e => setEditSubtaskValue(e.target.value)}
+                      disabled={editSubtaskLoading}
+                      autoFocus
+                    />
+                    <button onClick={() => handleEditSubtaskSave(subtask)} disabled={editSubtaskLoading} className="text-brand-600 font-bold text-xs mr-1">Simpan</button>
+                    <button onClick={handleEditSubtaskCancel} disabled={editSubtaskLoading} className="text-gray-400 text-xs">Batal</button>
+                  </>
+                ) : (
+                  <>
+                    <span className={subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}>{subtask.title}</span>
+                    <button type="button" onClick={() => handleEditSubtask(subtask)} className="ml-2 text-xs text-brand-500 underline">Edit</button>
+                  </>
+                )}
               </label>
             ))
           ) : (
