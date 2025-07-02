@@ -305,4 +305,16 @@ export async function deleteTask(taskId: string) {
   if (error) throw new Error('Gagal hapus task: ' + (error.message || ''));
   revalidatePath('/planning/main-quests');
   return { message: 'Task berhasil dihapus!' };
+}
+
+// Update motivation quest berdasarkan id
+export async function updateQuestMotivation(questId: string, motivation: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('quests')
+    .update({ motivation })
+    .eq('id', questId);
+  if (error) throw new Error('Gagal update motivation: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Motivation berhasil diupdate!' };
 } 
