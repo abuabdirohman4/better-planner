@@ -118,7 +118,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[700px]">
+      <div className="flex justify-center items-center min-h-[800px]">
         <Spinner size={32} />
       </div>
     );
