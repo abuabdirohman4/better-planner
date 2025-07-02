@@ -211,148 +211,148 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
   };
 
   return (
-      <div className="w-full max-w-none bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row">
-        {/* Kiri: Input Quest */}
-        <div className="w-full md:w-1/3 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-8 flex flex-col justify-between">
-          <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="INPUT 10 QUESTS" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
-            <div className="space-y-5">
-              {quests.map((q, idx) => {
-                let rankIdx = -1;
-                let score = 0;
-                if (ranking) {
-                  const found = ranking.find((r) => r.label === q.label);
-                  if (found) {
-                    rankIdx = ranking.indexOf(found);
-                    score = found.score;
-                  }
+    <div className="w-full max-w-none bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row">
+      {/* Kiri: Input Quest */}
+      <div className="w-full md:w-1/3 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-8 flex flex-col justify-between">
+        <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="INPUT 10 QUESTS" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
+          <div className="space-y-5">
+            {quests.map((q, idx) => {
+              let rankIdx = -1;
+              let score = 0;
+              if (ranking) {
+                const found = ranking.find((r) => r.label === q.label);
+                if (found) {
+                  rankIdx = ranking.indexOf(found);
+                  score = found.score;
                 }
-                const highlight = rankIdx > -1 && rankIdx < 3 && score > 0;
-                return (
-                  <div
-                    key={q.label}
-                    className={`flex items-center gap-2 pl-1 relative rounded transition-colors ${highlight ? 'bg-brand-100 border border-brand-400' : ''}`}
-                  >
-                    <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
-                    <input
-                      className={`flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 ${highlightEmpty && !q.title.trim() ? 'border-red-500 ring-2 ring-red-200' : ''}`}
-                      placeholder={`Quest ${idx+1}`}
-                      value={q.title}
-                      onChange={e => handleQuestTitleChange(idx, e.target.value)}
-                      required
-                    />
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 mr-2">
-                      <span className="inline-block min-w-[28px] px-2 py-0.5 rounded bg-gray-200 text-xs font-bold text-gray-700 border border-gray-300 text-center select-none">
-                        {score}
-                      </span>
-                    </div>
+              }
+              const highlight = rankIdx > -1 && rankIdx < 3 && score > 0;
+              return (
+                <div
+                  key={q.label}
+                  className={`flex items-center gap-2 pl-1 relative rounded transition-colors ${highlight ? 'bg-brand-100 border border-brand-400' : ''}`}
+                >
+                  <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
+                  <input
+                    className={`flex-1 h-11 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 ${highlightEmpty && !q.title.trim() ? 'border-red-500 ring-2 ring-red-200' : ''}`}
+                    placeholder={`Quest ${idx+1}`}
+                    value={q.title}
+                    onChange={e => handleQuestTitleChange(idx, e.target.value)}
+                    required
+                  />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 mr-2">
+                    <span className="inline-block min-w-[28px] px-2 py-0.5 rounded bg-gray-200 text-xs font-bold text-gray-700 border border-gray-300 text-center select-none">
+                      {score}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          </ComponentCard>
-          <div className="mt-2 mx-10 flex">
-            <Button
-              type="button"
-              size="md"
-              variant="primary"
-              onClick={handleSaveQuests}
-              className="w-full"
-            >
-              Simpan
-            </Button>
+                </div>
+              );
+            })}
           </div>
-        </div>
-        {/* Kanan: Matriks Perbandingan */}
-        <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
-          <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="HIGHEST FIRST" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse border text-xs">
-                <thead>
-                  <tr>
-                    <th className="border px-1 py-1 min-w-14 bg-gray-50"></th>
-                    {quests.map((q) => (
-                      <th key={q.label} className={`border px-1 py-1 min-w-14 bg-gray-50 font-bold`}>
-                        {q.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {quests.map((rowQ, i) => (
-                    <tr key={rowQ.label}>
-                      <th
-                        className={`border px-1 py-1 w-10 ${isExpanded ? 'h-[3.61rem]' : 'h-[3.71rem]'} bg-gray-50 font-bold text-center`}
-                      >
-                        {rowQ.label}
-                      </th>
-                      {quests.map((colQ, j) => {
-                        if (i === j) {
-                          return <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>;
-                        }
-                        if (i < j) {
-                          const key = `${rowQ.label}-${colQ.label}`;
-                          const winner = pairwiseResults[key];
-                          return (
-                            <td key={colQ.label} className="border px-1 py-1 text-center">
-                              {winner ? (
-                                <span className="font-bold text-[16px] text-brand-400">{winner}</span>
-                              ) : (
-                                <div className="flex gap-1 justify-center">
-                                  <Button
-                                    type="button"
-                                    size="xs"
-                                    variant="outline"
-                                    className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
-                                    onClick={() => handlePairwiseClick(i, j, 'row')}
-                                  >
-                                    {rowQ.label}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="xs"
-                                    variant="outline"
-                                    className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
-                                    onClick={() => handlePairwiseClick(i, j, 'col')}
-                                  >
-                                    {colQ.label}
-                                  </Button>
-                                </div>
-                              )}
-                            </td>
-                          );
-                        }
-                        // i > j: cell bawah, tampilkan kotak abu-abu kosong
-                        return (
-                          <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </ComponentCard>
-          <div className="mt-2 mx-10 flex gap-2">
-            <Button
-              type="button"
-              size="md"
-              variant="outline"
-              onClick={handleReset}
-              className="w-full"
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              size="md"
-              variant="primary"
-              className="w-full"
-              onClick={handleCommit}
-            >
-              Submit
-            </Button>
-          </div>
+        </ComponentCard>
+        <div className="mt-2 mx-10 flex">
+          <Button
+            type="button"
+            size="md"
+            variant="primary"
+            onClick={handleSaveQuests}
+            className="w-full"
+          >
+            Simpan
+          </Button>
         </div>
       </div>
+      {/* Kanan: Matriks Perbandingan */}
+      <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
+        <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="HIGHEST FIRST" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse border text-xs">
+              <thead>
+                <tr>
+                  <th className="border px-1 py-1 min-w-14 bg-gray-50"></th>
+                  {quests.map((q) => (
+                    <th key={q.label} className={`border px-1 py-1 min-w-14 bg-gray-50 font-bold`}>
+                      {q.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {quests.map((rowQ, i) => (
+                  <tr key={rowQ.label}>
+                    <th
+                      className={`border px-1 py-1 w-10 ${isExpanded ? 'h-[3.61rem]' : 'h-[3.71rem]'} bg-gray-50 font-bold text-center`}
+                    >
+                      {rowQ.label}
+                    </th>
+                    {quests.map((colQ, j) => {
+                      if (i === j) {
+                        return <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>;
+                      }
+                      if (i < j) {
+                        const key = `${rowQ.label}-${colQ.label}`;
+                        const winner = pairwiseResults[key];
+                        return (
+                          <td key={colQ.label} className="border px-1 py-1 text-center">
+                            {winner ? (
+                              <span className="font-bold text-[16px] text-brand-400">{winner}</span>
+                            ) : (
+                              <div className="flex gap-1 justify-center">
+                                <Button
+                                  type="button"
+                                  size="xs"
+                                  variant="outline"
+                                  className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  onClick={() => handlePairwiseClick(i, j, 'row')}
+                                >
+                                  {rowQ.label}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="xs"
+                                  variant="outline"
+                                  className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                  onClick={() => handlePairwiseClick(i, j, 'col')}
+                                >
+                                  {colQ.label}
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      }
+                      // i > j: cell bawah, tampilkan kotak abu-abu kosong
+                      return (
+                        <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ComponentCard>
+        <div className="mt-2 mx-10 flex gap-2">
+          <Button
+            type="button"
+            size="md"
+            variant="outline"
+            onClick={handleReset}
+            className="w-full"
+          >
+            Reset
+          </Button>
+          <Button
+            type="button"
+            size="md"
+            variant="primary"
+            className="w-full"
+            onClick={handleCommit}
+          >
+            Submit
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 } 
