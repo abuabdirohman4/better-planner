@@ -76,9 +76,9 @@ export default function MainQuestsClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-2 md:px-0">
-      <h1 className="text-2xl text-center font-bold mb-6">Main Quests</h1>
+      {/* <h1 className="text-2xl text-center font-bold mb-6">Main Quest 🎯</h1> */}
       <div className="mb-6">
-        <div className="flex justify-evenly border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-evenly border-b border-gray-200 dark:border-gray-700 mx-36">
           {quests.map((quest, idx) => (
             <button
               key={quest.id}

@@ -1,9 +1,7 @@
-import { getMilestonesForQuest, addMilestone } from '../quests/actions';
 import MilestoneItem from './MilestoneItem';
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import InputField from '@/components/form/input/InputField';
-import CustomToast from '@/components/ui/toast/CustomToast';
 import { useState, useEffect } from 'react';
 
 type Milestone = { id: string; title: string; display_order: number };
@@ -44,7 +42,6 @@ export default function QuestDetailCard({ quest }: QuestDetailCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quest_id: quest.id, title: input })
       });
-      const data = await res.json();
       if (res.ok) {
         setInput('');
         fetchMilestones();

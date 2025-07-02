@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 // import Checkbox from '@/components/form/input/Checkbox';
-import CustomToast from '@/components/ui/toast/CustomToast';
 import SubtaskModal from './SubtaskModal';
 import { updateTask } from '../quests/actions';
 import debounce from 'lodash/debounce';
@@ -17,22 +16,23 @@ export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtas
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subtasks, setSubtasks] = useState<{ id: string; title: string; status: 'TODO' | 'DONE' }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const [editLoading, setEditLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Debounced auto-save
-  const debouncedSaveTask = useMemo(() => debounce(async (val: string) => {
-    setEditLoading(true);
-    try {
-      await updateTask(task.id, val);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1200);
-      handleSubtasksChanged();
-    } catch {}
-    setEditLoading(false);
-  }, 1500), [task.id]);
+  const debouncedSaveTask = useMemo(() =>
+    debounce(async (val: string) => {
+      setEditLoading(true);
+      try {
+        await updateTask(task.id, val);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1200);
+        fetchSubtasks();
+      } catch {}
+      setEditLoading(false);
+    }, 1500)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  , [task.id]);
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditValue(e.target.value);
@@ -55,6 +55,7 @@ export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtas
 
   useEffect(() => {
     fetchSubtasks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
   const handleSubtasksChanged = () => {
@@ -63,16 +64,6 @@ export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtas
 
   const completed = subtasks.filter(st => st.status === 'DONE').length;
   const total = subtasks.length;
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditValue(task.title);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
-    setEditValue(task.title);
-  };
 
   return (
     <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg px-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">

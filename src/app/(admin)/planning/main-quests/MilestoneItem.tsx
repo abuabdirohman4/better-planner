@@ -1,7 +1,4 @@
 import TaskItem from './TaskItem';
-import Button from '@/components/ui/button/Button';
-import InputField from '@/components/form/input/InputField';
-import CustomToast from '@/components/ui/toast/CustomToast';
 import { useState, useEffect, useMemo } from 'react';
 import { updateMilestone } from '../quests/actions';
 import debounce from 'lodash/debounce';
@@ -20,8 +17,6 @@ interface MilestoneItemProps {
 
 export default function MilestoneItem({ milestone }: MilestoneItemProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(milestone.title);
@@ -66,12 +61,10 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ milestone_id: milestone.id, title: val })
         });
-        const data = await res.json();
-        if (res.ok) {
-          fetchTasks();
-          setNewTaskInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
-          setLastSubmittedTask(vals => vals.map((v, i) => i === 0 ? val : v));
-        }
+        await res.json();
+        fetchTasks();
+        setNewTaskInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
+        setLastSubmittedTask(vals => vals.map((v, i) => i === 0 ? val : v));
       } finally {
         setNewTaskLoading(l => l.map((v, i) => i === 0 ? false : v));
       }
@@ -91,12 +84,10 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ milestone_id: milestone.id, title: val })
         });
-        const data = await res.json();
-        if (res.ok) {
-          fetchTasks();
-          setNewTaskInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
-          setLastSubmittedTask(vals => vals.map((v, i) => i === 1 ? val : v));
-        }
+        await res.json();
+        fetchTasks();
+        setNewTaskInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
+        setLastSubmittedTask(vals => vals.map((v, i) => i === 1 ? val : v));
       } finally {
         setNewTaskLoading(l => l.map((v, i) => i === 1 ? false : v));
       }
@@ -116,12 +107,10 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ milestone_id: milestone.id, title: val })
         });
-        const data = await res.json();
-        if (res.ok) {
-          fetchTasks();
-          setNewTaskInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
-          setLastSubmittedTask(vals => vals.map((v, i) => i === 2 ? val : v));
-        }
+        await res.json();
+        fetchTasks();
+        setNewTaskInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
+        setLastSubmittedTask(vals => vals.map((v, i) => i === 2 ? val : v));
       } finally {
         setNewTaskLoading(l => l.map((v, i) => i === 2 ? false : v));
       }
@@ -137,41 +126,11 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
 
   useEffect(() => {
     fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [milestone.id]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ milestone_id: milestone.id, title: input })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setInput('');
-        fetchTasks();
-        CustomToast.success(data.message || 'Tugas utama berhasil ditambahkan');
-      } else {
-        CustomToast.error(data.error || 'Gagal menambah tugas utama');
-      }
-    } catch {
-      CustomToast.error('Gagal menambah tugas utama');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditValue(milestone.title);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditing(false);
     setEditValue(milestone.title);
   };
 
@@ -181,6 +140,7 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
         <TaskDetailCard task={activeTask} onBack={() => setActiveTask(null)} milestoneTitle={milestone.title} milestoneId={milestone.id} />
       ) : (
         <>
+          <label>Langkah selanjutnya untuk mecapai Milestone 1 :</label>
           <div className="font-semibold mb-2 flex items-center gap-2">
             {isEditing ? (
               <>

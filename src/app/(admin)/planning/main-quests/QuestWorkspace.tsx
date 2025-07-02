@@ -17,6 +17,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
   const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
   const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
   const [lastSubmittedMilestone, setLastSubmittedMilestone] = useState(['', '', '']);
+  const [activeMilestoneIdx, setActiveMilestoneIdx] = useState(0);
 
   // Debounced auto-save
   const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
@@ -122,41 +123,58 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quest.id]);
 
+  // MilestoneBar: 3 milestone vertical
+  const renderMilestoneBar = () => (
+    <div className="flex flex-col gap-4 justify-center mb-6">
+      {Array.from({ length: 3 }).map((_, idx) => {
+        const milestone = milestones[idx];
+        return (
+          <div
+            key={milestone ? milestone.id : idx}
+            className={`w-full rounded-lg border px-4 py-3 cursor-pointer transition-all duration-150 shadow-sm mb-0 ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'}`}
+            onClick={() => setActiveMilestoneIdx(idx)}
+          >
+            <div className="font-bold text-lg mb-1">
+              {milestone ? milestone.title : <span className="text-gray-400">Milestone {idx + 1}</span>}
+            </div>
+            {!milestone && (
+              <input
+                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900"
+                placeholder="Tambah milestone baru..."
+                value={newMilestoneInputs[idx]}
+                onChange={e => {
+                  const val = e.target.value;
+                  setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
+                }}
+                disabled={newMilestoneLoading[idx]}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <ComponentCard title={quest.title} classNameTitle='text-center text-xl font-bold' classNameHeader="pb-0">
-      <label className='translate-y-10'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
-      <div>
-        <textarea
-          className="border rounded px-2 py-1 text-sm w-full max-w-xl"
-          value={motivationValue}
-          onChange={handleMotivationChange}
-          rows={2}
-        />
-      </div>
+    <ComponentCard title={quest.title} className='max-w-2xl mx-auto' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
+      <label className='block mb-2 font-semibold'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
+      <textarea
+        className="border rounded mb-4 px-2 py-1 text-sm w-full"
+        value={motivationValue}
+        onChange={handleMotivationChange}
+        rows={3}
+      />
+      <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
+      {renderMilestoneBar()}
       <div className="space-y-4 mb-4">
         {loadingMilestones ? (
           <p className="text-gray-400">Memuat milestone...</p>
         ) : (
-          Array.from({ length: 3 }).map((_, idx) => {
-            const milestone = milestones[idx];
-            if (milestone) {
-              return <MilestoneItem key={milestone.id} milestone={milestone} />;
-            } else {
-              return (
-                <input
-                  key={idx}
-                  className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900"
-                  placeholder="Tambah milestone baru..."
-                  value={newMilestoneInputs[idx]}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
-                  }}
-                  disabled={newMilestoneLoading[idx]}
-                />
-              );
-            }
-          })
+          milestones[activeMilestoneIdx] ? (
+            <MilestoneItem key={milestones[activeMilestoneIdx].id} milestone={milestones[activeMilestoneIdx]} />
+          ) : (
+            <p className="text-gray-400">Belum ada milestone untuk slot ini.</p>
+          )
         )}
       </div>
     </ComponentCard>

@@ -114,6 +114,7 @@ export default function SubtaskModal({ open, onClose, parentTaskId, milestoneId,
       if (onSubtasksChanged) onSubtasksChanged();
       CustomToast.success('Sub-tugas berhasil diupdate');
     } catch (e) {
+      console.log('error: ', e)
       CustomToast.error('Gagal update sub-tugas');
     } finally {
       setEditSubtaskLoading(false);
