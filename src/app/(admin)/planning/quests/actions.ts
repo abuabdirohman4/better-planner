@@ -194,6 +194,7 @@ export async function getTasksForMilestone(milestoneId: string) {
     .from('tasks')
     .select('id, title, status')
     .eq('milestone_id', milestoneId)
+    .is('parent_task_id', null)
     .order('created_at', { ascending: true });
   if (error) return [];
   return data;
@@ -227,12 +228,20 @@ export async function addTask(formData: FormData): Promise<{ message: string }> 
   const supabase = await createClient();
   const milestone_id = formData.get('milestone_id');
   const title = formData.get('title');
+  const parent_task_id = formData.get('parent_task_id');
   if (!milestone_id || !title) throw new Error('milestone_id dan title wajib diisi');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User tidak ditemukan');
+  const insertData: any = { milestone_id, title, status: 'TODO', user_id: user.id };
+  if (parent_task_id) {
+    insertData.parent_task_id = parent_task_id;
+    insertData.type = 'SUBTASK';
+  } else {
+    insertData.type = 'MAIN_QUEST';
+  }
   const { error } = await supabase
     .from('tasks')
-    .insert({ milestone_id, title, type: 'MAIN_QUEST', status: 'TODO', user_id: user.id });
+    .insert(insertData);
   if (error) throw new Error('Gagal menambah task: ' + (error.message || ''));
   revalidatePath('/planning/main-quests');
   return { message: 'Task berhasil ditambahkan!' };
