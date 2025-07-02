@@ -1,7 +1,5 @@
 import TaskItem from './TaskItem';
-import { useState, useEffect, useMemo } from 'react';
-import { updateMilestone } from '../quests/actions';
-import debounce from 'lodash/debounce';
+import { useState, useEffect } from 'react';
 import TaskDetailCard from './TaskDetailCard';
 
 interface Task {
@@ -13,30 +11,16 @@ interface Task {
 
 interface MilestoneItemProps {
   milestone: { id: string; title: string };
+  milestoneNumber: number;
 }
 
-export default function MilestoneItem({ milestone }: MilestoneItemProps) {
+export default function MilestoneItem({ milestone, milestoneNumber }: MilestoneItemProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(milestone.title);
-  const [editLoading, setEditLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [newTaskInputs, setNewTaskInputs] = useState(['', '', '']);
   const [newTaskLoading, setNewTaskLoading] = useState([false, false, false]);
   const [lastSubmittedTask, setLastSubmittedTask] = useState(['', '', '']);
-
-  // Debounced auto-save
-  const debouncedSaveMilestone = useMemo(() => debounce(async (val: string) => {
-    setEditLoading(true);
-    try {
-      await updateMilestone(milestone.id, val);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1200);
-    } catch {}
-    setEditLoading(false);
-  }, 1500), [milestone.id]);
 
   const fetchTasks = async () => {
     setLoadingTasks(true);
@@ -119,47 +103,18 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newTaskInputs[2], milestone.id]);
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditValue(e.target.value);
-    debouncedSaveMilestone(e.target.value);
-  };
-
   useEffect(() => {
     fetchTasks();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [milestone.id]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditValue(milestone.title);
-  };
-
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-2">
+    <div className="rounded-lg mb-2">
       {activeTask ? (
         <TaskDetailCard task={activeTask} onBack={() => setActiveTask(null)} milestoneTitle={milestone.title} milestoneId={milestone.id} />
       ) : (
         <>
-          <label>Langkah selanjutnya untuk mecapai Milestone 1 :</label>
-          <div className="font-semibold mb-2 flex items-center gap-2">
-            {isEditing ? (
-              <>
-                <input
-                  className="border rounded px-2 py-1 text-sm mr-2 bg-transparent font-semibold"
-                  value={editValue}
-                  onChange={handleEditChange}
-                  disabled={editLoading}
-                  style={{ minWidth: 120 }}
-                />
-                {saved && <span className="text-xs text-green-500 ml-1">Tersimpan</span>}
-              </>
-            ) : (
-              <>
-                <span>{milestone.title}</span>
-                <button onClick={handleEdit} className="ml-2 text-xs text-brand-500 underline">Edit</button>
-              </>
-            )}
-          </div>
+          <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
           <div className="space-y-2 mb-2">
             {loadingTasks ? (
               <p className="text-gray-400 text-sm">Memuat tugas utama...</p>
@@ -174,21 +129,27 @@ export default function MilestoneItem({ milestone }: MilestoneItemProps) {
                       milestoneId={milestone.id}
                       disableModal
                       onOpenSubtask={() => setActiveTask(task)}
+                      orderNumber={idx + 1}
                     />
                   );
                 } else {
                   return (
-                    <input
-                      key={idx}
-                      className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900"
-                      placeholder="Tambah tugas utama..."
-                      value={newTaskInputs[idx]}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
-                      }}
-                      disabled={newTaskLoading[idx]}
-                    />
+                    <div key={idx} className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">
+                      <div className='flex gap-2 w-3/4'>
+                        <span className="font-medium text-lg w-6 text-center select-none">{idx + 1}.</span>
+                        <input
+                          key={idx}
+                          className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900"
+                          placeholder="Tambah langkah untuk milestone..."
+                          value={newTaskInputs[idx]}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
+                          }}
+                          disabled={newTaskLoading[idx]}
+                          />
+                      </div>
+                    </div>
                   );
                 }
               })

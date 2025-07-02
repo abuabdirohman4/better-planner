@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import MilestoneItem from './MilestoneItem';
 import ComponentCard from '@/components/common/ComponentCard';
-import { updateQuestMotivation } from '../quests/actions';
+import { updateQuestMotivation, updateMilestone } from '../quests/actions';
 import debounce from 'lodash/debounce';
 
 interface Milestone {
@@ -25,6 +25,15 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       await updateQuestMotivation(quest.id, val);
     } catch {}
   }, 1500), [quest.id]);
+
+  // Debounced auto-save milestone title
+  const debouncedSaveMilestone = useMemo(() => 
+    debounce(async (id: string, val: string) => {
+      try {
+        await updateMilestone(id, val);
+      } catch {}
+    }, 1500)
+  , []);
 
   const fetchMilestones = async () => {
     setLoadingMilestones(true);
@@ -131,22 +140,34 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
         return (
           <div
             key={milestone ? milestone.id : idx}
-            className={`w-full rounded-lg border px-4 py-3 cursor-pointer transition-all duration-150 shadow-sm mb-0 ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'}`}
+            className={`w-full rounded-lg border pl-3 pr-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center gap-2 ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700'}`}
             onClick={() => setActiveMilestoneIdx(idx)}
           >
-            <div className="font-bold text-lg mb-1">
-              {milestone ? milestone.title : <span className="text-gray-400">Milestone {idx + 1}</span>}
-            </div>
-            {!milestone && (
+            <span className="font-bold text-lg w-6 text-center select-none">{idx + 1}.</span>
+            {milestone ? (
+              <input
+                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 font-semibold"
+                value={milestone.title}
+                onChange={e => {
+                  const newTitle = e.target.value;
+                  setMilestones(ms => ms.map((m, i) => i === idx ? { ...m, title: newTitle } : m));
+                  debouncedSaveMilestone(milestone.id, newTitle);
+                }}
+                onClick={e => e.stopPropagation()}
+                onFocus={() => setActiveMilestoneIdx(idx)}
+              />
+            ) : (
               <input
                 className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900"
-                placeholder="Tambah milestone baru..."
+                placeholder={`Tambah milestone ${idx + 1}...`}
                 value={newMilestoneInputs[idx]}
                 onChange={e => {
                   const val = e.target.value;
                   setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
                 }}
                 disabled={newMilestoneLoading[idx]}
+                onClick={e => e.stopPropagation()}
+                onFocus={() => setActiveMilestoneIdx(idx)}
               />
             )}
           </div>
@@ -171,9 +192,9 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           <p className="text-gray-400">Memuat milestone...</p>
         ) : (
           milestones[activeMilestoneIdx] ? (
-            <MilestoneItem key={milestones[activeMilestoneIdx].id} milestone={milestones[activeMilestoneIdx]} />
+            <MilestoneItem key={milestones[activeMilestoneIdx].id} milestone={milestones[activeMilestoneIdx]} milestoneNumber={activeMilestoneIdx + 1} />
           ) : (
-            <p className="text-gray-400">Belum ada milestone untuk slot ini.</p>
+            <p className="text-gray-400">Belum ada milestone untuk quest ini.</p>
           )
         )}
       </div>
