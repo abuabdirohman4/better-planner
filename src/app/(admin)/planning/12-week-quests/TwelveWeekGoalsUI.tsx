@@ -119,7 +119,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[800px]">
-        <Spinner size={32} />
+        <Spinner size={164} />
       </div>
     );
   }
@@ -211,11 +211,10 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
   };
 
   return (
-    <div className="p-0 md:p-6">
       <div className="w-full max-w-none bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row">
         {/* Kiri: Input Quest */}
         <div className="w-full md:w-1/3 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-8 flex flex-col justify-between">
-          <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="10 Quests (Achievement Goal & End Result)" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
+          <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="INPUT 10 QUESTS" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
             <div className="space-y-5">
               {quests.map((q, idx) => {
                 let rankIdx = -1;
@@ -231,7 +230,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
                 return (
                   <div
                     key={q.label}
-                    className={`flex items-center gap-3 relative rounded transition-colors ${highlight ? 'bg-brand-100 border border-brand-400' : ''}`}
+                    className={`flex items-center gap-2 pl-1 relative rounded transition-colors ${highlight ? 'bg-brand-100 border border-brand-400' : ''}`}
                   >
                     <span className="w-6 text-right font-bold dark:text-white/90">{q.label}.</span>
                     <input
@@ -267,12 +266,12 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
         <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
           <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="HIGHEST FIRST" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
             <div className="overflow-x-auto">
-              <table className="min-w-max border-collapse border text-xs">
+              <table className="min-w-full border-collapse border text-xs">
                 <thead>
                   <tr>
-                    <th className="border px-1 py-1 w-16 bg-gray-50"></th>
+                    <th className="border px-1 py-1 min-w-14 bg-gray-50"></th>
                     {quests.map((q) => (
-                      <th key={q.label} className={`border px-1 py-1 w-[4.86rem] ${isExpanded ? "w-[4.86rem]" : " w-[6.29rem]"} bg-gray-50 font-bold`}>
+                      <th key={q.label} className={`border px-1 py-1 min-w-14 bg-gray-50 font-bold`}>
                         {q.label}
                       </th>
                     ))}
@@ -282,7 +281,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
                   {quests.map((rowQ, i) => (
                     <tr key={rowQ.label}>
                       <th
-                        className={`border px-1 py-1 w-10 ${isExpanded ? 'h-[3.61rem]' : 'h-[3.73rem]'} bg-gray-50 font-bold text-center`}
+                        className={`border px-1 py-1 w-10 ${isExpanded ? 'h-[3.61rem]' : 'h-[3.71rem]'} bg-gray-50 font-bold text-center`}
                       >
                         {rowQ.label}
                       </th>
@@ -301,18 +300,18 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
                                 <div className="flex gap-1 justify-center">
                                   <Button
                                     type="button"
-                                    size="sm"
+                                    size="xs"
                                     variant="outline"
-                                    className="px-1 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                    className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                     onClick={() => handlePairwiseClick(i, j, 'row')}
                                   >
                                     {rowQ.label}
                                   </Button>
                                   <Button
                                     type="button"
-                                    size="sm"
+                                    size="xs"
                                     variant="outline"
-                                    className="px-1 py-1 !rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
+                                    className="!rounded bg-brand-100 hover:bg-brand-200 text-brand-700 text-xs font-semibold border border-brand-200"
                                     onClick={() => handlePairwiseClick(i, j, 'col')}
                                   >
                                     {colQ.label}
@@ -355,6 +354,5 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
           </div>
         </div>
       </div>
-    </div>
   );
 } 
