@@ -12,15 +12,18 @@ interface Task {
 interface MilestoneItemProps {
   milestone: { id: string; title: string };
   milestoneNumber: number;
+  onOpenSubtask?: (task: Task) => void;
 }
 
-export default function MilestoneItem({ milestone, milestoneNumber }: MilestoneItemProps) {
+export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtask }: MilestoneItemProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [newTaskInputs, setNewTaskInputs] = useState(['', '', '']);
   const [newTaskLoading, setNewTaskLoading] = useState([false, false, false]);
   const [lastSubmittedTask, setLastSubmittedTask] = useState(['', '', '']);
+  // const [activeSubTask, setActiveSubTask] = useState(false);
+  const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);;
 
   const fetchTasks = async () => {
     setLoadingTasks(true);
@@ -128,7 +131,8 @@ export default function MilestoneItem({ milestone, milestoneNumber }: MilestoneI
                       task={task}
                       milestoneId={milestone.id}
                       disableModal
-                      onOpenSubtask={() => setActiveTask(task)}
+                      onOpenSubtask={onOpenSubtask ? () => {onOpenSubtask(task); setActiveSubTask(task)} : undefined}
+                      active={activeSubTask?.id === task.id}
                       orderNumber={idx + 1}
                     />
                   );

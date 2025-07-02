@@ -85,7 +85,7 @@ export default function MainQuestsClient() {
               className={`px-4 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
               onClick={() => setActiveTab(idx)}
             >
-              HIGH FOCUS GOAL #{idx + 1}
+              HIGH FOCUS QUEST #{idx + 1}
             </button>
           ))}
         </div>

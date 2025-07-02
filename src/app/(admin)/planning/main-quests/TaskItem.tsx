@@ -11,9 +11,10 @@ interface TaskItemProps {
   disableModal?: boolean;
   onOpenSubtask?: () => void;
   orderNumber?: number;
+  active?: boolean;
 }
 
-export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtask, orderNumber }: TaskItemProps) {
+export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtask, orderNumber, active }: TaskItemProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [subtasks, setSubtasks] = useState<{ id: string; title: string; status: 'TODO' | 'DONE' }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +68,7 @@ export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtas
   const total = subtasks.length;
 
   return (
-    <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">
+    <div className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg pl-2 pr-4 py-2 shadow-sm border transition ${active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700'}`}>
       <div className='flex gap-2 w-3/4'>
         {orderNumber && (
           <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span>
@@ -81,7 +82,7 @@ export default function TaskItem({ task, milestoneId, disableModal, onOpenSubtas
         {saved && <span className="text-xs text-green-500 ml-1">Tersimpan</span>}
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={onOpenSubtask} className="text-xs text-brand-500 underline px-2 py-1 rounded hover:bg-brand-50">Sub-tugas</button>
+        <button onClick={onOpenSubtask} className="text-xs text-brand-500 underline px-2 py-1 rounded hover:bg-brand-50">Add Detail</button>
         <div className="text-xs text-gray-500 mt-1">{loading ? 'Memuat progres...' : `${completed}/${total}`}</div>
         {!disableModal && (
           <SubtaskModal open={isModalOpen} onClose={() => setIsModalOpen(false)} parentTaskId={task.id} milestoneId={milestoneId} onSubtasksChanged={handleSubtasksChanged} />

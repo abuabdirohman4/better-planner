@@ -103,7 +103,7 @@ export default function TaskDetailCard({ task, onBack, milestoneTitle, milestone
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center mb-4">
-        <button onClick={onBack} className="mr-3 text-xs text-brand-500 underline">&larr; Kembali</button>
+        <button onClick={onBack} className="mr-3 text-xs text-brand-500 underline">&larr;</button>
         <div className="font-bold text-lg">{task.title}</div>
       </div>
       <div className="mb-2 text-xs text-gray-400">Milestone: {milestoneTitle}</div>
