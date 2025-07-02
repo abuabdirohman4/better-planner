@@ -155,4 +155,145 @@ export async function getPairwiseResults(year: number, quarter: number) {
     .single();
   if (error || !data) return null;
   return data.results_json;
+}
+
+// Ambil Main Quest yang sudah committed untuk user, year, quarter
+export async function getQuests(year: number, quarter: number, isCommitted: boolean = true) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from('quests')
+    .select('id, title, motivation')
+    .eq('user_id', user.id)
+    .eq('year', year)
+    .eq('quarter', quarter)
+    .eq('is_committed', isCommitted)
+    .order('priority_score', { ascending: false })
+    .limit(3);
+  if (error) return [];
+  return data;
+}
+
+// Ambil semua milestones untuk quest tertentu
+export async function getMilestonesForQuest(questId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('milestones')
+    .select('id, title, display_order')
+    .eq('quest_id', questId)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data;
+}
+
+// Ambil semua tasks untuk milestone tertentu
+export async function getTasksForMilestone(milestoneId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, title, status')
+    .eq('milestone_id', milestoneId)
+    .order('created_at', { ascending: true });
+  if (error) return [];
+  return data;
+}
+
+// Tambah milestone baru ke quest
+export async function addMilestone(formData: FormData) {
+  const supabase = await createClient();
+  const quest_id = formData.get('quest_id');
+  const title = formData.get('title');
+  if (!quest_id || !title) throw new Error('quest_id dan title wajib diisi');
+  // Hitung display_order terakhir
+  const { data: last, error: lastErr } = await supabase
+    .from('milestones')
+    .select('display_order')
+    .eq('quest_id', quest_id)
+    .order('display_order', { ascending: false })
+    .limit(1)
+    .single();
+  const nextOrder = last && last.display_order ? last.display_order + 1 : 1;
+  const { error } = await supabase
+    .from('milestones')
+    .insert({ quest_id, title, display_order: nextOrder });
+  if (error) throw new Error('Gagal menambah milestone: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Milestone berhasil ditambahkan!' };
+}
+
+// Tambah task baru ke milestone
+export async function addTask(formData: FormData): Promise<{ message: string }> {
+  const supabase = await createClient();
+  const milestone_id = formData.get('milestone_id');
+  const title = formData.get('title');
+  if (!milestone_id || !title) throw new Error('milestone_id dan title wajib diisi');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User tidak ditemukan');
+  const { error } = await supabase
+    .from('tasks')
+    .insert({ milestone_id, title, type: 'MAIN_QUEST', status: 'TODO', user_id: user.id });
+  if (error) throw new Error('Gagal menambah task: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Task berhasil ditambahkan!' };
+}
+
+// Update status task (TODO/DONE)
+export async function updateTaskStatus(taskId: string, newStatus: 'TODO' | 'DONE') {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tasks')
+    .update({ status: newStatus })
+    .eq('id', taskId);
+  if (error) throw new Error('Gagal update status task: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Status task berhasil diupdate!' };
+}
+
+// Edit milestone
+export async function updateMilestone(milestoneId: string, title: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('milestones')
+    .update({ title })
+    .eq('id', milestoneId);
+  if (error) throw new Error('Gagal update milestone: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Milestone berhasil diupdate!' };
+}
+
+// Hapus milestone
+export async function deleteMilestone(milestoneId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('milestones')
+    .delete()
+    .eq('id', milestoneId);
+  if (error) throw new Error('Gagal hapus milestone: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Milestone berhasil dihapus!' };
+}
+
+// Edit task
+export async function updateTask(taskId: string, title: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tasks')
+    .update({ title })
+    .eq('id', taskId);
+  if (error) throw new Error('Gagal update task: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Task berhasil diupdate!' };
+}
+
+// Hapus task
+export async function deleteTask(taskId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', taskId);
+  if (error) throw new Error('Gagal hapus task: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Task berhasil dihapus!' };
 } 
