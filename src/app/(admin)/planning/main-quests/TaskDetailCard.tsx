@@ -253,6 +253,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                 clearFocusSubtaskId={() => setFocusSubtaskId(null)}
                 draftTitle={draftTitles[subtask.id] ?? subtask.title ?? ''}
                 onDraftTitleChange={(val, immediate) => handleDraftTitleChange(subtask.id, val, immediate)}
+                subtaskIds={subtasks.map(st => st.id)}
               />
             ))}
             {subtasks.length === 0 && (
@@ -285,8 +286,9 @@ interface SubtaskInputProps {
   clearFocusSubtaskId: () => void;
   draftTitle: string;
   onDraftTitleChange: (val: string, immediate?: boolean) => void;
+  subtaskIds: string[];
 }
-function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange }: SubtaskInputProps) {
+function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds }: SubtaskInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
@@ -317,6 +319,16 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
             e.preventDefault();
             onDraftTitleChange(e.currentTarget.value, true); // update langsung ke server saat Enter
             handleSubtaskEnter(idx);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (idx > 0) {
+              setFocusSubtaskId(subtaskIds[idx - 1]);
+            }
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (idx < subtaskIds.length - 1) {
+              setFocusSubtaskId(subtaskIds[idx + 1]);
+            }
           }
         }}
         ref={inputRef}
