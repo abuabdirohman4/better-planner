@@ -5,6 +5,7 @@ import Checkbox from '@/components/form/input/Checkbox';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { updateTask } from '../quests/actions';
 import debounce from 'lodash/debounce';
+import { CloseLineIcon } from '@/icons';
 
 interface Subtask {
   id: string;
@@ -12,7 +13,7 @@ interface Subtask {
   status: 'TODO' | 'DONE';
 }
 
-export default function TaskDetailCard({ task, onBack, milestoneTitle, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneTitle: string; milestoneId: string }) {
+export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string }) {
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,7 @@ export default function TaskDetailCard({ task, onBack, milestoneTitle, milestone
 
   useEffect(() => {
     fetchSubtasks();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,6 +94,7 @@ export default function TaskDetailCard({ task, onBack, milestoneTitle, milestone
       fetchSubtasks();
     } catch {}
     setEditSubtaskLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, 1500), []);
 
   const handleEditSubtaskChange = (id: string, val: string) => {
@@ -102,13 +105,20 @@ export default function TaskDetailCard({ task, onBack, milestoneTitle, milestone
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center mb-4">
-        <button onClick={onBack} className="mr-3 text-xs text-brand-500 underline">&larr;</button>
-        <div className="font-bold text-lg">{task.title}</div>
+      <div className="relative flex items-center mb-4 min-h-[40px]">
+        <button
+          onClick={onBack}
+          className="absolute right-0 p-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          aria-label="Tutup"
+        >
+          <CloseLineIcon className="w-4 h-4 text-gray-500" />
+        </button>
+        <div className="flex-1 flex justify-center">
+          <div className="font-bold text-lg text-center">{task.title}</div>
+        </div>
       </div>
-      <div className="mb-2 text-xs text-gray-400">Milestone: {milestoneTitle}</div>
       <div className="mb-4">
-        <div className="font-semibold mb-2">Sub-tugas</div>
+        <div className="font-semibold mb-2">List quest untuk langkah ini:</div>
         {loadingSubtasks ? (
           <p className="text-gray-400 text-sm">Memuat sub-tugas...</p>
         ) : subtasks.length > 0 ? (

@@ -25,7 +25,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
   const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
   const [lastSubmittedMilestone, setLastSubmittedMilestone] = useState(['', '', '']);
   const [activeMilestoneIdx, setActiveMilestoneIdx] = useState(0);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
 
   // Debounced auto-save
   const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
@@ -195,7 +195,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
             onChange={handleMotivationChange}
             rows={3}
           />
-          <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Quest :</label>
+          <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
           {renderMilestoneBar()}
           <div className="space-y-4 mb-4">
             {loadingMilestones ? (
@@ -206,7 +206,8 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
                   key={milestones[activeMilestoneIdx].id}
                   milestone={milestones[activeMilestoneIdx]}
                   milestoneNumber={activeMilestoneIdx + 1}
-                  onOpenSubtask={setActiveTask}
+                  onOpenSubtask={setActiveSubTask}
+                  activeSubTask={activeSubTask}
                 />
               ) : (
                 <p className="text-gray-400">Belum ada milestone untuk quest ini.</p>
@@ -215,12 +216,11 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           </div>
         </ComponentCard>
       </div>
-      {activeTask && (
+      {activeSubTask && (
         <div className="flex-1 max-w-2xl">
           <TaskDetailCard
-            task={activeTask}
-            onBack={() => setActiveTask(null)}
-            milestoneTitle={milestones[activeMilestoneIdx]?.title || ''}
+            task={activeSubTask}
+            onBack={() => setActiveSubTask(null)}
             milestoneId={milestones[activeMilestoneIdx]?.id || ''}
           />
         </div>
