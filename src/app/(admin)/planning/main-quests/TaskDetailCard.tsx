@@ -5,12 +5,81 @@ import CustomToast from '@/components/ui/toast/CustomToast';
 import { updateTask } from '../quests/actions';
 import debounce from 'lodash/debounce';
 import { CloseLineIcon } from '@/icons';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Subtask {
   id: string;
   title: string;
   status: 'TODO' | 'DONE';
   display_order: number;
+}
+
+// Tambahkan SVG hamburger icon
+const HamburgerIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="cursor-grab text-gray-400 hover:text-gray-600">
+    <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    <rect x="4" y="9.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    <rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+  </svg>
+);
+
+// Komponen SortableItem untuk dnd-kit
+type SortableItemProps = {
+  subtask: Subtask;
+  idx: number;
+  setEditSubtaskId: (id: string) => void;
+  setFocusSubtaskId: (id: string) => void;
+  handleSubtaskEnter: (idx: number) => void;
+  handleCheck: (subtask: Subtask) => void;
+  shouldFocus: boolean;
+  clearFocusSubtaskId: () => void;
+  draftTitle: string;
+  onDraftTitleChange: (val: string, immediate?: boolean) => void;
+  subtaskIds: string[];
+  handleDeleteSubtask: (id: string, idx: number) => void;
+};
+function SortableItem({ subtask, idx, ...props }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: subtask.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 20 : 'auto',
+    background: 'inherit',
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={`flex items-center gap-2 mb-1 bg-white dark:bg-gray-900 w-full`}>
+      <span {...attributes} {...listeners} className="flex items-center cursor-grab select-none">
+        <HamburgerIcon />
+      </span>
+      <SubtaskInput
+        subtask={subtask}
+        idx={idx}
+        {...props}
+      />
+    </div>
+  );
 }
 
 export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string }) {
@@ -245,6 +314,43 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     } catch {}
   };
 
+  // dnd-kit sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  // Handler drag end dnd-kit
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const oldIndex = subtasks.findIndex(st => st.id === activeId);
+    const newIndex = subtasks.findIndex(st => st.id === overId);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newSubtasks = arrayMove(subtasks, oldIndex, newIndex);
+    // Hitung display_order baru (fractional indexing)
+    let newOrder = newSubtasks[newIndex].display_order;
+    if (newIndex === 0) {
+      newOrder = newSubtasks[1]?.display_order ? newSubtasks[1].display_order - 1 : 1;
+    } else if (newIndex === newSubtasks.length - 1) {
+      newOrder = newSubtasks[newSubtasks.length - 2]?.display_order + 1;
+    } else {
+      const prev = newSubtasks[newIndex - 1].display_order;
+      const next = newSubtasks[newIndex + 1].display_order;
+      newOrder = (prev + next) / 2;
+    }
+    newSubtasks[newIndex] = { ...newSubtasks[newIndex], display_order: newOrder };
+    setSubtasks(newSubtasks);
+    try {
+      await fetch(`/api/tasks`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: newSubtasks[newIndex].id, display_order: newOrder })
+      });
+    } catch {}
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="relative flex items-center mb-4 min-h-[40px]">
@@ -264,36 +370,40 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
         {loadingSubtasks ? (
           <p className="text-gray-400 text-sm">Memuat sub-tugas...</p>
         ) : (
-          <div className="flex flex-col gap-2 mt-2">
-            {subtasks.map((subtask, idx) => (
-              <SubtaskInput
-                key={subtask.id}
-                subtask={subtask}
-                idx={idx}
-                setEditSubtaskId={setEditSubtaskId}
-                setFocusSubtaskId={setFocusSubtaskId}
-                handleSubtaskEnter={handleSubtaskEnter}
-                handleCheck={handleCheck}
-                shouldFocus={focusSubtaskId === subtask.id}
-                clearFocusSubtaskId={() => setFocusSubtaskId(null)}
-                draftTitle={draftTitles[subtask.id] ?? subtask.title ?? ''}
-                onDraftTitleChange={(val, immediate) => handleDraftTitleChange(subtask.id, val, immediate)}
-                subtaskIds={subtasks.map(st => st.id)}
-                handleDeleteSubtask={handleDeleteSubtask}
-              />
-            ))}
-            {subtasks.length === 0 && (
-              <InputField
-                key="input-0"
-                name="title-0"
-                placeholder="Tambah sub-tugas baru..."
-                className="flex-1"
-                value={newSubtaskTitle}
-                onChange={e => setNewSubtaskTitle(e.target.value)}
-                disabled={newSubtaskLoading}
-              />
-            )}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={subtasks.map(st => st.id)} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-2 mt-2">
+                {subtasks.map((subtask, idx) => (
+                  <SortableItem
+                    key={subtask.id}
+                    subtask={subtask}
+                    idx={idx}
+                    setEditSubtaskId={setEditSubtaskId}
+                    setFocusSubtaskId={setFocusSubtaskId}
+                    handleSubtaskEnter={handleSubtaskEnter}
+                    handleCheck={handleCheck}
+                    shouldFocus={focusSubtaskId === subtask.id}
+                    clearFocusSubtaskId={() => setFocusSubtaskId(null)}
+                    draftTitle={draftTitles[subtask.id] ?? subtask.title ?? ''}
+                    onDraftTitleChange={(val: string, immediate?: boolean) => handleDraftTitleChange(subtask.id, val, immediate)}
+                    subtaskIds={subtasks.map(st => st.id)}
+                    handleDeleteSubtask={handleDeleteSubtask}
+                  />
+                ))}
+                {subtasks.length === 0 && (
+                  <InputField
+                    key="input-0"
+                    name="title-0"
+                    placeholder="Tambah sub-tugas baru..."
+                    className="flex-1"
+                    value={newSubtaskTitle}
+                    onChange={e => setNewSubtaskTitle(e.target.value)}
+                    disabled={newSubtaskLoading}
+                  />
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>
@@ -323,10 +433,10 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
     }
   }, [shouldFocus]);
   return (
-    <div className="flex items-center gap-2 mb-1">
+    <div className="flex items-center gap-2 w-full">
       <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
       <input
-        className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
+        className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
         value={draftTitle}
         onChange={e => onDraftTitleChange(e.target.value)}
         onFocus={() => {
