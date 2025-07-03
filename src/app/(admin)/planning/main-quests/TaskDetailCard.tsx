@@ -160,6 +160,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
         inputRefs.current[idx]?.focus();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusSubtaskId, subtasks.length, inputRefs.current]);
 
   // Pastikan fokus tetap di input yang sedang diedit setelah update
@@ -220,6 +221,28 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     }
   };
 
+  // Handler hapus subtask
+  const handleDeleteSubtask = async (id: string, idx: number) => {
+    // Optimistic remove
+    setSubtasks(prev => prev.filter(st => st.id !== id));
+    setDraftTitles(draft => {
+      const newDraft = { ...draft };
+      delete newDraft[id];
+      return newDraft;
+    });
+    // Pindahkan fokus ke input sebelumnya jika ada
+    if (idx > 0) {
+      setFocusSubtaskId(subtasks[idx - 1].id);
+    } else {
+      setFocusSubtaskId(null);
+    }
+    // Hapus di server jika id bukan temp
+    if (!id.match(/^\d+$/) && id.length < 24) return; // skip temp id (uuid pendek)
+    try {
+      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    } catch {}
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="relative flex items-center mb-4 min-h-[40px]">
@@ -254,6 +277,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                 draftTitle={draftTitles[subtask.id] ?? subtask.title ?? ''}
                 onDraftTitleChange={(val, immediate) => handleDraftTitleChange(subtask.id, val, immediate)}
                 subtaskIds={subtasks.map(st => st.id)}
+                handleDeleteSubtask={handleDeleteSubtask}
               />
             ))}
             {subtasks.length === 0 && (
@@ -287,8 +311,9 @@ interface SubtaskInputProps {
   draftTitle: string;
   onDraftTitleChange: (val: string, immediate?: boolean) => void;
   subtaskIds: string[];
+  handleDeleteSubtask: (id: string, idx: number) => void;
 }
-function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds }: SubtaskInputProps) {
+function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds, handleDeleteSubtask }: SubtaskInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
@@ -329,6 +354,9 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
             if (idx < subtaskIds.length - 1) {
               setFocusSubtaskId(subtaskIds[idx + 1]);
             }
+          } else if ((e.key === 'Backspace' || e.key === 'Delete') && draftTitle === '') {
+            e.preventDefault();
+            handleDeleteSubtask(subtask.id, idx);
           }
         }}
         ref={inputRef}
