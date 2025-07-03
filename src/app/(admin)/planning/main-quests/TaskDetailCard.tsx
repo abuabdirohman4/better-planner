@@ -25,6 +25,9 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
   const [focusSubtaskId, setFocusSubtaskId] = useState<string | null>(null);
+  const [localDraftTitles, setLocalDraftTitles] = useState<{ [id: string]: string }>({});
+  // Ref untuk menyimpan draft terakhir yang diketik user (anti race condition)
+  const lastDraftRef = useRef<{ id: string; value: string } | null>(null);
 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
@@ -85,17 +88,52 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       if (res.ok && data.task) {
         setSubtasks(prev => prev.map(st => st.id === tempId ? data.task : st));
         setFocusSubtaskId(data.task.id);
+        // Transfer draft title dari tempId ke id asli, merge jika realId sudah ada
+        setLocalDraftTitles(draft => {
+          const tempTitle = draft[tempId];
+          const realTitle = draft[data.task.id];
+          let mergedTitle = tempTitle;
+          // Jika user mengetik sangat cepat, ambil draft terbaru dari ref
+          if (lastDraftRef.current && lastDraftRef.current.id === tempId) {
+            mergedTitle = lastDraftRef.current.value;
+          } else if (realTitle && realTitle.length > (tempTitle?.length || 0)) {
+            mergedTitle = realTitle;
+          }
+          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
+          return data.task.id ? { ...rest, [data.task.id]: mergedTitle ?? '' } : rest;
+        });
       } else if (res.ok && data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
         setSubtasks(prev => prev.map(st => st.id === tempId ? data.tasks[0] : st));
         setFocusSubtaskId(data.tasks[0].id);
+        // Transfer draft title dari tempId ke id asli, merge jika realId sudah ada
+        setLocalDraftTitles(draft => {
+          const tempTitle = draft[tempId];
+          const realTitle = draft[data.tasks[0].id];
+          let mergedTitle = tempTitle;
+          if (lastDraftRef.current && lastDraftRef.current.id === tempId) {
+            mergedTitle = lastDraftRef.current.value;
+          } else if (realTitle && realTitle.length > (tempTitle?.length || 0)) {
+            mergedTitle = realTitle;
+          }
+          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
+          return data.tasks[0].id ? { ...rest, [data.tasks[0].id]: mergedTitle ?? '' } : rest;
+        });
       } else {
         setSubtasks(prev => prev.filter(st => st.id !== tempId));
         setFocusSubtaskId(null);
+        setLocalDraftTitles(draft => {
+          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
+          return rest;
+        });
         CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal membuat tugas baru. Coba lagi.');
       }
     } catch {
       setSubtasks(prev => prev.filter(st => st.id !== tempId));
       setFocusSubtaskId(null);
+      setLocalDraftTitles(draft => {
+        const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
+        return rest;
+      });
       CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
     }
   };
@@ -200,7 +238,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       const idx = subtasks.findIndex(st => st.id === focusSubtaskId);
       if (idx !== -1 && inputRefs.current[idx]) {
         inputRefs.current[idx]?.focus();
-        setFocusSubtaskId(null);
+        // Jangan reset focusSubtaskId di sini, biarkan persist
       }
     }
   }, [focusIdx, loadingSubtasks, subtasks.length, focusSubtaskId, subtasks]);
@@ -237,9 +275,20 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                 <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
                 <input
                   className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
-                  value={editSubtaskId === subtask.id ? editSubtaskValue : (subtask.title ?? '')}
-                  onChange={e => handleEditSubtaskChange(subtask.id, e.target.value)}
-                  onFocus={() => { setEditSubtaskId(subtask.id); setEditSubtaskValue(subtask.title ?? ''); }}
+                  value={localDraftTitles[subtask.id] ?? (editSubtaskId === subtask.id ? editSubtaskValue : (subtask.title ?? ''))}
+                  onChange={e => {
+                    setLocalDraftTitles(draft => {
+                      const newDraft = { ...draft, [subtask.id]: e.target.value };
+                      lastDraftRef.current = { id: subtask.id, value: e.target.value };
+                      return newDraft;
+                    });
+                    handleEditSubtaskChange(subtask.id, e.target.value);
+                  }}
+                  onFocus={() => {
+                    setEditSubtaskId(subtask.id);
+                    setEditSubtaskValue(localDraftTitles[subtask.id] ?? subtask.title ?? '');
+                    setFocusSubtaskId(subtask.id);
+                  }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
