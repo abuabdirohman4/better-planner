@@ -98,21 +98,23 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   };
 
   const handleCheck = async (subtask: Subtask) => {
+    const newStatus = subtask.status === 'DONE' ? 'TODO' : 'DONE';
+    // Optimistic update
+    setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: newStatus } : st));
     try {
-      const newStatus = subtask.status === 'DONE' ? 'TODO' : 'DONE';
       const res = await fetch(`/api/tasks/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId: subtask.id, newStatus })
       });
       const data = await res.json();
-      if (res.ok) {
-        fetchSubtasks();
-        CustomToast.success(typeof data.message === 'string' ? data.message : 'Status sub-tugas diupdate');
-      } else {
+      if (!res.ok) {
+        // Rollback jika gagal
+        setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: subtask.status } : st));
         CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal update status');
       }
     } catch {
+      setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: subtask.status } : st));
       CustomToast.error('Gagal update status');
     }
   };
@@ -340,7 +342,11 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
           }
         }}
         onKeyDown={e => {
-          if (e.key === 'Enter') {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            // Cmd+Enter (Mac) atau Ctrl+Enter (non-Mac) untuk checklist/unchecklist
+            e.preventDefault();
+            handleCheck(subtask);
+          } else if (e.key === 'Enter') {
             e.preventDefault();
             onDraftTitleChange(e.currentTarget.value, true); // update langsung ke server saat Enter
             handleSubtaskEnter(idx);
