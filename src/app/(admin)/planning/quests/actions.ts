@@ -238,23 +238,7 @@ export async function addTask(formData: FormData): Promise<{ message: string }> 
     insertData.parent_task_id = parent_task_id;
     insertData.type = 'SUBTASK';
     if (display_order !== undefined && display_order !== null) {
-      const orderNum = Number(display_order);
-      // Ambil semua subtask yang display_order >= orderNum, urutkan DESC
-      const { data: toShift } = await supabase
-        .from('tasks')
-        .select('id, display_order')
-        .eq('parent_task_id', parent_task_id)
-        .gte('display_order', orderNum)
-        .order('display_order', { ascending: false });
-      if (toShift && toShift.length > 0) {
-        for (const task of toShift) {
-          await supabase
-            .from('tasks')
-            .update({ display_order: task.display_order + 1 })
-            .eq('id', task.id);
-        }
-      }
-      insertData.display_order = orderNum;
+      insertData.display_order = Number(display_order);
     }
   } else {
     insertData.type = 'MAIN_QUEST';

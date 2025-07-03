@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, status')
+      .select('id, title, status, display_order')
       .eq('parent_task_id', parent_task_id)
       .order('display_order', { ascending: true });
     if (error) {

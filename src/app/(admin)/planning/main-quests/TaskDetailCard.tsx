@@ -41,16 +41,32 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
-  // Saat Enter ditekan pada subtask, insert subtask kosong ke database
+  // Saat Enter ditekan pada subtask, insert subtask kosong ke database dengan fractional indexing
   const handleSubtaskEnter = async (idx: number) => {
-    // Hitung display_order float baru
-    const prevOrder = subtasks[idx]?.display_order ?? 0;
-    const nextOrder = subtasks[idx + 1]?.display_order;
-    let newOrder = 0;
-    if (nextOrder !== undefined) {
-      newOrder = (prevOrder + nextOrder) / 2;
+    // Fractional Indexing Logic
+    let prevOrder = 0;
+    let nextOrder: number | undefined = undefined;
+    let newOrder = 1.0;
+    // Debug log
+    // console.log('DEBUG subtasks:', subtasks);
+    // console.log('DEBUG idx:', idx);
+    // Edge case: list kosong
+    if (subtasks.length === 0) {
+      newOrder = 1.0;
+      // console.log('DEBUG case: list kcosong, newOrder:', newOrder);
     } else {
-      newOrder = prevOrder + 100;
+      // Normal case: ada subtask
+      prevOrder = subtasks[idx]?.display_order ?? 0;
+      nextOrder = subtasks[idx + 1]?.display_order;
+      if (nextOrder !== undefined) {
+        // Sisip di tengah
+        newOrder = (prevOrder + nextOrder) / 2;
+        // console.log('DEBUG case: sisip di tengah, prevOrder:', prevOrder, 'nextOrder:', nextOrder, 'newOrder:', newOrder);
+      } else {
+        // Sisip di akhir
+        newOrder = prevOrder + 1.0;
+        // console.log('DEBUG case: sisip di akhir, prevOrder:', prevOrder, 'newOrder:', newOrder);
+      }
     }
     try {
       const res = await fetch('/api/tasks', {
@@ -107,7 +123,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       editInputRef.current.focus();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, 1500), []);
+  }, 500), []);
 
   const handleEditSubtaskChange = (id: string, val: string) => {
     setEditSubtaskId(id);
