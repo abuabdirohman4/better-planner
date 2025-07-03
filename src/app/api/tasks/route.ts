@@ -4,15 +4,18 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
-    const { milestone_id, title, parent_task_id } = await req.json();
-    if (!milestone_id || !title) {
-      return NextResponse.json({ error: 'milestone_id dan title wajib diisi' }, { status: 400 });
+    const { milestone_id, title, parent_task_id, display_order } = await req.json();
+    if (!milestone_id) {
+      return NextResponse.json({ error: 'milestone_id wajib diisi' }, { status: 400 });
     }
     const formData = new FormData();
     formData.append('milestone_id', milestone_id);
     formData.append('title', title);
     if (parent_task_id) {
       formData.append('parent_task_id', parent_task_id);
+    }
+    if (display_order !== undefined) {
+      formData.append('display_order', display_order);
     }
     const res = await addTask(formData);
     return NextResponse.json({ message: res?.message || 'Task berhasil ditambahkan!' });
@@ -33,7 +36,7 @@ export async function GET(req: NextRequest) {
       .from('tasks')
       .select('id, title, status')
       .eq('parent_task_id', parent_task_id)
-      .order('created_at', { ascending: true });
+      .order('display_order', { ascending: true });
     if (error) {
       return NextResponse.json({ tasks: [], error: error.message }, { status: 500 });
     }

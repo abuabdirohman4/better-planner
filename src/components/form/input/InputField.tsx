@@ -17,6 +17,8 @@ interface InputProps {
   error?: boolean;
   hint?: string; // Optional hint text
   required?: boolean; // Menambahkan properti required
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const Input: FC<InputProps> = ({
@@ -36,6 +38,8 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
   required, // Menambahkan required ke parameter
+  onKeyDown,
+  onBlur,
 }) => {
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
@@ -66,7 +70,9 @@ const Input: FC<InputProps> = ({
         step={step}
         disabled={disabled}
         className={inputClasses}
-        required={required} // Menambahkan required ke elemen input
+        required={required}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
       />
 
       {/* Optional Hint Text */}

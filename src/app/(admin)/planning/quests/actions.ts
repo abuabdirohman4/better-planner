@@ -229,13 +229,33 @@ export async function addTask(formData: FormData): Promise<{ message: string }> 
   const milestone_id = formData.get('milestone_id');
   const title = formData.get('title');
   const parent_task_id = formData.get('parent_task_id');
-  if (!milestone_id || !title) throw new Error('milestone_id dan title wajib diisi');
+  const display_order = formData.get('display_order');
+  if (!milestone_id) throw new Error('milestone_id wajib diisi');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User tidak ditemukan');
   const insertData: any = { milestone_id, title, status: 'TODO', user_id: user.id };
   if (parent_task_id) {
     insertData.parent_task_id = parent_task_id;
     insertData.type = 'SUBTASK';
+    if (display_order !== undefined && display_order !== null) {
+      const orderNum = Number(display_order);
+      // Ambil semua subtask yang display_order >= orderNum, urutkan DESC
+      const { data: toShift } = await supabase
+        .from('tasks')
+        .select('id, display_order')
+        .eq('parent_task_id', parent_task_id)
+        .gte('display_order', orderNum)
+        .order('display_order', { ascending: false });
+      if (toShift && toShift.length > 0) {
+        for (const task of toShift) {
+          await supabase
+            .from('tasks')
+            .update({ display_order: task.display_order + 1 })
+            .eq('id', task.id);
+        }
+      }
+      insertData.display_order = orderNum;
+    }
   } else {
     insertData.type = 'MAIN_QUEST';
   }

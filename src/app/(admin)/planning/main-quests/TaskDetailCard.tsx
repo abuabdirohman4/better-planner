@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import InputField from '@/components/form/input/InputField';
-import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { updateTask } from '../quests/actions';
@@ -11,17 +10,20 @@ interface Subtask {
   id: string;
   title: string;
   status: 'TODO' | 'DONE';
+  display_order: number;
 }
 
 export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string }) {
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const [loadingSubtasks, setLoadingSubtasks] = useState(true);
   const [editSubtaskId, setEditSubtaskId] = useState<string | null>(null);
   const [editSubtaskValue, setEditSubtaskValue] = useState('');
   const [editSubtaskLoading, setEditSubtaskLoading] = useState(false);
-  const [saved, setSaved] = useState<string | null>(null);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newSubtaskLoading, setNewSubtaskLoading] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
+  const editInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
@@ -39,19 +41,26 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    setLoading(true);
+  // Saat Enter ditekan pada subtask, insert subtask kosong ke database
+  const handleSubtaskEnter = async (idx: number) => {
+    // Hitung display_order float baru
+    const prevOrder = subtasks[idx]?.display_order ?? 0;
+    const nextOrder = subtasks[idx + 1]?.display_order;
+    let newOrder = 0;
+    if (nextOrder !== undefined) {
+      newOrder = (prevOrder + nextOrder) / 2;
+    } else {
+      newOrder = prevOrder + 100;
+    }
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent_task_id: task.id, title: input, milestone_id: milestoneId })
+        body: JSON.stringify({ parent_task_id: task.id, title: '', milestone_id: milestoneId, display_order: newOrder })
       });
       const data = await res.json();
       if (res.ok) {
-        setInput('');
+        setFocusIdx(idx + 1); // Fokus ke input baru setelah fetch
         fetchSubtasks();
         CustomToast.success(typeof data.message === 'string' ? data.message : 'Sub-tugas berhasil ditambahkan');
       } else {
@@ -59,8 +68,6 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       }
     } catch {
       CustomToast.error('Gagal menambah sub-tugas');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -89,11 +96,16 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     setEditSubtaskLoading(true);
     try {
       await updateTask(id, val);
-      setSaved(id);
-      setTimeout(() => setSaved(null), 1200);
-      fetchSubtasks();
-    } catch {}
+      // Update state lokal agar hasil edit langsung muncul
+      setSubtasks(subtasks => subtasks.map(st => st.id === id ? { ...st, title: val } : st));
+    } catch {
+      // Tidak perlu toast, biarkan hasil edit langsung muncul
+    }
     setEditSubtaskLoading(false);
+    // Fokuskan kembali ke input yang sedang diedit
+    if (editInputRef.current) {
+      editInputRef.current.focus();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, 1500), []);
 
@@ -102,6 +114,56 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     setEditSubtaskValue(val);
     debouncedSaveSubtask(id, val);
   };
+
+  // Debounce insert subtask baru
+  const debouncedInsertNewSubtask = useMemo(() => debounce(async (title: string) => {
+    if (!title) return;
+    setNewSubtaskLoading(true);
+    // Workflowy-style: display_order = display_order terbesar + 100 (atau 1)
+    const lastOrder = subtasks.length > 0 ? subtasks[subtasks.length - 1].display_order : 0;
+    const newOrder = lastOrder + 100;
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent_task_id: task.id, title, milestone_id: milestoneId, display_order: newOrder })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewSubtaskTitle('');
+        fetchSubtasks();
+        CustomToast.success(typeof data.message === 'string' ? data.message : 'Sub-tugas berhasil ditambahkan');
+      } else {
+        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal menambah sub-tugas');
+      }
+    } catch {
+      CustomToast.error('Gagal menambah sub-tugas');
+    } finally {
+      setNewSubtaskLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, 500), [task.id, milestoneId, subtasks]);
+
+  // Trigger debounce saat newSubtaskTitle berubah
+  useEffect(() => {
+    if (newSubtaskTitle) debouncedInsertNewSubtask(newSubtaskTitle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newSubtaskTitle]);
+
+  // Fokus ke input baru setelah insert
+  useEffect(() => {
+    if (focusIdx !== null && !loadingSubtasks) {
+      inputRefs.current[focusIdx]?.focus();
+      setFocusIdx(null);
+    }
+  }, [focusIdx, loadingSubtasks, subtasks.length]);
+
+  // Pastikan fokus tetap di input yang sedang diedit setelah update
+  useEffect(() => {
+    if (!editSubtaskLoading && editSubtaskId && editInputRef.current) {
+      editInputRef.current.focus();
+    }
+  }, [editSubtaskLoading, editSubtaskId]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -121,37 +183,45 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
         <div className="font-semibold mb-2">List quest untuk langkah ini:</div>
         {loadingSubtasks ? (
           <p className="text-gray-400 text-sm">Memuat sub-tugas...</p>
-        ) : subtasks.length > 0 ? (
-          subtasks.map((subtask) => (
-            <div key={subtask.id} className="flex items-center gap-2 mb-1">
-              <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
-              <input
-                className={`border rounded px-2 py-1 text-sm flex-1 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
-                value={editSubtaskId === subtask.id ? editSubtaskValue : subtask.title}
-                onChange={e => handleEditSubtaskChange(subtask.id, e.target.value)}
-                onFocus={() => { setEditSubtaskId(subtask.id); setEditSubtaskValue(subtask.title); }}
-                disabled={editSubtaskLoading}
-              />
-              {saved === subtask.id && <span className="text-xs text-green-500 ml-1">Tersimpan</span>}
-            </div>
-          ))
         ) : (
-          <p className="text-gray-400 text-sm">Belum ada sub-tugas.</p>
+          <div className="flex flex-col gap-2 mt-2">
+            {subtasks.map((subtask, idx) => (
+              <div key={subtask.id} className="flex items-center gap-2 mb-1">
+                <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
+                <input
+                  className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
+                  value={editSubtaskId === subtask.id ? editSubtaskValue : subtask.title}
+                  onChange={e => handleEditSubtaskChange(subtask.id, e.target.value)}
+                  onFocus={() => { setEditSubtaskId(subtask.id); setEditSubtaskValue(subtask.title); }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSubtaskEnter(idx);
+                    }
+                  }}
+                  disabled={editSubtaskLoading}
+                  ref={el => {
+                    inputRefs.current[idx] = el;
+                    if (editSubtaskId === subtask.id) {
+                      editInputRef.current = el;
+                    }
+                  }}
+                />
+              </div>
+            ))}
+            {subtasks.length === 0 && (
+              <InputField
+                key="input-0"
+                name="title-0"
+                placeholder="Tambah sub-tugas baru..."
+                className="flex-1"
+                value={newSubtaskTitle}
+                onChange={e => setNewSubtaskTitle(e.target.value)}
+                disabled={newSubtaskLoading}
+              />
+            )}
+          </div>
         )}
-        <form onSubmit={handleSubmit} className="flex gap-2 mt-2">
-          <InputField
-            name="title"
-            placeholder="Tambah sub-tugas baru..."
-            required
-            className="flex-1"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            disabled={loading}
-          />
-          <Button type="submit" size="sm" variant="primary" disabled={loading}>
-            {loading ? 'Menambah...' : 'Tambah'}
-          </Button>
-        </form>
       </div>
     </div>
   );

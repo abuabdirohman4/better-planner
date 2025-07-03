@@ -154,7 +154,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
             <span className="font-bold text-lg w-6 text-center select-none">{idx + 1}.</span>
             {milestone ? (
               <input
-                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 font-semibold"
+                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-0"
                 value={milestone.title}
                 onChange={e => {
                   const newTitle = e.target.value;
@@ -166,7 +166,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
               />
             ) : (
               <input
-                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900"
+                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 focus:outline-none focus:ring-0"
                 placeholder={`Tambah milestone ${idx + 1}...`}
                 value={newMilestoneInputs[idx]}
                 onChange={e => {
