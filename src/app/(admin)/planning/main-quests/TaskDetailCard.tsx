@@ -17,17 +17,12 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [loadingSubtasks, setLoadingSubtasks] = useState(true);
   const [editSubtaskId, setEditSubtaskId] = useState<string | null>(null);
-  const [editSubtaskValue, setEditSubtaskValue] = useState('');
-  const [editSubtaskLoading, setEditSubtaskLoading] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskLoading, setNewSubtaskLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
   const [focusSubtaskId, setFocusSubtaskId] = useState<string | null>(null);
-  const [localDraftTitles, setLocalDraftTitles] = useState<{ [id: string]: string }>({});
-  // Ref untuk menyimpan draft terakhir yang diketik user (anti race condition)
-  const lastDraftRef = useRef<{ id: string; value: string } | null>(null);
+  const [draftTitles, setDraftTitles] = useState<Record<string, string>>({});
 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
@@ -75,7 +70,6 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       arr.splice(idx + 1, 0, optimisticSubtask);
       return arr;
     });
-    setFocusIdx(idx + 1);
     setFocusSubtaskId(tempId);
     // 4. Panggil server action di background
     try {
@@ -88,52 +82,17 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       if (res.ok && data.task) {
         setSubtasks(prev => prev.map(st => st.id === tempId ? data.task : st));
         setFocusSubtaskId(data.task.id);
-        // Transfer draft title dari tempId ke id asli, merge jika realId sudah ada
-        setLocalDraftTitles(draft => {
-          const tempTitle = draft[tempId];
-          const realTitle = draft[data.task.id];
-          let mergedTitle = tempTitle;
-          // Jika user mengetik sangat cepat, ambil draft terbaru dari ref
-          if (lastDraftRef.current && lastDraftRef.current.id === tempId) {
-            mergedTitle = lastDraftRef.current.value;
-          } else if (realTitle && realTitle.length > (tempTitle?.length || 0)) {
-            mergedTitle = realTitle;
-          }
-          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
-          return data.task.id ? { ...rest, [data.task.id]: mergedTitle ?? '' } : rest;
-        });
       } else if (res.ok && data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
         setSubtasks(prev => prev.map(st => st.id === tempId ? data.tasks[0] : st));
         setFocusSubtaskId(data.tasks[0].id);
-        // Transfer draft title dari tempId ke id asli, merge jika realId sudah ada
-        setLocalDraftTitles(draft => {
-          const tempTitle = draft[tempId];
-          const realTitle = draft[data.tasks[0].id];
-          let mergedTitle = tempTitle;
-          if (lastDraftRef.current && lastDraftRef.current.id === tempId) {
-            mergedTitle = lastDraftRef.current.value;
-          } else if (realTitle && realTitle.length > (tempTitle?.length || 0)) {
-            mergedTitle = realTitle;
-          }
-          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
-          return data.tasks[0].id ? { ...rest, [data.tasks[0].id]: mergedTitle ?? '' } : rest;
-        });
       } else {
         setSubtasks(prev => prev.filter(st => st.id !== tempId));
         setFocusSubtaskId(null);
-        setLocalDraftTitles(draft => {
-          const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
-          return rest;
-        });
         CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal membuat tugas baru. Coba lagi.');
       }
     } catch {
       setSubtasks(prev => prev.filter(st => st.id !== tempId));
       setFocusSubtaskId(null);
-      setLocalDraftTitles(draft => {
-        const rest = Object.fromEntries(Object.entries(draft).filter(([k]) => k !== tempId));
-        return rest;
-      });
       CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
     }
   };
@@ -156,29 +115,6 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     } catch {
       CustomToast.error('Gagal update status');
     }
-  };
-
-  // Inline edit subtask
-  const debouncedSaveSubtask = useMemo(() => debounce(async (id: string, val: string) => {
-    setEditSubtaskLoading(true);
-    try {
-      await updateTask(id, val);
-      // Update state lokal agar hasil edit langsung muncul
-      setSubtasks(subtasks => subtasks.map(st => st.id === id ? { ...st, title: val } : st));
-    } catch {
-      // Tidak perlu toast, biarkan hasil edit langsung muncul
-    }
-    setEditSubtaskLoading(false);
-    // Fokuskan kembali ke input yang sedang diedit
-    if (editInputRef.current) {
-      editInputRef.current.focus();
-    }
-  }, 500), []);
-
-  const handleEditSubtaskChange = (id: string, val: string) => {
-    setEditSubtaskId(id);
-    setEditSubtaskValue(val);
-    debouncedSaveSubtask(id, val);
   };
 
   // Debounce insert subtask baru
@@ -218,37 +154,71 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
 
   // Fokus ke input baru setelah insert atau update id
   useEffect(() => {
-    if (focusIdx !== null && !loadingSubtasks) {
-      // Fallback: coba fokus langsung, jika gagal coba lagi dengan delay
-      const el = inputRefs.current[focusIdx];
-      if (el) {
-        el.focus();
-        setFocusIdx(null);
-      } else {
-        const timeout = setTimeout(() => {
-          const el2 = inputRefs.current[focusIdx];
-          if (el2) el2.focus();
-          setFocusIdx(null);
-        }, 30);
-        return () => clearTimeout(timeout);
-      }
-    }
-    // Fokus ke input dengan id tertentu (setelah id temp diganti id asli)
     if (focusSubtaskId) {
       const idx = subtasks.findIndex(st => st.id === focusSubtaskId);
       if (idx !== -1 && inputRefs.current[idx]) {
         inputRefs.current[idx]?.focus();
-        // Jangan reset focusSubtaskId di sini, biarkan persist
       }
     }
-  }, [focusIdx, loadingSubtasks, subtasks.length, focusSubtaskId, subtasks]);
+  }, [focusSubtaskId, subtasks.length, inputRefs.current]);
 
   // Pastikan fokus tetap di input yang sedang diedit setelah update
   useEffect(() => {
-    if (!editSubtaskLoading && editSubtaskId && editInputRef.current) {
+    if (!editSubtaskId && editInputRef.current) {
       editInputRef.current.focus();
     }
-  }, [editSubtaskLoading, editSubtaskId]);
+  }, [editSubtaskId]);
+
+  // Efek: Jika ada subtask baru (title kosong) yang id-nya berubah dari tempId ke id server, update focusSubtaskId ke id server
+  useEffect(() => {
+    const focused = subtasks.find(st => st.title === '' && st.id !== focusSubtaskId);
+    if (focused && focusSubtaskId && !subtasks.some(st => st.id === focusSubtaskId)) {
+      setFocusSubtaskId(focused.id);
+    }
+  }, [subtasks, focusSubtaskId]);
+
+  // Debounced update ke server
+  const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
+    try {
+      await updateTask(id, val);
+      setSubtasks(subtasks => subtasks.map(st => st.id === id ? { ...st, title: val } : st));
+    } catch {}
+  }, 1000), []);
+
+  // Update langsung ke server (tanpa debounce)
+  const updateTaskImmediate = async (id: string, val: string) => {
+    try {
+      await updateTask(id, val);
+      setSubtasks(subtasks => subtasks.map(st => st.id === id ? { ...st, title: val } : st));
+    } catch {}
+  };
+
+  // Saat id temp diganti id server, transfer draftTitle
+  useEffect(() => {
+    // Cari subtask dengan title kosong yang id-nya bukan focusSubtaskId, dan focusSubtaskId tidak ada di subtasks
+    const focused = subtasks.find(st => st.title === '' && st.id !== focusSubtaskId);
+    if (focused && focusSubtaskId && !subtasks.some(st => st.id === focusSubtaskId)) {
+      setFocusSubtaskId(focused.id);
+      setDraftTitles(draft => {
+        const newDraft = { ...draft };
+        if (draft[focusSubtaskId]) {
+          newDraft[focused.id] = draft[focusSubtaskId];
+          delete newDraft[focusSubtaskId];
+        }
+        return newDraft;
+      });
+    }
+  }, [subtasks, focusSubtaskId]);
+
+  // Handler perubahan draft title
+  const handleDraftTitleChange = (id: string, val: string, immediate = false) => {
+    setDraftTitles(draft => ({ ...draft, [id]: val }));
+    if (immediate) {
+      updateTaskImmediate(id, val);
+    } else {
+      debouncedUpdateTask(id, val);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -271,39 +241,19 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
         ) : (
           <div className="flex flex-col gap-2 mt-2">
             {subtasks.map((subtask, idx) => (
-              <div key={subtask.id} className="flex items-center gap-2 mb-1">
-                <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
-                <input
-                  className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
-                  value={localDraftTitles[subtask.id] ?? (editSubtaskId === subtask.id ? editSubtaskValue : (subtask.title ?? ''))}
-                  onChange={e => {
-                    setLocalDraftTitles(draft => {
-                      const newDraft = { ...draft, [subtask.id]: e.target.value };
-                      lastDraftRef.current = { id: subtask.id, value: e.target.value };
-                      return newDraft;
-                    });
-                    handleEditSubtaskChange(subtask.id, e.target.value);
-                  }}
-                  onFocus={() => {
-                    setEditSubtaskId(subtask.id);
-                    setEditSubtaskValue(localDraftTitles[subtask.id] ?? subtask.title ?? '');
-                    setFocusSubtaskId(subtask.id);
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleSubtaskEnter(idx);
-                    }
-                  }}
-                  disabled={editSubtaskLoading}
-                  ref={el => {
-                    inputRefs.current[idx] = el;
-                    if (editSubtaskId === subtask.id) {
-                      editInputRef.current = el;
-                    }
-                  }}
-                />
-              </div>
+              <SubtaskInput
+                key={subtask.id}
+                subtask={subtask}
+                idx={idx}
+                setEditSubtaskId={setEditSubtaskId}
+                setFocusSubtaskId={setFocusSubtaskId}
+                handleSubtaskEnter={handleSubtaskEnter}
+                handleCheck={handleCheck}
+                shouldFocus={focusSubtaskId === subtask.id}
+                clearFocusSubtaskId={() => setFocusSubtaskId(null)}
+                draftTitle={draftTitles[subtask.id] ?? subtask.title ?? ''}
+                onDraftTitleChange={(val, immediate) => handleDraftTitleChange(subtask.id, val, immediate)}
+              />
             ))}
             {subtasks.length === 0 && (
               <InputField
@@ -319,6 +269,58 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Komponen inline untuk granular state per subtask
+interface SubtaskInputProps {
+  subtask: Subtask;
+  idx: number;
+  setEditSubtaskId: (id: string) => void;
+  setFocusSubtaskId: (id: string) => void;
+  handleSubtaskEnter: (idx: number) => void;
+  handleCheck: (subtask: Subtask) => void;
+  shouldFocus: boolean;
+  clearFocusSubtaskId: () => void;
+  draftTitle: string;
+  onDraftTitleChange: (val: string, immediate?: boolean) => void;
+}
+function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange }: SubtaskInputProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (shouldFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [shouldFocus]);
+  return (
+    <div className="flex items-center gap-2 mb-1">
+      <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
+      <input
+        className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
+        value={draftTitle}
+        onChange={e => onDraftTitleChange(e.target.value)}
+        onFocus={() => {
+          setEditSubtaskId(subtask.id);
+          setFocusSubtaskId(subtask.id);
+        }}
+        onBlur={e => {
+          const next = e.relatedTarget as HTMLElement | null;
+          onDraftTitleChange(e.target.value, true); // update langsung ke server saat blur
+          if (!next || next.tagName !== 'INPUT') {
+            clearFocusSubtaskId();
+          } else {
+          }
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onDraftTitleChange(e.currentTarget.value, true); // update langsung ke server saat Enter
+            handleSubtaskEnter(idx);
+          }
+        }}
+        ref={inputRef}
+      />
     </div>
   );
 } 
