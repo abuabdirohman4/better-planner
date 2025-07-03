@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       formData.append('display_order', display_order);
     }
     const res = await addTask(formData);
-    return NextResponse.json({ message: res?.message || 'Task berhasil ditambahkan!' });
+    return NextResponse.json({ message: res?.message || 'Task berhasil ditambahkan!', task: res?.task });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) || 'Gagal menambah task' }, { status: 500 });
   }

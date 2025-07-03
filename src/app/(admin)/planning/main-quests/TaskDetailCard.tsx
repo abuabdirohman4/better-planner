@@ -24,6 +24,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
+  const [focusSubtaskId, setFocusSubtaskId] = useState<string | null>(null);
 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
@@ -43,31 +44,37 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
 
   // Saat Enter ditekan pada subtask, insert subtask kosong ke database dengan fractional indexing
   const handleSubtaskEnter = async (idx: number) => {
-    // Fractional Indexing Logic
+    // 1. Hitung display_order baru (fractional indexing)
     let prevOrder = 0;
     let nextOrder: number | undefined = undefined;
     let newOrder = 1.0;
-    // Debug log
-    // console.log('DEBUG subtasks:', subtasks);
-    // console.log('DEBUG idx:', idx);
-    // Edge case: list kosong
     if (subtasks.length === 0) {
       newOrder = 1.0;
-      // console.log('DEBUG case: list kcosong, newOrder:', newOrder);
     } else {
-      // Normal case: ada subtask
       prevOrder = subtasks[idx]?.display_order ?? 0;
       nextOrder = subtasks[idx + 1]?.display_order;
       if (nextOrder !== undefined) {
-        // Sisip di tengah
         newOrder = (prevOrder + nextOrder) / 2;
-        // console.log('DEBUG case: sisip di tengah, prevOrder:', prevOrder, 'nextOrder:', nextOrder, 'newOrder:', newOrder);
       } else {
-        // Sisip di akhir
         newOrder = prevOrder + 1.0;
-        // console.log('DEBUG case: sisip di akhir, prevOrder:', prevOrder, 'newOrder:', newOrder);
       }
     }
+    // 2. Buat sub-task palsu (optimistic)
+    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
+    const optimisticSubtask: Subtask = {
+      id: tempId,
+      title: '',
+      status: 'TODO',
+      display_order: newOrder,
+    };
+    setSubtasks(prev => {
+      const arr = [...prev];
+      arr.splice(idx + 1, 0, optimisticSubtask);
+      return arr;
+    });
+    setFocusIdx(idx + 1);
+    setFocusSubtaskId(tempId);
+    // 4. Panggil server action di background
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -75,15 +82,21 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
         body: JSON.stringify({ parent_task_id: task.id, title: '', milestone_id: milestoneId, display_order: newOrder })
       });
       const data = await res.json();
-      if (res.ok) {
-        setFocusIdx(idx + 1); // Fokus ke input baru setelah fetch
-        fetchSubtasks();
-        CustomToast.success(typeof data.message === 'string' ? data.message : 'Sub-tugas berhasil ditambahkan');
+      if (res.ok && data.task) {
+        setSubtasks(prev => prev.map(st => st.id === tempId ? data.task : st));
+        setFocusSubtaskId(data.task.id);
+      } else if (res.ok && data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
+        setSubtasks(prev => prev.map(st => st.id === tempId ? data.tasks[0] : st));
+        setFocusSubtaskId(data.tasks[0].id);
       } else {
-        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal menambah sub-tugas');
+        setSubtasks(prev => prev.filter(st => st.id !== tempId));
+        setFocusSubtaskId(null);
+        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal membuat tugas baru. Coba lagi.');
       }
     } catch {
-      CustomToast.error('Gagal menambah sub-tugas');
+      setSubtasks(prev => prev.filter(st => st.id !== tempId));
+      setFocusSubtaskId(null);
+      CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
     }
   };
 
@@ -122,7 +135,6 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     if (editInputRef.current) {
       editInputRef.current.focus();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, 500), []);
 
   const handleEditSubtaskChange = (id: string, val: string) => {
@@ -166,13 +178,32 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newSubtaskTitle]);
 
-  // Fokus ke input baru setelah insert
+  // Fokus ke input baru setelah insert atau update id
   useEffect(() => {
     if (focusIdx !== null && !loadingSubtasks) {
-      inputRefs.current[focusIdx]?.focus();
-      setFocusIdx(null);
+      // Fallback: coba fokus langsung, jika gagal coba lagi dengan delay
+      const el = inputRefs.current[focusIdx];
+      if (el) {
+        el.focus();
+        setFocusIdx(null);
+      } else {
+        const timeout = setTimeout(() => {
+          const el2 = inputRefs.current[focusIdx];
+          if (el2) el2.focus();
+          setFocusIdx(null);
+        }, 30);
+        return () => clearTimeout(timeout);
+      }
     }
-  }, [focusIdx, loadingSubtasks, subtasks.length]);
+    // Fokus ke input dengan id tertentu (setelah id temp diganti id asli)
+    if (focusSubtaskId) {
+      const idx = subtasks.findIndex(st => st.id === focusSubtaskId);
+      if (idx !== -1 && inputRefs.current[idx]) {
+        inputRefs.current[idx]?.focus();
+        setFocusSubtaskId(null);
+      }
+    }
+  }, [focusIdx, loadingSubtasks, subtasks.length, focusSubtaskId, subtasks]);
 
   // Pastikan fokus tetap di input yang sedang diedit setelah update
   useEffect(() => {
@@ -206,9 +237,9 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                 <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
                 <input
                   className={`border rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
-                  value={editSubtaskId === subtask.id ? editSubtaskValue : subtask.title}
+                  value={editSubtaskId === subtask.id ? editSubtaskValue : (subtask.title ?? '')}
                   onChange={e => handleEditSubtaskChange(subtask.id, e.target.value)}
-                  onFocus={() => { setEditSubtaskId(subtask.id); setEditSubtaskValue(subtask.title); }}
+                  onFocus={() => { setEditSubtaskId(subtask.id); setEditSubtaskValue(subtask.title ?? ''); }}
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
