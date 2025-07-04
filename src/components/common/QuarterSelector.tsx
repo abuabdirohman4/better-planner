@@ -5,55 +5,13 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
-
-// Helper: get week of year
-function getWeekOfYear(date: Date) {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const diff = (date.getTime() - start.getTime()) / 86400000;
-  const day = start.getDay() || 7;
-  return Math.ceil((diff + day) / 7);
-}
-
-// Helper: parse q param (e.g. 2025-Q2)
-function parseQParam(q: string | null): { year: number; quarter: number } {
-  if (!q) {
-    const now = new Date();
-    const week = getWeekOfYear(now);
-    let quarter = 1;
-    if (week >= 1 && week <= 13) quarter = 1;
-    else if (week >= 14 && week <= 26) quarter = 2;
-    else if (week >= 27 && week <= 39) quarter = 3;
-    else quarter = 4;
-    return { year: now.getFullYear(), quarter };
-  }
-  const match = q.match(/(\d{4})-Q([1-4])/);
-  if (match) {
-    return { year: parseInt(match[1]), quarter: parseInt(match[2]) };
-  }
-  // fallback
-  const now = new Date();
-  const week = getWeekOfYear(now);
-  let quarter = 1;
-  if (week >= 1 && week <= 13) quarter = 1;
-  else if (week >= 14 && week <= 26) quarter = 2;
-  else if (week >= 27 && week <= 39) quarter = 3;
-  else quarter = 4;
-  return { year: now.getFullYear(), quarter };
-}
-
-function formatQParam(year: number, quarter: number) {
-  return `${year}-Q${quarter}`;
-}
-
-// Helper: get previous/next quarter
-function getPrevQuarter(year: number, quarter: number) {
-  if (quarter === 1) return { year: year - 1, quarter: 4 };
-  return { year, quarter: quarter - 1 };
-}
-function getNextQuarter(year: number, quarter: number) {
-  if (quarter === 4) return { year: year + 1, quarter: 1 };
-  return { year, quarter: quarter + 1 };
-}
+import { 
+  parseQParam, 
+  formatQParam, 
+  getPrevQuarter, 
+  getNextQuarter,
+  getQuarterString 
+} from "@/lib/quarterUtils";
 
 // Helper: generate 16 quarter options (2 prev, current, 1 next year)
 function generateQuarterOptions(current: { year: number; quarter: number }) {
@@ -128,13 +86,16 @@ const QuarterSelector: React.FC = () => {
     const prev = getPrevQuarter(year, quarter);
     setQuarter(prev.year, prev.quarter);
   };
+  
   const handleNext = () => {
     const next = getNextQuarter(year, quarter);
     setQuarter(next.year, next.quarter);
   };
+  
   const handleSelect = (y: number, q: number) => {
     setQuarter(y, q);
   };
+
   const handleDropdownToggle = () => {
     setIsOpen((v) => !v);
   };
@@ -151,7 +112,7 @@ const QuarterSelector: React.FC = () => {
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
-          <span>{`Q${quarter} ${year}`}</span>
+          <span>{getQuarterString(year, quarter)}</span>
         </button>
         <Dropdown className="w-32" isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <div className="max-h-64 overflow-y-auto">
@@ -165,7 +126,7 @@ const QuarterSelector: React.FC = () => {
                     : "!text-center"
                 }
               >
-                {`Q${opt.quarter} ${opt.year}`}
+                {getQuarterString(opt.year, opt.quarter)}
               </DropdownItem>
             ))}
           </div>

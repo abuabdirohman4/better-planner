@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
 import { addMultipleQuests, updateQuests, finalizeQuests } from "../quests/actions";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import Spinner from "@/components/ui/spinner/Spinner";
 import { useSidebar } from '@/context/SidebarContext';
+import { useQuarter } from "@/hooks/useQuarter";
 
 // Komponen ini adalah client UI/presentasi dan interaksi utama untuk 12 Week Goals.
 // - Menerima data quest dari parent (props initialQuests).
@@ -28,20 +29,9 @@ interface RankedQuest extends Quest {
 }
 
 export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseResults = {}, loading = false }: { initialQuests?: { id?: string, title: string, label?: string }[], initialPairwiseResults?: { [key: string]: string }, loading?: boolean }) {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { isExpanded } = useSidebar();
-  // Ambil info kuartal dari URL
-  const qParam = searchParams.get("q");
-  let year = new Date().getFullYear();
-  let quarter = 1;
-  if (qParam) {
-    const match = qParam.match(/(\d{4})-Q([1-4])/);
-    if (match) {
-      year = parseInt(match[1]);
-      quarter = parseInt(match[2]);
-    }
-  }
+  const { year, quarter } = useQuarter();
   const localKey = `better-planner-pairwise-${year}-Q${quarter}`;
 
   // State utama
@@ -175,17 +165,6 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
   const handleCommit = async () => {
     if (!ranking) return;
     try {
-      // Ambil qParam, year, quarter secara real-time
-      const qParam = searchParams.get("q");
-      let year = new Date().getFullYear();
-      let quarter = 1;
-      if (qParam) {
-        const match = qParam.match(/(\d{4})-Q([1-4])/);
-        if (match) {
-          year = parseInt(match[1]);
-          quarter = parseInt(match[2]);
-        }
-      }
       // Kalkulasi skor priority_score dari pairwiseResults
       const scores: { [label: string]: number } = {};
       quests.forEach(q => { scores[q.label] = 0; });
