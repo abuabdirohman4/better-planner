@@ -353,4 +353,16 @@ export async function updateTaskDisplayOrder(taskId: string, display_order: numb
     .eq('id', taskId);
   if (error) throw new Error('Gagal update urutan task: ' + (error.message || ''));
   return { message: 'Urutan task berhasil diupdate!' };
+}
+
+// Ambil semua subtask untuk parent_task_id tertentu
+export async function getSubtasksForTask(parent_task_id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, title, status, display_order, parent_task_id, milestone_id')
+    .eq('parent_task_id', parent_task_id)
+    .order('display_order', { ascending: true });
+  if (error) return [];
+  return data;
 } 

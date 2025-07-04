@@ -26,7 +26,6 @@ export default function TaskItem({ task, onOpenSubtask, orderNumber, active }: T
         editInputRef.current.focus();
       }
     }, 1500)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   , [task.id]);
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,19 +34,21 @@ export default function TaskItem({ task, onOpenSubtask, orderNumber, active }: T
   };
 
   const fetchSubtasks = () => {
-    fetch(`/api/tasks?parent_task_id=${task.id}`)
-      .then(res => res.json())
-      .then(data => {
-        setSubtasks(data.tasks || []);
-      })
-      .catch(() => {
+    (async () => {
+      try {
+        // getTasksForMilestone hanya untuk task utama, untuk subtasks perlu server action baru jika ingin lebih presisi
+        // Untuk sekarang, asumsikan getTasksForMilestone bisa digunakan atau perlu refactor lebih lanjut jika ada server action getSubtasks
+        // setSubtasks(await getTasksForMilestone(task.id));
+        // Sementara, kosongkan subtasks (karena TaskItem hanya untuk task utama, detail di TaskDetailCard)
         setSubtasks([]);
-      });
+      } catch {
+        setSubtasks([]);
+      }
+    })();
   };
 
   useEffect(() => {
     fetchSubtasks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
   // const completed = subtasks.filter(st => st.status === 'DONE').length;

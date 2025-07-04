@@ -1,5 +1,7 @@
 import TaskItem from './TaskItem';
 import { useState, useEffect } from 'react';
+import { getTasksForMilestone, addTask } from '../quests/actions';
+
 interface Task {
   id: string;
   title: string;
@@ -24,9 +26,8 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
   const fetchTasks = async () => {
     setLoadingTasks(true);
     try {
-      const res = await fetch(`/api/tasks?milestone_id=${milestone.id}`);
-      const data = await res.json();
-      setTasks((data.tasks || []).filter((t: Task) => !t.parent_task_id)); // hanya tugas utama
+      const data = await getTasksForMilestone(milestone.id);
+      setTasks((data || []).filter((t: Task) => !t.parent_task_id)); // hanya tugas utama
     } finally {
       setLoadingTasks(false);
     }
@@ -39,12 +40,10 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
     const handler = setTimeout(async () => {
       setNewTaskLoading(l => l.map((v, i) => i === 0 ? true : v));
       try {
-        const res = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ milestone_id: milestone.id, title: val })
-        });
-        await res.json();
+        const formData = new FormData();
+        formData.append('milestone_id', milestone.id);
+        formData.append('title', val);
+        await addTask(formData);
         fetchTasks();
         setNewTaskInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
         setLastSubmittedTask(vals => vals.map((v, i) => i === 0 ? val : v));
@@ -62,12 +61,10 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
     const handler = setTimeout(async () => {
       setNewTaskLoading(l => l.map((v, i) => i === 1 ? true : v));
       try {
-        const res = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ milestone_id: milestone.id, title: val })
-        });
-        await res.json();
+        const formData = new FormData();
+        formData.append('milestone_id', milestone.id);
+        formData.append('title', val);
+        await addTask(formData);
         fetchTasks();
         setNewTaskInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
         setLastSubmittedTask(vals => vals.map((v, i) => i === 1 ? val : v));
@@ -85,12 +82,10 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
     const handler = setTimeout(async () => {
       setNewTaskLoading(l => l.map((v, i) => i === 2 ? true : v));
       try {
-        const res = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ milestone_id: milestone.id, title: val })
-        });
-        await res.json();
+        const formData = new FormData();
+        formData.append('milestone_id', milestone.id);
+        formData.append('title', val);
+        await addTask(formData);
         fetchTasks();
         setNewTaskInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
         setLastSubmittedTask(vals => vals.map((v, i) => i === 2 ? val : v));

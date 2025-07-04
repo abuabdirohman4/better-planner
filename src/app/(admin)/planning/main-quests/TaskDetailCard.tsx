@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import InputField from '@/components/form/input/InputField';
 import Checkbox from '@/components/form/input/Checkbox';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { updateTask } from '../quests/actions';
+import { updateTask, addTask, updateTaskStatus, deleteTask, updateTaskDisplayOrder, getSubtasksForTask } from '../quests/actions';
 import debounce from 'lodash/debounce';
 import { CloseLineIcon } from '@/icons';
 import {
@@ -98,9 +98,8 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   const fetchSubtasks = async () => {
     setLoadingSubtasks(true);
     try {
-      const res = await fetch(`/api/tasks?parent_task_id=${task.id}`);
-      const data = await res.json();
-      setSubtasks(data.tasks || []);
+      const data = await getSubtasksForTask(task.id);
+      setSubtasks(data || []);
     } finally {
       setLoadingSubtasks(false);
     }
@@ -160,22 +159,19 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     setFocusSubtaskId(tempId);
     // 4. Panggil server action di background
     try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent_task_id: task.id, title: title, milestone_id: milestoneId, display_order: newOrder })
-      });
-      const data = await res.json();
-      if (res.ok && data.task) {
-        setSubtasks(prev => prev.map(st => st.id === tempId ? data.task : st));
-        setFocusSubtaskId(data.task.id);
-      } else if (res.ok && data.tasks && Array.isArray(data.tasks) && data.tasks.length > 0) {
-        setSubtasks(prev => prev.map(st => st.id === tempId ? data.tasks[0] : st));
-        setFocusSubtaskId(data.tasks[0].id);
+      const formData = new FormData();
+      formData.append('parent_task_id', task.id);
+      formData.append('title', title);
+      formData.append('milestone_id', milestoneId);
+      formData.append('display_order', String(newOrder));
+      const res = await addTask(formData);
+      if (res && res.task) {
+        setSubtasks(prev => prev.map(st => st.id === tempId ? (res.task as Subtask) : st));
+        setFocusSubtaskId(res.task.id);
       } else {
         setSubtasks(prev => prev.filter(st => st.id !== tempId));
         setFocusSubtaskId(null);
-        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal membuat tugas baru. Coba lagi.');
+        CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
       }
     } catch {
       setSubtasks(prev => prev.filter(st => st.id !== tempId));
@@ -190,16 +186,10 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     // Optimistic update
     setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: newStatus } : st));
     try {
-      const res = await fetch(`/api/tasks/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: subtask.id, newStatus })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        // Rollback jika gagal
+      const res = await updateTaskStatus(subtask.id, newStatus);
+      if (!res) {
         setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: subtask.status } : st));
-        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal update status');
+        CustomToast.error('Gagal update status');
       }
     } catch {
       setSubtasks(prev => prev.map(st => st.id === subtask.id ? { ...st, status: subtask.status } : st));
@@ -218,18 +208,18 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       newOrder = lastOrder + 1.0;
     }
     try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent_task_id: task.id, title, milestone_id: milestoneId, display_order: newOrder })
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const formData = new FormData();
+      formData.append('parent_task_id', task.id);
+      formData.append('title', title);
+      formData.append('milestone_id', milestoneId);
+      formData.append('display_order', String(newOrder));
+      const res = await addTask(formData);
+      if (res && res.task) {
         setNewSubtaskTitle('');
         fetchSubtasks();
-        CustomToast.success(typeof data.message === 'string' ? data.message : 'Sub-tugas berhasil ditambahkan');
+        CustomToast.success(res.message || 'Sub-tugas berhasil ditambahkan');
       } else {
-        CustomToast.error(typeof data.error === 'string' ? data.error : 'Gagal menambah sub-tugas');
+        CustomToast.error('Gagal menambah sub-tugas');
       }
     } catch {
       CustomToast.error('Gagal menambah sub-tugas');
@@ -332,7 +322,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     // Hapus di server jika id bukan temp
     if (!id.match(/^\d+$/) && id.length < 24) return; // skip temp id (uuid pendek)
     try {
-      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      await deleteTask(id);
     } catch {}
   };
 
@@ -391,11 +381,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     newSubtasks[newIndex] = { ...newSubtasks[newIndex], display_order: newOrder };
     setSubtasks(newSubtasks);
     try {
-      await fetch(`/api/tasks`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: newSubtasks[newIndex].id, display_order: newOrder })
-      });
+      await updateTaskDisplayOrder(newSubtasks[newIndex].id, newOrder);
     } catch {}
   };
 

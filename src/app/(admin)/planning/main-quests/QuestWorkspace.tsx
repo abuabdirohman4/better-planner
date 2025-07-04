@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import MilestoneItem from './MilestoneItem';
 import ComponentCard from '@/components/common/ComponentCard';
-import { updateQuestMotivation, updateMilestone } from '../quests/actions';
+import { updateQuestMotivation, updateMilestone, getMilestonesForQuest } from '../quests/actions';
 import debounce from 'lodash/debounce';
 import TaskDetailCard from './TaskDetailCard';
 
@@ -46,9 +46,8 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
   const fetchMilestones = async () => {
     setLoadingMilestones(true);
     try {
-      const res = await fetch(`/api/milestones?quest_id=${quest.id}`);
-      const data = await res.json();
-      setMilestones(data.milestones || []);
+      const data = await getMilestonesForQuest(quest.id);
+      setMilestones(data || []);
     } finally {
       setLoadingMilestones(false);
     }
@@ -61,17 +60,12 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 0 ? true : v));
       try {
-        const res = await fetch('/api/milestones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quest_id: quest.id, title: val })
-        });
-        await res.json();
-        if (res.ok) {
-          fetchMilestones();
-          setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
-          setLastSubmittedMilestone(vals => vals.map((v, i) => i === 0 ? val : v));
-        }
+        const formData = new FormData();
+        formData.append('quest_id', quest.id);
+        formData.append('title', val);
+        fetchMilestones();
+        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
+        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 0 ? val : v));
       } finally {
         setNewMilestoneLoading(l => l.map((v, i) => i === 0 ? false : v));
       }
@@ -86,17 +80,12 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 1 ? true : v));
       try {
-        const res = await fetch('/api/milestones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quest_id: quest.id, title: val })
-        });
-        await res.json();
-        if (res.ok) {
-          fetchMilestones();
-          setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
-          setLastSubmittedMilestone(vals => vals.map((v, i) => i === 1 ? val : v));
-        }
+        const formData = new FormData();
+        formData.append('quest_id', quest.id);
+        formData.append('title', val);
+        fetchMilestones();
+        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
+        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 1 ? val : v));
       } finally {
         setNewMilestoneLoading(l => l.map((v, i) => i === 1 ? false : v));
       }
@@ -111,17 +100,12 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 2 ? true : v));
       try {
-        const res = await fetch('/api/milestones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quest_id: quest.id, title: val })
-        });
-        await res.json();
-        if (res.ok) {
-          fetchMilestones();
-          setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
-          setLastSubmittedMilestone(vals => vals.map((v, i) => i === 2 ? val : v));
-        }
+        const formData = new FormData();
+        formData.append('quest_id', quest.id);
+        formData.append('title', val);
+        fetchMilestones();
+        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
+        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 2 ? val : v));
       } finally {
         setNewMilestoneLoading(l => l.map((v, i) => i === 2 ? false : v));
       }

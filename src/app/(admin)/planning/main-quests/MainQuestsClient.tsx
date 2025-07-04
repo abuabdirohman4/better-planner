@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import QuestWorkspace from './QuestWorkspace';
 import ComponentCard from '@/components/common/ComponentCard';
+import { getQuests } from '../quests/actions';
 
 function parseQParam(q: string | null): { year: number; quarter: number } {
   if (!q) {
@@ -46,16 +47,16 @@ export default function MainQuestsClient() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/quests?year=${year}&quarter=${quarter}`)
-      .then(res => res.json())
-      .then(data => {
-        setQuests(data.quests || []);
-        setLoading(false);
-      })
-      .catch(() => {
+    (async () => {
+      try {
+        const data = await getQuests(year, quarter, true);
+        setQuests(data || []);
+      } catch {
         setQuests([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, [year, quarter]);
 
   if (loading) {
