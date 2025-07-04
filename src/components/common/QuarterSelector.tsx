@@ -71,6 +71,34 @@ function generateQuarterOptions(current: { year: number; quarter: number }) {
   });
 }
 
+// Helper: check if QuarterSelector should be hidden based on current pathname
+function shouldHideQuarterSelector(pathname: string): boolean {
+  const hiddenPaths = [
+    '/planning/vision',
+    '/settings',
+    '/profile',
+    // '/auth/signin',
+    // '/auth/signup',
+    // '/auth/callback',
+    // '/error-404',
+    // '/blank',
+    // '/calendar',
+    // '/alerts',
+    // '/avatars',
+    // '/badge',
+    // '/buttons',
+    // '/images',
+    // '/modals',
+    // '/videos',
+    // '/form-elements',
+    // '/basic-tables',
+    // '/bar-chart',
+    // '/line-chart'
+  ];
+  
+  return hiddenPaths.some(path => pathname.startsWith(path));
+}
+
 const QuarterSelector: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,6 +108,14 @@ const QuarterSelector: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const options = useMemo(() => generateQuarterOptions({ year, quarter }), [year, quarter]);
+  
+  // Check if component should be hidden based on current pathname
+  const isHidden = shouldHideQuarterSelector(pathname);
+
+  // If component should be hidden, return null
+  if (isHidden) {
+    return null;
+  }
 
   const setQuarter = (y: number, q: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -99,6 +135,9 @@ const QuarterSelector: React.FC = () => {
   const handleSelect = (y: number, q: number) => {
     setQuarter(y, q);
   };
+  const handleDropdownToggle = () => {
+    setIsOpen((v) => !v);
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -107,8 +146,8 @@ const QuarterSelector: React.FC = () => {
       </Button>
       <div className="relative">
         <button
-          className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-32 dropdown-toggle"
-          onClick={() => setIsOpen((v) => !v)}
+          className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-32 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          onClick={handleDropdownToggle}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
