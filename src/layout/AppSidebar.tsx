@@ -34,12 +34,12 @@ const executionNav: NavItem[] = [
   {
     icon: <TaskIcon />,
     name: "Daily Sync",
-    path: "/daily-sync",
+    path: "/execution/daily-sync",
   },
   {
     icon: <CalenderIcon />,
     name: "Weekly Sync",
-    path: "/weekly-sync",
+    path: "/execution/weekly-sync",
   },
 ];
 
