@@ -4,6 +4,16 @@ import { useQuarter } from "@/hooks/useQuarter";
 export default function QuarterUsageExample() {
   const quarterData = useQuarter();
 
+  // Helper function to format date with day name
+  const formatDateWithDay = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
   return (
     <div className="p-6 bg-white dark:bg-gray-900 rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-4">Quarter Data Example</h2>
@@ -24,12 +34,12 @@ export default function QuarterUsageExample() {
           
           <div className="flex justify-between">
             <span className="font-medium">Start Date:</span>
-            <span>{quarterData.startDate.toLocaleDateString()}</span>
+            <span className="text-sm">{formatDateWithDay(quarterData.startDate)}</span>
           </div>
           
           <div className="flex justify-between">
             <span className="font-medium">End Date:</span>
-            <span>{quarterData.endDate.toLocaleDateString()}</span>
+            <span className="text-sm">{formatDateWithDay(quarterData.endDate)}</span>
           </div>
           
           <div className="flex justify-between">
@@ -37,6 +47,16 @@ export default function QuarterUsageExample() {
             <span className={quarterData.isCurrentQuarter ? "text-green-600" : "text-gray-500"}>
               {quarterData.isCurrentQuarter ? "Yes" : "No"}
             </span>
+          </div>
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+              📅 Corrected Date Logic
+            </h3>
+            <p className="text-blue-700 dark:text-blue-300 text-sm">
+              • <strong>Start Date:</strong> Always Monday of the first week of the quarter<br/>
+              • <strong>End Date:</strong> Always Sunday of the last week of the quarter<br/>
+              • <strong>Week Range:</strong> Based on 13-week quarters (Q1: Week 1-13, Q2: Week 14-26, etc.)
+            </p>
           </div>
         </div>
         
@@ -47,14 +67,16 @@ export default function QuarterUsageExample() {
 import { useQuarter } from "@/hooks/useQuarter";
 
 export default function MyPage() {
-    const quarterData = useQuarter();
-
-    return (
-        <div>
-        <h1>Planning for {quarterData.quarterString}</h1>
-        <p>Week range: {quarterData.weekRange}</p>
-        </div>
-    );
+  const quarterData = useQuarter();
+  
+  return (
+    <div>
+      <h1>Planning for {quarterData.quarterString}</h1>
+      <p>Week range: {quarterData.weekRange}</p>
+      <p>From: {quarterData.startDate.toLocaleDateString()}</p>
+      <p>To: {quarterData.endDate.toLocaleDateString()}</p>
+    </div>
+  );
 }`}
           </pre>
         </div>

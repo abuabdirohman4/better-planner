@@ -1,9 +1,27 @@
-// Helper: get week of year
+// Helper: get week of year (ISO week)
 export function getWeekOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 1);
   const diff = (date.getTime() - start.getTime()) / 86400000;
   const day = start.getDay() || 7;
   return Math.ceil((diff + day) / 7);
+}
+
+// Helper: get date from week number and day of week (0 = Sunday, 1 = Monday, etc.)
+export function getDateFromWeek(year: number, week: number, dayOfWeek: number = 1): Date {
+  // Get January 1st of the year
+  const jan1 = new Date(year, 0, 1);
+  
+  // Find the first Monday of the year
+  const firstMonday = new Date(jan1);
+  const dayOfJan1 = jan1.getDay();
+  const daysToAdd = dayOfJan1 === 0 ? 1 : (8 - dayOfJan1); // 0 = Sunday, so we need Monday (1)
+  firstMonday.setDate(jan1.getDate() + daysToAdd);
+  
+  // Calculate the target date
+  const targetDate = new Date(firstMonday);
+  targetDate.setDate(firstMonday.getDate() + (week - 1) * 7 + (dayOfWeek - 1));
+  
+  return targetDate;
 }
 
 // Helper: parse q param (e.g. 2025-Q2)
@@ -49,20 +67,47 @@ export function getNextQuarter(year: number, quarter: number): { year: number; q
   return { year, quarter: quarter + 1 };
 }
 
-// Get quarter dates
-export function getQuarterDates(year: number, quarter: number): { startDate: Date; endDate: Date } {
-  const startMonth = (quarter - 1) * 3;
-  const startDate = new Date(year, startMonth, 1);
-  const endDate = new Date(year, startMonth + 3, 0); // Last day of the quarter
-  return { startDate, endDate };
-}
-
 // Get quarter week range
 export function getQuarterWeekRange(year: number, quarter: number): { startWeek: number; endWeek: number } {
-  const { startDate, endDate } = getQuarterDates(year, quarter);
-  const startWeek = getWeekOfYear(startDate);
-  const endWeek = getWeekOfYear(endDate);
+  let startWeek: number;
+  let endWeek: number;
+  
+  switch (quarter) {
+    case 1:
+      startWeek = 1;
+      endWeek = 13;
+      break;
+    case 2:
+      startWeek = 14;
+      endWeek = 26;
+      break;
+    case 3:
+      startWeek = 27;
+      endWeek = 39;
+      break;
+    case 4:
+      startWeek = 40;
+      endWeek = 52;
+      break;
+    default:
+      startWeek = 1;
+      endWeek = 13;
+  }
+  
   return { startWeek, endWeek };
+}
+
+// Get quarter dates (Monday to Sunday)
+export function getQuarterDates(year: number, quarter: number): { startDate: Date; endDate: Date } {
+  const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+  
+  // Calculate start date (Monday of start week)
+  const startDate = getDateFromWeek(year, startWeek, 1); // 1 = Monday
+  
+  // Calculate end date (Sunday of end week)
+  const endDate = getDateFromWeek(year, endWeek, 7); // 7 = Sunday
+  
+  return { startDate, endDate };
 }
 
 // Check if quarter is current
