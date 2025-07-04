@@ -44,6 +44,7 @@ type SortableItemProps = {
   setEditSubtaskId: (id: string) => void;
   setFocusSubtaskId: (id: string) => void;
   handleSubtaskEnter: (idx: number, title?: string) => void;
+  handleSubtaskEnterWithOverride?: (idx: number, title: string, subtasksOverride: Subtask[]) => Promise<number>;
   handleCheck: (subtask: Subtask) => void;
   shouldFocus: boolean;
   clearFocusSubtaskId: () => void;
@@ -52,7 +53,7 @@ type SortableItemProps = {
   subtaskIds: string[];
   handleDeleteSubtask: (id: string, idx: number) => void;
 };
-function SortableItem({ subtask, idx, ...props }: SortableItemProps) {
+function SortableItem({ subtask, idx, handleSubtaskEnterWithOverride, ...props }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -77,6 +78,7 @@ function SortableItem({ subtask, idx, ...props }: SortableItemProps) {
         subtask={subtask}
         idx={idx}
         {...props}
+        handleSubtaskEnterWithOverride={handleSubtaskEnterWithOverride}
       />
     </div>
   );
@@ -110,16 +112,26 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   }, [task.id]);
 
   // Saat Enter ditekan pada subtask, insert subtask kosong ke database dengan fractional indexing
-  const handleSubtaskEnter = async (idx: number, title: string = '') => {
-    // 1. Hitung display_order baru (fractional indexing)
-    let prevOrder = 0;
-    let nextOrder: number | undefined = undefined;
+  const handleSubtaskEnter = async (
+    idx: number,
+    title: string = '',
+    subtasksOverride?: Subtask[]
+  ): Promise<number> => {
+    // Gunakan array subtasksOverride jika ada, jika tidak pakai state subtasks
+    const subtasksArr = subtasksOverride ?? subtasks;
+    // 1. Hitung display_order baru (urutan unik, tanpa fractional indexing untuk insert di akhir)
     let newOrder = 1.0;
-    if (subtasks.length === 0) {
+    if (subtasksArr.length === 0) {
       newOrder = 1.0;
+    } else if (idx >= subtasksArr.length - 1) {
+      // Insert di akhir
+      // const lastOrder = subtasksArr[subtasksArr.length - 1].display_order;
+      const lastOrder = subtasksArr.length;
+      newOrder = lastOrder + 1.0;
     } else {
-      prevOrder = subtasks[idx]?.display_order ?? 0;
-      nextOrder = subtasks[idx + 1]?.display_order;
+      // Insert di tengah atau awal (tetap fractional indexing)
+      const prevOrder = subtasksArr[idx]?.display_order ?? 0;
+      const nextOrder = subtasksArr[idx + 1]?.display_order;
       if (nextOrder !== undefined) {
         newOrder = (prevOrder + nextOrder) / 2;
       } else {
@@ -131,12 +143,18 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     const optimisticSubtask: Subtask = {
       id: tempId,
       title: title, // Gunakan title yang diberikan atau string kosong
-      status: 'TODO',
+      status: 'TODO' as const,
       display_order: newOrder,
     };
     setSubtasks(prev => {
       const arr = [...prev];
-      arr.splice(idx + 1, 0, optimisticSubtask);
+      if (idx >= arr.length - 1) {
+        // Insert di akhir
+        arr.push(optimisticSubtask);
+      } else {
+        // Insert di tengah atau awal
+        arr.splice(idx + 1, 0, optimisticSubtask);
+      }
       return arr;
     });
     setFocusSubtaskId(tempId);
@@ -164,6 +182,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       setFocusSubtaskId(null);
       CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
     }
+    return newOrder;
   };
 
   const handleCheck = async (subtask: Subtask) => {
@@ -192,9 +211,12 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   const debouncedInsertNewSubtask = useMemo(() => debounce(async (title: string) => {
     if (!title) return;
     setNewSubtaskLoading(true);
-    // Workflowy-style: display_order = display_order terbesar + 100 (atau 1)
-    const lastOrder = subtasks.length > 0 ? subtasks[subtasks.length - 1].display_order : 0;
-    const newOrder = lastOrder + 100;
+    // Hitung display_order baru (konsisten dengan handleSubtaskEnter)
+    let newOrder = 1.0;
+    if (subtasks.length > 0) {
+      const lastOrder = subtasks[subtasks.length - 1].display_order;
+      newOrder = lastOrder + 1.0;
+    }
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
@@ -315,7 +337,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   };
 
   // Handler untuk bulk paste di input kosong
-  const handleBulkPasteEmpty = (e: React.ClipboardEvent) => {
+  const handleBulkPasteEmpty = async (e: React.ClipboardEvent) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').filter(line => line.trim());
     
@@ -323,18 +345,22 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     
     e.preventDefault();
     
-    // Baris pertama set sebagai newSubtaskTitle
     setNewSubtaskTitle(lines[0]);
     
-    // Buat sub-task baru untuk baris selanjutnya menggunakan handleSubtaskEnter
-    lines.slice(1).forEach((line, lineIndex) => {
-      setTimeout(() => {
-        handleSubtaskEnter(lineIndex, line);
-      }, 100 * (lineIndex + 1));
-    });
+    // Gunakan array lokal untuk simulasi penambahan subtask
+    const localSubtasks = subtasks.map(st => ({ ...st }));
+    for (let i = 1; i < lines.length; i++) {
+      const idx = localSubtasks.length - 1; // selalu insert di akhir
+      const newOrder = await handleSubtaskEnter(idx, lines[i], localSubtasks);
+      // Tambahkan dummy subtask ke array lokal dengan display_order yang benar
+      localSubtasks.push({
+        id: `dummy-${i}`,
+        title: lines[i],
+        status: 'TODO' as const,
+        display_order: newOrder,
+      });
+    }
   };
-
-
 
   // dnd-kit sensors
   const sensors = useSensors(
@@ -403,6 +429,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                     setEditSubtaskId={setEditSubtaskId}
                     setFocusSubtaskId={setFocusSubtaskId}
                     handleSubtaskEnter={handleSubtaskEnter}
+                    handleSubtaskEnterWithOverride={handleSubtaskEnter}
                     handleCheck={handleCheck}
                     shouldFocus={focusSubtaskId === subtask.id}
                     clearFocusSubtaskId={() => setFocusSubtaskId(null)}
@@ -440,6 +467,7 @@ interface SubtaskInputProps {
   setEditSubtaskId: (id: string) => void;
   setFocusSubtaskId: (id: string) => void;
   handleSubtaskEnter: (idx: number, title?: string) => void;
+  handleSubtaskEnterWithOverride?: (idx: number, title: string, subtasksOverride: Subtask[]) => Promise<number>;
   handleCheck: (subtask: Subtask) => void;
   shouldFocus: boolean;
   clearFocusSubtaskId: () => void;
@@ -448,7 +476,7 @@ interface SubtaskInputProps {
   subtaskIds: string[];
   handleDeleteSubtask: (id: string, idx: number) => void;
 }
-function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds, handleDeleteSubtask }: SubtaskInputProps) {
+function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleSubtaskEnterWithOverride, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds, handleDeleteSubtask }: SubtaskInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   
   useEffect(() => {
@@ -458,7 +486,7 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
   }, [shouldFocus]);
 
   // Handler untuk bulk paste
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = async (e: React.ClipboardEvent) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').filter(line => line.trim());
     
@@ -474,12 +502,29 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
     const newTitle = draftTitle + firstLine;
     onDraftTitleChange(newTitle, true);
     
-    // Buat sub-task baru untuk baris selanjutnya menggunakan handleSubtaskEnter
-    remainingLines.forEach((line, lineIndex) => {
-      setTimeout(() => {
-        handleSubtaskEnter(idx + lineIndex, line);
-      }, 100 * (lineIndex + 1));
-    });
+    // Gunakan array lokal untuk simulasi penambahan subtask
+    const localSubtasks = subtaskIds.map((id) => ({
+      id,
+      title: '',
+      status: 'TODO' as const,
+      display_order: 0,
+    }));
+    if (handleSubtaskEnterWithOverride) {
+      for (let i = 0; i < remainingLines.length; i++) {
+        const idx = localSubtasks.length - 1; // selalu insert di akhir
+        const newOrder = await handleSubtaskEnterWithOverride(idx, remainingLines[i], localSubtasks);
+        localSubtasks.push({
+          id: `dummy-paste-${i}`,
+          title: remainingLines[i],
+          status: 'TODO' as const,
+          display_order: newOrder,
+        });
+      }
+    } else {
+      for (let i = 0; i < remainingLines.length; i++) {
+        await handleSubtaskEnter(idx, remainingLines[i]);
+      }
+    }
   };
 
   return (
@@ -489,7 +534,7 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
         className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
         value={draftTitle}
         onChange={e => onDraftTitleChange(e.target.value)}
-        onPaste={handlePaste}
+        onPaste={(e) => handlePaste(e)}
         onFocus={() => {
           setEditSubtaskId(subtask.id);
           setFocusSubtaskId(subtask.id);
