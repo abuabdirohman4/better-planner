@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addTask, getTasksForMilestone } from '@/app/(admin)/planning/quests/actions';
+import { addTask, getTasksForMilestone, updateTaskDisplayOrder } from '@/app/(admin)/planning/quests/actions';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
@@ -50,4 +50,17 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ tasks: [], error: 'milestone_id atau parent_task_id wajib diisi' }, { status: 400 });
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { id, display_order } = await req.json();
+    if (!id || typeof display_order !== 'number') {
+      return NextResponse.json({ error: 'id dan display_order wajib diisi' }, { status: 400 });
+    }
+    const res = await updateTaskDisplayOrder(id, display_order);
+    return NextResponse.json({ message: res?.message || 'Urutan task berhasil diupdate!' });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) || 'Gagal update urutan task' }, { status: 500 });
+  }
 } 

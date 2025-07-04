@@ -342,4 +342,15 @@ export async function updateQuestMotivation(questId: string, motivation: string)
   if (error) throw new Error('Gagal update motivation: ' + (error.message || ''));
   revalidatePath('/planning/main-quests');
   return { message: 'Motivation berhasil diupdate!' };
+}
+
+// Update display_order task
+export async function updateTaskDisplayOrder(taskId: string, display_order: number) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('tasks')
+    .update({ display_order })
+    .eq('id', taskId);
+  if (error) throw new Error('Gagal update urutan task: ' + (error.message || ''));
+  return { message: 'Urutan task berhasil diupdate!' };
 } 
