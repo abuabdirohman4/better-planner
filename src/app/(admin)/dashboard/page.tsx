@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions'
 import { createClient } from '@/lib/supabase/server'
+import QuarterUsageExample from "@/components/examples/QuarterUsageExample";
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",
@@ -89,6 +90,10 @@ export default async function Dashboard() {
             The dashboard will show your daily progress and important metrics once you start using the app.
           </p>
         </div>
+      </div>
+
+      <div className="col-span-12">
+        <QuarterUsageExample/>
       </div>
     </div>
   );
