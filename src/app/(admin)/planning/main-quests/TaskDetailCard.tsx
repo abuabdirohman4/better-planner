@@ -43,7 +43,7 @@ type SortableItemProps = {
   idx: number;
   setEditSubtaskId: (id: string) => void;
   setFocusSubtaskId: (id: string) => void;
-  handleSubtaskEnter: (idx: number) => void;
+  handleSubtaskEnter: (idx: number, title?: string) => void;
   handleCheck: (subtask: Subtask) => void;
   shouldFocus: boolean;
   clearFocusSubtaskId: () => void;
@@ -110,7 +110,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
   }, [task.id]);
 
   // Saat Enter ditekan pada subtask, insert subtask kosong ke database dengan fractional indexing
-  const handleSubtaskEnter = async (idx: number) => {
+  const handleSubtaskEnter = async (idx: number, title: string = '') => {
     // 1. Hitung display_order baru (fractional indexing)
     let prevOrder = 0;
     let nextOrder: number | undefined = undefined;
@@ -130,7 +130,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
     const optimisticSubtask: Subtask = {
       id: tempId,
-      title: '',
+      title: title, // Gunakan title yang diberikan atau string kosong
       status: 'TODO',
       display_order: newOrder,
     };
@@ -145,7 +145,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent_task_id: task.id, title: '', milestone_id: milestoneId, display_order: newOrder })
+        body: JSON.stringify({ parent_task_id: task.id, title: title, milestone_id: milestoneId, display_order: newOrder })
       });
       const data = await res.json();
       if (res.ok && data.task) {
@@ -314,6 +314,28 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
     } catch {}
   };
 
+  // Handler untuk bulk paste di input kosong
+  const handleBulkPasteEmpty = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text');
+    const lines = pastedText.split('\n').filter(line => line.trim());
+    
+    if (lines.length <= 1) return; // Bukan multi-line, biarkan default behavior
+    
+    e.preventDefault();
+    
+    // Baris pertama set sebagai newSubtaskTitle
+    setNewSubtaskTitle(lines[0]);
+    
+    // Buat sub-task baru untuk baris selanjutnya menggunakan handleSubtaskEnter
+    lines.slice(1).forEach((line, lineIndex) => {
+      setTimeout(() => {
+        handleSubtaskEnter(lineIndex, line);
+      }, 100 * (lineIndex + 1));
+    });
+  };
+
+
+
   // dnd-kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -398,6 +420,7 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
                     className="flex-1"
                     value={newSubtaskTitle}
                     onChange={e => setNewSubtaskTitle(e.target.value)}
+                    onPaste={handleBulkPasteEmpty}
                     disabled={newSubtaskLoading}
                   />
                 )}
@@ -416,7 +439,7 @@ interface SubtaskInputProps {
   idx: number;
   setEditSubtaskId: (id: string) => void;
   setFocusSubtaskId: (id: string) => void;
-  handleSubtaskEnter: (idx: number) => void;
+  handleSubtaskEnter: (idx: number, title?: string) => void;
   handleCheck: (subtask: Subtask) => void;
   shouldFocus: boolean;
   clearFocusSubtaskId: () => void;
@@ -427,11 +450,38 @@ interface SubtaskInputProps {
 }
 function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handleSubtaskEnter, handleCheck, shouldFocus, clearFocusSubtaskId, draftTitle, onDraftTitleChange, subtaskIds, handleDeleteSubtask }: SubtaskInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
       inputRef.current.focus();
     }
   }, [shouldFocus]);
+
+  // Handler untuk bulk paste
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text');
+    const lines = pastedText.split('\n').filter(line => line.trim());
+    
+    if (lines.length <= 1) return; // Bukan multi-line, biarkan default behavior
+    
+    e.preventDefault();
+    
+    // Baris pertama digabung dengan text yang sudah ada
+    const firstLine = lines[0];
+    const remainingLines = lines.slice(1);
+    
+    // Update input yang sedang diedit dengan baris pertama dan simpan ke database
+    const newTitle = draftTitle + firstLine;
+    onDraftTitleChange(newTitle, true);
+    
+    // Buat sub-task baru untuk baris selanjutnya menggunakan handleSubtaskEnter
+    remainingLines.forEach((line, lineIndex) => {
+      setTimeout(() => {
+        handleSubtaskEnter(idx + lineIndex, line);
+      }, 100 * (lineIndex + 1));
+    });
+  };
+
   return (
     <div className="flex items-center gap-2 w-full">
       <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
@@ -439,6 +489,7 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
         className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
         value={draftTitle}
         onChange={e => onDraftTitleChange(e.target.value)}
+        onPaste={handlePaste}
         onFocus={() => {
           setEditSubtaskId(subtask.id);
           setFocusSubtaskId(subtask.id);
@@ -459,7 +510,7 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
           } else if (e.key === 'Enter') {
             e.preventDefault();
             onDraftTitleChange(e.currentTarget.value, true); // update langsung ke server saat Enter
-            handleSubtaskEnter(idx);
+            handleSubtaskEnter(idx, '');
           } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (idx > 0) {
