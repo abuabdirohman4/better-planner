@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import MainQuestsClient from './MainQuestsClient';
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Main Quests | Better Planner",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <MainQuestsClient />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading Main Quests...</div>}>
+      <MainQuestsClient />
+    </Suspense>
+  );
 }

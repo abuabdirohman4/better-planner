@@ -5,6 +5,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import CustomToast from "@/components/ui/toast/CustomToast";
 import QuarterSelector from "@/components/common/QuarterSelector";
+import { Suspense } from "react";
 import { useQuarter } from "@/hooks/useQuarter";
 import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
@@ -163,7 +164,9 @@ export default function WeeklySyncClient() {
       {/* Header dengan Quarter Selector */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Weekly Sync</h2>
-        <QuarterSelector />
+        <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>}>
+          <QuarterSelector />
+        </Suspense>
       </div>
       <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <p className="text-sm">

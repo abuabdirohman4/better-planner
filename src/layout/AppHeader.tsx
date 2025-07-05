@@ -3,7 +3,7 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
-import React, { useState ,useEffect,useRef} from "react";
+import React, { useState ,useEffect,useRef, Suspense} from "react";
 import QuarterSelector from "@/components/common/QuarterSelector";
 
 const AppHeader: React.FC = () => {
@@ -82,7 +82,9 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
           <div className="block lg:ml-4">
-            <QuarterSelector />
+            <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>}>
+              <QuarterSelector />
+            </Suspense>
           </div>
 
           <button

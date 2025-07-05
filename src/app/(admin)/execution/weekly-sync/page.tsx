@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import WeeklySyncClient from "./WeeklySyncClient";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Weekly Sync | Better Planner",
@@ -13,5 +14,9 @@ export const metadata: Metadata = {
 }; 
 
 export default function Page() {
-  return <WeeklySyncClient />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading Weekly Sync...</div>}>
+      <WeeklySyncClient />
+    </Suspense>
+  );
 } 
