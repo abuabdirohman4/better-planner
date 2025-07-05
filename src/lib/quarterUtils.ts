@@ -1,25 +1,44 @@
-// Helper: get week of year (ISO week)
+// Helper: get week of year (menggunakan logika yang sama dengan getDateFromWeek & getQuarterDates)
 export function getWeekOfYear(date: Date): number {
-  const start = new Date(date.getFullYear(), 0, 1);
-  const diff = (date.getTime() - start.getTime()) / 86400000;
-  const day = start.getDay() || 7;
-  return Math.ceil((diff + day) / 7);
+  const year = date.getFullYear();
+  
+  // 1. Tentukan tanggal 1 Januari untuk tahun yang diberikan.
+  const janFirst = new Date(year, 0, 1);
+
+  // 2. Cari hari Senin pertama dari tahun perencanaan (menggunakan logika yang sama dengan getQuarterDates).
+  const dayOfWeekJan1 = janFirst.getDay();
+  const daysToSubtract = dayOfWeekJan1 === 0 ? 6 : dayOfWeekJan1 - 1;
+  
+  const planningYearStartDate = new Date(janFirst);
+  planningYearStartDate.setDate(janFirst.getDate() - daysToSubtract);
+
+  // 3. Hitung berapa minggu dari planningYearStartDate ke tanggal target
+  const diffInDays = (date.getTime() - planningYearStartDate.getTime()) / 86400000;
+  const weekNumber = Math.floor(diffInDays / 7) + 1;
+  
+  return Math.max(1, weekNumber);
 }
 
-// Helper: get date from week number and day of week (0 = Sunday, 1 = Monday, etc.)
+// Helper: get date from week number and day of week (1 = Monday, 2 = Tuesday, etc.)
 export function getDateFromWeek(year: number, week: number, dayOfWeek: number = 1): Date {
-  // Get January 1st of the year
-  const jan1 = new Date(year, 0, 1);
+  // 1. Tentukan tanggal 1 Januari untuk tahun yang diberikan.
+  const janFirst = new Date(year, 0, 1);
+
+  // 2. Cari hari Senin pertama dari tahun perencanaan (menggunakan logika yang sama dengan getQuarterDates).
+  // getDay() -> 0=Minggu, 1=Senin, ..., 6=Sabtu
+  const dayOfWeekJan1 = janFirst.getDay();
+  // Hitung berapa hari harus mundur dari 1 Januari untuk mencapai hari Senin.
+  // Jika 1 Jan adalah Minggu (0), mundur 6 hari. Jika Selasa (2), mundur 1 hari.
+  const daysToSubtract = dayOfWeekJan1 === 0 ? 6 : dayOfWeekJan1 - 1;
   
-  // Find the first Monday of the year
-  const firstMonday = new Date(jan1);
-  const dayOfJan1 = jan1.getDay();
-  const daysToAdd = dayOfJan1 === 0 ? 1 : (8 - dayOfJan1); // 0 = Sunday, so we need Monday (1)
-  firstMonday.setDate(jan1.getDate() + daysToAdd);
-  
-  // Calculate the target date
-  const targetDate = new Date(firstMonday);
-  targetDate.setDate(firstMonday.getDate() + (week - 1) * 7 + (dayOfWeek - 1));
+  const planningYearStartDate = new Date(janFirst);
+  planningYearStartDate.setDate(janFirst.getDate() - daysToSubtract);
+
+  // 3. Hitung tanggal target berdasarkan week number dan day of week
+  // week - 1 karena week 1 dimulai dari planningYearStartDate
+  // dayOfWeek - 1 karena dayOfWeek 1 = Senin, jadi offset 0 hari dari Senin
+  const targetDate = new Date(planningYearStartDate);
+  targetDate.setDate(planningYearStartDate.getDate() + (week - 1) * 7 + (dayOfWeek - 1));
   
   return targetDate;
 }
@@ -68,7 +87,7 @@ export function getNextQuarter(year: number, quarter: number): { year: number; q
 }
 
 // Get quarter week range
-export function getQuarterWeekRange(year: number, quarter: number): { startWeek: number; endWeek: number } {
+export function getQuarterWeekRange(quarter: number): { startWeek: number; endWeek: number } {
   let startWeek: number;
   let endWeek: number;
   
@@ -98,17 +117,37 @@ export function getQuarterWeekRange(year: number, quarter: number): { startWeek:
 }
 
 // Get quarter dates (Monday to Sunday)
-export function getQuarterDates(year: number, quarter: number): { startDate: Date; endDate: Date } {
-  const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+/**
+ * Mendapatkan tanggal mulai dan selesai untuk kuartal tertentu dalam setahun,
+ * berdasarkan sistem 13 minggu per kuartal.
+ * Tahun perencanaan dimulai pada hari Senin di minggu yang sama dengan 1 Januari.
+ */
+export const getQuarterDates = (year: number, quarter: number): { startDate: Date; endDate: Date } => {
+  // 1. Tentukan tanggal 1 Januari untuk tahun yang diberikan.
+  const janFirst = new Date(year, 0, 1);
+
+  // 2. Cari hari Senin pertama dari tahun perencanaan.
+  // getDay() -> 0=Minggu, 1=Senin, ..., 6=Sabtu
+  const dayOfWeek = janFirst.getDay();
+  // Hitung berapa hari harus mundur dari 1 Januari untuk mencapai hari Senin.
+  // Jika 1 Jan adalah Minggu (0), mundur 6 hari. Jika Selasa (2), mundur 1 hari.
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   
-  // Calculate start date (Monday of start week)
-  const startDate = getDateFromWeek(year, startWeek, 1); // 1 = Monday
-  
-  // Calculate end date (Sunday of end week)
-  const endDate = getDateFromWeek(year, endWeek, 7); // 7 = Sunday
-  
-  return { startDate, endDate };
-}
+  const planningYearStartDate = new Date(janFirst);
+  planningYearStartDate.setDate(janFirst.getDate() - daysToSubtract);
+
+  // 3. Hitung tanggal mulai kuartal yang diminta.
+  // Setiap kuartal adalah 13 minggu * 7 hari = 91 hari.
+  const daysToAdd = (quarter - 1) * 91;
+  const quarterStartDate = new Date(planningYearStartDate);
+  quarterStartDate.setDate(planningYearStartDate.getDate() + daysToAdd);
+
+  // 4. Hitung tanggal akhir kuartal.
+  const quarterEndDate = new Date(quarterStartDate);
+  quarterEndDate.setDate(quarterStartDate.getDate() + 90); // 91 hari total, jadi tambah 90 hari dari tanggal mulai.
+
+  return { startDate: quarterStartDate, endDate: quarterEndDate };
+};
 
 // Check if quarter is current
 export function isCurrentQuarter(year: number, quarter: number): boolean {
@@ -124,7 +163,7 @@ export function getQuarterString(year: number, quarter: number): string {
 // Get quarter display info
 export function getQuarterInfo(year: number, quarter: number) {
   const { startDate, endDate } = getQuarterDates(year, quarter);
-  const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+  const { startWeek, endWeek } = getQuarterWeekRange(quarter);
   
   return {
     year,
@@ -135,4 +174,4 @@ export function getQuarterInfo(year: number, quarter: number) {
     weekRange: `Week ${startWeek}-${endWeek}`,
     isCurrentQuarter: isCurrentQuarter(year, quarter)
   };
-} 
+}

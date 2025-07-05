@@ -1,8 +1,10 @@
 "use client";
 import { useQuarter } from "@/hooks/useQuarter";
+import { getQuarterDates } from "@/lib/quarterUtils";
 
 export default function QuarterUsageExample() {
   const quarterData = useQuarter();
+  const { startDate: quarterStartDate, endDate: quarterEndDate } = getQuarterDates(quarterData.year, quarterData.quarter);
 
   // Helper function to format date with day name
   const formatDateWithDay = (date: Date) => {
@@ -34,12 +36,12 @@ export default function QuarterUsageExample() {
           
           <div className="flex justify-between">
             <span className="font-medium">Start Date:</span>
-            <span className="text-sm">{formatDateWithDay(quarterData.startDate)}</span>
+            <span className="text-sm">{formatDateWithDay(quarterStartDate)}</span>
           </div>
           
           <div className="flex justify-between">
             <span className="font-medium">End Date:</span>
-            <span className="text-sm">{formatDateWithDay(quarterData.endDate)}</span>
+            <span className="text-sm">{formatDateWithDay(quarterEndDate)}</span>
           </div>
           
           <div className="flex justify-between">

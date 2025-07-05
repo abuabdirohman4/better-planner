@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import CustomToast from "@/components/ui/toast/CustomToast";
-import QuarterSelector from "@/components/common/QuarterSelector";
-import { Suspense } from "react";
 import { useQuarter } from "@/hooks/useQuarter";
 import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
+import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek, getQuarterDates } from "@/lib/quarterUtils";
+import { Dropdown } from "@/components/ui/dropdown/Dropdown";
+import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 // Dynamic import server actions
 const getUnscheduledTasks = async (year: number, quarter: number) =>
   (await import("../../planning/quests/actions")).getUnscheduledTasks(year, quarter);
@@ -60,6 +61,25 @@ export default function WeeklySyncClient() {
   const [loading, setLoading] = useState(false);
   const quarterData = useQuarter();
   const weekDates = getWeekDates(currentWeek);
+  // State untuk dropdown week
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
+  const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
+
+  // Hitung minggu ke berapa dalam quarter
+  const currentWeekNumber = getWeekOfYear(currentWeek);
+  const { startWeek, endWeek } = getQuarterWeekRange(quarterData.quarter);
+  const totalWeeks = endWeek - startWeek + 1;
+  const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
+  // Week yang dipakai untuk label dan highlight
+  const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
+
+  // Hitung tanggal range minggu yang sedang dipilih (berbasis startDate quarter)
+  const { startDate: quarterStartDate } = getQuarterDates(quarterData.year, quarterData.quarter);
+  const weekStartDate = new Date(quarterStartDate);
+  weekStartDate.setDate(quarterStartDate.getDate() + (displayWeek - 1) * 7);
+  const weekEndDate = new Date(weekStartDate);
+  weekEndDate.setDate(weekStartDate.getDate() + 6);
+  const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,41 +168,95 @@ export default function WeeklySyncClient() {
     }
   };
 
+  // Handler pilih week dari dropdown
+  const handleSelectWeek = (weekIdx: number) => {
+    console.log('startWeek', startWeek)
+    console.log('weekIdx', weekIdx)
+    const weekNumber = startWeek + weekIdx - 1;
+    console.log('weekNumber', weekNumber)
+    const monday = getDateFromWeek(quarterData.year, weekNumber, 1);
+    console.log('monday', monday)
+    monday.setHours(0, 0, 0, 0);
+    console.log('monday', monday)
+    setCurrentWeek(monday);
+    setSelectedWeekInQuarter(weekIdx);
+  };
+
+  // Tutup dropdown setelah currentWeek berubah agar label sinkron
+  useEffect(() => {
+    if (isWeekDropdownOpen) {
+      setIsWeekDropdownOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWeek]);
+
+  // Reset selectedWeekInQuarter jika navigasi dengan tombol prev/next
   const goPrevWeek = () => {
+    if (displayWeek <= 1) return;
     const prev = new Date(currentWeek);
     prev.setDate(currentWeek.getDate() - 7);
     setCurrentWeek(prev);
+    setSelectedWeekInQuarter(undefined);
   };
   const goNextWeek = () => {
+    if (displayWeek >= totalWeeks) return;
     const next = new Date(currentWeek);
     next.setDate(currentWeek.getDate() + 7);
     setCurrentWeek(next);
+    setSelectedWeekInQuarter(undefined);
   };
 
   return (
-    <div className="container mx-auto py-8">
-      {/* Header dengan Quarter Selector */}
+    <div className="container mx-auto py-8 pt-0">
+      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <div className="text-sm">
+          <strong>Debug:</strong>
+          <div>
+            Quarter: {quarterData.quarterString} <br />
+            Week: {weekDates[0].toISOString().slice(0, 10)} - {weekDates[6].toISOString().slice(0, 10)} <br/> <br/>
+            Week {displayWeek} <br/>
+            {weekRangeLabel}
+            {/* <div className="text-xs text-gray-500 mt-1 text-center">
+            </div> */}
+          </div>
+        </div>
+        <div className="text-sm">Loading: {loading ? "Yes" : "No"}, Task Pool: {taskPool.length} tasks</div>
+      </div>
+      {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Weekly Sync</h2>
-        <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>}>
-          <QuarterSelector />
-        </Suspense>
-      </div>
-      <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <p className="text-sm">
-          <strong>Debug:</strong> Quarter: {quarterData.quarterString}, 
-          Week: {weekDates[0].toISOString().slice(0, 10)} - {weekDates[6].toISOString().slice(0, 10)}
-        </p>
-        <p className="text-sm">Loading: {loading ? "Yes" : "No"}, Task Pool: {taskPool.length} tasks</p>
-      </div>
-      <div className="flex items-center justify-between mb-6">
-        <Button size="sm" variant="outline" onClick={goPrevWeek}>
-          &lt;
-        </Button>
-        <h3 className="text-lg font-semibold">Minggu Ini</h3>
-        <Button size="sm" variant="outline" onClick={goNextWeek}>
-          &gt;
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
+            &lt;
+          </Button>
+          {/* Dropdown Week Selector */}
+          <div className="relative">
+            <button
+              className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+              onClick={() => setIsWeekDropdownOpen((v) => !v)}
+              aria-haspopup="listbox"
+              aria-expanded={isWeekDropdownOpen}
+            >
+              <span>Week {displayWeek}</span>
+            </button>
+            <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
+              <div className="max-h-64 overflow-y-auto">
+                {Array.from({ length: totalWeeks }, (_, i) => (
+                  <DropdownItem
+                    key={i + 1}
+                    onClick={() => handleSelectWeek(i + 1)}
+                    className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
+                  >
+                    Week {i + 1}
+                  </DropdownItem>
+                ))}
+              </div>
+            </Dropdown>
+          </div>
+          <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
+            &gt;
+          </Button>
+        </div>
       </div>
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
