@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import CustomToast from "@/components/ui/toast/CustomToast";
 import { useQuarter } from "@/hooks/useQuarter";
 import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
-import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek, getQuarterDates } from "@/lib/quarterUtils";
+import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 // Dynamic import server actions
@@ -65,21 +65,38 @@ export default function WeeklySyncClient() {
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
 
-  // Hitung minggu ke berapa dalam quarter
-  const currentWeekNumber = getWeekOfYear(currentWeek);
-  const { startWeek, endWeek } = getQuarterWeekRange(quarterData.quarter);
-  const totalWeeks = endWeek - startWeek + 1;
-  const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
-  // Week yang dipakai untuk label dan highlight
-  const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
+  // Optimized calculations using useMemo
+  const weekCalculations = useMemo(() => {
+    const currentWeekNumber = getWeekOfYear(currentWeek);
+    const { startWeek, endWeek } = getQuarterWeekRange(quarterData.year, quarterData.quarter);
+    const totalWeeks = endWeek - startWeek + 1;
+    const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
+    const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
 
-  // Hitung tanggal range minggu yang sedang dipilih (berbasis startDate quarter)
-  const { startDate: quarterStartDate } = getQuarterDates(quarterData.year, quarterData.quarter);
-  const weekStartDate = new Date(quarterStartDate);
-  weekStartDate.setDate(quarterStartDate.getDate() + (displayWeek - 1) * 7);
-  const weekEndDate = new Date(weekStartDate);
-  weekEndDate.setDate(weekStartDate.getDate() + 6);
-  const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
+    // Calculate week range using getDateFromWeek for consistency
+    const weekStartDate = getDateFromWeek(quarterData.year, startWeek + displayWeek - 1, 1);
+    const weekEndDate = getDateFromWeek(quarterData.year, startWeek + displayWeek - 1, 7);
+    const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
+
+    return {
+      currentWeekNumber,
+      startWeek,
+      endWeek,
+      totalWeeks,
+      weekInQuarter,
+      displayWeek,
+      weekStartDate,
+      weekEndDate,
+      weekRangeLabel
+    };
+  }, [currentWeek, quarterData.year, quarterData.quarter, selectedWeekInQuarter]);
+
+  // Destructure for easier access
+  const {
+    displayWeek,
+    totalWeeks,
+    weekRangeLabel
+  } = weekCalculations;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,14 +187,10 @@ export default function WeeklySyncClient() {
 
   // Handler pilih week dari dropdown
   const handleSelectWeek = (weekIdx: number) => {
-    console.log('startWeek', startWeek)
-    console.log('weekIdx', weekIdx)
+    const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
-    console.log('weekNumber', weekNumber)
     const monday = getDateFromWeek(quarterData.year, weekNumber, 1);
-    console.log('monday', monday)
     monday.setHours(0, 0, 0, 0);
-    console.log('monday', monday)
     setCurrentWeek(monday);
     setSelectedWeekInQuarter(weekIdx);
   };

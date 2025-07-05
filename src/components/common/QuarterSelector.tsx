@@ -10,24 +10,9 @@ import {
   formatQParam, 
   getPrevQuarter, 
   getNextQuarter,
-  getQuarterString 
+  getQuarterString,
+  generateQuarterOptions
 } from "@/lib/quarterUtils";
-
-// Helper: generate 16 quarter options (2 prev, current, 1 next year)
-function generateQuarterOptions(current: { year: number; quarter: number }) {
-  const options: { year: number; quarter: number }[] = [];
-  const startYear = current.year - 2;
-  for (let y = startYear; y <= current.year + 1; y++) {
-    for (let q = 1; q <= 4; q++) {
-      options.push({ year: y, quarter: q });
-    }
-  }
-  // Sort descending (latest first)
-  return options.sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year;
-    return b.quarter - a.quarter;
-  });
-}
 
 // Helper: check if QuarterSelector should be hidden based on current pathname
 function shouldHideQuarterSelector(pathname: string): boolean {
@@ -35,23 +20,6 @@ function shouldHideQuarterSelector(pathname: string): boolean {
     '/planning/vision',
     '/settings',
     '/profile',
-    // '/auth/signin',
-    // '/auth/signup',
-    // '/auth/callback',
-    // '/error-404',
-    // '/blank',
-    // '/calendar',
-    // '/alerts',
-    // '/avatars',
-    // '/badge',
-    // '/buttons',
-    // '/images',
-    // '/modals',
-    // '/videos',
-    // '/form-elements',
-    // '/basic-tables',
-    // '/bar-chart',
-    // '/line-chart'
   ];
   
   return hiddenPaths.some(path => pathname.startsWith(path));
