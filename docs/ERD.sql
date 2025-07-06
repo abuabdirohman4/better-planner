@@ -33,18 +33,73 @@ CREATE TABLE "quests" (
   "updated_at" TIMESTAMPTZ DEFAULT now()
 );
 
+-- Tabel Milestone (Goal Kecil untuk setiap Quest)
+CREATE TABLE "milestones" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "quest_id" UUID NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
+  "title" VARCHAR(255) NOT NULL,
+  "display_order" INTEGER DEFAULT 0,
+  "created_at" TIMESTAMPTZ DEFAULT now(),
+  "updated_at" TIMESTAMPTZ DEFAULT now()
+);
+
 -- Tabel Tugas (Bank Tugas Utama)
 CREATE TABLE "tasks" (
   "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   "user_id" UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   "quest_id" UUID REFERENCES quests(id) ON DELETE SET NULL, -- Bisa tidak terikat ke quest
+  "milestone_id" UUID REFERENCES milestones(id) ON DELETE SET NULL,
+  "parent_task_id" UUID REFERENCES tasks(id) ON DELETE CASCADE, -- Untuk subtask
   "title" TEXT NOT NULL,
   "type" task_type NOT NULL,
   "status" task_status DEFAULT 'TODO',
   "pomodoro_estimation" INTEGER DEFAULT 1,
   "due_date" DATE,
+  "scheduled_date" DATE, -- Untuk weekly sync
+  "display_order" INTEGER DEFAULT 0,
   "created_at" TIMESTAMPTZ DEFAULT now(),
   "updated_at" TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabel Weekly Goals (Fokus Mingguan)
+CREATE TABLE "weekly_goals" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "user_id" UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  "year" INTEGER NOT NULL,
+  "week_number" INTEGER NOT NULL,
+  "goal_slot" INTEGER NOT NULL, -- 1, 2, atau 3
+  "created_at" TIMESTAMPTZ DEFAULT now(),
+  "updated_at" TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, year, week_number, goal_slot)
+);
+
+-- Tabel Weekly Goal Items (Item-item dalam setiap Goal Slot)
+CREATE TABLE "weekly_goal_items" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "weekly_goal_id" UUID NOT NULL REFERENCES weekly_goals(id) ON DELETE CASCADE,
+  "item_id" UUID NOT NULL, -- ID dari quest, milestone, atau task
+  "item_type" TEXT NOT NULL, -- 'QUEST', 'MILESTONE', atau 'TASK'
+  "created_at" TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabel Weekly Focuses (Fokus Mingguan - Versi Hierarkis)
+CREATE TABLE "weekly_focuses" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "user_id" UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  "year" INTEGER NOT NULL,
+  "week_number" INTEGER NOT NULL,
+  "created_at" TIMESTAMPTZ DEFAULT now(),
+  "updated_at" TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, year, week_number)
+);
+
+-- Tabel Weekly Focus Items (Item-item dalam Fokus Mingguan)
+CREATE TABLE "weekly_focus_items" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "weekly_focus_id" UUID NOT NULL REFERENCES weekly_focuses(id) ON DELETE CASCADE,
+  "item_id" UUID NOT NULL, -- ID dari quest, milestone, task, atau subtask
+  "item_type" TEXT NOT NULL, -- 'QUEST', 'MILESTONE', 'TASK', atau 'SUBTASK'
+  "created_at" TIMESTAMPTZ DEFAULT now()
 );
 
 -- Tabel untuk Self Development Curriculum

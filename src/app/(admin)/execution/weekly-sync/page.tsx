@@ -1,6 +1,7 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
-import WeeklySyncClient from "./WeeklySyncClient";
-import { Suspense } from "react";
+import WeeklySyncClientEntry from './WeeklySyncClientEntry';
 
 export const metadata: Metadata = {
   title: "Weekly Sync | Better Planner",
@@ -13,10 +14,6 @@ export const metadata: Metadata = {
   },
 }; 
 
-export default function Page() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center">Loading Weekly Sync...</div>}>
-      <WeeklySyncClient />
-    </Suspense>
-  );
+export default function WeeklySyncPage() {
+  return <WeeklySyncClientEntry />;
 } 

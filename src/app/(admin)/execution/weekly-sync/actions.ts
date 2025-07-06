@@ -1,0 +1,609 @@
+"use server";
+
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+// Get selectable items (Main Quests and their Milestones) for the current quarter
+export async function getSelectableItems(year: number, quarter: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { quests: [], milestones: [] };
+
+  try {
+    // Get committed quests for the quarter
+    const { data: quests, error: questError } = await supabase
+      .from('quests')
+      .select('id, title')
+      .eq('user_id', user.id)
+      .eq('year', year)
+      .eq('quarter', quarter)
+      .eq('is_committed', true)
+      .order('priority_score', { ascending: false });
+
+    if (questError) throw questError;
+
+    // Get milestones for these quests
+    const questIds = quests?.map(q => q.id) || [];
+    let milestones: { id: string; title: string; quest_id: string }[] = [];
+    
+    if (questIds.length > 0) {
+      const { data: milestoneData, error: milestoneError } = await supabase
+        .from('milestones')
+        .select('id, title, quest_id')
+        .in('quest_id', questIds)
+        .order('display_order', { ascending: true });
+
+      if (milestoneError) throw milestoneError;
+      milestones = milestoneData || [];
+    }
+
+    return {
+      quests: quests || [],
+      milestones: milestones || []
+    };
+  } catch (error) {
+    console.error('Error fetching selectable items:', error);
+    return { quests: [], milestones: [] };
+  }
+}
+
+// Remove a weekly goal
+export async function removeWeeklyGoal(goalId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not found');
+
+  try {
+    const { error } = await supabase
+      .from('weekly_goals')
+      .delete()
+      .eq('id', goalId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+
+    revalidatePath('/execution/weekly-sync');
+    return { success: true, message: 'Weekly goal removed successfully' };
+  } catch (error) {
+    console.error('Error removing weekly goal:', error);
+    throw new Error('Failed to remove weekly goal');
+  }
+}
+
+// ===== NEW 3-SLOT TABLE WEEKLY GOALS ACTIONS =====
+
+// Get hierarchical data (Quest -> Milestone -> Task -> Sub-task) for the current quarter
+export async function getHierarchicalData(year: number, quarter: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  try {
+    // Get committed quests for the quarter
+    const { data: quests, error: questError } = await supabase
+      .from('quests')
+      .select('id, title')
+      .eq('user_id', user.id)
+      .eq('year', year)
+      .eq('quarter', quarter)
+      .eq('is_committed', true)
+      .order('priority_score', { ascending: false });
+
+    if (questError) throw questError;
+
+    // Build hierarchical structure
+    const hierarchicalData = await Promise.all(
+      (quests || []).map(async (quest) => {
+        // Get milestones for this quest
+        const { data: milestones, error: milestoneError } = await supabase
+          .from('milestones')
+          .select('id, title')
+          .eq('quest_id', quest.id)
+          .order('display_order', { ascending: true });
+
+        if (milestoneError) throw milestoneError;
+
+        // Get tasks for each milestone
+        const milestonesWithTasks = await Promise.all(
+          (milestones || []).map(async (milestone) => {
+            const { data: tasks, error: taskError } = await supabase
+              .from('tasks')
+              .select('id, title, status')
+              .eq('milestone_id', milestone.id)
+              .is('parent_task_id', null) // Only parent tasks
+              .order('display_order', { ascending: true });
+
+            if (taskError) throw taskError;
+
+            // Get subtasks for each task
+            const tasksWithSubtasks = await Promise.all(
+              (tasks || []).map(async (task) => {
+                const { data: subtasks, error: subtaskError } = await supabase
+                  .from('tasks')
+                  .select('id, title, status')
+                  .eq('parent_task_id', task.id)
+                  .order('display_order', { ascending: true });
+
+                if (subtaskError) throw subtaskError;
+
+                return {
+                  ...task,
+                  subtasks: subtasks || []
+                };
+              })
+            );
+
+            return {
+              ...milestone,
+              tasks: tasksWithSubtasks
+            };
+          })
+        );
+
+        return {
+          ...quest,
+          milestones: milestonesWithTasks
+        };
+      })
+    );
+
+    return hierarchicalData;
+  } catch (error) {
+    console.error('Error fetching hierarchical data:', error);
+    return [];
+  }
+}
+
+// Get weekly goals for a specific week (3 slots)
+export async function getWeeklyGoals(year: number, weekNumber: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  try {
+    // Get all 3 goal slots for the week
+    const { data: weeklyGoals, error } = await supabase
+      .from('weekly_goals')
+      .select('id, goal_slot')
+      .eq('user_id', user.id)
+      .eq('year', year)
+      .eq('week_number', weekNumber)
+      .order('goal_slot', { ascending: true });
+
+    if (error) throw error;
+
+    // Get items for each goal slot
+    const goalsWithItems = await Promise.all(
+      (weeklyGoals || []).map(async (goal) => {
+        const { data: goalItems, error: itemsError } = await supabase
+          .from('weekly_goal_items')
+          .select('id, item_id, item_type')
+          .eq('weekly_goal_id', goal.id);
+
+        if (itemsError) throw itemsError;
+
+        // Get details for each item
+        const itemsWithDetails = await Promise.all(
+          (goalItems || []).map(async (item) => {
+            let title = '';
+            let status = 'TODO';
+
+            if (item.item_type === 'QUEST') {
+              const { data: quest } = await supabase
+                .from('quests')
+                .select('title')
+                .eq('id', item.item_id)
+                .single();
+              title = quest?.title || '';
+            } else if (item.item_type === 'MILESTONE') {
+              const { data: milestone } = await supabase
+                .from('milestones')
+                .select('title')
+                .eq('id', item.item_id)
+                .single();
+              title = milestone?.title || '';
+            } else if (item.item_type === 'TASK') {
+              const { data: task } = await supabase
+                .from('tasks')
+                .select('title, status')
+                .eq('id', item.item_id)
+                .single();
+              title = task?.title || '';
+              status = task?.status || 'TODO';
+            }
+
+            return {
+              id: item.id,
+              item_id: item.item_id,
+              item_type: item.item_type,
+              title,
+              status
+            };
+          })
+        );
+
+        return {
+          id: goal.id,
+          goal_slot: goal.goal_slot,
+          items: itemsWithDetails
+        };
+      })
+    );
+
+    return goalsWithItems;
+  } catch (error) {
+    console.error('Error fetching weekly goals:', error);
+    return [];
+  }
+}
+
+// Set weekly goal items for a specific slot
+export async function setWeeklyGoalItems(data: {
+  year: number;
+  weekNumber: number;
+  goalSlot: number;
+  items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' }>;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not found');
+
+  try {
+    // First, upsert weekly goal record for the slot
+    const { data: weeklyGoal, error: goalError } = await supabase
+      .from('weekly_goals')
+      .upsert({
+        user_id: user.id,
+        year: data.year,
+        week_number: data.weekNumber,
+        goal_slot: data.goalSlot
+      }, {
+        onConflict: 'user_id,year,week_number,goal_slot'
+      })
+      .select('id')
+      .single();
+
+    if (goalError) throw goalError;
+
+    // Second, delete all existing goal items for this slot
+    const { error: deleteError } = await supabase
+      .from('weekly_goal_items')
+      .delete()
+      .eq('weekly_goal_id', weeklyGoal.id);
+
+    if (deleteError) throw deleteError;
+
+    // Third, insert new goal items
+    if (data.items.length > 0) {
+      const goalItemsData = data.items.map(item => ({
+        weekly_goal_id: weeklyGoal.id,
+        item_id: item.id,
+        item_type: item.type
+      }));
+
+      const { error: insertError } = await supabase
+        .from('weekly_goal_items')
+        .insert(goalItemsData);
+
+      if (insertError) throw insertError;
+    }
+
+    revalidatePath('/execution/weekly-sync');
+    return { success: true, message: 'Weekly goal items set successfully' };
+  } catch (error) {
+    console.error('Error setting weekly goal items:', error);
+    throw new Error('Failed to set weekly goal items');
+  }
+}
+
+// Calculate progress for a collection of items
+export async function calculateGoalProgress(items: Array<{ item_id: string; item_type: string }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { completed: 0, total: 0, percentage: 0 };
+
+  try {
+    let totalCompleted = 0;
+    let totalItems = 0;
+
+    for (const item of items) {
+      if (item.item_type === 'QUEST') {
+        // For quests, count all tasks under all milestones of this quest
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('quest_id', item.item_id);
+
+        if (error) throw error;
+
+        const completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+        const total = tasks?.length || 0;
+        
+        totalCompleted += completed;
+        totalItems += total;
+      } else if (item.item_type === 'MILESTONE') {
+        // For milestones, count all tasks under this milestone
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('milestone_id', item.item_id);
+
+        if (error) throw error;
+
+        const completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+        const total = tasks?.length || 0;
+        
+        totalCompleted += completed;
+        totalItems += total;
+      } else if (item.item_type === 'TASK') {
+        // For tasks, check if it has subtasks
+        const { data: subtasks, error: subtaskError } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('parent_task_id', item.item_id);
+
+        if (subtaskError) throw subtaskError;
+
+        if (subtasks && subtasks.length > 0) {
+          // Task has subtasks
+          const completed = subtasks.filter(task => task.status === 'DONE').length;
+          totalCompleted += completed;
+          totalItems += subtasks.length;
+        } else {
+          // Task is standalone
+          const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('status')
+            .eq('id', item.item_id)
+            .single();
+
+          if (taskError) throw taskError;
+
+          totalCompleted += task?.status === 'DONE' ? 1 : 0;
+          totalItems += 1;
+        }
+      }
+    }
+
+    const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+
+    return {
+      completed: totalCompleted,
+      total: totalItems,
+      percentage
+    };
+  } catch (error) {
+    console.error('Error calculating goal progress:', error);
+    return { completed: 0, total: 0, percentage: 0 };
+  }
+}
+
+// ===== NEW HIERARCHICAL WEEKLY FOCUS ACTIONS =====
+
+// Get weekly focus for a specific week
+export async function getWeeklyFocus(year: number, weekNumber: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  try {
+    // Get weekly focus record
+    const { data: weeklyFocus, error: focusError } = await supabase
+      .from('weekly_focuses')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('year', year)
+      .eq('week_number', weekNumber)
+      .single();
+
+    if (focusError && focusError.code !== 'PGRST116') throw focusError; // PGRST116 = no rows returned
+
+    if (!weeklyFocus) return null;
+
+    // Get focus items
+    const { data: focusItems, error: itemsError } = await supabase
+      .from('weekly_focus_items')
+      .select('id, item_id, item_type')
+      .eq('weekly_focus_id', weeklyFocus.id);
+
+    if (itemsError) throw itemsError;
+
+    // Get details for each item
+    const itemsWithDetails = await Promise.all(
+      (focusItems || []).map(async (item) => {
+        let title = '';
+        let status = 'TODO';
+
+        if (item.item_type === 'QUEST') {
+          const { data: quest } = await supabase
+            .from('quests')
+            .select('title')
+            .eq('id', item.item_id)
+            .single();
+          title = quest?.title || '';
+        } else if (item.item_type === 'MILESTONE') {
+          const { data: milestone } = await supabase
+            .from('milestones')
+            .select('title')
+            .eq('id', item.item_id)
+            .single();
+          title = milestone?.title || '';
+        } else if (item.item_type === 'TASK') {
+          const { data: task } = await supabase
+            .from('tasks')
+            .select('title, status')
+            .eq('id', item.item_id)
+            .single();
+          title = task?.title || '';
+          status = task?.status || 'TODO';
+        } else if (item.item_type === 'SUBTASK') {
+          const { data: subtask } = await supabase
+            .from('tasks')
+            .select('title, status')
+            .eq('id', item.item_id)
+            .single();
+          title = subtask?.title || '';
+          status = subtask?.status || 'TODO';
+        }
+
+        return {
+          id: item.id,
+          item_id: item.item_id,
+          item_type: item.item_type,
+          title,
+          status
+        };
+      })
+    );
+
+    return {
+      id: weeklyFocus.id,
+      items: itemsWithDetails
+    };
+  } catch (error) {
+    console.error('Error fetching weekly focus:', error);
+    return null;
+  }
+}
+
+// Set weekly focus items
+export async function setWeeklyFocusItems(data: {
+  year: number;
+  weekNumber: number;
+  items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not found');
+
+  try {
+    // First, upsert weekly focus record
+    const { data: weeklyFocus, error: focusError } = await supabase
+      .from('weekly_focuses')
+      .upsert({
+        user_id: user.id,
+        year: data.year,
+        week_number: data.weekNumber
+      }, {
+        onConflict: 'user_id,year,week_number'
+      })
+      .select('id')
+      .single();
+
+    if (focusError) throw focusError;
+
+    // Second, delete all existing focus items
+    const { error: deleteError } = await supabase
+      .from('weekly_focus_items')
+      .delete()
+      .eq('weekly_focus_id', weeklyFocus.id);
+
+    if (deleteError) throw deleteError;
+
+    // Third, insert new focus items
+    if (data.items.length > 0) {
+      const focusItemsData = data.items.map(item => ({
+        weekly_focus_id: weeklyFocus.id,
+        item_id: item.id,
+        item_type: item.type
+      }));
+
+      const { error: insertError } = await supabase
+        .from('weekly_focus_items')
+        .insert(focusItemsData);
+
+      if (insertError) throw insertError;
+    }
+
+    revalidatePath('/execution/weekly-sync');
+    return { success: true, message: 'Weekly focus set successfully' };
+  } catch (error) {
+    console.error('Error setting weekly focus:', error);
+    throw new Error('Failed to set weekly focus');
+  }
+}
+
+// Get completion progress for any item type
+export async function getItemCompletionProgress(itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { completed: 0, total: 0, percentage: 0 };
+
+  try {
+    let completed = 0;
+    let total = 0;
+
+    if (itemType === 'QUEST') {
+      // For quests, count all tasks under all milestones of this quest
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('quest_id', itemId);
+
+      if (error) throw error;
+
+      total = tasks?.length || 0;
+      completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+    } else if (itemType === 'MILESTONE') {
+      // For milestones, count all tasks under this milestone (including subtasks)
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('milestone_id', itemId);
+
+      if (error) throw error;
+
+      total = tasks?.length || 0;
+      completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+    } else if (itemType === 'TASK') {
+      // For tasks, count subtasks if any, otherwise just the task itself
+      const { data: subtasks, error: subtaskError } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('parent_task_id', itemId);
+
+      if (subtaskError) throw subtaskError;
+
+      if (subtasks && subtasks.length > 0) {
+        // Task has subtasks
+        total = subtasks.length;
+        completed = subtasks.filter(task => task.status === 'DONE').length;
+      } else {
+        // Task is standalone
+        const { data: task, error: taskError } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('id', itemId)
+          .single();
+
+        if (taskError) throw taskError;
+
+        total = 1;
+        completed = task?.status === 'DONE' ? 1 : 0;
+      }
+    } else if (itemType === 'SUBTASK') {
+      // For subtasks, just check the subtask itself
+      const { data: subtask, error } = await supabase
+        .from('tasks')
+        .select('status')
+        .eq('id', itemId)
+        .single();
+
+      if (error) throw error;
+
+      total = 1;
+      completed = subtask?.status === 'DONE' ? 1 : 0;
+    }
+
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return {
+      completed,
+      total,
+      percentage
+    };
+  } catch (error) {
+    console.error('Error calculating completion progress:', error);
+    return { completed: 0, total: 0, percentage: 0 };
+  }
+} 

@@ -4,19 +4,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import CustomToast from "@/components/ui/toast/CustomToast";
-import { useQuarter } from "@/hooks/useQuarter";
+import { useWeek } from "@/hooks/useWeek";
 import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
-// Dynamic import server actions
-const getUnscheduledTasks = async (year: number, quarter: number) =>
-  (await import("../../planning/quests/actions")).getUnscheduledTasks(year, quarter);
-const getScheduledTasksForWeek = async (startDate: string, endDate: string) =>
-  (await import("../../planning/quests/actions")).getScheduledTasksForWeek(startDate, endDate);
-const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
-  (await import("../../planning/quests/actions")).scheduleTask(taskId, newScheduledDate);
 
 type Task = {
   id: string;
@@ -54,12 +47,20 @@ function DayDroppable({ date, children }: { date: string; children: React.ReactN
   );
 }
 
+// Import missing functions
+const getUnscheduledTasks = async (year: number, quarter: number) =>
+  (await import("../../planning/quests/actions")).getUnscheduledTasks(year, quarter);
+const getScheduledTasksForWeek = async (startDate: string, endDate: string) =>
+  (await import("../../planning/quests/actions")).getScheduledTasksForWeek(startDate, endDate);
+const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
+  (await import("../../planning/quests/actions")).scheduleTask(taskId, newScheduledDate);
+
 export default function WeeklySyncClient() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [taskPool, setTaskPool] = useState<Task[]>([]);
   const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
   const [loading, setLoading] = useState(false);
-  const quarterData = useQuarter();
+  const { year, quarter } = useWeek();
   const weekDates = getWeekDates(currentWeek);
   // State untuk dropdown week
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
@@ -68,14 +69,14 @@ export default function WeeklySyncClient() {
   // Optimized calculations using useMemo
   const weekCalculations = useMemo(() => {
     const currentWeekNumber = getWeekOfYear(currentWeek);
-    const { startWeek, endWeek } = getQuarterWeekRange(quarterData.year, quarterData.quarter);
+    const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
     const totalWeeks = endWeek - startWeek + 1;
     const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
     const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
 
     // Calculate week range using getDateFromWeek for consistency
-    const weekStartDate = getDateFromWeek(quarterData.year, startWeek + displayWeek - 1, 1);
-    const weekEndDate = getDateFromWeek(quarterData.year, startWeek + displayWeek - 1, 7);
+    const weekStartDate = getDateFromWeek(year, startWeek + displayWeek - 1, 1);
+    const weekEndDate = getDateFromWeek(year, startWeek + displayWeek - 1, 7);
     const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
 
     return {
@@ -89,7 +90,7 @@ export default function WeeklySyncClient() {
       weekEndDate,
       weekRangeLabel
     };
-  }, [currentWeek, quarterData.year, quarterData.quarter, selectedWeekInQuarter]);
+  }, [currentWeek, year, quarter, selectedWeekInQuarter]);
 
   // Destructure for easier access
   const {
@@ -105,7 +106,7 @@ export default function WeeklySyncClient() {
       const endDate = weekDates[6].toISOString().slice(0, 10);
       try {
         const [unscheduled, scheduled]: [Task[], Task[]] = await Promise.all([
-          getUnscheduledTasks(quarterData.year, quarterData.quarter),
+          getUnscheduledTasks(year, quarter),
           getScheduledTasksForWeek(startDate, endDate),
         ]);
         setTaskPool(unscheduled);
@@ -128,7 +129,7 @@ export default function WeeklySyncClient() {
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWeek, quarterData.year, quarterData.quarter]);
+  }, [currentWeek, year, quarter]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -189,7 +190,7 @@ export default function WeeklySyncClient() {
   const handleSelectWeek = (weekIdx: number) => {
     const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
-    const monday = getDateFromWeek(quarterData.year, weekNumber, 1);
+    const monday = getDateFromWeek(year, weekNumber, 1);
     monday.setHours(0, 0, 0, 0);
     setCurrentWeek(monday);
     setSelectedWeekInQuarter(weekIdx);
@@ -225,7 +226,7 @@ export default function WeeklySyncClient() {
         <div className="text-sm">
           <strong>Debug:</strong>
           <div>
-            Quarter: {quarterData.quarterString} <br />
+            Quarter: {quarter} <br />
             Week: {weekDates[0].toISOString().slice(0, 10)} - {weekDates[6].toISOString().slice(0, 10)} <br/> <br/>
             Week {displayWeek} <br/>
             {weekRangeLabel}
@@ -235,6 +236,7 @@ export default function WeeklySyncClient() {
         </div>
         <div className="text-sm">Loading: {loading ? "Yes" : "No"}, Task Pool: {taskPool.length} tasks</div>
       </div>
+
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Weekly Sync</h2>
@@ -271,6 +273,7 @@ export default function WeeklySyncClient() {
           </Button>
         </div>
       </div>
+
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Kolom Kiri: Kolam Tugas */}
