@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { getWeeklyGoals, setWeeklyGoalItems, calculateGoalProgress, removeWeeklyGoal } from './actions';
 import WeeklyFocusModal from './WeeklyFocusModal';
+import TreeItem from './TreeItem';
 
 interface GoalItem {
   id: string;
@@ -32,6 +33,10 @@ interface WeeklyGoal {
 interface WeeklyGoalsTableProps {
   year: number;
   weekNumber: number;
+}
+
+export interface TreeGoalItem extends GoalItem {
+  children: TreeGoalItem[];
 }
 
 export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableProps) {
@@ -132,30 +137,59 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     return goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
   };
 
-  const getItemTypeLabel = (type: string) => {
-    switch (type) {
-      case 'QUEST': return 'Quest';
-      case 'MILESTONE': return 'Milestone';
-      case 'TASK': return 'Task';
-      case 'SUBTASK': return 'Subtask';
-      default: return type;
-    }
-  };
+  // Helper: Build tree from flat array
+  function buildTree(items: GoalItem[]): TreeGoalItem[] {
+    const byId: Record<string, TreeGoalItem> = {};
+    items.forEach(item => {
+      byId[item.item_id] = { ...item, children: [] };
+    });
+    const roots: TreeGoalItem[] = [];
+    items.forEach(item => {
+      let parentId: string | undefined = undefined;
+      if (item.item_type === 'MILESTONE') parentId = item.quest_id;
+      else if (item.item_type === 'TASK') parentId = item.milestone_id;
+      else if (item.item_type === 'SUBTASK') parentId = item.parent_task_id;
+      if (parentId && byId[parentId]) {
+        byId[parentId].children.push(byId[item.item_id]);
+      } else {
+        roots.push(byId[item.item_id]);
+      }
+    });
+    return roots;
+  }
 
-  // Helper: Render flat list with indent and color label per Main Quest
-  function renderFlatHierarchicalList(items: GoalItem[]) {
-    // 1. Build color mapping for parent_quest_id (urut priority_score desc)
+  // Helper: Sort tree
+  function sortTree(nodes: TreeGoalItem[]): TreeGoalItem[] {
+    // Sort root by parent_quest_priority_score desc, then display_order
+    nodes.sort((a, b) => {
+      const pa = a.parent_quest_priority_score ?? 0;
+      const pb = b.parent_quest_priority_score ?? 0;
+      if (pb !== pa) return pb - pa;
+      return (a.display_order ?? 0) - (b.display_order ?? 0);
+    });
+    // Sort children by display_order asc
+    nodes.forEach(node => {
+      if (node.children && node.children.length > 0) {
+        node.children.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+        sortTree(node.children);
+      }
+    });
+    return nodes;
+  }
+
+  // Helper: Build color mapping for Main Quest
+  function getQuestColorMap(items: GoalItem[]) {
     const questIdToPriority: Record<string, number> = {};
     items.forEach(item => {
-      if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
+      if (item.item_type === 'QUEST' && item.priority_score !== undefined) {
+        questIdToPriority[item.item_id] = item.priority_score;
+      } else if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
         questIdToPriority[item.parent_quest_id] = item.parent_quest_priority_score;
       }
     });
-    // Sort quest ids by priority desc
     const sortedQuestIds = Object.entries(questIdToPriority)
       .sort((a, b) => b[1] - a[1])
       .map(([id]) => id);
-    // Assign color per quest
     const questColors = [
       'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
       'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
@@ -165,36 +199,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     sortedQuestIds.forEach((qid, idx) => {
       questIdToColor[qid] = questColors[idx % questColors.length];
     });
-    // 2. Sort items: by parent_quest_priority_score desc, then by item_type order, then display_order
-    const itemTypeOrder: Record<string, number> = { QUEST: 0, MILESTONE: 1, TASK: 2, SUBTASK: 3 };
-    const sortedItems = [...items].sort((a, b) => {
-      const pa = a.parent_quest_priority_score ?? 0;
-      const pb = b.parent_quest_priority_score ?? 0;
-      if (pb !== pa) return pb - pa;
-      const ta = itemTypeOrder[a.item_type] ?? 99;
-      const tb = itemTypeOrder[b.item_type] ?? 99;
-      if (ta !== tb) return ta - tb;
-      return (a.display_order ?? 0) - (b.display_order ?? 0);
-    });
-    // 3. Render flat list with indent and color label
-    return (
-      <div className="space-y-1">
-        {sortedItems.map(item => {
-          let indentClass = '';
-          if (item.item_type === 'MILESTONE') indentClass = 'pl-4';
-          else if (item.item_type === 'TASK') indentClass = 'pl-8';
-          else if (item.item_type === 'SUBTASK') indentClass = 'pl-12';
-          const colorClass = questIdToColor[item.parent_quest_id || ''] || questColors[0];
-          return (
-            <div key={item.id} className={`flex items-center space-x-2 ${indentClass}`}>
-              <input type="checkbox" checked={item.status === 'DONE'} readOnly className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-              <span className={`text-xs px-2 py-1 rounded ${colorClass}`}>{getItemTypeLabel(item.item_type)}</span>
-              <span className="text-sm text-gray-900 dark:text-white">{item.title}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
+    return questIdToColor;
   }
 
   if (loading) {
@@ -248,7 +253,21 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                   <td className="py-4 px-4">
                     {goal && goal.items.length > 0 ? (
                       <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors" onClick={() => handleSlotClick(slotNumber)}>
-                        {renderFlatHierarchicalList(goal.items)}
+                        {/* Build, sort, and render tree */}
+                        {(() => {
+                          const questIdToColor = getQuestColorMap(goal.items);
+                          const tree = sortTree(buildTree(goal.items));
+                          return tree.map((root) => {
+                            // Color: for QUEST, use its own id; for descendant, use parent_quest_id
+                            const colorClass =
+                              root.item_type === 'QUEST'
+                                ? questIdToColor[root.item_id] || (root.parent_quest_id ? questIdToColor[root.parent_quest_id] : '') || ''
+                                : (root.parent_quest_id ? questIdToColor[root.parent_quest_id] : '') || '';
+                            return (
+                              <TreeItem key={root.id} item={root} level={0} colorClass={colorClass} />
+                            );
+                          });
+                        })()}
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Klik untuk mengedit</p>
                       </div>
                     ) : (
