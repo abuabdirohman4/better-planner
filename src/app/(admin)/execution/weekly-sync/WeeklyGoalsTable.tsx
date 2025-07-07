@@ -13,6 +13,11 @@ interface GoalItem {
   item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
   title: string;
   status: string;
+  display_order?: number;
+  priority_score?: number;
+  quest_id?: string;
+  milestone_id?: string;
+  parent_task_id?: string;
 }
 
 interface WeeklyGoal {
@@ -130,6 +135,68 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     }
   };
 
+  // Helper untuk membangun tree dari flat items
+  function buildGoalTree(items: GoalItem[]) {
+    const byId: Record<string, GoalItem> = Object.fromEntries(items.map(i => [i.item_id, i]));
+    let roots: GoalItem[] = [];
+    const childrenMap: Record<string, GoalItem[]> = {};
+    items.forEach(item => {
+      let parentId: string | undefined = undefined;
+      if (item.item_type === 'MILESTONE') parentId = item.quest_id;
+      else if (item.item_type === 'TASK') parentId = item.milestone_id;
+      else if (item.item_type === 'SUBTASK') parentId = item.parent_task_id;
+      // root jika parent tidak ada di items
+      if (item.item_type === 'QUEST') {
+        roots.push(item);
+      } else if (parentId && !byId[parentId]) {
+        roots.push(item);
+      } else if (parentId && byId[parentId]) {
+        childrenMap[parentId] = childrenMap[parentId] || [];
+        childrenMap[parentId].push(item);
+      }
+    });
+    // Urutkan roots: Quest (priority_score), Milestone (display_order), Task (display_order), Subtask (display_order)
+    roots = [
+      ...roots.filter(i => i.item_type === 'QUEST').sort((a, b) => (b.priority_score ?? 0) - (a.priority_score ?? 0)),
+      ...roots.filter(i => i.item_type === 'MILESTONE').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+      ...roots.filter(i => i.item_type === 'TASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+      ...roots.filter(i => i.item_type === 'SUBTASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    ];
+    const questColors = [
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    ];
+    const questIdToColor: Record<string, string> = {};
+    roots.forEach((item, idx) => {
+      if (item.item_type === 'QUEST') {
+        questIdToColor[item.item_id] = questColors[idx % questColors.length];
+      }
+    });
+    function getColorForItem(item: GoalItem): string {
+      if (item.item_type === 'QUEST') return questIdToColor[item.item_id] || questColors[0];
+      if (item.item_type === 'MILESTONE' && item.quest_id && questIdToColor[item.quest_id]) return questIdToColor[item.quest_id];
+      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK') && item.milestone_id && byId[item.milestone_id] && byId[item.milestone_id].quest_id && questIdToColor[byId[item.milestone_id]!.quest_id!]) return questIdToColor[byId[item.milestone_id]!.quest_id!];
+      return questColors[0];
+    }
+    function renderTree(item: GoalItem, level = 0) {
+      // Paksa Quest selalu level 0 (tanpa indent)
+      const effectiveLevel = item.item_type === 'QUEST' ? 0 : level;
+      const ml = ["", "ml-4", "ml-8", "ml-12"][effectiveLevel] || "";
+      return (
+        <React.Fragment key={item.id}>
+          <div className={`flex items-center space-x-2 ${ml}`}>
+            <input type="checkbox" checked={item.status === 'DONE'} readOnly className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+            <span className={`text-xs px-2 py-1 rounded ${getColorForItem(item)}`}>{getItemTypeLabel(item.item_type)}</span>
+            <span className="text-sm text-gray-900 dark:text-white">{item.title}</span>
+          </div>
+          {(childrenMap[item.item_id] || []).map(child => renderTree(child, effectiveLevel + 1))}
+        </React.Fragment>
+      );
+    }
+    return roots.map(item => renderTree(item));
+  }
+
   if (loading) {
     return (
       <ComponentCard title={`3 Goal Minggu ${weekNumber}`} className="mb-6">
@@ -165,7 +232,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
               const goal = getGoalForSlot(slotNumber);
               const progress = getProgressForSlot(slotNumber);
               const isCompleted = progress.percentage === 100;
-              
+
               return (
                 <tr key={slotNumber} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                   {/* Column 1 - Auto Checkbox */}
@@ -181,25 +248,11 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                   {/* Column 2 - Focus Selector */}
                   <td className="py-4 px-4">
                     {goal && goal.items.length > 0 ? (
-                      <div 
-                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors"
-                        onClick={() => handleSlotClick(slotNumber)}
-                      >
+                      <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors" onClick={() => handleSlotClick(slotNumber)}>
                         <div className="space-y-1">
-                          {goal.items.map((item) => (
-                            <div key={item.id} className="flex items-center space-x-2">
-                              <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">
-                                {getItemTypeLabel(item.item_type)}
-                              </span>
-                              <span className="text-sm text-gray-900 dark:text-white">
-                                {item.title}
-                              </span>
-                            </div>
-                          ))}
+                          {buildGoalTree(goal.items)}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Klik untuk mengedit
-                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Klik untuk mengedit</p>
                       </div>
                     ) : (
                       <Button
@@ -248,6 +301,9 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
           }}
           onSave={handleModalSave}
           year={year}
+          initialSelectedItems={
+            (getGoalForSlot(selectedSlot)?.items || []).map(item => ({ id: item.item_id, type: item.item_type }))
+          }
         />
       )}
     </>

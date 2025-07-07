@@ -187,37 +187,52 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
           (goalItems || []).map(async (item) => {
             let title = '';
             let status = 'TODO';
+            let priority_score: number | undefined = undefined;
+            let display_order: number | undefined = undefined;
+            let quest_id: string | undefined = undefined;
+            let milestone_id: string | undefined = undefined;
+            let parent_task_id: string | undefined = undefined;
 
             if (item.item_type === 'QUEST') {
               const { data: quest } = await supabase
                 .from('quests')
-                .select('title')
+                .select('id, title, priority_score')
                 .eq('id', item.item_id)
                 .single();
               title = quest?.title || '';
+              priority_score = quest?.priority_score;
+              quest_id = quest?.id;
             } else if (item.item_type === 'MILESTONE') {
               const { data: milestone } = await supabase
                 .from('milestones')
-                .select('title')
+                .select('title, display_order, quest_id')
                 .eq('id', item.item_id)
                 .single();
               title = milestone?.title || '';
+              display_order = milestone?.display_order;
+              quest_id = milestone?.quest_id;
             } else if (item.item_type === 'TASK') {
               const { data: task } = await supabase
                 .from('tasks')
-                .select('title, status')
+                .select('title, status, display_order, milestone_id, parent_task_id')
                 .eq('id', item.item_id)
                 .single();
               title = task?.title || '';
               status = task?.status || 'TODO';
+              display_order = task?.display_order;
+              milestone_id = task?.milestone_id;
+              parent_task_id = task?.parent_task_id;
             } else if (item.item_type === 'SUBTASK') {
               const { data: subtask } = await supabase
                 .from('tasks')
-                .select('title, status')
+                .select('title, status, display_order, milestone_id, parent_task_id')
                 .eq('id', item.item_id)
                 .single();
               title = subtask?.title || '';
               status = subtask?.status || 'TODO';
+              display_order = subtask?.display_order;
+              milestone_id = subtask?.milestone_id;
+              parent_task_id = subtask?.parent_task_id;
             }
 
             return {
@@ -225,7 +240,12 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               item_id: item.item_id,
               item_type: item.item_type,
               title,
-              status
+              status,
+              priority_score,
+              display_order,
+              quest_id,
+              milestone_id,
+              parent_task_id
             };
           })
         );
@@ -315,72 +335,44 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
     let totalItems = 0;
 
     for (const item of items) {
-      if (item.item_type === 'QUEST') {
-        // For quests, count all tasks under all milestones of this quest
-        const { data: milestones, error: milestoneError } = await supabase
-          .from('milestones')
-          .select('id')
-          .eq('quest_id', item.item_id);
-        if (milestoneError) throw milestoneError;
-        const milestoneIds = (milestones || []).map(m => m.id);
-        let tasks: { status: string }[] = [];
-        if (milestoneIds.length > 0) {
-          const { data: tasksData, error: tasksError } = await supabase
-            .from('tasks')
-            .select('status')
-            .in('milestone_id', milestoneIds);
-          if (tasksError) throw tasksError;
-          tasks = tasksData || [];
-        }
-        const completed = tasks.filter(task => task.status === 'DONE').length;
-        const total = tasks.length;
-        totalCompleted += completed;
-        totalItems += total;
-      } else if (item.item_type === 'MILESTONE') {
-        // For milestones, count all tasks under this milestone
-        const { data: tasks, error } = await supabase
-          .from('tasks')
-          .select('status')
-          .eq('milestone_id', item.item_id);
-        if (error) throw error;
-        const completed = tasks?.filter(task => task.status === 'DONE').length || 0;
-        const total = tasks?.length || 0;
-        totalCompleted += completed;
-        totalItems += total;
-      } else if (item.item_type === 'TASK') {
-        // For tasks, check if it has subtasks
-        const { data: subtasks, error: subtaskError } = await supabase
-          .from('tasks')
-          .select('status')
-          .eq('parent_task_id', item.item_id);
-        if (subtaskError) throw subtaskError;
-        if (subtasks && subtasks.length > 0) {
-          // Task has subtasks
-          const completed = subtasks.filter(task => task.status === 'DONE').length;
-          totalCompleted += completed;
-          totalItems += subtasks.length;
-        } else {
-          // Task is standalone
-          const { data: task, error: taskError } = await supabase
+      let status: string | undefined = undefined;
+      try {
+        if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
+          const { data: task } = await supabase
             .from('tasks')
             .select('status')
             .eq('id', item.item_id)
             .single();
-          if (taskError) throw taskError;
-          totalCompleted += task?.status === 'DONE' ? 1 : 0;
-          totalItems += 1;
+          status = task?.status;
+          if (!task) {
+            console.error('Task/Subtask not found for item_id', item.item_id);
+          }
+        } else if (item.item_type === 'MILESTONE') {
+          const { data: milestone } = await supabase
+            .from('milestones')
+            .select('status')
+            .eq('id', item.item_id)
+            .single();
+          status = milestone?.status;
+          if (!milestone) {
+            console.error('Milestone not found for item_id', item.item_id);
+          }
+        } else if (item.item_type === 'QUEST') {
+          const { data: quest } = await supabase
+            .from('quests')
+            .select('status')
+            .eq('id', item.item_id)
+            .single();
+          status = quest?.status;
+          if (!quest) {
+            console.error('Quest not found for item_id', item.item_id);
+          }
         }
-      } else if (item.item_type === 'SUBTASK') {
-        // For subtask, just check its own status
-        const { data: subtask, error: subtaskError } = await supabase
-          .from('tasks')
-          .select('status')
-          .eq('id', item.item_id)
-          .single();
-        if (subtaskError) throw subtaskError;
-        totalCompleted += subtask?.status === 'DONE' ? 1 : 0;
-        totalItems += 1;
+      } catch (e) {
+        console.error('Error fetching status for item', item, e);
       }
+      totalItems += 1;
+      if (status === 'DONE') totalCompleted += 1;
     }
     const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
     return {

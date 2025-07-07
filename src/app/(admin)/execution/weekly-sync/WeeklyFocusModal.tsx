@@ -26,6 +26,7 @@ interface WeeklyFocusModalProps {
   onClose: () => void;
   onSave: (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => void;
   year: number;
+  initialSelectedItems?: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
 }
 
 interface SelectedItem {
@@ -37,11 +38,12 @@ export default function WeeklyFocusModal({
   isOpen,
   onClose,
   onSave,
-  year
+  year,
+  initialSelectedItems = []
 }: WeeklyFocusModalProps) {
   const { quarter } = useWeek();
   const [hierarchicalData, setHierarchicalData] = useState<Quest[]>([]);
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(initialSelectedItems);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -63,9 +65,9 @@ export default function WeeklyFocusModal({
   useEffect(() => {
     if (isOpen) {
       loadHierarchicalData();
-      setSelectedItems([]); // Reset selection when modal opens
+      setSelectedItems(initialSelectedItems); // Set dari props, bukan reset kosong
     }
-  }, [isOpen, loadHierarchicalData]);
+  }, [isOpen, loadHierarchicalData, initialSelectedItems]);
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
@@ -117,7 +119,7 @@ export default function WeeklyFocusModal({
   const renderSubtasks = (subtasks: HierarchicalItem[], taskId: string) => {
     if (!expandedItems.has(taskId)) return null;
     return (
-      <div className="ml-8 space-y-2">
+      <div className="ml-2 space-y-2">
         {subtasks.map((subtask) => (
           <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
             <div className="flex items-center space-x-2 py-1">
@@ -141,7 +143,7 @@ export default function WeeklyFocusModal({
     if (!expandedItems.has(milestoneId)) return null;
 
     return (
-      <div className="ml-6 space-y-2">
+      <div className="ml-2 space-y-2">
         {tasks.map((task) => (
           <div key={task.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
             <div className="flex items-center space-x-2 py-1">
@@ -174,7 +176,7 @@ export default function WeeklyFocusModal({
     if (!expandedItems.has(questId)) return null;
 
     return (
-      <div className="ml-4 space-y-3">
+      <div className="ml-2 space-y-3">
         {milestones.map((milestone) => (
           <div key={milestone.id} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
             <div className="flex items-center space-x-2 py-1">
