@@ -112,90 +112,97 @@ export default function WeeklyFocusModal({
   };
 
   const renderSubtasks = (subtasks: HierarchicalItem[], taskId: string) => {
-    if (!expandedItems.has(taskId)) return null;
+    const expanded = expandedItems.has(taskId);
     return (
-      <div className="ml-2 space-y-2">
-        {subtasks.map((subtask) => (
-          <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
-            <div className="flex items-center space-x-2 py-1">
-              <input
-                type="checkbox"
-                checked={isItemSelected(subtask.id, 'SUBTASK')}
-                onChange={() => handleItemToggle(subtask.id, 'SUBTASK')}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-800 dark:text-gray-200">
-                {subtask.title}
-              </span>
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        style={{ willChange: 'max-height, opacity' }}
+      >
+        <div className="ml-2 space-y-2">
+          {subtasks.map((subtask) => (
+            <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
+              <div className="flex items-center space-x-2 py-1">
+                <input
+                  type="checkbox"
+                  checked={isItemSelected(subtask.id, 'SUBTASK')}
+                  onChange={() => handleItemToggle(subtask.id, 'SUBTASK')}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-800 dark:text-gray-200">
+                  {subtask.title}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
   const renderTasks = (tasks: (HierarchicalItem & { subtasks: HierarchicalItem[] })[], milestoneId: string) => {
-    if (!expandedItems.has(milestoneId)) return null;
-
+    const expanded = expandedItems.has(milestoneId);
     return (
-      <div className="ml-2 space-y-2">
-        {tasks.map((task) => (
-          <div key={task.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-            <div className="flex items-center space-x-2 py-1">
-              <input
-                type="checkbox"
-                checked={isItemSelected(task.id, 'TASK')}
-                onChange={() => handleItemToggle(task.id, 'TASK')}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                {task.title}
-              </span>
-              {task.subtasks && task.subtasks.length > 0 && (
-                <button
-                  onClick={() => toggleExpanded(task.id)}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  {expandedItems.has(task.id) ? '[-]' : '[+]'} Sub-tasks
-                </button>
-              )}
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        style={{ willChange: 'max-height, opacity' }}
+      >
+        <div className="ml-2 space-y-2">
+          {tasks.map((task) => (
+            <div key={task.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+              <div className="flex items-center space-x-2 py-1">
+                <input
+                  type="checkbox"
+                  checked={isItemSelected(task.id, 'TASK')}
+                  onChange={() => handleItemToggle(task.id, 'TASK')}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {task.title}
+                </span>
+                {task.subtasks && task.subtasks.length > 0 && (
+                  <button
+                    onClick={() => toggleExpanded(task.id)}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    {expandedItems.has(task.id) ? '▼' : '▶'} Quests
+                  </button>
+                )}
+              </div>
+              {task.subtasks && renderSubtasks(task.subtasks, task.id)}
             </div>
-            {task.subtasks && renderSubtasks(task.subtasks, task.id)}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
   const renderMilestones = (milestones: Milestone[], questId: string) => {
-    if (!expandedItems.has(questId)) return null;
-
+    const expanded = expandedItems.has(questId);
     return (
-      <div className="ml-2 space-y-3">
-        {milestones.map((milestone) => (
-          <div key={milestone.id} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
-            <div className="flex items-center space-x-2 py-1">
-              <input
-                type="checkbox"
-                checked={isItemSelected(milestone.id, 'MILESTONE')}
-                onChange={() => handleItemToggle(milestone.id, 'MILESTONE')}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                {milestone.title}
-              </span>
-              {milestone.tasks && milestone.tasks.length > 0 && (
-                <button
-                  onClick={() => toggleExpanded(milestone.id)}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  {expandedItems.has(milestone.id) ? '[-]' : '[+]'} Tasks
-                </button>
-              )}
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        style={{ willChange: 'max-height, opacity' }}
+      >
+        <div className="ml-2 space-y-3">
+          {milestones.map((milestone) => (
+            <div key={milestone.id} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
+              <div className="flex items-center space-x-2 py-1">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {milestone.title}
+                </span>
+                {milestone.tasks && milestone.tasks.length > 0 && (
+                  <button
+                    onClick={() => toggleExpanded(milestone.id)}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    {expandedItems.has(milestone.id) ? '▼' : '▶'} Langkah
+                  </button>
+                )}
+              </div>
+              {milestone.tasks && renderTasks(milestone.tasks, milestone.id)}
             </div>
-            {milestone.tasks && renderTasks(milestone.tasks, milestone.id)}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
@@ -243,12 +250,6 @@ export default function WeeklyFocusModal({
               {hierarchicalData.map((quest) => (
                 <div key={quest.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={isItemSelected(quest.id, 'QUEST')}
-                      onChange={() => handleItemToggle(quest.id, 'QUEST')}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
                     <span className="font-medium text-gray-900 dark:text-white">
                       {quest.title}
                     </span>
@@ -257,7 +258,7 @@ export default function WeeklyFocusModal({
                         onClick={() => toggleExpanded(quest.id)}
                         className="text-sm text-blue-600 hover:text-blue-800"
                       >
-                        {expandedItems.has(quest.id) ? '[-]' : '[+]'} Milestones
+                        {expandedItems.has(quest.id) ? '▼' : '▶'} Milestones
                       </button>
                     )}
                   </div>
