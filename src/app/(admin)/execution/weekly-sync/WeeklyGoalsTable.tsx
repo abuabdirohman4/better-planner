@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { getWeeklyGoals, setWeeklyGoalItems, calculateGoalProgress } from './actions';
+import { getWeeklyGoals, setWeeklyGoalItems, calculateGoalProgress, removeWeeklyGoal } from './actions';
 import WeeklyFocusModal from './WeeklyFocusModal';
 
 interface GoalItem {
@@ -83,22 +83,27 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     if (!selectedSlot) return;
 
     try {
-      await setWeeklyGoalItems({
-        year,
-        weekNumber,
-        goalSlot: selectedSlot,
-        items: selectedItems
-      });
-      
-      CustomToast.success('Goal mingguan berhasil disimpan!');
-      
+      if (selectedItems.length === 0) {
+        // Hapus goal mingguan untuk slot ini
+        const goal = getGoalForSlot(selectedSlot);
+        if (goal) {
+          await removeWeeklyGoal(goal.id);
+          CustomToast.success('Goal mingguan berhasil dihapus!');
+        }
+      } else {
+        await setWeeklyGoalItems({
+          year,
+          weekNumber,
+          goalSlot: selectedSlot,
+          items: selectedItems
+        });
+        CustomToast.success('Goal mingguan berhasil disimpan!');
+      }
       // Reload weekly goals
       const goals = await getWeeklyGoals(year, weekNumber);
       setWeeklyGoals(goals);
-      
       // Recalculate progress
       const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-      
       await Promise.all(
         goals.map(async (goal) => {
           if (goal.items.length > 0) {
@@ -109,7 +114,6 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
           }
         })
       );
-      
       setGoalProgress(progressData);
     } catch (error) {
       console.error('Error saving weekly goal:', error);

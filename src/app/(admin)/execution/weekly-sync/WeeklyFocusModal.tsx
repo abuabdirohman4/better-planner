@@ -99,11 +99,6 @@ export default function WeeklyFocusModal({
   };
 
   const handleSave = async () => {
-    if (selectedItems.length === 0) {
-      CustomToast.error('Pilih minimal satu item sebagai fokus mingguan');
-      return;
-    }
-
     setLoading(true);
     try {
       onSave(selectedItems);
@@ -291,7 +286,7 @@ export default function WeeklyFocusModal({
               size="sm"
               variant="primary"
               onClick={handleSave}
-              disabled={loading || selectedItems.length === 0}
+              disabled={loading}
             >
               {loading ? 'Menyimpan...' : 'Simpan Fokus'}
             </Button>
