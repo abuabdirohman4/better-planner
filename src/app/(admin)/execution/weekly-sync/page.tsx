@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import WeeklySyncClientEntry from './WeeklySyncClientEntry';
+import WeeklySyncClient from "./WeeklySyncClient";
 
 export const metadata: Metadata = {
   title: "Weekly Sync | Better Planner",
@@ -15,5 +15,5 @@ export const metadata: Metadata = {
 }; 
 
 export default function WeeklySyncPage() {
-  return <WeeklySyncClientEntry />;
+  return <WeeklySyncClient />;
 } 

@@ -10,6 +10,7 @@ import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import WeeklyGoalsTable from "./WeeklyGoalsTable";
 
 type Task = {
   id: string;
@@ -93,11 +94,7 @@ export default function WeeklySyncClient() {
   }, [currentWeek, year, quarter, selectedWeekInQuarter]);
 
   // Destructure for easier access
-  const {
-    displayWeek,
-    totalWeeks,
-    weekRangeLabel
-  } = weekCalculations;
+  const { displayWeek, totalWeeks, weekRangeLabel } = weekCalculations;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -273,6 +270,9 @@ export default function WeeklySyncClient() {
           </Button>
         </div>
       </div>
+
+      {/* Kolom 3 Goal Mingguan */}
+      <WeeklyGoalsTable year={year} weekNumber={displayWeek} />
 
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
