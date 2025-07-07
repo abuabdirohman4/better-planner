@@ -18,6 +18,9 @@ interface GoalItem {
   quest_id?: string;
   milestone_id?: string;
   parent_task_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
 }
 
 interface WeeklyGoal {
@@ -139,89 +142,59 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     }
   };
 
-  // Helper untuk membangun tree dari flat items
-  function buildGoalTree(items: GoalItem[]) {
-    const byId: Record<string, GoalItem> = Object.fromEntries(items.map(i => [i.item_id, i]));
-    let roots: GoalItem[] = [];
-    const childrenMap: Record<string, GoalItem[]> = {};
-    const questIdsSet = new Set<string>();
-    // Kumpulkan semua quest_id dari quest, milestone, task, subtask
+  // Helper: Render flat list with indent and color label per Main Quest
+  function renderFlatHierarchicalList(items: GoalItem[]) {
+    // 1. Build color mapping for parent_quest_id (urut priority_score desc)
+    const questIdToPriority: Record<string, number> = {};
     items.forEach(item => {
-      if (item.item_type === 'QUEST') questIdsSet.add(item.item_id);
-      if (item.item_type === 'MILESTONE' && item.quest_id) questIdsSet.add(item.quest_id);
-      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK') && item.milestone_id && byId[item.milestone_id] && byId[item.milestone_id].quest_id) questIdsSet.add(byId[item.milestone_id].quest_id!);
+      if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
+        questIdToPriority[item.parent_quest_id] = item.parent_quest_priority_score;
+      }
     });
-    // Buat array questId beserta priority_score
-    const questIdWithPriority: { id: string; priority: number }[] = Array.from(questIdsSet).map(qid => {
-      const quest = items.find(i => i.item_type === 'QUEST' && i.item_id === qid);
-      return { id: qid, priority: quest?.priority_score ?? 0 };
-    });
-    // Urutkan questId berdasarkan priority_score
-    questIdWithPriority.sort((a, b) => b.priority - a.priority);
+    // Sort quest ids by priority desc
+    const sortedQuestIds = Object.entries(questIdToPriority)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
+    // Assign color per quest
     const questColors = [
       'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
       'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
       'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
     ];
     const questIdToColor: Record<string, string> = {};
-    questIdWithPriority.forEach((q, idx) => {
-      questIdToColor[q.id] = questColors[idx] || questColors[0];
+    sortedQuestIds.forEach((qid, idx) => {
+      questIdToColor[qid] = questColors[idx % questColors.length];
     });
-    // ... roots dan childrenMap tetap
-    items.forEach(item => {
-      let parentId: string | undefined = undefined;
-      if (item.item_type === 'MILESTONE') parentId = item.quest_id;
-      else if (item.item_type === 'TASK') parentId = item.milestone_id;
-      else if (item.item_type === 'SUBTASK') parentId = item.parent_task_id;
-      if (item.item_type === 'QUEST') {
-        roots.push(item);
-      } else if (parentId && !byId[parentId]) {
-        roots.push(item);
-      } else if (parentId && byId[parentId]) {
-        childrenMap[parentId] = childrenMap[parentId] || [];
-        childrenMap[parentId].push(item);
-      }
+    // 2. Sort items: by parent_quest_priority_score desc, then by item_type order, then display_order
+    const itemTypeOrder: Record<string, number> = { QUEST: 0, MILESTONE: 1, TASK: 2, SUBTASK: 3 };
+    const sortedItems = [...items].sort((a, b) => {
+      const pa = a.parent_quest_priority_score ?? 0;
+      const pb = b.parent_quest_priority_score ?? 0;
+      if (pb !== pa) return pb - pa;
+      const ta = itemTypeOrder[a.item_type] ?? 99;
+      const tb = itemTypeOrder[b.item_type] ?? 99;
+      if (ta !== tb) return ta - tb;
+      return (a.display_order ?? 0) - (b.display_order ?? 0);
     });
-    // Urutkan roots seperti sebelumnya
-    const questRoots = roots.filter(i => i.item_type === 'QUEST').sort((a, b) => (b.priority_score ?? 0) - (a.priority_score ?? 0));
-    roots = [
-      ...questRoots,
-      ...roots.filter(i => i.item_type === 'MILESTONE').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
-      ...roots.filter(i => i.item_type === 'TASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
-      ...roots.filter(i => i.item_type === 'SUBTASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
-    ];
-    function getColorForItem(item: GoalItem): string {
-      if (item.item_type === 'QUEST') return questIdToColor[item.item_id] || questColors[0];
-      if (item.item_type === 'MILESTONE' && item.quest_id && questIdToColor[item.quest_id]) return questIdToColor[item.quest_id];
-      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK')) {
-        let milestoneId = item.milestone_id;
-        const visited = new Set<string>();
-        while (milestoneId && !visited.has(milestoneId)) {
-          visited.add(milestoneId);
-          const milestone = byId[milestoneId];
-          if (milestone && milestone.quest_id && questIdToColor[milestone.quest_id]) {
-            return questIdToColor[milestone.quest_id];
-          }
-          milestoneId = milestone?.quest_id;
-        }
-      }
-      return questColors[0];
-    }
-    function renderTree(item: GoalItem, level = 0) {
-      const effectiveLevel = item.item_type === 'QUEST' ? 0 : level;
-      const ml = ["", "ml-4", "ml-8", "ml-12"][effectiveLevel] || "";
-      return (
-        <React.Fragment key={item.id}>
-          <div className={`flex items-center space-x-2 ${ml}`}>
-            <input type="checkbox" checked={item.status === 'DONE'} readOnly className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-            <span className={`text-xs px-2 py-1 rounded ${getColorForItem(item)}`}>{getItemTypeLabel(item.item_type)}</span>
-            <span className="text-sm text-gray-900 dark:text-white">{item.title}</span>
-          </div>
-          {(childrenMap[item.item_id] || []).map(child => renderTree(child, effectiveLevel + 1))}
-        </React.Fragment>
-      );
-    }
-    return roots.map(item => renderTree(item));
+    // 3. Render flat list with indent and color label
+    return (
+      <div className="space-y-1">
+        {sortedItems.map(item => {
+          let indentClass = '';
+          if (item.item_type === 'MILESTONE') indentClass = 'pl-4';
+          else if (item.item_type === 'TASK') indentClass = 'pl-8';
+          else if (item.item_type === 'SUBTASK') indentClass = 'pl-12';
+          const colorClass = questIdToColor[item.parent_quest_id || ''] || questColors[0];
+          return (
+            <div key={item.id} className={`flex items-center space-x-2 ${indentClass}`}>
+              <input type="checkbox" checked={item.status === 'DONE'} readOnly className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+              <span className={`text-xs px-2 py-1 rounded ${colorClass}`}>{getItemTypeLabel(item.item_type)}</span>
+              <span className="text-sm text-gray-900 dark:text-white">{item.title}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   if (loading) {
@@ -271,14 +244,11 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                       className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                     />
                   </td>
-                  
                   {/* Column 2 - Focus Selector */}
                   <td className="py-4 px-4">
                     {goal && goal.items.length > 0 ? (
                       <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors" onClick={() => handleSlotClick(slotNumber)}>
-                        <div className="space-y-1">
-                          {buildGoalTree(goal.items)}
-                        </div>
+                        {renderFlatHierarchicalList(goal.items)}
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Klik untuk mengedit</p>
                       </div>
                     ) : (
@@ -292,7 +262,6 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                       </Button>
                     )}
                   </td>
-                  
                   {/* Column 3 - Auto Progress */}
                   <td className="py-4 px-4 w-32">
                     <div className="space-y-1">

@@ -193,6 +193,11 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
             let milestone_id: string | undefined = undefined;
             let parent_task_id: string | undefined = undefined;
 
+            // New: parent quest info
+            let parent_quest_id: string | undefined = undefined;
+            let parent_quest_title: string | undefined = undefined;
+            let parent_quest_priority_score: number | undefined = undefined;
+
             if (item.item_type === 'QUEST') {
               const { data: quest } = await supabase
                 .from('quests')
@@ -202,6 +207,10 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               title = quest?.title || '';
               priority_score = quest?.priority_score;
               quest_id = quest?.id;
+              // Parent quest info
+              parent_quest_id = quest?.id;
+              parent_quest_title = quest?.title;
+              parent_quest_priority_score = quest?.priority_score;
             } else if (item.item_type === 'MILESTONE') {
               const { data: milestone } = await supabase
                 .from('milestones')
@@ -211,6 +220,17 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               title = milestone?.title || '';
               display_order = milestone?.display_order;
               quest_id = milestone?.quest_id;
+              // Parent quest info
+              if (milestone?.quest_id) {
+                const { data: quest } = await supabase
+                  .from('quests')
+                  .select('id, title, priority_score')
+                  .eq('id', milestone.quest_id)
+                  .single();
+                parent_quest_id = quest?.id;
+                parent_quest_title = quest?.title;
+                parent_quest_priority_score = quest?.priority_score;
+              }
             } else if (item.item_type === 'TASK') {
               const { data: task } = await supabase
                 .from('tasks')
@@ -222,6 +242,24 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               display_order = task?.display_order;
               milestone_id = task?.milestone_id;
               parent_task_id = task?.parent_task_id;
+              // Parent quest info
+              if (task?.milestone_id) {
+                const { data: milestone } = await supabase
+                  .from('milestones')
+                  .select('id, quest_id')
+                  .eq('id', task.milestone_id)
+                  .single();
+                if (milestone?.quest_id) {
+                  const { data: quest } = await supabase
+                    .from('quests')
+                    .select('id, title, priority_score')
+                    .eq('id', milestone.quest_id)
+                    .single();
+                  parent_quest_id = quest?.id;
+                  parent_quest_title = quest?.title;
+                  parent_quest_priority_score = quest?.priority_score;
+                }
+              }
             } else if (item.item_type === 'SUBTASK') {
               const { data: subtask } = await supabase
                 .from('tasks')
@@ -233,6 +271,24 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               display_order = subtask?.display_order;
               milestone_id = subtask?.milestone_id;
               parent_task_id = subtask?.parent_task_id;
+              // Parent quest info
+              if (subtask?.milestone_id) {
+                const { data: milestone } = await supabase
+                  .from('milestones')
+                  .select('id, quest_id')
+                  .eq('id', subtask.milestone_id)
+                  .single();
+                if (milestone?.quest_id) {
+                  const { data: quest } = await supabase
+                    .from('quests')
+                    .select('id, title, priority_score')
+                    .eq('id', milestone.quest_id)
+                    .single();
+                  parent_quest_id = quest?.id;
+                  parent_quest_title = quest?.title;
+                  parent_quest_priority_score = quest?.priority_score;
+                }
+              }
             }
 
             return {
@@ -245,7 +301,10 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
               display_order,
               quest_id,
               milestone_id,
-              parent_task_id
+              parent_task_id,
+              parent_quest_id,
+              parent_quest_title,
+              parent_quest_priority_score
             };
           })
         );
