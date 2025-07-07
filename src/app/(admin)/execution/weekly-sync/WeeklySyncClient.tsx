@@ -219,7 +219,7 @@ export default function WeeklySyncClient() {
 
   return (
     <div className="container mx-auto py-8 pt-0">
-      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hidden">
         <div className="text-sm">
           <strong>Debug:</strong>
           <div>
@@ -275,7 +275,7 @@ export default function WeeklySyncClient() {
       <WeeklyGoalsTable year={year} weekNumber={displayWeek} />
 
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
         {/* Kolom Kiri: Kolam Tugas */}
         <section>
           <h4 className="text-base font-semibold mb-2">Kolam Tugas</h4>

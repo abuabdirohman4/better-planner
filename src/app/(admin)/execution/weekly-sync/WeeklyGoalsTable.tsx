@@ -131,7 +131,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
 
   if (loading) {
     return (
-      <ComponentCard title="3 Goal Mingguan" className="mb-6">
+      <ComponentCard title={`3 Goal Minggu ${weekNumber}`} className="mb-6">
         <div className="animate-pulse">
           <table className="w-full">
             <tbody>
@@ -157,7 +157,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
 
   return (
     <>
-      <ComponentCard title="3 Goal Mingguan" className="mb-6">
+      <ComponentCard title={`3 Goal Minggu ${weekNumber}`} classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pt-8 pb-0" className="mb-6">
         <table className="w-full">
           <tbody>
             {[1, 2, 3].map((slotNumber) => {
