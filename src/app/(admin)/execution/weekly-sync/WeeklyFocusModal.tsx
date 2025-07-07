@@ -24,13 +24,13 @@ interface Quest extends HierarchicalItem {
 interface WeeklyFocusModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' }>) => void;
+  onSave: (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => void;
   year: number;
 }
 
 interface SelectedItem {
   id: string;
-  type: 'QUEST' | 'MILESTONE' | 'TASK';
+  type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
 }
 
 export default function WeeklyFocusModal({
@@ -79,7 +79,7 @@ export default function WeeklyFocusModal({
     });
   };
 
-  const handleItemToggle = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK') => {
+  const handleItemToggle = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') => {
     setSelectedItems(prev => {
       const existingIndex = prev.findIndex(item => item.id === itemId && item.type === itemType);
       if (existingIndex >= 0) {
@@ -92,7 +92,7 @@ export default function WeeklyFocusModal({
     });
   };
 
-  const isItemSelected = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK') => {
+  const isItemSelected = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') => {
     return selectedItems.some(item => item.id === itemId && item.type === itemType);
   };
 
@@ -114,6 +114,29 @@ export default function WeeklyFocusModal({
     }
   };
 
+  const renderSubtasks = (subtasks: HierarchicalItem[], taskId: string) => {
+    if (!expandedItems.has(taskId)) return null;
+    return (
+      <div className="ml-8 space-y-2">
+        {subtasks.map((subtask) => (
+          <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
+            <div className="flex items-center space-x-2 py-1">
+              <input
+                type="checkbox"
+                checked={isItemSelected(subtask.id, 'SUBTASK')}
+                onChange={() => handleItemToggle(subtask.id, 'SUBTASK')}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-800 dark:text-gray-200">
+                {subtask.title}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderTasks = (tasks: (HierarchicalItem & { subtasks: HierarchicalItem[] })[], milestoneId: string) => {
     if (!expandedItems.has(milestoneId)) return null;
 
@@ -131,7 +154,16 @@ export default function WeeklyFocusModal({
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 {task.title}
               </span>
+              {task.subtasks && task.subtasks.length > 0 && (
+                <button
+                  onClick={() => toggleExpanded(task.id)}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  {expandedItems.has(task.id) ? '[-]' : '[+]'} Sub-tasks
+                </button>
+              )}
             </div>
+            {task.subtasks && renderSubtasks(task.subtasks, task.id)}
           </div>
         ))}
       </div>
@@ -175,7 +207,7 @@ export default function WeeklyFocusModal({
 
   return (
     <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[32px] flex items-center justify-center z-50">
-      <div className="relative max-w-4xl mx-4 max-h-[90vh] w-full shadow-2xl border rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-10">
+      <div className="relative max-w-4xl mx-4 max-h-[90vh] w-full shadow-2xl border rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-10 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -190,7 +222,7 @@ export default function WeeklyFocusModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {dataLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -240,7 +272,7 @@ export default function WeeklyFocusModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-900 pt-4 mt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between z-10">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {selectedItems.length} item dipilih
           </div>

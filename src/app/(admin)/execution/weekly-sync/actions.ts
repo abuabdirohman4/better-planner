@@ -210,6 +210,14 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
                 .single();
               title = task?.title || '';
               status = task?.status || 'TODO';
+            } else if (item.item_type === 'SUBTASK') {
+              const { data: subtask } = await supabase
+                .from('tasks')
+                .select('title, status')
+                .eq('id', item.item_id)
+                .single();
+              title = subtask?.title || '';
+              status = subtask?.status || 'TODO';
             }
 
             return {
@@ -242,7 +250,7 @@ export async function setWeeklyGoalItems(data: {
   year: number;
   weekNumber: number;
   goalSlot: number;
-  items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' }>;
+  items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -309,16 +317,23 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
     for (const item of items) {
       if (item.item_type === 'QUEST') {
         // For quests, count all tasks under all milestones of this quest
-        const { data: tasks, error } = await supabase
-          .from('tasks')
-          .select('status')
+        const { data: milestones, error: milestoneError } = await supabase
+          .from('milestones')
+          .select('id')
           .eq('quest_id', item.item_id);
-
-        if (error) throw error;
-
-        const completed = tasks?.filter(task => task.status === 'DONE').length || 0;
-        const total = tasks?.length || 0;
-        
+        if (milestoneError) throw milestoneError;
+        const milestoneIds = (milestones || []).map(m => m.id);
+        let tasks: { status: string }[] = [];
+        if (milestoneIds.length > 0) {
+          const { data: tasksData, error: tasksError } = await supabase
+            .from('tasks')
+            .select('status')
+            .in('milestone_id', milestoneIds);
+          if (tasksError) throw tasksError;
+          tasks = tasksData || [];
+        }
+        const completed = tasks.filter(task => task.status === 'DONE').length;
+        const total = tasks.length;
         totalCompleted += completed;
         totalItems += total;
       } else if (item.item_type === 'MILESTONE') {
@@ -327,12 +342,9 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
           .from('tasks')
           .select('status')
           .eq('milestone_id', item.item_id);
-
         if (error) throw error;
-
         const completed = tasks?.filter(task => task.status === 'DONE').length || 0;
         const total = tasks?.length || 0;
-        
         totalCompleted += completed;
         totalItems += total;
       } else if (item.item_type === 'TASK') {
@@ -341,9 +353,7 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
           .from('tasks')
           .select('status')
           .eq('parent_task_id', item.item_id);
-
         if (subtaskError) throw subtaskError;
-
         if (subtasks && subtasks.length > 0) {
           // Task has subtasks
           const completed = subtasks.filter(task => task.status === 'DONE').length;
@@ -356,17 +366,23 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
             .select('status')
             .eq('id', item.item_id)
             .single();
-
           if (taskError) throw taskError;
-
           totalCompleted += task?.status === 'DONE' ? 1 : 0;
           totalItems += 1;
         }
+      } else if (item.item_type === 'SUBTASK') {
+        // For subtask, just check its own status
+        const { data: subtask, error: subtaskError } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('id', item.item_id)
+          .single();
+        if (subtaskError) throw subtaskError;
+        totalCompleted += subtask?.status === 'DONE' ? 1 : 0;
+        totalItems += 1;
       }
     }
-
     const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
-
     return {
       completed: totalCompleted,
       total: totalItems,

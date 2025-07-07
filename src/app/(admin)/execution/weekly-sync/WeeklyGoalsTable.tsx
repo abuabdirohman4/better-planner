@@ -10,7 +10,7 @@ import WeeklyFocusModal from './WeeklyFocusModal';
 interface GoalItem {
   id: string;
   item_id: string;
-  item_type: 'QUEST' | 'MILESTONE' | 'TASK';
+  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
   title: string;
   status: string;
 }
@@ -74,7 +74,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     setIsModalOpen(true);
   };
 
-  const handleModalSave = async (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' }>) => {
+  const handleModalSave = async (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => {
     if (!selectedSlot) return;
 
     try {
@@ -125,6 +125,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
       case 'QUEST': return 'Quest';
       case 'MILESTONE': return 'Milestone';
       case 'TASK': return 'Task';
+      case 'SUBTASK': return 'Subtask';
       default: return type;
     }
   };
