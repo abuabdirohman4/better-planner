@@ -144,12 +144,35 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     const byId: Record<string, GoalItem> = Object.fromEntries(items.map(i => [i.item_id, i]));
     let roots: GoalItem[] = [];
     const childrenMap: Record<string, GoalItem[]> = {};
+    const questIdsSet = new Set<string>();
+    // Kumpulkan semua quest_id dari quest, milestone, task, subtask
+    items.forEach(item => {
+      if (item.item_type === 'QUEST') questIdsSet.add(item.item_id);
+      if (item.item_type === 'MILESTONE' && item.quest_id) questIdsSet.add(item.quest_id);
+      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK') && item.milestone_id && byId[item.milestone_id] && byId[item.milestone_id].quest_id) questIdsSet.add(byId[item.milestone_id].quest_id!);
+    });
+    // Buat array questId beserta priority_score
+    const questIdWithPriority: { id: string; priority: number }[] = Array.from(questIdsSet).map(qid => {
+      const quest = items.find(i => i.item_type === 'QUEST' && i.item_id === qid);
+      return { id: qid, priority: quest?.priority_score ?? 0 };
+    });
+    // Urutkan questId berdasarkan priority_score
+    questIdWithPriority.sort((a, b) => b.priority - a.priority);
+    const questColors = [
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    ];
+    const questIdToColor: Record<string, string> = {};
+    questIdWithPriority.forEach((q, idx) => {
+      questIdToColor[q.id] = questColors[idx] || questColors[0];
+    });
+    // ... roots dan childrenMap tetap
     items.forEach(item => {
       let parentId: string | undefined = undefined;
       if (item.item_type === 'MILESTONE') parentId = item.quest_id;
       else if (item.item_type === 'TASK') parentId = item.milestone_id;
       else if (item.item_type === 'SUBTASK') parentId = item.parent_task_id;
-      // root jika parent tidak ada di items
       if (item.item_type === 'QUEST') {
         roots.push(item);
       } else if (parentId && !byId[parentId]) {
@@ -159,32 +182,32 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
         childrenMap[parentId].push(item);
       }
     });
-    // Urutkan roots: Quest (priority_score), Milestone (display_order), Task (display_order), Subtask (display_order)
+    // Urutkan roots seperti sebelumnya
+    const questRoots = roots.filter(i => i.item_type === 'QUEST').sort((a, b) => (b.priority_score ?? 0) - (a.priority_score ?? 0));
     roots = [
-      ...roots.filter(i => i.item_type === 'QUEST').sort((a, b) => (b.priority_score ?? 0) - (a.priority_score ?? 0)),
+      ...questRoots,
       ...roots.filter(i => i.item_type === 'MILESTONE').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
       ...roots.filter(i => i.item_type === 'TASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
       ...roots.filter(i => i.item_type === 'SUBTASK').sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
     ];
-    const questColors = [
-      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-    ];
-    const questIdToColor: Record<string, string> = {};
-    roots.forEach((item, idx) => {
-      if (item.item_type === 'QUEST') {
-        questIdToColor[item.item_id] = questColors[idx % questColors.length];
-      }
-    });
     function getColorForItem(item: GoalItem): string {
       if (item.item_type === 'QUEST') return questIdToColor[item.item_id] || questColors[0];
       if (item.item_type === 'MILESTONE' && item.quest_id && questIdToColor[item.quest_id]) return questIdToColor[item.quest_id];
-      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK') && item.milestone_id && byId[item.milestone_id] && byId[item.milestone_id].quest_id && questIdToColor[byId[item.milestone_id]!.quest_id!]) return questIdToColor[byId[item.milestone_id]!.quest_id!];
+      if ((item.item_type === 'TASK' || item.item_type === 'SUBTASK')) {
+        let milestoneId = item.milestone_id;
+        const visited = new Set<string>();
+        while (milestoneId && !visited.has(milestoneId)) {
+          visited.add(milestoneId);
+          const milestone = byId[milestoneId];
+          if (milestone && milestone.quest_id && questIdToColor[milestone.quest_id]) {
+            return questIdToColor[milestone.quest_id];
+          }
+          milestoneId = milestone?.quest_id;
+        }
+      }
       return questColors[0];
     }
     function renderTree(item: GoalItem, level = 0) {
-      // Paksa Quest selalu level 0 (tanpa indent)
       const effectiveLevel = item.item_type === 'QUEST' ? 0 : level;
       const ml = ["", "ml-4", "ml-8", "ml-12"][effectiveLevel] || "";
       return (
