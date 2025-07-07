@@ -195,7 +195,7 @@ export async function getTasksForMilestone(milestoneId: string) {
     .select('id, title, status')
     .eq('milestone_id', milestoneId)
     .is('parent_task_id', null)
-    .order('created_at', { ascending: true });
+    .order('display_order', { ascending: true });
   if (error) return [];
   return data;
 }
