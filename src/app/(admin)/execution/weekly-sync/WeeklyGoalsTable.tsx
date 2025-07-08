@@ -6,7 +6,6 @@ import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { getWeeklyGoals, setWeeklyGoalItems, calculateGoalProgress, removeWeeklyGoal } from './actions';
 import WeeklyFocusModal from './WeeklyFocusModal';
-import TreeItem from './TreeItem';
 
 interface GoalItem {
   id: string;
@@ -38,6 +37,95 @@ interface WeeklyGoalsTableProps {
 export interface TreeGoalItem extends GoalItem {
   children: TreeGoalItem[];
 }
+
+// New component for horizontal inline display of selected goals
+const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void }> = ({ items, onClick }) => {
+  // Helper: Build color mapping for Main Quest
+  const getQuestColorMap = (items: GoalItem[]) => {
+    const questIdToPriority: Record<string, number> = {};
+    items.forEach(item => {
+      if (item.item_type === 'QUEST' && item.priority_score !== undefined) {
+        questIdToPriority[item.item_id] = item.priority_score;
+      } else if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
+        questIdToPriority[item.parent_quest_id] = item.parent_quest_priority_score;
+      }
+    });
+    const sortedQuestIds = Object.entries(questIdToPriority)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
+    const questColors = [
+      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+    ];
+    const questIdToColor: Record<string, string> = {};
+    sortedQuestIds.forEach((qid, idx) => {
+      questIdToColor[qid] = questColors[idx % questColors.length];
+    });
+    return questIdToColor;
+  };
+
+  // Group items by parent quest
+  const groupItemsByQuest = (items: GoalItem[]) => {
+    const groups: { [questId: string]: GoalItem[] } = {};
+    items.forEach(item => {
+      const questId = item.parent_quest_id || item.item_id;
+      if (!groups[questId]) {
+        groups[questId] = [];
+      }
+      groups[questId].push(item);
+    });
+    return groups;
+  };
+
+  const questIdToColor = getQuestColorMap(items);
+  const groupedItems = groupItemsByQuest(items);
+  const sortedQuestIds = Object.keys(groupedItems).sort((a, b) => {
+    const aPriority = items.find(item => (item.parent_quest_id || item.item_id) === a)?.parent_quest_priority_score ?? 0;
+    const bPriority = items.find(item => (item.parent_quest_id || item.item_id) === b)?.parent_quest_priority_score ?? 0;
+    return bPriority - aPriority;
+  });
+
+  return (
+    <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-3 rounded transition-colors" onClick={onClick}>
+      <div className="flex flex-wrap gap-3">
+        {sortedQuestIds.map((questId, questIndex) => {
+          const questItems = groupedItems[questId];
+          const colorClass = questIdToColor[questId] || '';
+          
+          return (
+            <React.Fragment key={questId}>
+              {questItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.status === 'DONE'}
+                    readOnly
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
+                    {item.item_type}
+                  </span>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {item.title}
+                  </span>
+                </div>
+              ))}
+              {/* Add visual separator between quest groups if there are multiple quests */}
+              {questIndex < sortedQuestIds.length - 1 && sortedQuestIds.length > 1 && (
+                <div className="w-full h-px bg-gray-200 dark:bg-gray-600 my-3" />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Klik untuk mengedit</p>
+    </div>
+  );
+};
 
 export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableProps) {
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
@@ -137,70 +225,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     return goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
   };
 
-  // Helper: Build tree from flat array
-  function buildTree(items: GoalItem[]): TreeGoalItem[] {
-    const byId: Record<string, TreeGoalItem> = {};
-    items.forEach(item => {
-      byId[item.item_id] = { ...item, children: [] };
-    });
-    const roots: TreeGoalItem[] = [];
-    items.forEach(item => {
-      let parentId: string | undefined = undefined;
-      if (item.item_type === 'MILESTONE') parentId = item.quest_id;
-      else if (item.item_type === 'TASK') parentId = item.milestone_id;
-      else if (item.item_type === 'SUBTASK') parentId = item.parent_task_id;
-      if (parentId && byId[parentId]) {
-        byId[parentId].children.push(byId[item.item_id]);
-      } else {
-        roots.push(byId[item.item_id]);
-      }
-    });
-    return roots;
-  }
 
-  // Helper: Sort tree
-  function sortTree(nodes: TreeGoalItem[]): TreeGoalItem[] {
-    // Sort root by parent_quest_priority_score desc, then display_order
-    nodes.sort((a, b) => {
-      const pa = a.parent_quest_priority_score ?? 0;
-      const pb = b.parent_quest_priority_score ?? 0;
-      if (pb !== pa) return pb - pa;
-      return (a.display_order ?? 0) - (b.display_order ?? 0);
-    });
-    // Sort children by display_order asc
-    nodes.forEach(node => {
-      if (node.children && node.children.length > 0) {
-        node.children.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
-        sortTree(node.children);
-      }
-    });
-    return nodes;
-  }
-
-  // Helper: Build color mapping for Main Quest
-  function getQuestColorMap(items: GoalItem[]) {
-    const questIdToPriority: Record<string, number> = {};
-    items.forEach(item => {
-      if (item.item_type === 'QUEST' && item.priority_score !== undefined) {
-        questIdToPriority[item.item_id] = item.priority_score;
-      } else if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
-        questIdToPriority[item.parent_quest_id] = item.parent_quest_priority_score;
-      }
-    });
-    const sortedQuestIds = Object.entries(questIdToPriority)
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => id);
-    const questColors = [
-      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-    ];
-    const questIdToColor: Record<string, string> = {};
-    sortedQuestIds.forEach((qid, idx) => {
-      questIdToColor[qid] = questColors[idx % questColors.length];
-    });
-    return questIdToColor;
-  }
 
   if (loading) {
     return (
@@ -252,24 +277,10 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                   {/* Column 2 - Focus Selector */}
                   <td className="py-4 px-4">
                     {goal && goal.items.length > 0 ? (
-                      <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors" onClick={() => handleSlotClick(slotNumber)}>
-                        {/* Build, sort, and render tree */}
-                        {(() => {
-                          const questIdToColor = getQuestColorMap(goal.items);
-                          const tree = sortTree(buildTree(goal.items));
-                          return tree.map((root) => {
-                            // Color: for QUEST, use its own id; for descendant, use parent_quest_id
-                            const colorClass =
-                              root.item_type === 'QUEST'
-                                ? questIdToColor[root.item_id] || (root.parent_quest_id ? questIdToColor[root.parent_quest_id] : '') || ''
-                                : (root.parent_quest_id ? questIdToColor[root.parent_quest_id] : '') || '';
-                            return (
-                              <TreeItem key={root.id} item={root} level={0} colorClass={colorClass} />
-                            );
-                          });
-                        })()}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Klik untuk mengedit</p>
-                      </div>
+                      <HorizontalGoalDisplay
+                        items={goal.items}
+                        onClick={() => handleSlotClick(slotNumber)}
+                      />
                     ) : (
                       <Button
                         size="sm"
