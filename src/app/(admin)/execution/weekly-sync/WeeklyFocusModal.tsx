@@ -69,6 +69,14 @@ export default function WeeklyFocusModal({
     }
   }, [isOpen, loadHierarchicalData, initialSelectedItems]);
 
+  // Auto-expand all quests when hierarchical data is loaded
+  useEffect(() => {
+    if (hierarchicalData.length > 0 && !dataLoading) {
+      const questIds = hierarchicalData.map(quest => quest.id);
+      setExpandedItems(new Set(questIds));
+    }
+  }, [hierarchicalData, dataLoading]);
+
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
@@ -96,6 +104,38 @@ export default function WeeklyFocusModal({
 
   const isItemSelected = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') => {
     return selectedItems.some(item => item.id === itemId && item.type === itemType);
+  };
+
+  // Get all available items from hierarchical data
+  const getAllAvailableItems = (): Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }> => {
+    const items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }> = [];
+    
+    hierarchicalData.forEach(quest => {
+      items.push({ id: quest.id, type: 'QUEST' });
+      
+      quest.milestones?.forEach(milestone => {
+        items.push({ id: milestone.id, type: 'MILESTONE' });
+        
+        milestone.tasks?.forEach(task => {
+          items.push({ id: task.id, type: 'TASK' });
+          
+          task.subtasks?.forEach(subtask => {
+            items.push({ id: subtask.id, type: 'SUBTASK' });
+          });
+        });
+      });
+    });
+    
+    return items;
+  };
+
+  const handleSelectAll = () => {
+    const allItems = getAllAvailableItems();
+    setSelectedItems(allItems);
+  };
+
+  const handleClearAll = () => {
+    setSelectedItems([]);
   };
 
   const handleSave = async () => {
@@ -247,6 +287,8 @@ export default function WeeklyFocusModal({
                 Pilih item-item yang ingin menjadi fokus mingguan ini. Anda dapat memilih kombinasi Quest, Milestone, atau Task.
               </div>
               
+
+              
               {hierarchicalData.map((quest) => (
                 <div key={quest.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 py-1">
@@ -271,8 +313,28 @@ export default function WeeklyFocusModal({
 
         {/* Footer */}
         <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-900 pt-4 mt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between z-10">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedItems.length} item dipilih
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedItems.length} item dipilih
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSelectAll}
+                className="text-xs"
+              >
+                Select All
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClearAll}
+                className="text-xs"
+              >
+                Clear All
+              </Button>
+            </div>
           </div>
           <div className="flex space-x-2">
             <Button
