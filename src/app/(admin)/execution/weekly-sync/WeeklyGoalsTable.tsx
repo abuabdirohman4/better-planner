@@ -153,7 +153,7 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void; 
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
-                    {item.item_type}
+                    {['Q1','Q2','Q3'][slotNumber-1] || item.item_type}
                   </span>
                   <span className="text-gray-900 dark:text-white font-medium">
                     {item.title}
