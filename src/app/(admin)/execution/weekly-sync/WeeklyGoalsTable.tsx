@@ -38,33 +38,14 @@ export interface TreeGoalItem extends GoalItem {
   children: TreeGoalItem[];
 }
 
-// New component for horizontal inline display of selected goals
-const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void }> = ({ items, onClick }) => {
-  // Helper: Build color mapping for Main Quest
-  const getQuestColorMap = (items: GoalItem[]) => {
-    const questIdToPriority: Record<string, number> = {};
-    items.forEach(item => {
-      if (item.item_type === 'QUEST' && item.priority_score !== undefined) {
-        questIdToPriority[item.item_id] = item.priority_score;
-      } else if (item.parent_quest_id && item.parent_quest_priority_score !== undefined) {
-        questIdToPriority[item.parent_quest_id] = item.parent_quest_priority_score;
-      }
-    });
-    const sortedQuestIds = Object.entries(questIdToPriority)
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => id);
-    const questColors = [
-      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-      'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-    ];
-    const questIdToColor: Record<string, string> = {};
-    sortedQuestIds.forEach((qid, idx) => {
-      questIdToColor[qid] = questColors[idx % questColors.length];
-    });
-    return questIdToColor;
-  };
+const questColors = [
+  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+];
 
+// New component for horizontal inline display of selected goals
+const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void; slotNumber: number }> = ({ items, onClick, slotNumber }) => {
   // Group items by parent quest with improved logic
   const groupItemsByQuest = (items: GoalItem[]) => {
     const groups: { [questId: string]: GoalItem[] } = {};
@@ -144,7 +125,6 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void }
     return result;
   };
 
-  const questIdToColor = getQuestColorMap(items);
   const groupedItems = groupItemsByQuest(items);
   const sortedQuestIds = Object.keys(groupedItems).sort((a, b) => {
     const aPriority = items.find(item => (item.parent_quest_id || item.item_id) === a)?.parent_quest_priority_score ?? 0;
@@ -157,7 +137,7 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void }
       <div className="flex flex-wrap gap-3">
         {sortedQuestIds.map((questId, questIndex) => {
           const questItems = groupedItems[questId];
-          const colorClass = questIdToColor[questId] || '';
+          const colorClass = questColors[(slotNumber-1)%questColors.length];
           
           return (
             <React.Fragment key={questId}>
@@ -357,6 +337,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                       <HorizontalGoalDisplay
                         items={goal.items}
                         onClick={() => handleSlotClick(slotNumber)}
+                        slotNumber={slotNumber}
                       />
                     ) : (
                       <Button
