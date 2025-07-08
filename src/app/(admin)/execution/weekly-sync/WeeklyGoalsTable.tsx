@@ -65,17 +65,83 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void }
     return questIdToColor;
   };
 
-  // Group items by parent quest
+  // Group items by parent quest with improved logic
   const groupItemsByQuest = (items: GoalItem[]) => {
     const groups: { [questId: string]: GoalItem[] } = {};
+    const questItems: { [questId: string]: GoalItem } = {};
+    const taskItems: { [taskId: string]: GoalItem } = {};
+    
+    // First pass: collect all items and identify quest and task items
     items.forEach(item => {
+      if (item.item_type === 'QUEST') {
+        questItems[item.item_id] = item;
+      }
+      if (item.item_type === 'TASK') {
+        taskItems[item.item_id] = item;
+      }
       const questId = item.parent_quest_id || item.item_id;
       if (!groups[questId]) {
         groups[questId] = [];
       }
       groups[questId].push(item);
     });
-    return groups;
+
+    // Second pass: apply grouping logic
+    const result: { [questId: string]: GoalItem[] } = {};
+    
+    Object.keys(groups).forEach(questId => {
+      const groupItems = groups[questId];
+      const questItem = questItems[questId];
+      
+      // If this is a quest with children
+      if (questItem && groupItems.length > 1) {
+        const children = groupItems.filter(item => item.item_id !== questId);
+        const allChildrenSelected = children.every(item => item.status === 'DONE');
+        
+        if (allChildrenSelected) {
+          // Hide parent if all children are selected
+          result[questId] = children;
+        } else {
+          // Show parent with its selection state
+          result[questId] = groupItems;
+        }
+      } else {
+        // Handle Task/Subtask relationships
+        const processedItems: GoalItem[] = [];
+        
+        groupItems.forEach(item => {
+          if (item.item_type === 'TASK') {
+            // Check if this task has subtasks
+            const subtasks = groupItems.filter(subtask => 
+              subtask.item_type === 'SUBTASK' && subtask.parent_task_id === item.item_id
+            );
+            
+            if (subtasks.length > 0) {
+              const allSubtasksSelected = subtasks.every(subtask => subtask.status === 'DONE');
+              
+              if (allSubtasksSelected) {
+                // Hide task if all subtasks are selected
+                processedItems.push(...subtasks);
+              } else {
+                // Show task even if some subtasks are selected
+                processedItems.push(item);
+                processedItems.push(...subtasks);
+              }
+            } else {
+              // Task has no subtasks, add normally
+              processedItems.push(item);
+            }
+          } else if (item.item_type !== 'SUBTASK') {
+            // Add non-subtask items (quests, milestones)
+            processedItems.push(item);
+          }
+        });
+        
+        result[questId] = processedItems;
+      }
+    });
+    
+    return result;
   };
 
   const questIdToColor = getQuestColorMap(items);
@@ -225,7 +291,18 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     return goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
   };
 
-
+  // Get all existing selected item IDs from other slots (for anti-duplication)
+  const getExistingSelectedIds = (currentSlot: number) => {
+    const existingIds = new Set<string>();
+    weeklyGoals.forEach(goal => {
+      if (goal.goal_slot !== currentSlot) {
+        goal.items.forEach(item => {
+          existingIds.add(item.item_id);
+        });
+      }
+    });
+    return existingIds;
+  };
 
   if (loading) {
     return (
@@ -330,6 +407,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
           initialSelectedItems={
             (getGoalForSlot(selectedSlot)?.items || []).map(item => ({ id: item.item_id, type: item.item_type }))
           }
+          existingSelectedIds={getExistingSelectedIds(selectedSlot)}
         />
       )}
     </>

@@ -27,6 +27,7 @@ interface WeeklyFocusModalProps {
   onSave: (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => void;
   year: number;
   initialSelectedItems?: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
+  existingSelectedIds?: Set<string>;
 }
 
 interface SelectedItem {
@@ -39,7 +40,8 @@ export default function WeeklyFocusModal({
   onClose,
   onSave,
   year,
-  initialSelectedItems = []
+  initialSelectedItems = [],
+  existingSelectedIds = new Set()
 }: WeeklyFocusModalProps) {
   const { quarter } = useWeek();
   const [hierarchicalData, setHierarchicalData] = useState<Quest[]>([]);
@@ -89,15 +91,46 @@ export default function WeeklyFocusModal({
     });
   };
 
-  const handleItemToggle = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') => {
+  const handleItemToggle = (
+    itemId: string,
+    itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK',
+    subtasks: HierarchicalItem[] = [],
+    parentTaskId?: string
+  ) => {
     setSelectedItems(prev => {
-      const existingIndex = prev.findIndex(item => item.id === itemId && item.type === itemType);
-      if (existingIndex >= 0) {
-        // Remove item
-        return prev.filter((_, index) => index !== existingIndex);
+      const isSelected = prev.some(item => item.id === itemId && item.type === itemType);
+      if (itemType === 'TASK') {
+        if (isSelected) {
+          // Uncheck task & all subtasks
+          return prev.filter(
+            item =>
+              !(item.id === itemId && item.type === 'TASK') &&
+              !subtasks.some(st => st.id === item.id && item.type === 'SUBTASK')
+          );
+        } else {
+          // Check task & all subtasks
+          return [
+            ...prev,
+            { id: itemId, type: 'TASK' },
+            ...subtasks.map(st => ({ id: st.id, type: 'SUBTASK' as const })),
+          ];
+        }
+      } else if (itemType === 'SUBTASK') {
+        // If parent task is selected, ignore manual toggle
+        if (parentTaskId && prev.some(item => item.id === parentTaskId && item.type === 'TASK')) return prev;
+        // Normal toggle for subtask
+        if (isSelected) {
+          return prev.filter(item => !(item.id === itemId && item.type === 'SUBTASK'));
+        } else {
+          return [...prev, { id: itemId, type: 'SUBTASK' as const }];
+        }
       } else {
-        // Add item
-        return [...prev, { id: itemId, type: itemType }];
+        // Normal toggle for milestone
+        if (isSelected) {
+          return prev.filter(item => !(item.id === itemId && item.type === itemType));
+        } else {
+          return [...prev, { id: itemId, type: itemType }];
+        }
       }
     });
   };
@@ -106,12 +139,13 @@ export default function WeeklyFocusModal({
     return selectedItems.some(item => item.id === itemId && item.type === itemType);
   };
 
-  // Get all available items from hierarchical data
+  // Get all available items from hierarchical data (excluding quests since they don't have checkboxes)
   const getAllAvailableItems = (): Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }> => {
     const items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }> = [];
     
     hierarchicalData.forEach(quest => {
-      items.push({ id: quest.id, type: 'QUEST' });
+      // Don't include quests since they don't have checkboxes
+      // items.push({ id: quest.id, type: 'QUEST' });
       
       quest.milestones?.forEach(milestone => {
         items.push({ id: milestone.id, type: 'MILESTONE' });
@@ -153,27 +187,35 @@ export default function WeeklyFocusModal({
 
   const renderSubtasks = (subtasks: HierarchicalItem[], taskId: string) => {
     const expanded = expandedItems.has(taskId);
+    // Filter out only the specific subtasks that are selected
+    const filteredSubtasks = subtasks.filter(subtask => !existingSelectedIds.has(subtask.id));
+    
     return (
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-2">
-          {subtasks.map((subtask) => (
-            <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
-              <div className="flex items-center space-x-2 py-1">
-                <input
-                  type="checkbox"
-                  checked={isItemSelected(subtask.id, 'SUBTASK')}
-                  onChange={() => handleItemToggle(subtask.id, 'SUBTASK')}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-800 dark:text-gray-200">
-                  {subtask.title}
-                </span>
+          {filteredSubtasks.map((subtask) => {
+            // Check if parent task is selected
+            const parentTaskSelected = selectedItems.some(item => item.id === taskId && item.type === 'TASK');
+            return (
+              <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
+                <div className="flex items-center space-x-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={isItemSelected(subtask.id, 'SUBTASK') || parentTaskSelected}
+                    onChange={() => handleItemToggle(subtask.id, 'SUBTASK', [], taskId)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    disabled={parentTaskSelected}
+                  />
+                  <span className="text-sm text-gray-800 dark:text-gray-200">
+                    {subtask.title}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -181,19 +223,37 @@ export default function WeeklyFocusModal({
 
   const renderTasks = (tasks: (HierarchicalItem & { subtasks: HierarchicalItem[] })[], milestoneId: string) => {
     const expanded = expandedItems.has(milestoneId);
+    // Filter out existing selected items, but keep tasks that have unselected subtasks
+    const filteredTasks = tasks.filter(task => {
+      // If task itself is selected, filter it out
+      if (existingSelectedIds.has(task.id)) {
+        return false;
+      }
+      // If task has subtasks, check if any subtasks are not selected
+      if (task.subtasks && task.subtasks.length > 0) {
+        const unselectedSubtasks = task.subtasks.filter(subtask => !existingSelectedIds.has(subtask.id));
+        // Keep task if it has unselected subtasks
+        return unselectedSubtasks.length > 0;
+      }
+      // If task has no subtasks and is not selected, keep it
+      return true;
+    });
+    
+    if (filteredTasks.length === 0) return null;
+    
     return (
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-2">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <div key={task.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-2 py-1">
                 <input
                   type="checkbox"
                   checked={isItemSelected(task.id, 'TASK')}
-                  onChange={() => handleItemToggle(task.id, 'TASK')}
+                  onChange={() => handleItemToggle(task.id, 'TASK', task.subtasks || [])}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -218,13 +278,29 @@ export default function WeeklyFocusModal({
 
   const renderMilestones = (milestones: Milestone[], questId: string) => {
     const expanded = expandedItems.has(questId);
+    // Filter out milestones where all descendants (tasks & subtasks) are selected
+    const filteredMilestones = milestones.filter(milestone => {
+      const allTasks = milestone.tasks || [];
+      const allSubtasks = allTasks.flatMap(task => task.subtasks || []);
+      const allIds = [
+        ...allTasks.map(t => t.id),
+        ...allSubtasks.map(st => st.id)
+      ];
+      // If milestone has no children, never hide
+      if (allIds.length === 0) return true;
+      // Hide if all descendants are selected
+      return !allIds.every(id => existingSelectedIds.has(id));
+    });
+    
+    if (filteredMilestones.length === 0) return null;
+    
     return (
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-3">
-          {milestones.map((milestone) => (
+          {filteredMilestones.map((milestone) => (
             <div key={milestone.id} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
               <div className="flex items-center space-x-2 py-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -285,11 +361,35 @@ export default function WeeklyFocusModal({
             <div className="space-y-4">
               <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Pilih item-item yang ingin menjadi fokus mingguan ini. Anda dapat memilih kombinasi Quest, Milestone, atau Task.
+                {existingSelectedIds.size > 0 && (
+                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md text-xs">
+                    <span className="font-medium text-blue-800 dark:text-blue-300">Info:</span> {existingSelectedIds.size} item sudah dipilih di slot lain dan tidak ditampilkan di sini.
+                  </div>
+                )}
               </div>
               
 
               
-              {hierarchicalData.map((quest) => (
+              {hierarchicalData
+                .filter(quest => {
+                  const allMilestones = quest.milestones || [];
+                  // Remaining milestones (not selected)
+                  const remainingMilestones = allMilestones.filter(m => !existingSelectedIds.has(m.id));
+                  if (remainingMilestones.length === 0) return false; // hide quest
+
+                  // Check if any remaining milestone has available task/subtask
+                  const hasAnyAvailableChild = remainingMilestones.some(milestone => {
+                    const tasks = milestone.tasks || [];
+                    // Any available task?
+                    if (tasks.some(task => !existingSelectedIds.has(task.id))) return true;
+                    // Any available subtask?
+                    return tasks.some(task =>
+                      (task.subtasks || []).some(subtask => !existingSelectedIds.has(subtask.id))
+                    );
+                  });
+                  return hasAnyAvailableChild;
+                })
+                .map((quest) => (
                 <div key={quest.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 py-1">
                     <span className="font-medium text-gray-900 dark:text-white">
