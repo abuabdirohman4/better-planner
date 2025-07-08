@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { getHierarchicalData } from './actions';
 import { useWeek } from '@/hooks/useWeek';
+import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 
 interface HierarchicalItem {
   id: string;
@@ -78,6 +79,29 @@ export default function WeeklyFocusModal({
       setExpandedItems(new Set(questIds));
     }
   }, [hierarchicalData, dataLoading]);
+
+  // Helper: get all expandable ids (quest, milestone, task)
+  const getAllExpandableIds = () => {
+    const ids: string[] = [];
+    hierarchicalData.forEach(quest => {
+      ids.push(quest.id);
+      quest.milestones?.forEach(milestone => {
+        ids.push(milestone.id);
+        milestone.tasks?.forEach(task => {
+          ids.push(task.id);
+        });
+      });
+    });
+    return ids;
+  };
+
+  const handleExpandAll = () => {
+    setExpandedItems(new Set(getAllExpandableIds()));
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedItems(new Set());
+  };
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
@@ -413,26 +437,46 @@ export default function WeeklyFocusModal({
 
         {/* Footer */}
         <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-900 pt-4 mt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between z-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {selectedItems.length} item dipilih
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
               <Button
                 size="sm"
-                variant="outline"
+                variant="primary"
                 onClick={handleSelectAll}
-                className="text-xs"
+                className="text-xs flex items-center gap-1 hover:bg-blue-600 hover:text-white transition-colors"
+                aria-label="Pilih semua item"
               >
-                Select All
+                <FaCheck className="w-3 h-3" /> Select All
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleClearAll}
-                className="text-xs"
+                className="text-xs flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Kosongkan semua pilihan"
               >
-                Clear All
+                <FaTimes className="w-3 h-3" /> Clear All
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExpandAll}
+                className="text-xs flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Expand semua quest dan milestone"
+              >
+                <FaExpand className="w-3 h-3" /> Expand All
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCollapseAll}
+                className="text-xs flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Collapse semua quest dan milestone"
+              >
+                <FaCompress className="w-3 h-3" /> Collapse All
               </Button>
             </div>
           </div>
