@@ -192,7 +192,7 @@ export default function WeeklyFocusModal({
     
     return (
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'opacity-100' : 'opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-2">
@@ -243,7 +243,7 @@ export default function WeeklyFocusModal({
     
     return (
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'opacity-100' : 'opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-2">
@@ -296,7 +296,7 @@ export default function WeeklyFocusModal({
     
     return (
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'opacity-100' : 'opacity-0'}`}
         style={{ willChange: 'max-height, opacity' }}
       >
         <div className="ml-2 space-y-3">
