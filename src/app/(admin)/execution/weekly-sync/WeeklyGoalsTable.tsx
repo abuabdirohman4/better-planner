@@ -296,7 +296,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   </td>
                   <td className="py-4 px-4">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   </td>
                   <td className="py-4 px-4 w-32">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -332,7 +332,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
                     />
                   </td>
                   {/* Column 2 - Focus Selector */}
-                  <td className="py-4 px-4">
+                  <td className={`py-4 ${goal && goal.items.length > 0 ? 'px-4' : 'px-7'}`}>
                     {goal && goal.items.length > 0 ? (
                       <HorizontalGoalDisplay
                         items={goal.items}

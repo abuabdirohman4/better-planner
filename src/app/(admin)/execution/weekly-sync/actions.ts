@@ -791,3 +791,26 @@ export async function deleteWeeklyRule(id: string) {
     return { success: false, message: 'Gagal menghapus aturan' };
   }
 } 
+
+/**
+ * Update urutan (display_order) beberapa aturan sekaligus
+ * @param rules Array of { id, display_order }
+ */
+export async function updateWeeklyRuleOrder(rules: { id: string; display_order: number }[]) {
+  const supabase = await createClient();
+  try {
+    // Update setiap rule satu per satu (bisa dioptimasi dengan upsert jika perlu)
+    for (const rule of rules) {
+      const { error } = await supabase
+        .from('weekly_rules')
+        .update({ display_order: rule.display_order })
+        .eq('id', rule.id);
+      if (error) throw error;
+    }
+    revalidatePath('/execution/weekly-sync');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating weekly rule order:', error);
+    return { success: false, message: 'Gagal update urutan aturan' };
+  }
+} 
