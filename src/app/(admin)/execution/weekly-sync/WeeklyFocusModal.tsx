@@ -212,7 +212,7 @@ export default function WeeklyFocusModal({
   const renderSubtasks = (subtasks: HierarchicalItem[], taskId: string) => {
     const expanded = expandedItems.has(taskId);
     // Filter out only the specific subtasks that are selected
-    const filteredSubtasks = subtasks.filter(subtask => !existingSelectedIds.has(subtask.id));
+    const filteredSubtasks = subtasks.filter(subtask => subtask.status !== 'DONE' && !existingSelectedIds.has(subtask.id));
     
     return (
       <div
@@ -249,6 +249,8 @@ export default function WeeklyFocusModal({
     const expanded = expandedItems.has(milestoneId);
     // Filter out existing selected items, but keep tasks that have unselected subtasks
     const filteredTasks = tasks.filter(task => {
+      // Jangan tampilkan task yang sudah DONE
+      if (task.status === 'DONE') return false;
       // If task itself is selected, filter it out
       if (existingSelectedIds.has(task.id)) {
         return false;
