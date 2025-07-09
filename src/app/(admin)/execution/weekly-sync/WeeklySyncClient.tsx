@@ -11,6 +11,7 @@ import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quart
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
+import ToDontListCard from "./ToDontListCard";
 
 type Task = {
   id: string;
@@ -273,6 +274,9 @@ export default function WeeklySyncClient() {
 
       {/* Kolom 3 Goal Mingguan */}
       <WeeklyGoalsTable year={year} weekNumber={displayWeek} />
+
+      {/* === To Don't List Card === */}
+      <ToDontListCard year={year} weekNumber={displayWeek} />
 
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">

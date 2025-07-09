@@ -286,7 +286,7 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
 
   if (loading) {
     return (
-      <ComponentCard title={`3 Goal Minggu ${weekNumber}`} className="mb-6">
+      <ComponentCard title="" classNameHeader="hidden">
         <div className="animate-pulse">
           <table className="w-full">
             <tbody>
