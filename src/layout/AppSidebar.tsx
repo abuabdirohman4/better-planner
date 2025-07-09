@@ -14,8 +14,8 @@ import {
   TaskIcon,
   EyeIcon,
   CheckCircleIcon,
-  DocsIcon,
-  ShootingStarIcon,
+  // DocsIcon,
+  // ShootingStarIcon,
 } from "../icons/index";
 
 type NavItem = {
@@ -59,16 +59,16 @@ const planningNav: NavItem[] = [
     name: "Main Quests",
     path: "/planning/main-quests",
   },
-  {
-    icon: <DocsIcon />,
-    name: "Self Development Curriculum",
-    path: "/planning/curriculum",
-  },
-  {
-    icon: <ShootingStarIcon />,
-    name: "Best Week",
-    path: "/planning/best-week",
-  },
+  // {
+  //   icon: <DocsIcon />,
+  //   name: "Self Development Curriculum",
+  //   path: "/planning/curriculum",
+  // },
+  // {
+  //   icon: <ShootingStarIcon />,
+  //   name: "Best Week",
+  //   path: "/planning/best-week",
+  // },
 ];
 
 const trackingNav: NavItem[] = [
@@ -93,7 +93,7 @@ const settingsNav: NavItem[] = [
   {
     icon: <PlugInIcon />,
     name: "Settings",
-    path: "/settings",
+    path: "/profile",
   },
 ];
 
@@ -352,10 +352,10 @@ const AppSidebar: React.FC = () => {
             {renderMenuItems(planningNav, "main")}
           </div>
           {/* TRACKING */}
-          <div className="mb-2">
+          {/* <div className="mb-2">
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tracking</div>
             {renderMenuItems(trackingNav, "main")}
-          </div>
+          </div> */}
           {/* Divider */}
           <div className="flex-1" />
           {/* SETTINGS */}
