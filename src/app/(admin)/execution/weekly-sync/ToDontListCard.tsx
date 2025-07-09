@@ -31,10 +31,14 @@ const SortableRuleItem = forwardRef<HTMLInputElement, {
   focusRuleId: string | null;
   focusInputAbove: (idx: number) => void;
   isLastItem: boolean;
-  handleAddEmptyRule: () => void;
+  handleAddEmptyRuleAt: () => void;
   handleBulkPasteLast: (e: React.ClipboardEvent<HTMLInputElement>) => void;
+  focusRuleIdAfterInsert: string | null;
+  setFocusRuleIdAfterInsert: (id: string | null) => void;
+  idx: number;
+  inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
 }>(
-  ({ rule, editingId, editingText, setEditingId, setEditingText, handleSaveEdit, handleDelete, setFocusRuleId, focusRuleId, focusInputAbove, isLastItem, handleAddEmptyRule, handleBulkPasteLast }, ref) => {
+  ({ rule, editingId, editingText, setEditingId, setEditingText, handleSaveEdit, handleDelete, setFocusRuleId, focusRuleId, focusInputAbove, isLastItem, handleAddEmptyRuleAt, handleBulkPasteLast, focusRuleIdAfterInsert, setFocusRuleIdAfterInsert, idx, inputRefs }, ref) => {
     const {
       attributes,
       listeners,
@@ -51,15 +55,17 @@ const SortableRuleItem = forwardRef<HTMLInputElement, {
       background: 'inherit',
     };
     useEffect(() => {
-      if (focusRuleId === rule.id && ref && typeof ref !== 'function' && ref.current) {
+      if ((focusRuleId === rule.id || focusRuleIdAfterInsert === rule.id) && ref && typeof ref !== 'function' && ref.current) {
         ref.current.focus();
+        if (focusRuleIdAfterInsert === rule.id) setFocusRuleIdAfterInsert(null);
       }
-    }, [focusRuleId, rule.id, ref]);
+    }, [focusRuleId, focusRuleIdAfterInsert, rule.id, ref, setFocusRuleIdAfterInsert]);
     return (
-      <div ref={setNodeRef} style={style} className="flex items-center py-2 group w-full">
+      <div ref={setNodeRef} style={style} className="flex items-center py-2 px-4 group w-full">
         <span {...attributes} {...listeners} className="flex items-center cursor-grab select-none mr-2 text-gray-400 hover:text-gray-600">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" /><rect x="4" y="9.25" width="12" height="1.5" rx="0.75" fill="currentColor" /><rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" /></svg>
         </span>
+        <span className="w-6 mr-2 select-none text-right">{idx + 1}.</span>
         <input
           ref={ref}
           className="flex-1 border rounded px-2 py-1 mr-2 dark:bg-gray-800"
@@ -73,13 +79,21 @@ const SortableRuleItem = forwardRef<HTMLInputElement, {
             if (editingId === rule.id) handleSaveEdit(rule.id);
           }}
           onKeyDown={e => {
-            if (e.key === "Enter" && isLastItem) handleAddEmptyRule();
+            if (e.key === "Enter") handleAddEmptyRuleAt();
             if (e.key === "Enter") handleSaveEdit(rule.id);
             if (e.key === "Escape") setEditingId(null);
             if ((e.key === "Backspace" || e.key === "Delete") && (editingId === rule.id ? editingText : rule.rule_text).length === 0) {
               e.preventDefault();
               handleDelete(rule.id);
               focusInputAbove(rule.display_order - 1);
+            }
+            if (e.key === "ArrowUp" && idx > 0) {
+              e.preventDefault();
+              inputRefs.current[idx - 1]?.focus();
+            }
+            if (e.key === "ArrowDown" && inputRefs.current[idx + 1]) {
+              e.preventDefault();
+              inputRefs.current[idx + 1]?.focus();
             }
           }}
           onPaste={isLastItem ? handleBulkPasteLast : undefined}
@@ -100,6 +114,8 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
   const [newRuleLoading, setNewRuleLoading] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusRuleIdAfterInsert, setFocusRuleIdAfterInsert] = useState<string | null>(null);
+  const [loadingInsertAt, setLoadingInsertAt] = useState<number | null>(null);
 
   // Fetch rules on mount or when year/weekNumber changes
   useEffect(() => {
@@ -134,6 +150,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
 
   // Delete rule (by keyboard)
   const handleDelete = async (id: string) => {
+    const idx = rules.findIndex(r => r.id === id);
     setRules(rules => rules.filter(r => r.id !== id)); // Optimistic
     const res = await deleteWeeklyRule(id);
     if (!res.success) {
@@ -142,11 +159,9 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
       const data = await getWeeklyRules(year, weekNumber);
       setRules(data);
     } else {
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
-      // Fokus ke input baru
+      // Fokus ke input di atasnya
       setTimeout(() => {
-        if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
+        if (inputRefs.current[idx - 1]) inputRefs.current[idx - 1]?.focus();
       }, 100);
     }
   };
@@ -194,11 +209,10 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     setNewRule("");
     const data = await getWeeklyRules(year, weekNumber);
     setRules(data);
-    setNewRuleLoading(false);
-    // Fokus ke input baru
     setTimeout(() => {
       if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
     }, 100);
+    setNewRuleLoading(false);
   };
 
   // Drag & drop handler
@@ -226,26 +240,31 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     }, 100);
   };
 
-  // Tambah aturan kosong dari input terakhir
-  const handleAddEmptyRule = async () => {
-    setNewRuleLoading(true);
+  // Handler insert di posisi mana pun
+  const handleAddEmptyRuleAt = async (idx: number) => {
+    setLoadingInsertAt(idx + 1);
+    // Hitung display_order baru (selalu tambah di paling bawah)
+    const newOrder = (rules[rules.length - 1]?.display_order ?? 0) + 1;
     const formData = new FormData();
     formData.append("rule_text", "");
     formData.append("year", String(year));
     formData.append("week_number", String(weekNumber));
+    formData.append("display_order", String(newOrder));
     const res = await addWeeklyRule(formData);
-    if (res.success) {
-      // CustomToast.success(res.message);
-      // Refresh list
+    if (res.success && res.id) {
+      const data = await getWeeklyRules(year, weekNumber);
+      setRules(data);
+      setFocusRuleIdAfterInsert(res.id);
+    } else if (res.success) {
       const data = await getWeeklyRules(year, weekNumber);
       setRules(data);
       setTimeout(() => {
-        if (inputRefs.current[data.length - 1]) inputRefs.current[data.length - 1]?.focus();
+        if (inputRefs.current[idx + 1]) inputRefs.current[idx + 1]?.focus();
       }, 100);
     } else {
-      CustomToast.error("Gagal", res.message);
+      CustomToast.error("Gagal menambah aturan", res.message);
     }
-    setNewRuleLoading(false);
+    setLoadingInsertAt(null);
   };
 
   // Bulk paste handler untuk input terakhir
@@ -276,7 +295,10 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
         <SortableContext items={rules.map(r => r.id)} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-1">
             {loading ? (
-              <div className="text-gray-400 ml-8">Memuat...</div>
+              <div className="flex items-center py-2 group w-full animate-pulse">
+                <span className="w-6 mr-2" />
+                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
             ) : rules.length === 0 ? (
               <div className="flex items-center py-2 group w-full">
                 <span className="w-6 mr-1" />
@@ -298,7 +320,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
                 />
               </div>
             ) : (
-              rules.map((rule, idx) => (
+              rules.map((rule, idx) => [
                 <SortableRuleItem
                   key={rule.id}
                   rule={rule}
@@ -313,10 +335,27 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
                   focusInputAbove={focusInputAbove}
                   ref={el => { inputRefs.current[idx] = el; }}
                   isLastItem={idx === rules.length - 1}
-                  handleAddEmptyRule={handleAddEmptyRule}
+                  handleAddEmptyRuleAt={() => handleAddEmptyRuleAt(idx)}
                   handleBulkPasteLast={handleBulkPasteLast}
-                />
-              ))
+                  focusRuleIdAfterInsert={focusRuleIdAfterInsert}
+                  setFocusRuleIdAfterInsert={setFocusRuleIdAfterInsert}
+                  idx={idx}
+                  inputRefs={inputRefs}
+                />,
+                loadingInsertAt === idx + 1 && (
+                  <div key={`skeleton-${idx + 1}`} className="flex items-center py-2 group w-full animate-pulse">
+                    <span className="w-6 mr-2" />
+                    <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+                  </div>
+                )
+              ])
+            )}
+            {/* Skeleton loading bar saat insert */}
+            {newRuleLoading && (
+              <div className="flex items-center py-2 group w-full animate-pulse">
+                <span className="w-6 mr-2" />
+                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
             )}
           </div>
         </SortableContext>

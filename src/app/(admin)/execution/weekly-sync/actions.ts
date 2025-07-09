@@ -727,8 +727,8 @@ export async function addWeeklyRule(formData: FormData) {
     if (orderError) throw orderError;
     const nextOrder = (existing?.[0]?.display_order ?? 0) + 1;
 
-    // Insert rule baru
-    const { error } = await supabase
+    // Insert rule baru, return id
+    const { data: inserted, error } = await supabase
       .from('weekly_rules')
       .insert({
         user_id: user.id,
@@ -736,10 +736,12 @@ export async function addWeeklyRule(formData: FormData) {
         year,
         week_number,
         display_order: nextOrder,
-      });
+      })
+      .select('id')
+      .single();
     if (error) throw error;
     revalidatePath('/execution/weekly-sync');
-    return { success: true, message: 'Aturan berhasil ditambahkan!' };
+    return { success: true, message: 'Aturan berhasil ditambahkan!', id: inserted?.id };
   } catch (error) {
     console.error('Error adding weekly rule:', error);
     return { success: false, message: 'Gagal menambah aturan' };
