@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 
 type SidebarContextType = {
   isExpanded: boolean;
@@ -12,6 +12,7 @@ type SidebarContextType = {
   setIsHovered: (isHovered: boolean) => void;
   setActiveItem: (item: string | null) => void;
   toggleSubmenu: (item: string) => void;
+  isInitialized: boolean;
 };
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -33,6 +34,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,6 +46,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     handleResize();
+    setIsInitialized(true);
     window.addEventListener("resize", handleResize);
 
     return () => {
@@ -63,21 +66,31 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
     setOpenSubmenu((prev) => (prev === item ? null : item));
   };
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    isExpanded: isMobile ? false : isExpanded,
+    isMobileOpen,
+    isHovered,
+    activeItem,
+    openSubmenu,
+    toggleSidebar,
+    toggleMobileSidebar,
+    setIsHovered,
+    setActiveItem,
+    toggleSubmenu,
+    isInitialized,
+  }), [
+    isMobile,
+    isExpanded,
+    isMobileOpen,
+    isHovered,
+    activeItem,
+    openSubmenu,
+    isInitialized
+  ]);
+
   return (
-    <SidebarContext.Provider
-      value={{
-        isExpanded: isMobile ? false : isExpanded,
-        isMobileOpen,
-        isHovered,
-        activeItem,
-        openSubmenu,
-        toggleSidebar,
-        toggleMobileSidebar,
-        setIsHovered,
-        setActiveItem,
-        toggleSubmenu,
-      }}
-    >
+    <SidebarContext.Provider value={contextValue}>
       {children}
     </SidebarContext.Provider>
   );

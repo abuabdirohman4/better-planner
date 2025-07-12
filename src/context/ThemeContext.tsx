@@ -8,6 +8,7 @@ type Theme = "light" | "dark";
 type ThemeContextType = {
   theme: Theme;
   toggleTheme: () => void;
+  isInitialized: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -15,6 +16,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  // Use a more stable initial state to reduce hydration mismatch
   const [theme, setTheme] = useState<Theme>("light");
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -43,7 +45,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isInitialized }}>
       {children}
     </ThemeContext.Provider>
   );
