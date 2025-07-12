@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import DailySyncClient from "./DailySyncClient";
 import { useWeek } from '@/hooks/useWeek';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
@@ -11,7 +11,7 @@ const getTodayDate = () => {
   return today;
 };
 
-export default function DailySyncPage() {
+function DailySyncContent() {
   const { year, quarter } = useWeek();
   const today = getTodayDate();
   const [currentWeek, setCurrentWeek] = useState(today);
@@ -140,5 +140,13 @@ export default function DailySyncPage() {
         selectedDate={selectedDateStr}
       />
     </div>
+  );
+}
+
+export default function DailySyncPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <DailySyncContent />
+    </Suspense>
   );
 }

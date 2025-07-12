@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useTransition } from "react";
 import { getTasksForWeek, getDailyPlan, setDailyPlan, addSideQuest, updateDailyPlanItemStatus } from "./actions";
-import { useWeek } from '@/hooks/useWeek';
 
 interface WeeklyTaskItem {
   id: string;
@@ -100,7 +99,8 @@ const TaskColumn: React.FC<{
   items: DailyPlanItem[];
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
   onAddSideQuest?: (title: string) => void;
-}> = ({ title, items, onStatusChange, onAddSideQuest }) => {
+  onSelectTasks?: () => void;
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -163,6 +163,18 @@ const TaskColumn: React.FC<{
           ))
         )}
       </div>
+
+              {/* Select Tasks button for Main Quest column */}
+        {onSelectTasks && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={onSelectTasks}
+              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+            >
+              Kelola Rencana Harian
+            </button>
+          </div>
+        )}
     </div>
   );
 };
@@ -193,11 +205,16 @@ const TaskSelectionModal: React.FC<{
       <div className="bg-white dark:bg-gray-800 rounded-lg p-8 min-w-[600px] max-w-4xl w-full max-h-[80vh] overflow-y-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Pilih Tugas untuk Hari Ini
+            Kelola Rencana Harian
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Pilih tugas-tugas dari goal mingguan yang ingin dikerjakan hari ini
+            Tugas yang sudah tercentang adalah yang sudah ada di rencana harian. Anda bisa menambah atau menghapus tugas sesuai kebutuhan.
           </p>
+          {Object.keys(selectedTasks).filter(k => selectedTasks[k]).length > 0 && (
+            <div className="mt-2 text-sm text-brand-600 dark:text-brand-400">
+              {Object.keys(selectedTasks).filter(k => selectedTasks[k]).length} tugas dipilih
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -215,7 +232,7 @@ const TaskSelectionModal: React.FC<{
                 </h3>
                 <div className="space-y-2">
                   {slotTasks.map((task) => (
-                    <div key={task.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div key={task.id} className={`flex items-center space-x-3 p-3 rounded-lg ${selectedTasks[task.id] ? 'bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-700' : 'bg-gray-50 dark:bg-gray-700'}`}>
                       <input
                         type="checkbox"
                         id={task.id}
@@ -231,6 +248,11 @@ const TaskSelectionModal: React.FC<{
                           {task.quest_title} • {task.type}
                         </div>
                       </label>
+                      {selectedTasks[task.id] && (
+                        <div className="text-xs bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-full">
+                          Dalam Rencana
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -251,7 +273,7 @@ const TaskSelectionModal: React.FC<{
             disabled={isLoading || Object.keys(selectedTasks).filter(k => selectedTasks[k]).length === 0}
             className="px-6 py-2 bg-brand-500 text-white rounded-md font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Menyimpan...' : 'Simpan Pilihan'}
+            {isLoading ? 'Menyimpan...' : `Update Rencana (${Object.keys(selectedTasks).filter(k => selectedTasks[k]).length} tugas)`}
           </button>
         </div>
       </div>
@@ -259,7 +281,7 @@ const TaskSelectionModal: React.FC<{
   );
 };
 
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNumber, selectedDate }) => {
+const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate }) => {
   const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
@@ -272,28 +294,44 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
   useEffect(() => {
     const loadDailyPlan = async () => {
       setLoading(true);
-      try {
-        const plan = await getDailyPlan(selectedDate);
-        setDailyPlanState(plan);
-      } catch (err) {
-        // It's okay if no plan exists yet
-      } finally {
+          try {
+      const plan = await getDailyPlan(selectedDate);
+      setDailyPlanState(plan);
+    } catch (err) {
+      // It's okay if no plan exists yet
+      console.log('No daily plan found for date:', selectedDate, err);
+    } finally {
         setLoading(false);
       }
     };
     loadDailyPlan();
   }, [selectedDate]);
 
+  // Helper function to get current daily plan items as initial selections
+  const getCurrentDailyPlanSelections = () => {
+    if (!dailyPlan?.daily_plan_items) return {};
+    
+    const selections: Record<string, boolean> = {};
+    dailyPlan.daily_plan_items.forEach(item => {
+      selections[item.item_id] = true;
+    });
+    return selections;
+  };
+
   // Load weekly tasks saat modal dibuka
   const handleOpenModal = async () => {
     setShowModal(true);
     setModalLoading(true);
-    setSelectedTasks({});
+    
+    // Initialize with current daily plan selections
+    const currentSelections = getCurrentDailyPlanSelections();
+    setSelectedTasks(currentSelections);
+    
     try {
       const tasks = await getTasksForWeek(year, weekNumber);
       setWeeklyTasks(tasks);
     } catch (err) {
-      // error handling
+      console.error('Error loading weekly tasks:', err);
     } finally {
       setModalLoading(false);
     }
@@ -324,7 +362,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
         const plan = await getDailyPlan(selectedDate);
         setDailyPlanState(plan);
         setShowModal(false);
-      } catch (err) {}
+      } catch (err) {
+        console.error('Error saving daily plan:', err);
+      }
     });
   };
 
@@ -343,7 +383,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
             };
           });
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Error updating task status:', err);
+      }
     });
   };
 
@@ -356,7 +398,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
         await addSideQuest(formData);
         const plan = await getDailyPlan(selectedDate);
         setDailyPlanState(plan);
-      } catch (err) {}
+      } catch (err) {
+        console.error('Error adding side quest:', err);
+      }
     });
   };
 
@@ -368,11 +412,11 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
       'SIDE_QUEST': [] as DailyPlanItem[]
     };
     items.forEach(item => {
-      if (item.item_type === 'QUEST') {
+      if (item.item_type === 'QUEST' || item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
         groups['MAIN_QUEST'].push(item);
       } else if (item.item_type === 'MILESTONE') {
         groups['WORK'].push(item);
-      } else {
+      } else if (item.item_type === 'SIDE_QUEST') {
         groups['SIDE_QUEST'].push(item);
       }
     });
@@ -391,28 +435,20 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      {/* Header with main action */}
+      {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Daily Sync
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {new Date(selectedDate).toLocaleDateString('id-ID', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </p>
-          </div>
-          <button
-            onClick={handleOpenModal}
-            className="px-6 py-3 bg-brand-500 text-white font-bold rounded-lg shadow-lg hover:bg-brand-600 transition-colors"
-          >
-            + Pilih Tugas untuk Hari Ini
-          </button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Daily Sync
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {new Date(selectedDate).toLocaleDateString('id-ID', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
         </div>
       </div>
       {/* Multi-column task board */}
@@ -421,6 +457,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNu
           title="Main Quest"
           items={groupedItems['MAIN_QUEST']}
           onStatusChange={handleStatusChange}
+          onSelectTasks={handleOpenModal}
         />
         <TaskColumn
           title="AW Quest"
