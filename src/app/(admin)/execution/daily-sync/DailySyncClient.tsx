@@ -1,358 +1,470 @@
 "use client";
-import React, { useState, useTransition, useEffect } from "react";
-import { getWeeklyGoalItems, setDailyPlan, getDailyPlan } from "./actions";
-import { useQuarter } from '@/hooks/useQuarter';
-import { getWeekDates, daysOfWeek, formatDateIndo } from '@/lib/dateUtils';
-import { getWeekOfYear } from '@/lib/quarterUtils';
-import { getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
+import React, { useState, useEffect, useTransition } from "react";
+import { getTasksForWeek, getDailyPlan, setDailyPlan, addSideQuest, updateDailyPlanItemStatus } from "./actions";
+import { useWeek } from '@/hooks/useWeek';
 
-interface WeeklyGoalItem {
+interface WeeklyTaskItem {
   id: string;
   type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
   title: string;
-  main_quest_id: string | null;
-  main_quest_title: string;
-  goal_slot?: number; // Added for grouping by goal slot
+  status: string;
+  quest_title: string;
+  goal_slot: number;
 }
 
 interface DailyPlanItem {
   id: string;
   item_id: string;
-  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  item_type: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  title?: string;
+  quest_title?: string;
 }
 
 interface DailyPlan {
+  id: string;
+  plan_date: string;
   daily_plan_items?: DailyPlanItem[];
 }
 
 interface DailySyncClientProps {
-  initialPlan: DailyPlan | null;
-  today: string;
+  year: number;
+  quarter: number;
+  weekNumber: number;
+  selectedDate: string; // format YYYY-MM-DD
 }
 
-const groupByMainQuest = (items: WeeklyGoalItem[]) => {
-  const groups: Record<string, { main_quest_title: string; items: WeeklyGoalItem[] }> = {};
-  items.forEach((item) => {
-    const key = item.main_quest_id || 'other';
-    if (!groups[key]) {
-      groups[key] = { main_quest_title: item.main_quest_title || 'Lainnya', items: [] };
+const TaskCard: React.FC<{ 
+  item: DailyPlanItem; 
+  onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void 
+}> = ({ item, onStatusChange }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'DONE': return 'bg-green-100 text-green-800 border-green-200';
+      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-    groups[key].items.push(item);
-  });
-  return groups;
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
+      <div className="flex items-start justify-between mb-2">
+        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
+          {item.title || `Task ${item.item_id}`}
+        </h4>
+        <div className="flex items-center space-x-2">
+          <select
+            value={item.status}
+            onChange={(e) => onStatusChange(item.item_id, e.target.value as 'TODO' | 'IN_PROGRESS' | 'DONE')}
+            className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(item.status)}`}
+          >
+            <option value="TODO">Belum Dimulai</option>
+            <option value="IN_PROGRESS">Sedang Dikerjakan</option>
+            <option value="DONE">Selesai</option>
+          </select>
+        </div>
+      </div>
+      
+      {item.quest_title && (
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          {item.quest_title}
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between">
+        <button 
+          className="text-xs bg-brand-500 text-white px-3 py-1 rounded hover:bg-brand-600 transition-colors"
+          onClick={() => {
+            // TODO: Implement Pomodoro timer functionality
+            console.log('Start Pomodoro session for:', item.title);
+          }}
+        >
+          Mulai Sesi
+        </button>
+        
+        <div className="flex items-center space-x-1">
+          <input
+            type="checkbox"
+            checked={item.status === 'DONE'}
+            onChange={(e) => onStatusChange(item.item_id, e.target.checked ? 'DONE' : 'TODO')}
+            className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
-function groupByGoalSlot(items: WeeklyGoalItem[]) {
-  const groups: Record<number, WeeklyGoalItem[]> = { 1: [], 2: [], 3: [] };
-  items.forEach(item => {
-    if (item.goal_slot && groups[item.goal_slot]) {
-      groups[item.goal_slot].push(item);
-    }
-  });
-  return groups;
-}
-
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ initialPlan, today }) => {
-  const [plan, setPlan] = useState<DailyPlan | null>(initialPlan);
-  const [showModal, setShowModal] = useState(false);
+const TaskColumn: React.FC<{
+  title: string;
+  items: DailyPlanItem[];
+  onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
+  onAddSideQuest?: (title: string) => void;
+}> = ({ title, items, onStatusChange, onAddSideQuest }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
-  const [weeklyItems, setWeeklyItems] = useState<WeeklyGoalItem[] | null>(null);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [loadingWeekly, setLoadingWeekly] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Ambil year dan quarter dari useQuarter
-  const { year, quarter } = useQuarter();
-  // Tambahkan state currentWeekMonday lebih dulu
-  const [currentWeekMonday] = useState(() => {
-    const now = new Date(today);
-    const day = now.getDay() || 7; // 1=Senin, 7=Minggu
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (day - 1));
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  });
-  // Deklarasi startWeek, endWeek, totalWeeks setelah currentWeekMonday
-  const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
-  const totalWeeks = endWeek - startWeek + 1;
-  // State minggu yang dipilih dalam quarter (1-13)
-  const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number>(() => {
-    const today = new Date();
-    const weekAbs = getWeekOfYear(today);
-    return Math.max(1, Math.min(totalWeeks, weekAbs - startWeek + 1));
-  });
-  // Update selectedWeekInQuarter setelah currentWeekMonday, year, quarter tersedia
-  useEffect(() => {
-    const weekAbs = startWeek + selectedWeekInQuarter - 1;
-    const monday = getDateFromWeek(year, weekAbs, 1);
-    monday.setHours(0, 0, 0, 0);
-
-    // Cek apakah minggu yang dipilih adalah minggu saat ini
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const thisMonday = new Date(today);
-    thisMonday.setDate(today.getDate() - ((today.getDay() || 7) - 1));
-    thisMonday.setHours(0, 0, 0, 0);
-
-    if (monday.getTime() === thisMonday.getTime()) {
-      // Minggu ini, pilih hari ini jika ada di minggu itu
-      const weekDates = getWeekDates(monday);
-      const todayStr = today.toISOString().slice(0, 10);
-      const found = weekDates.find(d => d.toISOString().slice(0, 10) === todayStr);
-      setSelectedDate(found ? todayStr : monday.toISOString().slice(0, 10));
-    } else {
-      // Minggu lain, pilih Senin
-      setSelectedDate(monday.toISOString().slice(0, 10));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWeekInQuarter, year, quarter]);
-  // Dropdown minggu
-  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
-  // Range tanggal minggu
-  const weekStartDate = getDateFromWeek(year, startWeek + selectedWeekInQuarter - 1, 1);
-  const weekEndDate = getDateFromWeek(year, startWeek + selectedWeekInQuarter - 1, 7);
-
-  // Tambahkan state selectedDate
-  const [selectedDate, setSelectedDate] = useState<string>(today);
-
-  // Fetch plan setiap kali selectedDate berubah
-  useEffect(() => {
-    if (selectedDate === today && initialPlan) {
-      setPlan(initialPlan);
-      return;
-    }
-    let ignore = false;
-    setLoadingWeekly(true);
-    getDailyPlan(selectedDate).then((plan) => {
-      if (!ignore) setPlan(plan);
-    }).finally(() => {
-      if (!ignore) setLoadingWeekly(false);
-    });
-    return () => { ignore = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
-
-  // Daftar tanggal minggu berjalan
-  // Hitung Senin minggu yang dipilih
-  const weekAbs = startWeek + selectedWeekInQuarter - 1;
-  const mondayOfSelected = getDateFromWeek(year, weekAbs, 1);
-  // Generate weekDates dari Senin minggu yang dipilih
-  const weekDates = getWeekDates(mondayOfSelected);
-  // Hitung minggu ke berapa dalam tahun pakai quarterUtils
-  const weekNumber = getWeekOfYear(currentWeekMonday);
-  // Hapus deklarasi weekNumber lain jika ada
-
-  // Navigasi minggu
-  // Hapus fungsi goPrevWeek dan goNextWeek
-
-  // Ambil weekly goal items saat modal dibuka
-  const handleOpenModal = async () => {
-    setShowModal(true);
-    setLoadingWeekly(true);
-    setError(null);
-    try {
-      const items = await getWeeklyGoalItems(year, weekNumber);
-      console.log('items', items)
-      setWeeklyItems(items);
-      setSelected({});
-    } catch {
-      setError("Gagal mengambil data goal mingguan");
-      setWeeklyItems([]);
-    }
-    setLoadingWeekly(false);
-  };
-
-  // Submit ke server action setDailyPlan
-  const handlePlanSubmit = async () => {
-    const selectedItems = Object.entries(selected)
-      .filter(([, v]) => v)
-      .map(([id]) => {
-        const item = weeklyItems?.find((i) => i && i.id === id);
-        if (!item) return undefined;
-        return { item_id: item.id, item_type: item.type as 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' };
-      })
-      .filter((i): i is { item_id: string; item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' } => !!i);
-    if (!selectedItems.length) return;
+  const handleAddSideQuest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim() || !onAddSideQuest) return;
+    
     startTransition(async () => {
-      await setDailyPlan(today, selectedItems);
-      // Setelah submit, ambil ulang plan
-      const newPlan: DailyPlan = { daily_plan_items: selectedItems.map((i) => ({ ...i, id: i.item_id })) };
-      setPlan(newPlan);
-      setShowModal(false);
+      await onAddSideQuest(newTaskTitle);
+      setNewTaskTitle('');
+      setShowAddForm(false);
     });
   };
 
-  // Selector minggu dan hari di pojok kanan atas
   return (
-    <div className="max-w-2xl mx-auto py-10">
-      <div className="flex flex-row justify-end mb-6">
-        <div className="flex flex-col items-end gap-2">
-          {/* Selector Minggu ala WeeklySyncClient */}
-          <div className="flex items-center gap-2 mb-1">
+    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 h-fit">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{title}</h3>
+        {onAddSideQuest && (
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="text-brand-500 hover:text-brand-600 text-sm font-medium"
+          >
+            + Tambah Side Quest
+          </button>
+        )}
+      </div>
+
+      {showAddForm && onAddSideQuest && (
+        <form onSubmit={handleAddSideQuest} className="mb-4">
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              placeholder="Judul side quest..."
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              disabled={isPending}
+            />
             <button
-              className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700"
-              onClick={() => setSelectedWeekInQuarter((w) => Math.max(1, w - 1))}
-              aria-label="Minggu sebelumnya"
-              disabled={selectedWeekInQuarter <= 1}
+              type="submit"
+              disabled={isPending || !newTaskTitle.trim()}
+              className="px-4 py-2 bg-brand-500 text-white rounded-md text-sm font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              &lt;
+              {isPending ? '...' : 'Tambah'}
             </button>
-            <div className="relative">
-              <button
-                className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => setIsWeekDropdownOpen((v) => !v)}
-                aria-haspopup="listbox"
-                aria-expanded={isWeekDropdownOpen}
-              >
-                <span>Minggu {selectedWeekInQuarter}</span>
-              </button>
-              {isWeekDropdownOpen && (
-                <div className="absolute z-10 bg-white dark:bg-gray-900 border rounded shadow mt-1 w-full max-h-64 overflow-y-auto">
-                  {Array.from({ length: totalWeeks }, (_, i) => (
-                    <div
-                      key={i + 1}
-                      onClick={() => {
-                        setSelectedWeekInQuarter(i + 1);
-                        setIsWeekDropdownOpen(false);
-                      }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-brand-100 dark:hover:bg-brand-900/30 ${selectedWeekInQuarter === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}`}
-                    >
-                      Minggu {i + 1}
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {items.length === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+            Tidak ada tugas {title.toLowerCase()} hari ini
+          </div>
+        ) : (
+          items.map((item) => (
+            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const TaskSelectionModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  tasks: WeeklyTaskItem[];
+  selectedTasks: Record<string, boolean>;
+  onTaskToggle: (taskId: string) => void;
+  onSave: () => void;
+  isLoading: boolean;
+}> = ({ isOpen, onClose, tasks, selectedTasks, onTaskToggle, onSave, isLoading }) => {
+  if (!isOpen) return null;
+
+  const groupByGoalSlot = (tasks: WeeklyTaskItem[]) => {
+    const groups: Record<number, WeeklyTaskItem[]> = { 1: [], 2: [], 3: [] };
+    tasks.forEach(task => {
+      if (groups[task.goal_slot]) {
+        groups[task.goal_slot].push(task);
+      }
+    });
+    return groups;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 min-w-[600px] max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Pilih Tugas untuk Hari Ini
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Pilih tugas-tugas dari goal mingguan yang ingin dikerjakan hari ini
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-8">Memuat tugas mingguan...</div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            Tidak ada tugas mingguan tersedia. Silakan atur goal mingguan terlebih dahulu.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(groupByGoalSlot(tasks)).map(([slot, slotTasks]) => (
+              <div key={slot} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">
+                  Goal Mingguan {slot}
+                </h3>
+                <div className="space-y-2">
+                  {slotTasks.map((task) => (
+                    <div key={task.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <input
+                        type="checkbox"
+                        id={task.id}
+                        checked={!!selectedTasks[task.id]}
+                        onChange={() => onTaskToggle(task.id)}
+                        className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+                      />
+                      <label htmlFor={task.id} className="flex-1 cursor-pointer">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {task.title}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {task.quest_title} • {task.type}
+                        </div>
+                      </label>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-            <button
-              className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700"
-              onClick={() => setSelectedWeekInQuarter((w) => Math.min(totalWeeks, w + 1))}
-              aria-label="Minggu berikutnya"
-              disabled={selectedWeekInQuarter >= totalWeeks}
-            >
-              &gt;
-            </button>
+              </div>
+            ))}
           </div>
-          <div className="text-xs text-gray-500 mb-2">{formatDateIndo(weekStartDate)} – {formatDateIndo(weekEndDate)}</div>
-          {/* Selector Hari */}
-          <div className="flex gap-1">
-            {weekDates.map((date, idx) => {
-              const dateStr = date.toISOString().slice(0, 10);
-              const isActive = selectedDate === dateStr;
-              return (
-                <button
-                  key={dateStr}
-                  className={`flex flex-col items-center px-2 py-1 rounded transition text-xs font-medium border-2 ${isActive ? "bg-brand-500 text-white border-brand-500" : "bg-gray-100 dark:bg-gray-800 border-transparent text-gray-700 dark:text-gray-200"}`}
-                  onClick={() => setSelectedDate(dateStr)}
-                >
-                  <span>{daysOfWeek[idx]}</span>
-                  <span className="text-[10px] font-normal">{formatDateIndo(date)}</span>
-                </button>
-              );
-            })}
+        )}
+
+        <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onSave}
+            disabled={isLoading || Object.keys(selectedTasks).filter(k => selectedTasks[k]).length === 0}
+            className="px-6 py-2 bg-brand-500 text-white rounded-md font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Menyimpan...' : 'Simpan Pilihan'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, quarter, weekNumber, selectedDate }) => {
+  const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
+  const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
+  const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [, startTransition] = useTransition();
+
+  // Load daily plan setiap kali selectedDate berubah
+  useEffect(() => {
+    const loadDailyPlan = async () => {
+      setLoading(true);
+      try {
+        const plan = await getDailyPlan(selectedDate);
+        setDailyPlanState(plan);
+      } catch (err) {
+        // It's okay if no plan exists yet
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDailyPlan();
+  }, [selectedDate]);
+
+  // Load weekly tasks saat modal dibuka
+  const handleOpenModal = async () => {
+    setShowModal(true);
+    setModalLoading(true);
+    setSelectedTasks({});
+    try {
+      const tasks = await getTasksForWeek(year, weekNumber);
+      setWeeklyTasks(tasks);
+    } catch (err) {
+      // error handling
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleTaskToggle = (taskId: string) => {
+    setSelectedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
+  const handleSaveSelection = async () => {
+    const selectedItems = Object.entries(selectedTasks)
+      .filter(([, selected]) => selected)
+      .map(([taskId]) => {
+        const task = weeklyTasks.find(t => t.id === taskId);
+        return {
+          item_id: taskId,
+          item_type: task?.type || 'TASK'
+        };
+      });
+    if (selectedItems.length === 0) return;
+    startTransition(async () => {
+      try {
+        await setDailyPlan(selectedDate, selectedItems);
+        // Reload daily plan
+        const plan = await getDailyPlan(selectedDate);
+        setDailyPlanState(plan);
+        setShowModal(false);
+      } catch (err) {}
+    });
+  };
+
+  const handleStatusChange = async (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
+    startTransition(async () => {
+      try {
+        await updateDailyPlanItemStatus(itemId, status);
+        if (dailyPlan) {
+          setDailyPlanState(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              daily_plan_items: prev.daily_plan_items?.map(item =>
+                item.item_id === itemId ? { ...item, status } : item
+              )
+            };
+          });
+        }
+      } catch (err) {}
+    });
+  };
+
+  const handleAddSideQuest = async (title: string) => {
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('date', selectedDate);
+        await addSideQuest(formData);
+        const plan = await getDailyPlan(selectedDate);
+        setDailyPlanState(plan);
+      } catch (err) {}
+    });
+  };
+
+  // Group daily plan items by type
+  const groupItemsByType = (items: DailyPlanItem[] = []) => {
+    const groups = {
+      'MAIN_QUEST': [] as DailyPlanItem[],
+      'WORK': [] as DailyPlanItem[],
+      'SIDE_QUEST': [] as DailyPlanItem[]
+    };
+    items.forEach(item => {
+      if (item.item_type === 'QUEST') {
+        groups['MAIN_QUEST'].push(item);
+      } else if (item.item_type === 'MILESTONE') {
+        groups['WORK'].push(item);
+      } else {
+        groups['SIDE_QUEST'].push(item);
+      }
+    });
+    return groups;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <div className="text-lg">Memuat rencana harian...</div>
+      </div>
+    );
+  }
+
+  const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
+
+  return (
+    <div className="max-w-7xl mx-auto py-8 px-4">
+      {/* Header with main action */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Daily Sync
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              {new Date(selectedDate).toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+          <button
+            onClick={handleOpenModal}
+            className="px-6 py-3 bg-brand-500 text-white font-bold rounded-lg shadow-lg hover:bg-brand-600 transition-colors"
+          >
+            + Pilih Tugas untuk Hari Ini
+          </button>
+        </div>
+      </div>
+      {/* Multi-column task board */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <TaskColumn
+          title="Main Quest"
+          items={groupedItems['MAIN_QUEST']}
+          onStatusChange={handleStatusChange}
+        />
+        <TaskColumn
+          title="AW Quest"
+          items={groupedItems['WORK']}
+          onStatusChange={handleStatusChange}
+        />
+        <TaskColumn
+          title="Side Quest"
+          items={groupedItems['SIDE_QUEST']}
+          onStatusChange={handleStatusChange}
+          onAddSideQuest={handleAddSideQuest}
+        />
+      </div>
+      {/* Additional tools section */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            [Pomodoro Timer Placeholder]
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            [Brain Dump Placeholder]
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            [Log Aktivitas Placeholder]
           </div>
         </div>
       </div>
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-8 flex flex-col items-center justify-center min-h-[220px]">
-        {!plan ? (
-          <>
-            <div className="mb-6 text-lg font-semibold text-gray-700 dark:text-gray-200">Belum ada rencana untuk hari ini</div>
-            <button
-              className="px-8 py-4 text-lg rounded-lg bg-brand-500 text-white font-bold shadow-lg hover:bg-brand-600 transition"
-              onClick={handleOpenModal}
-            >
-              + Rencanakan Hari Ini
-            </button>
-            {showModal && (
-              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-8 min-w-[350px] max-w-lg w-full">
-                  <div className="mb-4 font-bold text-lg">Pilih Tugas Harian</div>
-                  {loadingWeekly ? (
-                    <div>Loading...</div>
-                  ) : error ? (
-                    <div className="text-red-500">{error}</div>
-                  ) : weeklyItems && weeklyItems.length ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handlePlanSubmit();
-                      }}
-                    >
-                      <div className="max-h-64 overflow-y-auto mb-4">
-                        {Object.entries(groupByGoalSlot(weeklyItems)).map(([slot, items]) => (
-                          <div key={slot} className="mb-4">
-                            <div className="font-bold mb-2">Goal Mingguan {slot}</div>
-                            {items.length === 0 ? (
-                              <div className="text-gray-400 text-sm mb-2">Belum ada item.</div>
-                            ) : (
-                              Object.entries(groupByMainQuest(items)).map(
-                                ([mainQuestId, group]) => (
-                                  <div key={mainQuestId} className="mb-3">
-                                    <div className="font-semibold mb-1">{group.main_quest_title}</div>
-                                    <ul className="pl-2">
-                                      {group.items.map((item) => (
-                                        <li key={item.id} className="flex items-center mb-1">
-                                          <input
-                                            type="checkbox"
-                                            id={item.id}
-                                            checked={!!selected[item.id]}
-                                            onChange={(e) =>
-                                              setSelected((prev) => ({ ...prev, [item.id]: e.target.checked }))
-                                            }
-                                            className="mr-2"
-                                          />
-                                          <label htmlFor={item.id}>
-                                            {item.title} <span className="text-xs text-gray-400 ml-1">({item.type})</span>
-                                          </label>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )
-                              )
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        type="submit"
-                        className="w-full px-4 py-2 rounded bg-brand-500 text-white font-bold disabled:opacity-60"
-                        disabled={isPending}
-                      >
-                        {isPending ? "Menyimpan..." : "Mulai Hari Ini"}
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="text-gray-500">Tidak ada goal mingguan tersedia.</div>
-                  )}
-                  <button className="mt-6 px-4 py-2 rounded bg-gray-200 w-full" onClick={() => setShowModal(false)}>
-                    Tutup
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold mb-6">Tugas Harian Anda</h1>
-            <ul className="space-y-3 mb-8">
-              {plan.daily_plan_items?.length ? (
-                plan.daily_plan_items.map((item: DailyPlanItem) => (
-                  <li key={item.id} className="p-4 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-between">
-                    <span>{item.item_id} ({item.item_type})</span>
-                    <button className="px-3 py-1 rounded bg-brand-500 text-white text-sm">Mulai Sesi</button>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-500">Belum ada tugas terpilih.</li>
-              )}
-            </ul>
-            {/* Dummy komponen Pomodoro, Brain Dump, Log Aktivitas */}
-            <div className="mb-4 p-4 rounded bg-white dark:bg-gray-900 shadow">[Pomodoro Timer Placeholder]</div>
-            <div className="mb-4 p-4 rounded bg-white dark:bg-gray-900 shadow">[Brain Dump Placeholder]</div>
-            <div className="mb-4 p-4 rounded bg-white dark:bg-gray-900 shadow">[Log Aktivitas Placeholder]</div>
-          </>
-        )}
-      </div>
+      {/* Task Selection Modal */}
+      <TaskSelectionModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        tasks={weeklyTasks}
+        selectedTasks={selectedTasks}
+        onTaskToggle={handleTaskToggle}
+        onSave={handleSaveSelection}
+        isLoading={modalLoading}
+      />
     </div>
   );
 };
