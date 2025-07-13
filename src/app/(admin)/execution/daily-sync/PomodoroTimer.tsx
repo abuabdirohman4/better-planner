@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+import Button from '@/components/ui/button/Button';
 
 interface PomodoroTimerProps {
   activeTask?: {
@@ -19,7 +20,7 @@ interface PomodoroTimerProps {
 
 type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK' | 'BREAK_TIME';
 
-const FOCUS_DURATION = 25 * 60; // 25 minutes in seconds
+const FOCUS_DURATION = 0.25 * 60; // 25 minutes in seconds
 const SHORT_BREAK_DURATION = 5 * 60; // 5 minutes in seconds
 const LONG_BREAK_DURATION = 15 * 60; // 15 minutes in seconds
 
@@ -52,15 +53,6 @@ const playNotificationSound = () => {
     console.log('Error playing notification sound:', err);
   }
 };
-
-function PauseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <rect x="6" y="5" width="3" height="14" rx="1.5" fill="currentColor"/>
-      <rect x="15" y="5" width="3" height="14" rx="1.5" fill="currentColor"/>
-    </svg>
-  );
-}
 
 function CircularTimer({
   time,
@@ -200,12 +192,6 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     setSecondsElapsed(0);
   };
 
-  const startBreak = (type: 'SHORT' | 'LONG') => {
-    setTimerState('BREAK');
-    setBreakType(type);
-    setSecondsElapsed(0);
-  };
-
   const pauseTimer = () => {
     setTimerState('PAUSED');
     if (intervalRef.current) {
@@ -217,199 +203,74 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     setTimerState(breakType ? 'BREAK' : 'FOCUSING');
   };
 
-  const stopTimer = () => {
-    setTimerState('IDLE');
-    setSecondsElapsed(0);
-    setBreakType(null);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-  };
-
-  const skipBreak = () => {
-    setTimerState('IDLE');
-    setSecondsElapsed(0);
-    setBreakType(null);
-  };
-
   // Helper to get total seconds for progress
   let totalSeconds = 1500; // default 25 min
   if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = 300;
   if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = 900;
   // Extract seconds from secondsElapsed for progress
   // (Assume secondsElapsed is always MM:SS)
-  let displayTime = '00:00';
-  if (/^\d{2}:\d{2}$/.test(formatTime(secondsElapsed))) {
-    displayTime = formatTime(secondsElapsed);
-  }
   const progress = secondsElapsed / totalSeconds;
 
-  // Icon logic
-  let icon = null;
-  if (timerState === 'FOCUSING' || timerState === 'PAUSED') {
-    icon = <PauseIcon className="text-orange-400 w-7 h-7 mb-1" />;
+  // Handler untuk tombol
+  const handleStart = () => startFocusSession();
+  const handlePause = () => pauseTimer();
+  const handleResume = () => resumeTimer();
+
+  // Tambahkan PlayIcon dan PauseIcon lokal
+  // Ganti tipe props PlayIcon dan PauseIcon
+  const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 48 48" fill="none" {...props}><circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none"/><polygon points="20,16 36,24 20,32" fill="currentColor"/></svg>
+  );
+  const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 48 48" fill="none" {...props}><circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="17" y="16" width="4" height="16" rx="2" fill="currentColor"/><rect x="27" y="16" width="4" height="16" rx="2" fill="currentColor"/></svg>
+  );
+
+  // Pilih ikon & handler sesuai state
+  let IconComponent = PlayIcon;
+  let iconColor = 'text-brand-500';
+  let iconAction = handleStart;
+  if (timerState === 'FOCUSING') {
+    IconComponent = PauseIcon;
+    iconColor = 'text-orange-500';
+    iconAction = handlePause;
+  } else if (timerState === 'PAUSED') {
+    IconComponent = PlayIcon;
+    iconColor = 'text-brand-500';
+    iconAction = handleResume;
   }
 
-  // Render different UI based on timer state
-  const renderTimerCircle = () => (
-    <CircularTimer time={displayTime} progress={progress} icon={icon} />
-  );
-
-  const renderIdleState = () => (
-    <div className="flex flex-col items-center justify-center">
-      {renderTimerCircle()}
-      <div className="space-y-4 mt-4">
-        <button
-          onClick={startFocusSession}
-          disabled={!activeTask}
-          className="w-full px-8 py-4 bg-brand-500 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {activeTask ? 'Mulai Sesi Fokus' : 'Pilih Tugas Terlebih Dahulu'}
-        </button>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => startBreak('SHORT')}
-            className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            Mulai Istirahat Pendek
-          </button>
-          <button
-            onClick={() => startBreak('LONG')}
-            className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          >
-            Mulai Istirahat Panjang
-          </button>
-        </div>
-      </div>
-      {sessionCount > 0 && (
-        <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
-          Sesi fokus hari ini: {sessionCount}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderFocusingState = () => (
-    <div className="flex flex-col items-center justify-center">
-      {activeTask && (
-        <div className="mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Sedang Bekerja
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {activeTask.title}
-          </p>
-        </div>
-      )}
-      {renderTimerCircle()}
-      <div className="flex space-x-3 mt-4">
-        <button
-          onClick={pauseTimer}
-          className="flex-1 px-6 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors"
-        >
-          Jeda
-        </button>
-        <button
-          onClick={stopTimer}
-          className="flex-1 px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-        >
-          Hentikan
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderPausedState = () => (
-    <div className="flex flex-col items-center justify-center">
-      {activeTask && (
-        <div className="mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Sesi Dijeda
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {activeTask.title}
-          </p>
-        </div>
-      )}
-      {renderTimerCircle()}
-      <div className="flex space-x-3 mt-4">
-        <button
-          onClick={resumeTimer}
-          className="flex-1 px-6 py-3 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors"
-        >
-          Lanjutkan
-        </button>
-        <button
-          onClick={stopTimer}
-          className="flex-1 px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
-        >
-          Hentikan
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderBreakTimeState = () => (
-    <div className="flex flex-col items-center justify-center">
-      <div className="mb-6">
-        <h3 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
-          🎉 Sesi Fokus Selesai!
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          Selamat! Anda telah menyelesaikan sesi fokus 25 menit.
-        </p>
-      </div>
-      {renderTimerCircle()}
-      <div className="space-y-4 mt-4">
-        <button
-          onClick={() => startBreak('SHORT')}
-          className="w-full px-6 py-3 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
-        >
-          Mulai Istirahat Pendek (5 menit)
-        </button>
-        <button
-          onClick={() => startBreak('LONG')}
-          className="w-full px-6 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Mulai Istirahat Panjang (15 menit)
-        </button>
-        <button
-          onClick={skipBreak}
-          className="w-full px-6 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-        >
-          Lewati Istirahat
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderBreakState = () => (
-    <div className="flex flex-col items-center justify-center">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Istirahat {breakType === 'SHORT' ? 'Pendek' : 'Panjang'}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {breakType === 'SHORT' ? '5 menit' : '15 menit'}
-        </p>
-      </div>
-      {renderTimerCircle()}
-      <button
-        onClick={stopTimer}
-        className="px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors mt-4"
-      >
-        Hentikan Istirahat
-      </button>
-    </div>
-  );
+  // Tampilkan waktu (naik dari 00:00 ke totalSeconds)
+  const timeDisplay = timerState === 'IDLE' ? formatTime(totalSeconds) : formatTime(secondsElapsed);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      {timerState === 'IDLE' && renderIdleState()}
-      {timerState === 'FOCUSING' && renderFocusingState()}
-      {timerState === 'PAUSED' && renderPausedState()}
-      {timerState === 'BREAK_TIME' && renderBreakTimeState()}
-      {timerState === 'BREAK' && renderBreakState()}
+    <div className="relative w-48 h-48 flex items-center justify-center mx-auto">
+      {/* Lingkaran background */}
+      <svg className="absolute top-0 left-0 w-full h-full" width={192} height={192}>
+        <circle
+          cx={96}
+          cy={96}
+          r={90}
+          stroke="#e5e7eb"
+          strokeWidth={7}
+          fill="none"
+        />
+      </svg>
+      { !activeTask ? (
+        <span className="text-xl font-bold z-10 select-none">00:00</span>
+      ) : (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 opacity-20 hover:opacity-100 transition-opacity flex flex-col items-center">
+          <Button variant="plain" size="sm" onClick={iconAction}>
+            <IconComponent className={`w-16 h-16 ${iconColor}`} />
+          </Button>
+          <span className="block w-full text-center text-lg font-bold z-10 select-none">{timeDisplay}</span>
+        </div>
+      )}
+      {/* Sesi fokus hari ini */}
+      {/* {sessionCount > 0 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-sm text-gray-500 dark:text-gray-400">
+          Sesi fokus hari ini: {sessionCount}
+        </div>
+      )} */}
     </div>
   );
 } 
