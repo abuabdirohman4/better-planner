@@ -218,11 +218,18 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
 
   // Tambahkan PlayIcon dan PauseIcon lokal
   // Ganti tipe props PlayIcon dan PauseIcon
+  // PlayIcon tanpa lingkaran, segitiga outline
   const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 48 48" fill="none" {...props}><circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none"/><polygon points="20,16 36,24 20,32" fill="currentColor"/></svg>
+    <svg viewBox="0 0 48 48" fill="none" {...props}>
+      <polygon points="20,16 36,24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
+    </svg>
   );
+  // PauseIcon tanpa lingkaran
   const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 48 48" fill="none" {...props}><circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="17" y="16" width="4" height="16" rx="2" fill="currentColor"/><rect x="27" y="16" width="4" height="16" rx="2" fill="currentColor"/></svg>
+    <svg viewBox="0 0 48 48" fill="none" {...props}>
+      <rect x="17" y="16" width="4" height="16" rx="2" fill="currentColor"/>
+      <rect x="27" y="16" width="4" height="16" rx="2" fill="currentColor"/>
+    </svg>
   );
 
   // Pilih ikon & handler sesuai state
@@ -243,27 +250,27 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   const timeDisplay = timerState === 'IDLE' ? formatTime(totalSeconds) : formatTime(secondsElapsed);
 
   return (
-    <div className="relative w-48 h-48 flex items-center justify-center mx-auto">
+    <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
       {/* Lingkaran background */}
-      <svg className="absolute top-0 left-0 w-full h-full" width={192} height={192}>
+      <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
         <circle
-          cx={96}
-          cy={96}
-          r={90}
+          cx={45}
+          cy={45}
+          r={41}
           stroke="#e5e7eb"
-          strokeWidth={7}
+          strokeWidth={4}
           fill="none"
         />
       </svg>
       { !activeTask ? (
-        <span className="text-xl font-bold z-10 select-none">00:00</span>
+        <span className="text-sm select-none">00:00</span>
       ) : (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 opacity-20 hover:opacity-100 transition-opacity flex flex-col items-center">
-          <Button variant="plain" size="sm" onClick={iconAction}>
-            <IconComponent className={`w-16 h-16 ${iconColor}`} />
+        <>
+          <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+            <IconComponent className={`w-14 h-14 ${iconColor}`} />
           </Button>
-          <span className="block w-full text-center text-lg font-bold z-10 select-none">{timeDisplay}</span>
-        </div>
+          <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+        </>
       )}
       {/* Sesi fokus hari ini */}
       {/* {sessionCount > 0 && (
