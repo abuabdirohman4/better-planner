@@ -324,3 +324,44 @@ export async function updateDailyPlanItemStatus(itemId: string, status: 'TODO' |
     throw error;
   }
 } 
+
+// Log Pomodoro session activity
+export async function logActivity(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  
+  const taskId = formData.get('taskId')?.toString();
+  const taskTitle = formData.get('taskTitle')?.toString();
+  const duration = parseInt(formData.get('duration')?.toString() || '0');
+  const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  const date = formData.get('date')?.toString();
+  
+  if (!taskTitle || !duration || !sessionType || !date) {
+    throw new Error('Missing required fields');
+  }
+
+  try {
+    const { data: activity, error } = await supabase
+      .from('pomodoro_sessions')
+      .insert({
+        user_id: user.id,
+        task_id: taskId || null,
+        task_title: taskTitle,
+        duration_seconds: duration,
+        session_type: sessionType,
+        session_date: date,
+        completed_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    revalidatePath('/execution/daily-sync');
+    return activity;
+  } catch (error) {
+    console.error('Error logging activity:', error);
+    throw error;
+  }
+} 

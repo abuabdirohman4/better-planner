@@ -31,12 +31,14 @@ interface DailySyncClientProps {
   quarter: number;
   weekNumber: number;
   selectedDate: string; // format YYYY-MM-DD
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
 }
 
 const TaskCard: React.FC<{ 
   item: DailyPlanItem; 
-  onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void 
-}> = ({ item, onStatusChange }) => {
+  onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+}> = ({ item, onStatusChange, onSetActiveTask }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DONE': return 'bg-green-100 text-green-800 border-green-200';
@@ -71,15 +73,20 @@ const TaskCard: React.FC<{
       )}
       
       <div className="flex items-center justify-between">
-        <button 
-          className="text-xs bg-brand-500 text-white px-3 py-1 rounded hover:bg-brand-600 transition-colors"
-          onClick={() => {
-            // TODO: Implement Pomodoro timer functionality
-            console.log('Start Pomodoro session for:', item.title);
-          }}
-        >
-          Mulai Sesi
-        </button>
+        {onSetActiveTask && (
+          <button 
+            className="text-xs bg-brand-500 text-white px-3 py-1 rounded hover:bg-brand-600 transition-colors"
+            onClick={() => {
+              onSetActiveTask({
+                id: item.item_id,
+                title: item.title || `Task ${item.item_id}`,
+                item_type: item.item_type
+              });
+            }}
+          >
+            Mulai Sesi
+          </button>
+        )}
         
         <div className="flex items-center space-x-1">
           <input
@@ -100,7 +107,8 @@ const TaskColumn: React.FC<{
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
   onAddSideQuest?: (title: string) => void;
   onSelectTasks?: () => void;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks }) => {
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -159,7 +167,7 @@ const TaskColumn: React.FC<{
           </div>
         ) : (
           items.map((item) => (
-            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} />
+            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} onSetActiveTask={onSetActiveTask} />
           ))
         )}
       </div>
@@ -281,13 +289,14 @@ const TaskSelectionModal: React.FC<{
   );
 };
 
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate }) => {
+const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate, onSetActiveTask }) => {
   const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalLoading, setModalLoading] = useState(false);
+
   const [, startTransition] = useTransition();
 
   // Load daily plan setiap kali selectedDate berubah
@@ -404,6 +413,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
     });
   };
 
+
+
   // Group daily plan items by type
   const groupItemsByType = (items: DailyPlanItem[] = []) => {
     const groups = {
@@ -458,27 +469,24 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
           items={groupedItems['MAIN_QUEST']}
           onStatusChange={handleStatusChange}
           onSelectTasks={handleOpenModal}
+          onSetActiveTask={onSetActiveTask}
         />
         <TaskColumn
           title="AW Quest"
           items={groupedItems['WORK']}
           onStatusChange={handleStatusChange}
+          onSetActiveTask={onSetActiveTask}
         />
         <TaskColumn
           title="Side Quest"
           items={groupedItems['SIDE_QUEST']}
           onStatusChange={handleStatusChange}
           onAddSideQuest={handleAddSideQuest}
+          onSetActiveTask={onSetActiveTask}
         />
       </div>
       {/* Additional tools section */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            [Pomodoro Timer Placeholder]
-          </div>
-        </div>
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">

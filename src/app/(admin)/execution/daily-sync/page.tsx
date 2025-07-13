@@ -1,9 +1,11 @@
 "use client";
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useTransition } from "react";
 import DailySyncClient from "./DailySyncClient";
+import PomodoroTimer from "./PomodoroTimer";
 import { useWeek } from '@/hooks/useWeek';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { formatDateIndo, daysOfWeek, getWeekDates } from '@/lib/dateUtils';
+import { logActivity } from "./actions";
 
 const getTodayDate = () => {
   const today = new Date();
@@ -16,6 +18,8 @@ function DailySyncContent() {
   const today = getTodayDate();
   const [currentWeek, setCurrentWeek] = useState(today);
   const weekDates = getWeekDates(currentWeek);
+  const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
+  const [, startTransition] = useTransition();
 
   // Week calculations (mirip WeeklySyncClient)
   const weekCalculations = useMemo(() => {
@@ -86,6 +90,27 @@ function DailySyncContent() {
     setIsWeekDropdownOpen(false);
   };
 
+  const handleSessionComplete = async (sessionData: {
+    taskId: string;
+    taskTitle: string;
+    duration: number;
+    type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  }) => {
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append('taskId', sessionData.taskId);
+        formData.append('taskTitle', sessionData.taskTitle);
+        formData.append('duration', sessionData.duration.toString());
+        formData.append('sessionType', sessionData.type);
+        formData.append('date', selectedDateStr);
+        await logActivity(formData);
+      } catch (err) {
+        console.error('Error logging session:', err);
+      }
+    });
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       {/* Week & Day Selector */}
@@ -132,12 +157,21 @@ function DailySyncContent() {
           ))}
         </div>
       </div>
+      {/* Pomodoro Timer - Prominent position at top */}
+      <div className="mb-8">
+        <PomodoroTimer 
+          activeTask={activeTask}
+          onSessionComplete={handleSessionComplete}
+        />
+      </div>
+      
       {/* DailySyncClient dengan props week/day */}
       <DailySyncClient
         year={year}
         quarter={quarter}
         weekNumber={displayWeek}
         selectedDate={selectedDateStr}
+        onSetActiveTask={setActiveTask}
       />
     </div>
   );
