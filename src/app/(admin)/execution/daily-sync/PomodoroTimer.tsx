@@ -51,6 +51,61 @@ const playNotificationSound = () => {
   }
 };
 
+function PauseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect x="6" y="5" width="3" height="14" rx="1.5" fill="currentColor"/>
+      <rect x="15" y="5" width="3" height="14" rx="1.5" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function CircularTimer({
+  time,
+  progress,
+  icon
+}: {
+  time: string;
+  progress: number;
+  icon?: React.ReactNode;
+}) {
+  const size = 112;
+  const stroke = 7;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - progress);
+  return (
+    <div className="relative w-28 h-28 flex items-center justify-center">
+      <svg className="absolute top-0 left-0" width={size} height={size}>
+        <circle
+          cx={size/2}
+          cy={size/2}
+          r={radius}
+          stroke="#e5e7eb" // gray-200
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size/2}
+          cy={size/2}
+          r={radius}
+          stroke="#3b82f6" // brand-500 (blue)
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.5s linear" }}
+        />
+      </svg>
+      <div className="flex flex-col items-center justify-center z-10">
+        {icon}
+        <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{time}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function PomodoroTimer({ activeTask, onSessionComplete }: PomodoroTimerProps) {
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -165,14 +220,33 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
     setBreakType(null);
   };
 
+  // Helper to get total seconds for progress
+  let totalSeconds = 1500; // default 25 min
+  if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = 300;
+  if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = 900;
+  // Extract seconds from secondsElapsed for progress
+  // (Assume secondsElapsed is always MM:SS)
+  let displayTime = '00:00';
+  if (/^\d{2}:\d{2}$/.test(formatTime(secondsElapsed))) {
+    displayTime = formatTime(secondsElapsed);
+  }
+  const progress = secondsElapsed / totalSeconds;
+
+  // Icon logic
+  let icon = null;
+  if (timerState === 'FOCUSING' || timerState === 'PAUSED') {
+    icon = <PauseIcon className="text-orange-400 w-7 h-7 mb-1" />;
+  }
+
   // Render different UI based on timer state
+  const renderTimerCircle = () => (
+    <CircularTimer time={displayTime} progress={progress} icon={icon} />
+  );
+
   const renderIdleState = () => (
-    <div className="text-center">
-      <div className="text-6xl font-mono font-bold text-gray-900 dark:text-gray-100 mb-8">
-        {formatTime(0)}
-      </div>
-      
-      <div className="space-y-4">
+    <div className="flex flex-col items-center justify-center">
+      {renderTimerCircle()}
+      <div className="space-y-4 mt-4">
         <button
           onClick={startFocusSession}
           disabled={!activeTask}
@@ -180,7 +254,6 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
         >
           {activeTask ? 'Mulai Sesi Fokus' : 'Pilih Tugas Terlebih Dahulu'}
         </button>
-        
         <div className="flex space-x-3">
           <button
             onClick={() => startBreak('SHORT')}
@@ -196,7 +269,6 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
           </button>
         </div>
       </div>
-      
       {sessionCount > 0 && (
         <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
           Sesi fokus hari ini: {sessionCount}
@@ -206,9 +278,9 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
   );
 
   const renderFocusingState = () => (
-    <div className="text-center">
+    <div className="flex flex-col items-center justify-center">
       {activeTask && (
-        <div className="mb-4">
+        <div className="mb-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Sedang Bekerja
           </h3>
@@ -217,19 +289,8 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
           </p>
         </div>
       )}
-      
-      <div className="text-6xl font-mono font-bold text-brand-500 mb-8">
-        {formatTime(secondsElapsed)}
-      </div>
-      
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8">
-        <div 
-          className="bg-brand-500 h-2 rounded-full transition-all duration-1000"
-          style={{ width: `${(secondsElapsed / FOCUS_DURATION) * 100}%` }}
-        />
-      </div>
-      
-      <div className="flex space-x-3">
+      {renderTimerCircle()}
+      <div className="flex space-x-3 mt-4">
         <button
           onClick={pauseTimer}
           className="flex-1 px-6 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors"
@@ -247,9 +308,9 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
   );
 
   const renderPausedState = () => (
-    <div className="text-center">
+    <div className="flex flex-col items-center justify-center">
       {activeTask && (
-        <div className="mb-4">
+        <div className="mb-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Sesi Dijeda
           </h3>
@@ -258,19 +319,8 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
           </p>
         </div>
       )}
-      
-      <div className="text-6xl font-mono font-bold text-yellow-500 mb-8">
-        {formatTime(secondsElapsed)}
-      </div>
-      
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8">
-        <div 
-          className="bg-yellow-500 h-2 rounded-full"
-          style={{ width: `${(secondsElapsed / FOCUS_DURATION) * 100}%` }}
-        />
-      </div>
-      
-      <div className="flex space-x-3">
+      {renderTimerCircle()}
+      <div className="flex space-x-3 mt-4">
         <button
           onClick={resumeTimer}
           className="flex-1 px-6 py-3 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors"
@@ -288,7 +338,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
   );
 
   const renderBreakTimeState = () => (
-    <div className="text-center">
+    <div className="flex flex-col items-center justify-center">
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">
           🎉 Sesi Fokus Selesai!
@@ -297,22 +347,20 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
           Selamat! Anda telah menyelesaikan sesi fokus 25 menit.
         </p>
       </div>
-      
-      <div className="space-y-4">
+      {renderTimerCircle()}
+      <div className="space-y-4 mt-4">
         <button
           onClick={() => startBreak('SHORT')}
           className="w-full px-6 py-3 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
         >
           Mulai Istirahat Pendek (5 menit)
         </button>
-        
         <button
           onClick={() => startBreak('LONG')}
           className="w-full px-6 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
         >
           Mulai Istirahat Panjang (15 menit)
         </button>
-        
         <button
           onClick={skipBreak}
           className="w-full px-6 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -324,7 +372,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
   );
 
   const renderBreakState = () => (
-    <div className="text-center">
+    <div className="flex flex-col items-center justify-center">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Istirahat {breakType === 'SHORT' ? 'Pendek' : 'Panjang'}
@@ -333,23 +381,10 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
           {breakType === 'SHORT' ? '5 menit' : '15 menit'}
         </p>
       </div>
-      
-      <div className="text-6xl font-mono font-bold text-green-500 mb-8">
-        {formatTime(secondsElapsed)}
-      </div>
-      
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-8">
-        <div 
-          className="bg-green-500 h-2 rounded-full transition-all duration-1000"
-          style={{ 
-            width: `${(secondsElapsed / (breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION)) * 100}%` 
-          }}
-        />
-      </div>
-      
+      {renderTimerCircle()}
       <button
         onClick={stopTimer}
-        className="px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
+        className="px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors mt-4"
       >
         Hentikan Istirahat
       </button>
@@ -361,7 +396,6 @@ export default function PomodoroTimer({ activeTask, onSessionComplete }: Pomodor
       <h3 className="font-bold text-lg mb-6 text-gray-900 dark:text-gray-100">
         Pomodoro Timer
       </h3>
-      
       {timerState === 'IDLE' && renderIdleState()}
       {timerState === 'FOCUSING' && renderFocusingState()}
       {timerState === 'PAUSED' && renderPausedState()}
