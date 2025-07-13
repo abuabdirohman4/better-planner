@@ -450,42 +450,56 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
   const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
-      {/* Multi-column task board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <TaskColumn
-          title="Main Quest"
-          items={groupedItems['MAIN_QUEST']}
-          onStatusChange={handleStatusChange}
-          onSelectTasks={handleOpenModal}
-          onSetActiveTask={onSetActiveTask}
-        />
-        <TaskColumn
-          title="AW Quest"
-          items={groupedItems['WORK']}
-          onStatusChange={handleStatusChange}
-          onSetActiveTask={onSetActiveTask}
-        />
-        <TaskColumn
-          title="Side Quest"
-          items={groupedItems['SIDE_QUEST']}
-          onStatusChange={handleStatusChange}
-          onAddSideQuest={handleAddSideQuest}
-          onSetActiveTask={onSetActiveTask}
-        />
+    <div className="max-w-7xl mx-auto">
+      {/* Task board kiri, Log Aktivitas kanan */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Kolom kiri: Task board */}
+        <div>
+          <div className="flex flex-col gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <TaskColumn
+                title="Main Quest"
+                items={groupedItems['MAIN_QUEST']}
+                onStatusChange={handleStatusChange}
+                onSelectTasks={handleOpenModal}
+                onSetActiveTask={onSetActiveTask}
+              />
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <TaskColumn
+                title="AW Quest"
+                items={groupedItems['WORK']}
+                onStatusChange={handleStatusChange}
+                onSetActiveTask={onSetActiveTask}
+              />
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <TaskColumn
+                title="Side Quest"
+                items={groupedItems['SIDE_QUEST']}
+                onStatusChange={handleStatusChange}
+                onAddSideQuest={handleAddSideQuest}
+                onSetActiveTask={onSetActiveTask}
+              />
+            </div>
+          </div>
+        </div>
+        {/* Kolom kanan: Log Aktivitas */}
+        <div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              [Log Aktivitas Placeholder]
+            </div>
+          </div>
+        </div>
       </div>
-      {/* Additional tools section */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Brain Dump di bawah 2 kolom */}
+      <div className="mt-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             [Brain Dump Placeholder]
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            [Log Aktivitas Placeholder]
           </div>
         </div>
       </div>
