@@ -55,55 +55,46 @@ const playNotificationSound = () => {
 };
 
 function CircularTimer({
-  time,
   progress,
-  icon
+  size = 90,
+  stroke = 4
 }: {
-  time: string;
   progress: number;
-  icon?: React.ReactNode;
+  size?: number;
+  stroke?: number;
 }) {
-  const size = 112;
-  const stroke = 7;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
   return (
-    <div className="relative w-28 h-28 flex items-center justify-center">
-      <svg className="absolute top-0 left-0" width={size} height={size}>
-        <circle
-          cx={size/2}
-          cy={size/2}
-          r={radius}
-          stroke="#e5e7eb" // gray-200
-          strokeWidth={stroke}
-          fill="none"
-        />
-        <circle
-          cx={size/2}
-          cy={size/2}
-          r={radius}
-          stroke="#3b82f6" // brand-500 (blue)
-          strokeWidth={stroke}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 0.5s linear" }}
-        />
-      </svg>
-      <div className="flex flex-col items-center justify-center z-10">
-        {icon}
-        <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{time}</span>
-      </div>
-    </div>
+    <svg className="absolute top-0 left-0" width={size} height={size}>
+      <circle
+        cx={size/2}
+        cy={size/2}
+        r={radius}
+        stroke="#e5e7eb" // gray-200
+        strokeWidth={stroke}
+        fill="none"
+      />
+      <circle
+        cx={size/2}
+        cy={size/2}
+        r={radius}
+        stroke="#3b82f6" // brand-500 (blue)
+        strokeWidth={stroke}
+        fill="none"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        style={{ transition: "stroke-dashoffset 0.5s linear" }}
+      />
+    </svg>
   );
 }
 
 export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
-  const [sessionCount, setSessionCount] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -134,7 +125,6 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
             
             if (timerState === 'FOCUSING') {
               // Focus session completed
-              setSessionCount(prev => prev + 1);
               if (activeTask && onSessionComplete) {
                 onSessionComplete({
                   taskId: activeTask.id,
@@ -204,12 +194,14 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   };
 
   // Helper to get total seconds for progress
-  let totalSeconds = 1500; // default 25 min
-  if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = 300;
-  if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = 900;
-  // Extract seconds from secondsElapsed for progress
-  // (Assume secondsElapsed is always MM:SS)
+  let totalSeconds = 0;
+  if (timerState === 'FOCUSING') totalSeconds = FOCUS_DURATION;
+  else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
+  else if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
+  else totalSeconds = FOCUS_DURATION; // fallback/idle
+
   const progress = secondsElapsed / totalSeconds;
+  // const timeDisplay = formatTime(Math.max(totalSeconds - secondsElapsed, 0));
 
   // Handler untuk tombol
   const handleStart = () => startFocusSession();
@@ -221,7 +213,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   // PlayIcon tanpa lingkaran, segitiga outline
   const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 48 48" fill="none" {...props}>
-      <polygon points="20,16 36,24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
+      <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
     </svg>
   );
   // PauseIcon tanpa lingkaran
@@ -251,17 +243,21 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
 
   return (
     <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
-      {/* Lingkaran background */}
-      <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
-        <circle
-          cx={45}
-          cy={45}
-          r={41}
-          stroke="#e5e7eb"
-          strokeWidth={4}
-          fill="none"
-        />
-      </svg>
+      {/* Progress bar animasi */}
+      {activeTask ? (
+        <CircularTimer progress={progress} size={90} stroke={4} />
+      ) : (
+        <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
+          <circle
+            cx={45}
+            cy={45}
+            r={41}
+            stroke="#e5e7eb"
+            strokeWidth={4}
+            fill="none"
+          />
+        </svg>
+      )}
       { !activeTask ? (
         <span className="text-sm select-none">00:00</span>
       ) : (
