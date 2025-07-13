@@ -446,22 +446,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            Daily Sync
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {new Date(selectedDate).toLocaleDateString('id-ID', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-      </div>
       {/* Multi-column task board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <TaskColumn
