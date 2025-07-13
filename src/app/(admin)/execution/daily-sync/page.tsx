@@ -22,6 +22,7 @@ function DailySyncContent() {
   const [currentWeek, setCurrentWeek] = useState(today);
   const weekDates = getWeekDates(currentWeek);
   const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
+  const [shouldStartTimer, setShouldStartTimer] = useState(false);
   const [, startTransition] = useTransition();
 
   // Week calculations (mirip WeeklySyncClient)
@@ -112,6 +113,12 @@ function DailySyncContent() {
     });
   };
 
+  // Ganti onSetActiveTask agar set shouldStartTimer true
+  const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
+    setActiveTask(task);
+    setShouldStartTimer(true);
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       {/* Week & Day Selector */}
@@ -168,6 +175,8 @@ function DailySyncContent() {
       <div className="mb-8">
         <PomodoroTimer 
           activeTask={activeTask}
+          shouldStart={shouldStartTimer}
+          onStarted={() => setShouldStartTimer(false)}
           onSessionComplete={handleSessionComplete}
         />
       </div>
@@ -178,7 +187,7 @@ function DailySyncContent() {
         quarter={quarter}
         weekNumber={displayWeek}
         selectedDate={selectedDateStr}
-        onSetActiveTask={setActiveTask}
+        onSetActiveTask={handleSetActiveTask}
       />
     </div>
   );

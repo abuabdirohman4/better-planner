@@ -50,9 +50,27 @@ const TaskCard: React.FC<{
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
       <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
-          {item.title || `Task ${item.item_id}`}
-        </h4>
+        <div className="flex items-center gap-2">
+          {onSetActiveTask && (
+            <button
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+              onClick={() => onSetActiveTask({
+                id: item.item_id,
+                title: item.title || `Task ${item.item_id}`,
+                item_type: item.item_type
+              })}
+              title="Mulai Pomodoro"
+            >
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15"/>
+                <polygon points="8,6 14,10 8,14" fill="currentColor"/>
+              </svg>
+            </button>
+          )}
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
+            {item.title || `Task ${item.item_id}`}
+          </h4>
+        </div>
         <div className="flex items-center space-x-2">
           <select
             value={item.status}
@@ -73,21 +91,8 @@ const TaskCard: React.FC<{
       )}
       
       <div className="flex items-center justify-between">
-        {onSetActiveTask && (
-          <button 
-            className="text-xs bg-brand-500 text-white px-3 py-1 rounded hover:bg-brand-600 transition-colors"
-            onClick={() => {
-              onSetActiveTask({
-                id: item.item_id,
-                title: item.title || `Task ${item.item_id}`,
-                item_type: item.item_type
-              });
-            }}
-          >
-            Mulai Sesi
-          </button>
-        )}
-        
+        {/* Hapus tombol Mulai Sesi, karena sekarang pakai Play */}
+        <div></div>
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"

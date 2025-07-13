@@ -13,6 +13,8 @@ interface PomodoroTimerProps {
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   }) => void;
+  shouldStart?: boolean;
+  onStarted?: () => void;
 }
 
 type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK' | 'BREAK_TIME';
@@ -106,12 +108,22 @@ function CircularTimer({
   );
 }
 
-export default function PomodoroTimer({ activeTask, onSessionComplete }: PomodoroTimerProps) {
+export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto start timer if shouldStart is true
+  useEffect(() => {
+    if (shouldStart && activeTask && timerState !== 'FOCUSING') {
+      setTimerState('FOCUSING');
+      setSecondsElapsed(0);
+      if (onStarted) onStarted();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldStart, activeTask]);
 
   // Timer logic
   useEffect(() => {
