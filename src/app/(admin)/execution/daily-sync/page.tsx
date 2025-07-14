@@ -36,7 +36,6 @@ function DailySyncContent() {
 
   // Log setiap kali currentWeek berubah
   useEffect(() => {
-    const monday = ensureMonday(currentWeek);
   }, [currentWeek]);
 
   const weekDates = getWeekDates(currentWeek);

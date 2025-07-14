@@ -332,10 +332,8 @@ export async function logActivity(formData: FormData) {
   if (!user) throw new Error('User not authenticated');
   
   const taskId = formData.get('taskId')?.toString();
-  const taskTitle = formData.get('taskTitle')?.toString(); // tidak dipakai di tabel
   const duration = parseInt(formData.get('duration')?.toString() || '0'); // dalam detik
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
-  const date = formData.get('date')?.toString(); // format YYYY-MM-DD
 
   if (!taskId || !duration || !sessionType) {
     console.error('[logActivity] Missing required fields', { taskId, duration, sessionType });
