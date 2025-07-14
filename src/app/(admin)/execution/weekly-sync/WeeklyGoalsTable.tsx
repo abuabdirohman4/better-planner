@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { getWeeklyGoals, setWeeklyGoalItems, calculateGoalProgress, removeWeeklyGoal } from './actions';
+import { setWeeklyGoalItems, removeWeeklyGoal } from './actions';
 import WeeklyFocusModal from './WeeklyFocusModal';
 
 interface GoalItem {
@@ -32,6 +32,9 @@ interface WeeklyGoal {
 interface WeeklyGoalsTableProps {
   year: number;
   weekNumber: number;
+  goals: WeeklyGoal[];
+  goalProgress: { [key: number]: { completed: number; total: number; percentage: number } };
+  onRefreshGoals?: () => void;
 }
 
 export interface TreeGoalItem extends GoalItem {
@@ -173,48 +176,9 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void; 
   );
 };
 
-export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableProps) {
-  const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function WeeklyGoalsTable({ goals = [], goalProgress = {}, onRefreshGoals, ...props }: WeeklyGoalsTableProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [goalProgress, setGoalProgress] = useState<{ [key: number]: { completed: number; total: number; percentage: number } }>({});
-
-  // Load weekly goals
-  useEffect(() => {
-    const loadWeeklyGoals = async () => {
-      setLoading(true);
-      try {
-        const goals = await getWeeklyGoals(year, weekNumber);
-        setWeeklyGoals(goals);
-        
-        // Calculate progress for each goal slot
-        const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-        
-        await Promise.all(
-          goals.map(async (goal) => {
-            if (goal.items.length > 0) {
-              const progress = await calculateGoalProgress(goal.items);
-              progressData[goal.goal_slot] = progress;
-            } else {
-              progressData[goal.goal_slot] = { completed: 0, total: 0, percentage: 0 };
-            }
-          })
-        );
-        
-        setGoalProgress(progressData);
-      } catch (error) {
-        console.error('Error loading weekly goals:', error);
-        setWeeklyGoals([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (year && weekNumber) {
-      loadWeeklyGoals();
-    }
-  }, [year, weekNumber]);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -227,54 +191,31 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     try {
       if (selectedItems.length === 0) {
         // Hapus goal mingguan untuk slot ini
-        const goal = getGoalForSlot(selectedSlot);
+        const goal = goals.find(goal => goal.goal_slot === selectedSlot);
         if (goal) {
           await removeWeeklyGoal(goal.id);
           CustomToast.success('Goal mingguan berhasil dihapus!');
         }
       } else {
         await setWeeklyGoalItems({
-          year,
-          weekNumber,
+          year: props.year,
+          weekNumber: props.weekNumber,
           goalSlot: selectedSlot,
           items: selectedItems
         });
         CustomToast.success('Goal mingguan berhasil disimpan!');
       }
-      // Reload weekly goals
-      const goals = await getWeeklyGoals(year, weekNumber);
-      setWeeklyGoals(goals);
-      // Recalculate progress
-      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-      await Promise.all(
-        goals.map(async (goal) => {
-          if (goal.items.length > 0) {
-            const progress = await calculateGoalProgress(goal.items);
-            progressData[goal.goal_slot] = progress;
-          } else {
-            progressData[goal.goal_slot] = { completed: 0, total: 0, percentage: 0 };
-          }
-        })
-      );
-      setGoalProgress(progressData);
+      if (onRefreshGoals) onRefreshGoals();
     } catch (error) {
       console.error('Error saving weekly goal:', error);
       CustomToast.error('Gagal menyimpan goal mingguan');
     }
   };
 
-  const getGoalForSlot = (slotNumber: number) => {
-    return weeklyGoals.find(goal => goal.goal_slot === slotNumber);
-  };
-
-  const getProgressForSlot = (slotNumber: number) => {
-    return goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
-  };
-
   // Get all existing selected item IDs from other slots (for anti-duplication)
   const getExistingSelectedIds = (currentSlot: number) => {
     const existingIds = new Set<string>();
-    weeklyGoals.forEach(goal => {
+    goals.forEach(goal => {
       if (goal.goal_slot !== currentSlot) {
         goal.items.forEach(item => {
           existingIds.add(item.item_id);
@@ -284,40 +225,14 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
     return existingIds;
   };
 
-  if (loading) {
-    return (
-      <ComponentCard title="" classNameHeader="hidden">
-        <div className="animate-pulse">
-          <table className="w-full">
-            <tbody>
-              {[1, 2, 3].map((slot) => (
-                <tr key={slot} className="border-b border-gray-200 dark:border-gray-700">
-                  <td className="py-4 px-4 w-16">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </td>
-                  <td className="py-4 px-4 w-32">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </ComponentCard>
-    );
-  }
-
   return (
     <>
-      <ComponentCard title={`3 Goal Minggu ${weekNumber}`} classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pt-8 pb-0" className="mb-6">
+      <ComponentCard title={`3 Goal Minggu ${props.weekNumber}`} classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pt-8 pb-0" className="mb-6">
         <table className="w-full">
           <tbody>
-            {[1, 2, 3].map((slotNumber) => {
-              const goal = getGoalForSlot(slotNumber);
-              const progress = getProgressForSlot(slotNumber);
+            {[1, 2, 3].map((slotNumber: number) => {
+              const goal = goals.find(goal => goal.goal_slot === slotNumber);
+              const progress = goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
               const isCompleted = progress.percentage === 100;
 
               return (
@@ -384,9 +299,9 @@ export default function WeeklyGoalsTable({ year, weekNumber }: WeeklyGoalsTableP
             setSelectedSlot(null);
           }}
           onSave={handleModalSave}
-          year={year}
+          year={props.year}
           initialSelectedItems={
-            (getGoalForSlot(selectedSlot)?.items || []).map(item => ({ id: item.item_id, type: item.item_type }))
+            (goals.find(goal => goal.goal_slot === selectedSlot)?.items || []).map(item => ({ id: item.item_id, type: item.item_type }))
           }
           existingSelectedIds={getExistingSelectedIds(selectedSlot)}
         />

@@ -106,7 +106,6 @@ SortableRuleItem.displayName = "SortableRuleItem";
 
 const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => {
   const [rules, setRules] = useState<Rule[]>([]);
-  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [focusRuleId, setFocusRuleId] = useState<string | null>(null);
@@ -116,17 +115,6 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [focusRuleIdAfterInsert, setFocusRuleIdAfterInsert] = useState<string | null>(null);
   const [loadingInsertAt, setLoadingInsertAt] = useState<number | null>(null);
-
-  // Fetch rules on mount or when year/weekNumber changes
-  useEffect(() => {
-    const fetchRules = async () => {
-      setLoading(true);
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
-      setLoading(false);
-    };
-    fetchRules();
-  }, [year, weekNumber]);
 
   // Save edit
   const handleSaveEdit = async (id: string) => {
@@ -294,12 +282,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={rules.map(r => r.id)} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-1">
-            {loading ? (
-              <div className="flex items-center py-2 group w-full animate-pulse">
-                <span className="w-6 mr-2" />
-                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-              </div>
-            ) : rules.length === 0 ? (
+            {rules.length === 0 ? (
               <div className="flex items-center py-2 group w-full">
                 <span className="w-6 mr-1" />
                 <input

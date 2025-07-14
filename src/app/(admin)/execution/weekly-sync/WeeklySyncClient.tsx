@@ -13,6 +13,7 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
 import ToDontListCard from "./ToDontListCard";
 import Spinner from '@/components/ui/spinner/Spinner';
+import { getWeeklyGoals, calculateGoalProgress } from './actions';
 
 type Task = {
   id: string;
@@ -68,6 +69,9 @@ export default function WeeklySyncClient() {
   // State untuk dropdown week
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
+  const [goals, setGoals] = useState([]);
+  const [goalProgress, setGoalProgress] = useState({});
+  const [refreshFlag, setRefreshFlag] = useState(0);
 
   // Optimized calculations using useMemo
   const weekCalculations = useMemo(() => {
@@ -129,6 +133,30 @@ export default function WeeklySyncClient() {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWeek, year, quarter]);
+
+  useEffect(() => {
+    const fetchGoals = async () => {
+      const fetchedGoals = await getWeeklyGoals(year, displayWeek);
+      setGoals(fetchedGoals);
+      // Hitung progress untuk setiap goal slot
+      const progressData = {};
+      await Promise.all(
+        fetchedGoals.map(async (goal) => {
+          if (goal.items.length > 0) {
+            const progress = await calculateGoalProgress(goal.items);
+            progressData[goal.goal_slot] = progress;
+          } else {
+            progressData[goal.goal_slot] = { completed: 0, total: 0, percentage: 0 };
+          }
+        })
+      );
+      setGoalProgress(progressData);
+    };
+    fetchGoals();
+  }, [year, displayWeek, refreshFlag]);
+
+  // Handler untuk refresh data dari child
+  const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -282,7 +310,13 @@ export default function WeeklySyncClient() {
       </div>
 
       {/* Kolom 3 Goal Mingguan */}
-      <WeeklyGoalsTable year={year} weekNumber={displayWeek} />
+      <WeeklyGoalsTable
+        year={year}
+        weekNumber={displayWeek}
+        goals={goals}
+        goalProgress={goalProgress}
+        onRefreshGoals={handleRefreshGoals}
+      />
 
       {/* === To Don't List Card === */}
       <ToDontListCard year={year} weekNumber={displayWeek} />
