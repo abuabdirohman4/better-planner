@@ -27,12 +27,25 @@ export const useSidebar = () => {
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  // On mount, read sidebar state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-expanded");
+    if (saved !== null) {
+      setIsExpanded(saved === "true");
+    }
+  }, []);
+
+  // Whenever isExpanded changes, save to localStorage
+  useEffect(() => {
+    localStorage.setItem("sidebar-expanded", String(isExpanded));
+  }, [isExpanded]);
 
   useEffect(() => {
     const handleResize = () => {
