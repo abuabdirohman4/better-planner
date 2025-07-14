@@ -12,6 +12,7 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
 import ToDontListCard from "./ToDontListCard";
+import Spinner from '@/components/ui/spinner/Spinner';
 
 type Task = {
   id: string;
@@ -217,6 +218,14 @@ export default function WeeklySyncClient() {
     setCurrentWeek(next);
     setSelectedWeekInQuarter(undefined);
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[600px]">
+        <Spinner size={164} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 pt-0">

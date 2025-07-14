@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: "/execution/weekly-sync",
     type: "website",
   },
-}; 
+};
 
 export default function WeeklySyncPage() {
   return <WeeklySyncClient />;

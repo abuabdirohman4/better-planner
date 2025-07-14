@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, Suspense, useTransition } from "react";
+import React, { useState, useMemo, useTransition } from "react";
 import DailySyncClient from "./DailySyncClient";
 import PomodoroTimer from "./PomodoroTimer";
 import { useWeek } from '@/hooks/useWeek';
@@ -214,9 +214,5 @@ function DailySyncContent() {
 }
 
 export default function DailySyncPage() {
-  return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-      <DailySyncContent />
-    </Suspense>
-  );
+  return <DailySyncContent />;
 }
