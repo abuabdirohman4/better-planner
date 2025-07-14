@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useTransition } from "react";
-import { getTasksForWeek, getDailyPlan, setDailyPlan, addSideQuest, updateDailyPlanItemStatus } from "./actions";
+import React, { useState, useTransition } from "react";
+import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan } from "./actions";
+import Spinner from '@/components/ui/spinner/Spinner';
 
 interface WeeklyTaskItem {
   id: string;
@@ -20,7 +21,7 @@ interface DailyPlanItem {
   quest_title?: string;
 }
 
-interface DailyPlan {
+export interface DailyPlan {
   id: string;
   plan_date: string;
   daily_plan_items?: DailyPlanItem[];
@@ -32,6 +33,10 @@ interface DailySyncClientProps {
   weekNumber: number;
   selectedDate: string; // format YYYY-MM-DD
   onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+  dailyPlan: DailyPlan | null;
+  setDailyPlanState: (plan: DailyPlan | null) => void;
+  setDailyPlanAction?: typeof setDailyPlan;
+  loading: boolean;
 }
 
 const TaskCard: React.FC<{ 
@@ -294,37 +299,17 @@ const TaskSelectionModal: React.FC<{
   );
 };
 
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate, onSetActiveTask }) => {
-  const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
+const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate, onSetActiveTask, dailyPlan, setDailyPlanState, setDailyPlanAction, loading }) => {
+  // Hapus state loading dan dailyPlan lokal, gunakan dari props
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [modalLoading, setModalLoading] = useState(false);
-
   const [, startTransition] = useTransition();
-
-  // Load daily plan setiap kali selectedDate berubah
-  useEffect(() => {
-    const loadDailyPlan = async () => {
-      setLoading(true);
-          try {
-      const plan = await getDailyPlan(selectedDate);
-      setDailyPlanState(plan);
-    } catch (err) {
-      // It's okay if no plan exists yet
-      console.log('No daily plan found for date:', selectedDate, err);
-    } finally {
-        setLoading(false);
-      }
-    };
-    loadDailyPlan();
-  }, [selectedDate]);
 
   // Helper function to get current daily plan items as initial selections
   const getCurrentDailyPlanSelections = () => {
     if (!dailyPlan?.daily_plan_items) return {};
-    
     const selections: Record<string, boolean> = {};
     dailyPlan.daily_plan_items.forEach(item => {
       selections[item.item_id] = true;
@@ -336,11 +321,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
   const handleOpenModal = async () => {
     setShowModal(true);
     setModalLoading(true);
-    
     // Initialize with current daily plan selections
     const currentSelections = getCurrentDailyPlanSelections();
     setSelectedTasks(currentSelections);
-    
     try {
       const tasks = await getTasksForWeek(year, weekNumber);
       setWeeklyTasks(tasks);
@@ -371,8 +354,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
     if (selectedItems.length === 0) return;
     startTransition(async () => {
       try {
-        await setDailyPlan(selectedDate, selectedItems);
-        // Reload daily plan
+        if (setDailyPlanAction) {
+          await setDailyPlanAction(selectedDate, selectedItems);
+        }
         const plan = await getDailyPlan(selectedDate);
         setDailyPlanState(plan);
         setShowModal(false);
@@ -387,14 +371,12 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
       try {
         await updateDailyPlanItemStatus(itemId, status);
         if (dailyPlan) {
-          setDailyPlanState(prev => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              daily_plan_items: prev.daily_plan_items?.map(item =>
-                item.item_id === itemId ? { ...item, status } : item
-              )
-            };
+          // Update state manual, bukan pakai callback prev
+          setDailyPlanState({
+            ...dailyPlan,
+            daily_plan_items: dailyPlan.daily_plan_items?.map((item: DailyPlanItem) =>
+              item.item_id === itemId ? { ...item, status } : item
+            )
           });
         }
       } catch (err) {
@@ -418,8 +400,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
     });
   };
 
-
-
   // Group daily plan items by type
   const groupItemsByType = (items: DailyPlanItem[] = []) => {
     const groups = {
@@ -441,8 +421,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="text-lg">Memuat rencana harian...</div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
+        <Spinner size={164} />
       </div>
     );
   }
@@ -450,7 +430,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
   const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto relative">
       <div className="flex flex-col gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <TaskColumn

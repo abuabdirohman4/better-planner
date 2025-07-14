@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useMemo, useTransition } from "react";
-import DailySyncClient from "./DailySyncClient";
+import React, { useState, useMemo, useTransition, useEffect } from "react";
+import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
 import PomodoroTimer from "./PomodoroTimer";
 import { useWeek } from '@/hooks/useWeek';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
@@ -9,6 +9,8 @@ import { logActivity } from "./actions";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import Spinner from '@/components/ui/spinner/Spinner';
+import { getDailyPlan, setDailyPlan } from './actions';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -24,6 +26,34 @@ function DailySyncContent() {
   const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
   const [shouldStartTimer, setShouldStartTimer] = useState(false);
   const [, startTransition] = useTransition();
+
+  // Helper function to determine default day index for a week
+  const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
+    const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
+    const todayStr = today.toISOString().slice(0, 10);
+    const todayIndex = weekDateStrs.indexOf(todayStr);
+    
+    // If today is in this week, select today, otherwise select Monday (index 0)
+    return todayIndex !== -1 ? todayIndex : 0;
+  };
+
+  // State hari aktif (default: hari ini jika di minggu ini, else Senin)
+  const defaultDayIdx = getDefaultDayIndexForWeek(currentWeek);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(defaultDayIdx);
+  const selectedDate = weekDates[selectedDayIdx];
+  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+
+  // Tambahkan state loading dan dailyPlan di sini
+  const [loading, setLoading] = useState(true);
+  const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
+
+  // Fetch daily plan setiap kali selectedDateStr berubah
+  useEffect(() => {
+    setLoading(true);
+    getDailyPlan(selectedDateStr)
+      .then(plan => setDailyPlanState(plan))
+      .finally(() => setLoading(false));
+  }, [selectedDateStr]);
 
   // Week calculations (mirip WeeklySyncClient)
   const weekCalculations = useMemo(() => {
@@ -47,22 +77,6 @@ function DailySyncContent() {
   }, [currentWeek, year, quarter]);
 
   const { displayWeek, totalWeeks, startWeek } = weekCalculations;
-
-  // Helper function to determine default day index for a week
-  const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
-    const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
-    const todayStr = today.toISOString().slice(0, 10);
-    const todayIndex = weekDateStrs.indexOf(todayStr);
-    
-    // If today is in this week, select today, otherwise select Monday (index 0)
-    return todayIndex !== -1 ? todayIndex : 0;
-  };
-
-  // State hari aktif (default: hari ini jika di minggu ini, else Senin)
-  const defaultDayIdx = getDefaultDayIndexForWeek(currentWeek);
-  const [selectedDayIdx, setSelectedDayIdx] = useState(defaultDayIdx);
-  const selectedDate = weekDates[selectedDayIdx];
-  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
 
   // Week navigation
   const goPrevWeek = () => {
@@ -118,6 +132,14 @@ function DailySyncContent() {
     setActiveTask(task);
     setShouldStartTimer(true);
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto py-32 flex flex-col items-center justify-center min-h-[600px]">
+        <Spinner size={164} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
@@ -182,6 +204,10 @@ function DailySyncContent() {
             weekNumber={displayWeek}
             selectedDate={selectedDateStr}
             onSetActiveTask={handleSetActiveTask}
+            dailyPlan={dailyPlan}
+            setDailyPlanState={setDailyPlanState}
+            setDailyPlanAction={setDailyPlan}
+            loading={loading}
           />
         </div>
         {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
