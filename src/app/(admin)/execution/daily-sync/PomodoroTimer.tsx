@@ -16,6 +16,7 @@ interface PomodoroTimerProps {
   }) => void;
   shouldStart?: boolean;
   onStarted?: () => void;
+  onForceRefresh?: (taskId: string) => void;
 }
 
 type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK' | 'BREAK_TIME';
@@ -49,8 +50,8 @@ const playNotificationSound = () => {
     
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
-  } catch (err) {
-    console.log('Error playing notification sound:', err);
+  } catch {
+    // Error playing notification sound
   }
 };
 
@@ -108,13 +109,18 @@ const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
-  console.log('activeTask', activeTask)
+export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted, onForceRefresh }: PomodoroTimerProps) {
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
   const [sessionJustCompleted, setSessionJustCompleted] = useState<null | 'FOCUS' | 'BREAK'>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [pendingSessionComplete, setPendingSessionComplete] = useState<null | {
+    taskId: string;
+    taskTitle: string;
+    duration: number;
+    type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  }>(null);
 
   // Auto start timer if shouldStart is true
   useEffect(() => {
@@ -122,6 +128,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
       setTimerState('FOCUSING');
       setSecondsElapsed(0);
       setSessionJustCompleted(null);
+      setPendingSessionComplete(null);
       if (onStarted) onStarted();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,12 +144,10 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
           const maxDuration = timerState === 'FOCUSING' ? FOCUS_DURATION : 
                              breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION;
           if (newSeconds >= maxDuration) {
-            // Timer completed
             playNotificationSound();
             if (timerState === 'FOCUSING') {
-              // Focus session completed
-              if (activeTask && onSessionComplete) {
-                onSessionComplete({
+              if (activeTask) {
+                setPendingSessionComplete({
                   taskId: activeTask.id,
                   taskTitle: activeTask.title,
                   duration: FOCUS_DURATION,
@@ -151,20 +156,15 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
               }
               setTimerState('BREAK_TIME');
               setSessionJustCompleted('FOCUS');
-              // setSecondsElapsed(0); // JANGAN reset, biarkan di max
             } else {
-              // Break completed
-              if (onSessionComplete) {
-                onSessionComplete({
-                  taskId: activeTask?.id || '',
-                  taskTitle: activeTask?.title || 'Break',
-                  duration: breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION,
-                  type: breakType === 'SHORT' ? 'SHORT_BREAK' : 'LONG_BREAK'
-                });
-              }
+              setPendingSessionComplete({
+                taskId: activeTask?.id || '',
+                taskTitle: activeTask?.title || 'Break',
+                duration: breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION,
+                type: breakType === 'SHORT' ? 'SHORT_BREAK' : 'LONG_BREAK'
+              });
               setTimerState('IDLE');
               setSessionJustCompleted('BREAK');
-              // setSecondsElapsed(0); // JANGAN reset, biarkan di max
               setBreakType(null);
             }
             return prev; // Biarkan di max
@@ -178,7 +178,18 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
         clearInterval(intervalRef.current);
       }
     };
-  }, [timerState, breakType, activeTask, onSessionComplete]);
+  }, [timerState, breakType, activeTask]);
+
+  // Panggil onSessionComplete hanya di efek, setelah render
+  useEffect(() => {
+    if (pendingSessionComplete && onSessionComplete) {
+      onSessionComplete(pendingSessionComplete);
+      if (pendingSessionComplete.type === 'FOCUS' && pendingSessionComplete.taskId && typeof onForceRefresh === 'function') {
+        onForceRefresh(pendingSessionComplete.taskId);
+      }
+      setPendingSessionComplete(null);
+    }
+  }, [pendingSessionComplete, onSessionComplete, onForceRefresh]);
 
   // Cleanup on unmount
   useEffect(() => {

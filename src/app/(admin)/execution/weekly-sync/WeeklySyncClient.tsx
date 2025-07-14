@@ -61,8 +61,18 @@ const getScheduledTasksForWeek = async (startDate: string, endDate: string) =>
 const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
   (await import("../../planning/quests/actions")).scheduleTask(taskId, newScheduledDate);
 
+// Helper: pastikan date adalah hari Senin
+function ensureMonday(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export default function WeeklySyncClient() {
-  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
   const [taskPool, setTaskPool] = useState<Task[]>([]);
   const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
   const [loading, setLoading] = useState(false);
@@ -230,8 +240,7 @@ export default function WeeklySyncClient() {
   const handleSelectWeek = (weekIdx: number) => {
     const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
-    const monday = getDateFromWeek(year, weekNumber, 1);
-    monday.setHours(0, 0, 0, 0);
+    const monday = ensureMonday(getDateFromWeek(year, weekNumber, 1));
     setCurrentWeek(monday);
     setSelectedWeekInQuarter(weekIdx);
   };
@@ -249,14 +258,14 @@ export default function WeeklySyncClient() {
     if (displayWeek <= 1) return;
     const prev = new Date(currentWeek);
     prev.setDate(currentWeek.getDate() - 7);
-    setCurrentWeek(prev);
+    setCurrentWeek(ensureMonday(prev));
     setSelectedWeekInQuarter(undefined);
   };
   const goNextWeek = () => {
     if (displayWeek >= totalWeeks) return;
     const next = new Date(currentWeek);
     next.setDate(currentWeek.getDate() + 7);
-    setCurrentWeek(next);
+    setCurrentWeek(ensureMonday(next));
     setSelectedWeekInQuarter(undefined);
   };
 
