@@ -39,6 +39,7 @@ interface DailySyncClientProps {
   setDailyPlanAction?: typeof setDailyPlan;
   loading: boolean;
   refreshSessionKey?: Record<string, number>;
+  forceRefreshTaskId?: string | null;
 }
 
 const TaskCard: React.FC<{
@@ -48,7 +49,8 @@ const TaskCard: React.FC<{
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
   refreshKey?: number;
-}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, refreshKey }) => {
+  forceRefreshTaskId?: string | null;
+}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, refreshKey, forceRefreshTaskId }) => {
   const [completed, setCompleted] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
@@ -64,7 +66,7 @@ const TaskCard: React.FC<{
       }
     });
     return () => { cancelled = true; };
-  }, [item.id, selectedDate, refreshKey]);
+  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId]);
 
   // Update target jika prop berubah (misal setelah update dari server)
   React.useEffect(() => {
@@ -182,7 +184,8 @@ const TaskColumn: React.FC<{
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
   refreshSessionKey?: Record<string, number>;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey }) => {
+  forceRefreshTaskId?: string | null;
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey, forceRefreshTaskId }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -241,7 +244,7 @@ const TaskColumn: React.FC<{
           </div>
                         ) : (
           items.map((item) => (
-            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} onSetActiveTask={onSetActiveTask} selectedDate={selectedDate} onTargetChange={onTargetChange} refreshKey={refreshSessionKey?.[item.id] || 0} />
+            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} onSetActiveTask={onSetActiveTask} selectedDate={selectedDate} onTargetChange={onTargetChange} refreshKey={refreshSessionKey?.[item.id] || 0} forceRefreshTaskId={forceRefreshTaskId} />
           ))
         )}
       </div>
@@ -363,7 +366,7 @@ const TaskSelectionModal: React.FC<{
   );
 };
 
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate, onSetActiveTask, dailyPlan, setDailyPlanState, setDailyPlanAction, loading, refreshSessionKey }) => {
+const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, selectedDate, onSetActiveTask, dailyPlan, setDailyPlanState, setDailyPlanAction, loading, refreshSessionKey, forceRefreshTaskId }) => {
   // Hapus state loading dan dailyPlan lokal, gunakan dari props
   const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
@@ -502,6 +505,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
     );
   }
 
+  // Pass forceRefreshTaskId ke TaskCard, dan log refreshKey
   const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
 
   return (
@@ -517,6 +521,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
             refreshSessionKey={refreshSessionKey}
+            forceRefreshTaskId={forceRefreshTaskId}
           />
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -528,6 +533,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
             refreshSessionKey={refreshSessionKey}
+            forceRefreshTaskId={forceRefreshTaskId}
           />
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -540,6 +546,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
             refreshSessionKey={refreshSessionKey}
+            forceRefreshTaskId={forceRefreshTaskId}
           />
         </div>
       </div>

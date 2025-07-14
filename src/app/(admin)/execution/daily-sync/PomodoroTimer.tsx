@@ -16,6 +16,7 @@ interface PomodoroTimerProps {
   }) => void;
   shouldStart?: boolean;
   onStarted?: () => void;
+  onForceRefresh?: (taskId: string) => void;
 }
 
 type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK' | 'BREAK_TIME';
@@ -108,7 +109,7 @@ const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
+export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted, onForceRefresh }: PomodoroTimerProps) {
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
@@ -183,9 +184,12 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   useEffect(() => {
     if (pendingSessionComplete && onSessionComplete) {
       onSessionComplete(pendingSessionComplete);
+      if (pendingSessionComplete.type === 'FOCUS' && pendingSessionComplete.taskId && typeof onForceRefresh === 'function') {
+        onForceRefresh(pendingSessionComplete.taskId);
+      }
       setPendingSessionComplete(null);
     }
-  }, [pendingSessionComplete, onSessionComplete]);
+  }, [pendingSessionComplete, onSessionComplete, onForceRefresh]);
 
   // Cleanup on unmount
   useEffect(() => {

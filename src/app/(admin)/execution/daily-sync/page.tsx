@@ -48,6 +48,7 @@ function DailySyncContent() {
   const [shouldStartTimer, setShouldStartTimer] = useState(false);
   const [, startTransition] = useTransition();
   const [refreshSessionKey, setRefreshSessionKey] = useState<Record<string, number>>({});
+  const [forceRefreshTaskId, setForceRefreshTaskId] = useState<string | null>(null);
 
   // Helper function to determine default day index for a week
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
@@ -96,6 +97,7 @@ function DailySyncContent() {
   // Jika currentWeek berubah, reset selectedDayIdx ke default (hari ini jika ada, else Senin)
   useEffect(() => {
     setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentWeek]);
 
   // Week calculations (mirip WeeklySyncClient)
@@ -189,6 +191,16 @@ function DailySyncContent() {
     setShouldStartTimer(true);
   };
 
+  // Handler untuk force refresh count di TaskCard
+  const handleForceRefresh = (taskId: string) => {
+    console.info('[DailySync] forceRefreshTaskId set:', taskId);
+    setForceRefreshTaskId(taskId);
+    setTimeout(() => {
+      setForceRefreshTaskId(null);
+      console.info('[DailySync] forceRefreshTaskId reset');
+    }, 500);
+  };
+
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       {/* Spinner initialLoading hanya di area konten utama, bukan overlay fixed */}
@@ -269,6 +281,7 @@ function DailySyncContent() {
                     setDailyPlanAction={setDailyPlan}
                     loading={loading}
                     refreshSessionKey={refreshSessionKey}
+                    forceRefreshTaskId={forceRefreshTaskId}
                   />
                 </div>
                 {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
@@ -278,6 +291,7 @@ function DailySyncContent() {
                     shouldStart={shouldStartTimer}
                     onStarted={() => setShouldStartTimer(false)}
                     onSessionComplete={handleSessionComplete}
+                    onForceRefresh={handleForceRefresh}
                   />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
                     <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
