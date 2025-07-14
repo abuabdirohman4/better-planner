@@ -334,9 +334,10 @@ export async function logActivity(formData: FormData) {
   const taskId = formData.get('taskId')?.toString();
   const duration = parseInt(formData.get('duration')?.toString() || '0'); // dalam detik
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  const localDate = formData.get('localDate')?.toString();
 
-  if (!taskId || !duration || !sessionType) {
-    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType });
+  if (!taskId || !duration || !sessionType || !localDate) {
+    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType, localDate });
     throw new Error('Missing required fields');
   }
 
@@ -355,7 +356,8 @@ export async function logActivity(formData: FormData) {
         type: sessionType,
         start_time,
         end_time,
-        duration_minutes
+        duration_minutes,
+        local_date: localDate,
       })
       .select()
       .single();
@@ -411,23 +413,60 @@ export async function countCompletedSessions(dailyPlanItemId: string, date: stri
     const itemId = dailyPlanItem?.item_id;
     if (!itemId) throw new Error('Item ID not found');
 
-    // Hitung rentang waktu hari lokal (00:00:00 sampai 23:59:59)
-    const startOfDay = `${date}T00:00:00`;
-    const endOfDay = `${date}T23:59:59.999`;
-
-    // Hitung jumlah sesi FOCUS di activity_logs untuk item_id dan tanggal
+    // Hitung jumlah sesi FOCUS di activity_logs untuk item_id dan local_date
     const { count, error: countError } = await supabase
       .from('activity_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('task_id', itemId)
       .eq('type', 'FOCUS')
-      .gte('start_time', startOfDay)
-      .lte('start_time', endOfDay);
+      .eq('local_date', date);
     if (countError) throw countError;
     return count || 0;
   } catch (error) {
     console.error('Error counting completed sessions:', error);
     throw error;
   }
+} 
+
+// Ambil log aktivitas harian untuk feed aktivitas
+export async function getTodayActivityLogs(date: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  const user_id = user.id;
+
+  // Query semua activity_logs milik user pada tanggal lokal tsb
+  const { data: logs, error } = await supabase
+    .from('activity_logs')
+    .select('*')
+    .eq('user_id', user_id)
+    .eq('local_date', date)
+    .order('start_time', { ascending: false });
+
+  if (error) throw error;
+  if (!logs || logs.length === 0) return [];
+
+  // Untuk setiap log FOCUS, ambil judul tugas dari tabel tasks
+  const logsWithTitle = await Promise.all(
+    logs.map(async (log) => {
+      let task_title = null;
+      if (log.type === 'FOCUS' && log.task_id) {
+        const { data: task, error: taskError } = await supabase
+          .from('tasks')
+          .select('title')
+          .eq('id', log.task_id)
+          .single();
+        if (!taskError && task) {
+          task_title = task.title;
+        }
+      }
+      return {
+        ...log,
+        task_title,
+      };
+    })
+  );
+
+  return logsWithTitle;
 } 

@@ -509,7 +509,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
   const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
 
   return (
-    <div className="max-w-7xl mx-auto relative">
+    <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <TaskColumn
@@ -524,7 +524,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
             forceRefreshTaskId={forceRefreshTaskId}
           />
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        {/* <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <TaskColumn
             title="AW Quest"
             items={groupedItems['WORK']}
@@ -535,7 +535,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}
           />
-        </div>
+        </div> */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <TaskColumn
             title="Side Quest"

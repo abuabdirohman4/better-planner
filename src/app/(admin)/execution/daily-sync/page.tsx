@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useTransition, useEffect } from "react";
 import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
 import PomodoroTimer from "./PomodoroTimer";
+import ActivityLog from "./ActivityLog";
 import { useWeek } from '@/hooks/useWeek';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
@@ -159,7 +160,9 @@ function DailySyncContent() {
         formData.append('taskTitle', sessionData.taskTitle);
         formData.append('duration', sessionData.duration.toString());
         formData.append('sessionType', sessionData.type);
-        formData.append('date', selectedDateStr);
+        // Kirim localDate (format YYYY-MM-DD) sesuai waktu lokal user
+        const localDate = new Date().toLocaleDateString('en-CA');
+        formData.append('localDate', localDate);
         await logActivity(formData);
         // Refresh progres sesi untuk taskId
         setRefreshSessionKey(prev => ({
@@ -187,7 +190,7 @@ function DailySyncContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
+    <div className="mx-auto py-8 px-4">
       {/* Spinner initialLoading hanya di area konten utama, bukan overlay fixed */}
       {initialLoading ? (
         <div className="flex flex-col items-center justify-center min-h-[600px]">
@@ -279,10 +282,7 @@ function DailySyncContent() {
                     onForceRefresh={handleForceRefresh}
                   />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
-                    <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
-                    <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                      [Log Aktivitas Placeholder]
-                    </div>
+                    <ActivityLog date={selectedDateStr} />
                   </div>
                 </div>
               </div>
