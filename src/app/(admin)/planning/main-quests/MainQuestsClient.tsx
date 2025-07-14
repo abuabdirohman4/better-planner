@@ -1,37 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import QuestWorkspace from './QuestWorkspace';
 import ComponentCard from '@/components/common/ComponentCard';
-import { getQuests } from '../quests/actions';
-import { useQuarter } from "@/hooks/useQuarter";
 
-export default function MainQuestsClient() {
-  const { year, quarter } = useQuarter();
-  const [quests, setQuests] = useState<{ id: string; title: string; motivation?: string }[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function MainQuestsClient({ quests }: { quests: { id: string; title: string; motivation?: string }[] }) {
   const [activeTab, setActiveTab] = useState(0);
-
-  useEffect(() => {
-    setLoading(true);
-    (async () => {
-      try {
-        const data = await getQuests(year, quarter, true);
-        setQuests(data || []);
-      } catch {
-        setQuests([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [year, quarter]);
-
-  if (loading) {
-    return (
-      <ComponentCard title="Loading..." className="mb-4">
-        <p className="text-gray-600">Memuat data Main Quest...</p>
-      </ComponentCard>
-    );
-  }
 
   if (!quests || quests.length === 0) {
     return (
