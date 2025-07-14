@@ -121,7 +121,7 @@ const TaskCard: React.FC<{
           {/* Progres Sesi */}
           <div className="flex items-center gap-1 text-xs">
             {loading ? (
-              <span className="text-gray-400">...</span>
+              <span className="text-gray-400"><Spinner size={16} /></span>
             ) : (
               <span className="font-semibold">({completed} / {target})</span>
             )}
