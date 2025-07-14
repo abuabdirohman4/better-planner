@@ -130,7 +130,7 @@ const TaskColumn: React.FC<{
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 h-fit">
+    <div className="rounded-lg h-fit">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{title}</h3>
         {onAddSideQuest && (
@@ -177,17 +177,17 @@ const TaskColumn: React.FC<{
         )}
       </div>
 
-              {/* Select Tasks button for Main Quest column */}
-        {onSelectTasks && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={onSelectTasks}
-              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-            >
-              Kelola Rencana Harian
-            </button>
-          </div>
-        )}
+      {/* Select Tasks button for Main Quest column */}
+      {onSelectTasks && (
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={onSelectTasks}
+            className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+          >
+            Kelola Rencana Harian
+          </button>
+        </div>
+      )}
     </div>
   );
 };

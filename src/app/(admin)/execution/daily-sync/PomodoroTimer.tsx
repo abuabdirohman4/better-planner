@@ -93,6 +93,7 @@ function CircularTimer({
 }
 
 export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
+  console.log('activeTask', activeTask)
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
@@ -219,8 +220,8 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   // PauseIcon tanpa lingkaran
   const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 48 48" fill="none" {...props}>
-      <rect x="17" y="16" width="4" height="16" rx="2" fill="currentColor"/>
-      <rect x="27" y="16" width="4" height="16" rx="2" fill="currentColor"/>
+      <rect x="17" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+      <rect x="27" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 
@@ -242,12 +243,13 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   const timeDisplay = timerState === 'IDLE' ? formatTime(totalSeconds) : formatTime(secondsElapsed);
 
   return (
-    <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
-      {/* Progress bar animasi */}
-      {activeTask ? (
-        <CircularTimer progress={progress} size={90} stroke={4} />
-      ) : (
-        <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
+    <div className="flex flex-col items-center justify-center w-full">
+      {/* Timer lingkaran dan kontrol play/pause */}
+      <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
+        {activeTask ? (
+          <CircularTimer progress={progress} size={90} stroke={5} />
+        ) : (
+          <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
           <circle
             cx={45}
             cy={45}
@@ -257,21 +259,39 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
             fill="none"
           />
         </svg>
-      )}
-      { !activeTask ? (
-        <span className="text-sm select-none">00:00</span>
-      ) : (
+        )}
+        { !activeTask ? (
+          <span className="text-lg select-none">00:00</span>
+        ) : (
+          <>
+            <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+              <IconComponent className={`w-16 h-16 ${iconColor}`} />
+            </Button>
+            <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+          </>
+        )}
+      </div>
+      {/* Judul dan subjudul */}
+      {activeTask && (
         <>
-          <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
-            <IconComponent className={`w-14 h-14 ${iconColor}`} />
-          </Button>
-          <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+          <div className="text-base text-gray-500 dark:text-gray-300 mb-4 text-center font-medium">{activeTask.title}</div>
         </>
       )}
-      {/* Sesi fokus hari ini */}
-      {/* {sessionCount > 0 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-sm text-gray-500 dark:text-gray-400">
-          Sesi fokus hari ini: {sessionCount}
+      {/* Tombol Jeda & Hentikan saat FOCUSING */}
+      {/* {timerState === 'FOCUSING' && (
+        <div className="flex gap-4 w-full max-w-xs mx-auto mt-2">
+          <button
+            onClick={handlePause}
+            className="flex-1 px-0 py-4 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-bold text-lg shadow transition-colors"
+          >
+            Jeda
+          </button>
+          <button
+            onClick={() => { setTimerState('IDLE'); setSecondsElapsed(0); setBreakType(null); }}
+            className="flex-1 px-0 py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-lg shadow transition-colors"
+          >
+            Hentikan
+          </button>
         </div>
       )} */}
     </div>
