@@ -8,8 +8,48 @@ import QuarterSelector from "@/components/common/QuarterSelector";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    setCurrentDateTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isClient]);
+
+  const formatDateTime = (date: Date) => {
+    // const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const day = days[date.getDay()];
+    const dateStr = date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      // year: 'numeric'
+    });
+    const timeStr = date.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    return { day, date: dateStr, time: timeStr };
+  };
+
+  let day = "", date = "", time = "";
+  if (currentDateTime) {
+    const formatted = formatDateTime(currentDateTime);
+    day = formatted.day;
+    date = formatted.date;
+    time = formatted.time;
+  }
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -108,21 +148,24 @@ const AppHeader: React.FC = () => {
           </button>
         </div>
         <div
-          className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
-            {/* <!-- Dark Mode Toggler --> */}
+            {/* Current Date & Time Display */}
+            <div className="hidden lg:flex flex-col items-end text-sm text-gray-600 dark:text-gray-400">
+              {isClient && currentDateTime ? (
+                <>
+                  <div className="text-medium font-mono">{time}</div>
+                  <div className="font-medium">{day}, {date}</div>
+                </>
+              ) : (
+                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              )}
+            </div>
             <ThemeToggleButton />
-            {/* <!-- Dark Mode Toggler --> */}
-
-           <NotificationDropdown /> 
-            {/* <!-- Notification Menu Area --> */}
+            <NotificationDropdown />
           </div>
-          {/* <!-- User Area --> */}
-          <UserDropdown /> 
-    
+          <UserDropdown />
         </div>
       </div>
     </header>

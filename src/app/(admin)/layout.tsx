@@ -24,9 +24,7 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <div className="min-h-screen dark:bg-gray-900 xl:flex">
+    <div className="min-h-screen dark:bg-gray-900 xl:flex">
       {/* Sidebar and Backdrop */}
       <AppSidebar />
       <Backdrop />
@@ -42,7 +40,5 @@ export default function AdminLayout({
         </div>
       </div>
     </div>
-      </body>
-    </html>
   );
 }

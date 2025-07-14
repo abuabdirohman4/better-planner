@@ -185,7 +185,7 @@ function DailySyncContent() {
           />
         </div>
         {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
-        <div className="flex flex-col gap-2 mt-4">
+        <div className="flex flex-col gap-4 mt-4">
           <PomodoroTimer 
             activeTask={activeTask}
             shouldStart={shouldStartTimer}

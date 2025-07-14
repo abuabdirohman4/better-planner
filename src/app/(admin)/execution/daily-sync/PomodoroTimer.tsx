@@ -273,9 +273,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
       </div>
       {/* Judul dan subjudul */}
       {activeTask && (
-        <>
-          <div className="text-base text-gray-500 dark:text-gray-300 mb-4 text-center font-medium">{activeTask.title}</div>
-        </>
+        <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div>
       )}
       {/* Tombol Jeda & Hentikan saat FOCUSING */}
       {/* {timerState === 'FOCUSING' && (
