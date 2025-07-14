@@ -416,15 +416,19 @@ export async function countCompletedSessions(dailyPlanItemId: string, date: stri
     const itemId = dailyPlanItem?.item_id;
     if (!itemId) throw new Error('Item ID not found');
 
+    // Hitung rentang waktu hari lokal (00:00:00 sampai 23:59:59)
+    const startOfDay = `${date}T00:00:00`;
+    const endOfDay = `${date}T23:59:59.999`;
+
     // Hitung jumlah sesi FOCUS di activity_logs untuk item_id dan tanggal
-    // start_time format: 2025-07-13T10:00:00.000Z, kita filter dengan LIKE '2025-07-13%'
     const { count, error: countError } = await supabase
       .from('activity_logs')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('task_id', itemId)
       .eq('type', 'FOCUS')
-      .like('start_time', `${date}%`);
+      .gte('start_time', startOfDay)
+      .lte('start_time', endOfDay);
     if (countError) throw countError;
     return count || 0;
   } catch (error) {

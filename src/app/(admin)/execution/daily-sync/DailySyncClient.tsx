@@ -57,7 +57,6 @@ const TaskCard: React.FC<{
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // countCompletedSessions(item.id, selectedDate || '').then((count) => {
     countCompletedSessions(item.id, selectedDate || '').then((count) => {
       if (!cancelled) {
         setCompleted(count);
