@@ -92,11 +92,28 @@ function CircularTimer({
   );
 }
 
+// Tambahkan PlayIcon dan PauseIcon lokal
+// Ganti tipe props PlayIcon dan PauseIcon
+// PlayIcon tanpa lingkaran, segitiga outline
+const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 48 48" fill="none" {...props}>
+    <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+// PauseIcon tanpa lingkaran
+const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 48 48" fill="none" {...props}>
+    <rect x="17" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+    <rect x="27" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
+
 export default function PomodoroTimer({ activeTask, onSessionComplete, shouldStart, onStarted }: PomodoroTimerProps) {
   console.log('activeTask', activeTask)
   const [timerState, setTimerState] = useState<TimerState>('IDLE');
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
+  const [sessionJustCompleted, setSessionJustCompleted] = useState<null | 'FOCUS' | 'BREAK'>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto start timer if shouldStart is true
@@ -104,6 +121,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     if (shouldStart && activeTask && timerState !== 'FOCUSING') {
       setTimerState('FOCUSING');
       setSecondsElapsed(0);
+      setSessionJustCompleted(null);
       if (onStarted) onStarted();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,15 +133,12 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
       intervalRef.current = setInterval(() => {
         setSecondsElapsed(prev => {
           const newSeconds = prev + 1;
-          
           // Check if timer is complete
           const maxDuration = timerState === 'FOCUSING' ? FOCUS_DURATION : 
                              breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION;
-          
           if (newSeconds >= maxDuration) {
             // Timer completed
             playNotificationSound();
-            
             if (timerState === 'FOCUSING') {
               // Focus session completed
               if (activeTask && onSessionComplete) {
@@ -135,6 +150,8 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
                 });
               }
               setTimerState('BREAK_TIME');
+              setSessionJustCompleted('FOCUS');
+              // setSecondsElapsed(0); // JANGAN reset, biarkan di max
             } else {
               // Break completed
               if (onSessionComplete) {
@@ -146,18 +163,16 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
                 });
               }
               setTimerState('IDLE');
+              setSessionJustCompleted('BREAK');
+              // setSecondsElapsed(0); // JANGAN reset, biarkan di max
+              setBreakType(null);
             }
-            
-            setSecondsElapsed(0);
-            setBreakType(null);
-            return 0;
+            return prev; // Biarkan di max
           }
-          
           return newSeconds;
         });
       }, 1000);
     }
-
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -181,6 +196,7 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     }
     setTimerState('FOCUSING');
     setSecondsElapsed(0);
+    setSessionJustCompleted(null);
   };
 
   const pauseTimer = () => {
@@ -194,53 +210,63 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     setTimerState(breakType ? 'BREAK' : 'FOCUSING');
   };
 
+  // Handler untuk reset ke idle setelah break selesai
+  // const handleReset = () => {
+  //   setTimerState('IDLE');
+  //   setSecondsElapsed(0);
+  //   setBreakType(null);
+  //   setSessionJustCompleted(null);
+  // };
+
   // Helper to get total seconds for progress
   let totalSeconds = 0;
   if (timerState === 'FOCUSING') totalSeconds = FOCUS_DURATION;
   else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
   else if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
+  else if (timerState === 'PAUSED' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
+  else if (timerState === 'PAUSED' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
+  else if (timerState === 'PAUSED') totalSeconds = FOCUS_DURATION;
+  else if (timerState === 'BREAK_TIME' && sessionJustCompleted === 'FOCUS') totalSeconds = FOCUS_DURATION;
+  else if (timerState === 'IDLE' && sessionJustCompleted === 'BREAK') totalSeconds = breakType === 'LONG' ? LONG_BREAK_DURATION : SHORT_BREAK_DURATION;
   else totalSeconds = FOCUS_DURATION; // fallback/idle
 
-  const progress = secondsElapsed / totalSeconds;
-  // const timeDisplay = formatTime(Math.max(totalSeconds - secondsElapsed, 0));
+  // Progress calculation
+  let progress = 0;
+  if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
+    progress = secondsElapsed / totalSeconds;
+  } else if (timerState === 'BREAK_TIME' && sessionJustCompleted === 'FOCUS') {
+    progress = 1;
+  } else if (timerState === 'IDLE' && sessionJustCompleted === 'BREAK') {
+    progress = 1;
+  } else {
+    progress = 0;
+  }
 
-  // Handler untuk tombol
-  const handleStart = () => startFocusSession();
-  const handlePause = () => pauseTimer();
-  const handleResume = () => resumeTimer();
-
-  // Tambahkan PlayIcon dan PauseIcon lokal
-  // Ganti tipe props PlayIcon dan PauseIcon
-  // PlayIcon tanpa lingkaran, segitiga outline
-  const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 48 48" fill="none" {...props}>
-      <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
-    </svg>
-  );
-  // PauseIcon tanpa lingkaran
-  const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 48 48" fill="none" {...props}>
-      <rect x="17" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-      <rect x="27" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-    </svg>
-  );
+  // Tampilkan waktu (naik dari 00:00 ke totalSeconds, atau tetap di max saat selesai)
+  let timeDisplay = '';
+  if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
+    timeDisplay = formatTime(secondsElapsed);
+  } else if (timerState === 'BREAK_TIME' && sessionJustCompleted === 'FOCUS') {
+    timeDisplay = formatTime(totalSeconds);
+  } else if (timerState === 'IDLE' && sessionJustCompleted === 'BREAK') {
+    timeDisplay = formatTime(totalSeconds);
+  } else {
+    timeDisplay = formatTime(0);
+  }
 
   // Pilih ikon & handler sesuai state
   let IconComponent = PlayIcon;
   let iconColor = 'text-brand-500';
-  let iconAction = handleStart;
+  let iconAction = startFocusSession;
   if (timerState === 'FOCUSING') {
     IconComponent = PauseIcon;
     iconColor = 'text-orange-500';
-    iconAction = handlePause;
+    iconAction = pauseTimer;
   } else if (timerState === 'PAUSED') {
     IconComponent = PlayIcon;
     iconColor = 'text-brand-500';
-    iconAction = handleResume;
+    iconAction = resumeTimer;
   }
-
-  // Tampilkan waktu (naik dari 00:00 ke totalSeconds)
-  const timeDisplay = timerState === 'IDLE' ? formatTime(totalSeconds) : formatTime(secondsElapsed);
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
@@ -264,10 +290,32 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
           <span className="text-lg select-none">00:00</span>
         ) : (
           <>
-            <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
-              <IconComponent className={`w-16 h-16 ${iconColor}`} />
-            </Button>
-            <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+            {/* Saat selesai fokus, tampilkan progress 100% dan waktu max, serta tombol break */}
+            {timerState === 'BREAK_TIME' && sessionJustCompleted === 'FOCUS' ? (
+              <>
+                <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+                  <IconComponent className={`w-16 h-16 ${iconColor}`} />
+                </Button>
+                <span className="-mt-3 text-sm text-brand-500 select-none">{formatTime(FOCUS_DURATION)}</span>
+              </>
+            ) : timerState === 'IDLE' && sessionJustCompleted === 'BREAK' ? (
+              <>
+                {/* <Button variant="plain" size="sm" className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 !p-0 cursor-pointer z-10" onClick={handleReset}>
+                  <PlayIcon className="w-10 h-10 text-brand-500" />
+                </Button>
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold text-green-500 select-none">{breakType === 'LONG' ? formatTime(LONG_BREAK_DURATION) : formatTime(SHORT_BREAK_DURATION)}</span>
+                <div className="absolute left-1/2 top-[70%] -translate-x-1/2">
+                  <Button size="sm" variant="outline" onClick={handleReset}>Selesai</Button>
+                </div> */}
+              </>
+            ) : (
+              <>
+                <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+                  <IconComponent className={`w-16 h-16 ${iconColor}`} />
+                </Button>
+                <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+              </>
+            )}
           </>
         )}
       </div>
