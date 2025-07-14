@@ -13,7 +13,9 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
 import ToDontListCard from "./ToDontListCard";
 import Spinner from '@/components/ui/spinner/Spinner';
-import { getWeeklyGoals, calculateGoalProgress } from './actions';
+import { getWeeklyGoals, calculateGoalProgress, getWeeklyRules } from './actions';
+import type { Rule } from './ToDontListCard';
+import type { WeeklyGoal } from './WeeklyGoalsTable';
 
 type Task = {
   id: string;
@@ -69,9 +71,11 @@ export default function WeeklySyncClient() {
   // State untuk dropdown week
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
-  const [goals, setGoals] = useState([]);
-  const [goalProgress, setGoalProgress] = useState({});
+  const [goals, setGoals] = useState<WeeklyGoal[]>([]);
+  const [goalProgress, setGoalProgress] = useState<{ [key: number]: { completed: number; total: number; percentage: number } }>({});
   const [refreshFlag, setRefreshFlag] = useState(0);
+  const [toDontList, setToDontList] = useState<Rule[]>([]);
+  const [toDontListLoading, setToDontListLoading] = useState(true);
 
   // Optimized calculations using useMemo
   const weekCalculations = useMemo(() => {
@@ -135,18 +139,26 @@ export default function WeeklySyncClient() {
   }, [currentWeek, year, quarter]);
 
   useEffect(() => {
+    setToDontListLoading(true);
+    getWeeklyRules(year, displayWeek).then(data => {
+      setToDontList(data);
+      setToDontListLoading(false);
+    });
+  }, [year, displayWeek, refreshFlag]);
+
+  useEffect(() => {
     const fetchGoals = async () => {
       const fetchedGoals = await getWeeklyGoals(year, displayWeek);
       setGoals(fetchedGoals);
       // Hitung progress untuk setiap goal slot
-      const progressData = {};
+      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
       await Promise.all(
         fetchedGoals.map(async (goal) => {
           if (goal.items.length > 0) {
             const progress = await calculateGoalProgress(goal.items);
-            progressData[goal.goal_slot] = progress;
+            progressData[goal.goal_slot as number] = progress;
           } else {
-            progressData[goal.goal_slot] = { completed: 0, total: 0, percentage: 0 };
+            progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
           }
         })
       );
@@ -157,6 +169,7 @@ export default function WeeklySyncClient() {
 
   // Handler untuk refresh data dari child
   const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
+  const handleRefreshToDontList = () => setRefreshFlag(f => f + 1);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -247,7 +260,7 @@ export default function WeeklySyncClient() {
     setSelectedWeekInQuarter(undefined);
   };
 
-  if (loading) {
+  if (loading || toDontListLoading) {
     return (
       <div className="flex justify-center items-center min-h-[600px]">
         <Spinner size={164} />
@@ -317,9 +330,14 @@ export default function WeeklySyncClient() {
         goalProgress={goalProgress}
         onRefreshGoals={handleRefreshGoals}
       />
-
       {/* === To Don't List Card === */}
-      <ToDontListCard year={year} weekNumber={displayWeek} />
+      <ToDontListCard
+        year={year}
+        weekNumber={displayWeek}
+        rules={toDontList}
+        loading={toDontListLoading}
+        onRefresh={handleRefreshToDontList}
+      />
 
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">

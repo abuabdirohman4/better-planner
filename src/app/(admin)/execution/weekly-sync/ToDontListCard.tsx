@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, forwardRef } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import CustomToast from "@/components/ui/toast/CustomToast";
-import { getWeeklyRules, addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "./actions";
+import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "./actions";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -11,9 +11,12 @@ import { CSS } from "@dnd-kit/utilities";
 interface ToDontListCardProps {
   year: number;
   weekNumber: number;
+  rules: Rule[];
+  loading: boolean;
+  onRefresh: () => void;
 }
 
-type Rule = {
+export type Rule = {
   id: string;
   rule_text: string;
   display_order: number;
@@ -104,8 +107,7 @@ const SortableRuleItem = forwardRef<HTMLInputElement, {
 );
 SortableRuleItem.displayName = "SortableRuleItem";
 
-const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => {
-  const [rules, setRules] = useState<Rule[]>([]);
+const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules, loading, onRefresh }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [focusRuleId, setFocusRuleId] = useState<string | null>(null);
@@ -127,7 +129,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     }
     const res = await updateWeeklyRule(id, editingText.trim());
     if (res.success) {
-      setRules(rules => rules.map(r => r.id === id ? { ...r, rule_text: editingText.trim() } : r));
+      onRefresh();
       // CustomToast.success(res.message);
     } else {
       CustomToast.error("Gagal", res.message);
@@ -139,18 +141,16 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
   // Delete rule (by keyboard)
   const handleDelete = async (id: string) => {
     const idx = rules.findIndex(r => r.id === id);
-    setRules(rules => rules.filter(r => r.id !== id)); // Optimistic
     const res = await deleteWeeklyRule(id);
     if (!res.success) {
       CustomToast.error("Gagal", res.message);
-      // Re-fetch jika gagal
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
+      onRefresh();
     } else {
       // Fokus ke input di atasnya
       setTimeout(() => {
         if (inputRefs.current[idx - 1]) inputRefs.current[idx - 1]?.focus();
       }, 100);
+      onRefresh();
     }
   };
 
@@ -166,10 +166,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     const res = await addWeeklyRule(formData);
     if (res.success) {
       setNewRule("");
-      // CustomToast.success(res.message);
-      // Refresh list
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
+      onRefresh();
     } else {
       CustomToast.error("Gagal", res.message);
     }
@@ -195,8 +192,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
       await addWeeklyRule(formData);
     }
     setNewRule("");
-    const data = await getWeeklyRules(year, weekNumber);
-    setRules(data);
+    onRefresh();
     setTimeout(() => {
       if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
     }, 100);
@@ -211,14 +207,11 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     const newIndex = rules.findIndex(r => r.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
     const newRules = arrayMove(rules, oldIndex, newIndex).map((r, idx) => ({ ...r, display_order: idx + 1 }));
-    setRules(newRules); // Optimistic
     const res = await updateWeeklyRuleOrder(newRules.map(r => ({ id: r.id, display_order: r.display_order })));
     if (!res.success) {
       CustomToast.error("Gagal update urutan", res.message);
-      // Re-fetch jika gagal
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
     }
+    onRefresh();
   };
 
   // Fokus ke input atas setelah hapus
@@ -240,15 +233,13 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
     formData.append("display_order", String(newOrder));
     const res = await addWeeklyRule(formData);
     if (res.success && res.id) {
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
       setFocusRuleIdAfterInsert(res.id);
+      onRefresh();
     } else if (res.success) {
-      const data = await getWeeklyRules(year, weekNumber);
-      setRules(data);
       setTimeout(() => {
         if (inputRefs.current[idx + 1]) inputRefs.current[idx + 1]?.focus();
       }, 100);
+      onRefresh();
     } else {
       CustomToast.error("Gagal menambah aturan", res.message);
     }
@@ -269,10 +260,9 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
       formData.append("week_number", String(weekNumber));
       await addWeeklyRule(formData);
     }
-    const data = await getWeeklyRules(year, weekNumber);
-    setRules(data);
+    onRefresh();
     setTimeout(() => {
-      if (inputRefs.current[data.length - 1]) inputRefs.current[data.length - 1]?.focus();
+      if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
     }, 100);
     setNewRuleLoading(false);
   };
@@ -282,7 +272,12 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber }) => 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={rules.map(r => r.id)} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-1">
-            {rules.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center py-2 group w-full animate-pulse">
+                <span className="w-6 mr-2" />
+                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            ) : rules.length === 0 ? (
               <div className="flex items-center py-2 group w-full">
                 <span className="w-6 mr-1" />
                 <input

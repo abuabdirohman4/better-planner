@@ -23,7 +23,7 @@ interface GoalItem {
   parent_quest_priority_score?: number;
 }
 
-interface WeeklyGoal {
+export interface WeeklyGoal {
   id: string;
   goal_slot: number;
   items: GoalItem[];
