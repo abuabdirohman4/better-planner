@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 type SidebarContextType = {
   isExpanded: boolean;
@@ -33,6 +34,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const pathname = usePathname();
 
   // On mount, read sidebar state from localStorage
   useEffect(() => {
@@ -63,6 +65,14 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const toggleSidebar = () => {
     setIsExpanded((prev) => !prev);
