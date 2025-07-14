@@ -451,56 +451,32 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({ year, weekNumber, sel
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Task board kiri, Log Aktivitas kanan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Kolom kiri: Task board */}
-        <div>
-          <div className="flex flex-col gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-              <TaskColumn
-                title="Main Quest"
-                items={groupedItems['MAIN_QUEST']}
-                onStatusChange={handleStatusChange}
-                onSelectTasks={handleOpenModal}
-                onSetActiveTask={onSetActiveTask}
-              />
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-              <TaskColumn
-                title="AW Quest"
-                items={groupedItems['WORK']}
-                onStatusChange={handleStatusChange}
-                onSetActiveTask={onSetActiveTask}
-              />
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-              <TaskColumn
-                title="Side Quest"
-                items={groupedItems['SIDE_QUEST']}
-                onStatusChange={handleStatusChange}
-                onAddSideQuest={handleAddSideQuest}
-                onSetActiveTask={onSetActiveTask}
-              />
-            </div>
-          </div>
-        </div>
-        {/* Kolom kanan: Log Aktivitas */}
-        <div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
-            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
-            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-              [Log Aktivitas Placeholder]
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Brain Dump di bawah 2 kolom */}
-      <div className="mt-8">
+      <div className="flex flex-col gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            [Brain Dump Placeholder]
-          </div>
+          <TaskColumn
+            title="Main Quest"
+            items={groupedItems['MAIN_QUEST']}
+            onStatusChange={handleStatusChange}
+            onSelectTasks={handleOpenModal}
+            onSetActiveTask={onSetActiveTask}
+          />
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <TaskColumn
+            title="AW Quest"
+            items={groupedItems['WORK']}
+            onStatusChange={handleStatusChange}
+            onSetActiveTask={onSetActiveTask}
+          />
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <TaskColumn
+            title="Side Quest"
+            items={groupedItems['SIDE_QUEST']}
+            onStatusChange={handleStatusChange}
+            onAddSideQuest={handleAddSideQuest}
+            onSetActiveTask={onSetActiveTask}
+          />
         </div>
       </div>
       {/* Task Selection Modal */}

@@ -171,24 +171,44 @@ function DailySyncContent() {
           ))}
         </div>
       </div>
-      {/* Pomodoro Timer - Prominent position at top */}
-      <div className="mb-8">
-        <PomodoroTimer 
-          activeTask={activeTask}
-          shouldStart={shouldStartTimer}
-          onStarted={() => setShouldStartTimer(false)}
-          onSessionComplete={handleSessionComplete}
-        />
-      </div>
       
       {/* DailySyncClient dengan props week/day */}
-      <DailySyncClient
-        year={year}
-        quarter={quarter}
-        weekNumber={displayWeek}
-        selectedDate={selectedDateStr}
-        onSetActiveTask={handleSetActiveTask}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Kolom kiri: Task board saja */}
+        <div>
+          <DailySyncClient
+            year={year}
+            quarter={quarter}
+            weekNumber={displayWeek}
+            selectedDate={selectedDateStr}
+            onSetActiveTask={handleSetActiveTask}
+          />
+        </div>
+        {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
+        <div className="flex flex-col gap-2 mt-4">
+          <PomodoroTimer 
+            activeTask={activeTask}
+            shouldStart={shouldStartTimer}
+            onStarted={() => setShouldStartTimer(false)}
+            onSessionComplete={handleSessionComplete}
+          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Log Aktivitas</h3>
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              [Log Aktivitas Placeholder]
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Brain Dump di bawah 2 kolom */}
+      <div className="mt-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            [Brain Dump Placeholder]
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
