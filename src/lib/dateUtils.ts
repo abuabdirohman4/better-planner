@@ -11,12 +11,17 @@ export const daysOfWeek: string[] = [
 ];
 
 export function getWeekDates(date: Date): Date[] {
-  const monday = new Date(date);
-  monday.setDate(date.getDate() - ((date.getDay() + 6) % 7)); // Senin
-  return Array.from({ length: 7 }, (_, i: number): Date => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
+  const d = new Date(date);
+  let day = d.getDay();
+  // Jika hari Minggu, treat as 7 (bukan 0)
+  if (day === 0) day = 7;
+  // Mundur ke Senin
+  d.setDate(d.getDate() - (day - 1));
+  d.setHours(12, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(d);
+    day.setDate(d.getDate() + i);
+    return day;
   });
 }
 

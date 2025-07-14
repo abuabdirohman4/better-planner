@@ -14,34 +14,64 @@ import { getDailyPlan, setDailyPlan } from './actions';
 
 const getTodayDate = () => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(12, 0, 0, 0); // Gunakan jam 12 siang untuk menghindari bug zona waktu
   return today;
 };
+
+// Helper: pastikan date adalah hari Senin
+function ensureMonday(date: Date) {
+  const d = new Date(date);
+  d.setHours(12, 0, 0, 0); // Set jam ke 12 siang
+  const day = d.getDay();
+  // 0 = Minggu, 1 = Senin, ...
+  const diff = (day === 0 ? -6 : 1 - day); // Jika Minggu, mundur 6 hari, selain itu ke Senin
+  d.setDate(d.getDate() + diff);
+  return d;
+}
 
 function DailySyncContent() {
   const { year, quarter } = useWeek();
   const today = getTodayDate();
-  const [currentWeek, setCurrentWeek] = useState(today);
+  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(today));
+
+  // Log setiap kali currentWeek berubah
+  useEffect(() => {
+    console.info('[DailySync] currentWeek:', currentWeek.toISOString());
+    const monday = ensureMonday(currentWeek);
+    console.info('[DailySync] ensureMonday(currentWeek):', monday.toISOString());
+    const weekDatesLog = getWeekDates(currentWeek).map(d => d.toISOString().slice(0, 10));
+    console.info('[DailySync] getWeekDates(currentWeek):', weekDatesLog);
+  }, [currentWeek]);
+
   const weekDates = getWeekDates(currentWeek);
   const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
   const [shouldStartTimer, setShouldStartTimer] = useState(false);
   const [, startTransition] = useTransition();
+  const [refreshSessionKey, setRefreshSessionKey] = useState<Record<string, number>>({});
 
   // Helper function to determine default day index for a week
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
     const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
     const todayStr = today.toISOString().slice(0, 10);
     const todayIndex = weekDateStrs.indexOf(todayStr);
-    
+    // Log weekDates dan todayIndex
+    console.info('[DailySync] weekDates:', weekDateStrs, 'todayIndex:', todayIndex);
     // If today is in this week, select today, otherwise select Monday (index 0)
     return todayIndex !== -1 ? todayIndex : 0;
   };
 
   // State hari aktif (default: hari ini jika di minggu ini, else Senin)
-  const defaultDayIdx = getDefaultDayIndexForWeek(currentWeek);
-  const [selectedDayIdx, setSelectedDayIdx] = useState(defaultDayIdx);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(() => getDefaultDayIndexForWeek(currentWeek));
   const selectedDate = weekDates[selectedDayIdx];
   const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+
+  // Log setiap kali selectedDayIdx berubah
+  useEffect(() => {
+    console.info('[DailySync] selectedDayIdx:', selectedDayIdx, 'selectedDateStr:', selectedDateStr);
+  }, [selectedDayIdx, selectedDateStr]);
+
+  // Log setiap render utama
+  console.info('[DailySync] render selectedDateStr:', selectedDateStr);
 
   // Tambahkan state loading dan dailyPlan di sini
   const [loading, setLoading] = useState(true);
@@ -62,6 +92,11 @@ function DailySyncContent() {
       setInitialLoading(false);
     }
   }, [loading, initialLoading]);
+
+  // Jika currentWeek berubah, reset selectedDayIdx ke default (hari ini jika ada, else Senin)
+  useEffect(() => {
+    setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));
+  }, [currentWeek]);
 
   // Week calculations (mirip WeeklySyncClient)
   const weekCalculations = useMemo(() => {
@@ -90,15 +125,19 @@ function DailySyncContent() {
   const goPrevWeek = () => {
     const prev = new Date(currentWeek);
     prev.setDate(currentWeek.getDate() - 7);
-    setCurrentWeek(prev);
-    const defaultDayIdx = getDefaultDayIndexForWeek(prev);
+    prev.setHours(12, 0, 0, 0); // Set jam ke 12 siang
+    const monday = ensureMonday(prev);
+    setCurrentWeek(monday);
+    const defaultDayIdx = getDefaultDayIndexForWeek(monday);
     setSelectedDayIdx(defaultDayIdx);
   };
   const goNextWeek = () => {
     const next = new Date(currentWeek);
     next.setDate(currentWeek.getDate() + 7);
-    setCurrentWeek(next);
-    const defaultDayIdx = getDefaultDayIndexForWeek(next);
+    next.setHours(12, 0, 0, 0); // Set jam ke 12 siang
+    const monday = ensureMonday(next);
+    setCurrentWeek(monday);
+    const defaultDayIdx = getDefaultDayIndexForWeek(monday);
     setSelectedDayIdx(defaultDayIdx);
   };
 
@@ -106,8 +145,11 @@ function DailySyncContent() {
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const handleSelectWeek = (weekIdx: number) => {
     const weekNumber = startWeek + weekIdx - 1;
-    const monday = getDateFromWeek(year, weekNumber, 1);
-    monday.setHours(0, 0, 0, 0);
+    const rawDate = getDateFromWeek(year, weekNumber, 1);
+    rawDate.setHours(12, 0, 0, 0); // Set jam ke 12 siang
+    console.info('[DailySync] getDateFromWeek:', rawDate.toISOString());
+    const monday = ensureMonday(rawDate);
+    console.info('[DailySync] ensureMonday(getDateFromWeek):', monday.toISOString());
     setCurrentWeek(monday);
     const defaultDayIdx = getDefaultDayIndexForWeek(monday);
     setSelectedDayIdx(defaultDayIdx);
@@ -120,6 +162,7 @@ function DailySyncContent() {
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   }) => {
+    console.info('[DailySync] handleSessionComplete', { selectedDateStr, sessionData });
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -129,6 +172,11 @@ function DailySyncContent() {
         formData.append('sessionType', sessionData.type);
         formData.append('date', selectedDateStr);
         await logActivity(formData);
+        // Refresh progres sesi untuk taskId
+        setRefreshSessionKey(prev => ({
+          ...prev,
+          [sessionData.taskId]: (prev[sessionData.taskId] || 0) + 1
+        }));
       } catch (err) {
         console.error('Error logging session:', err);
       }
@@ -220,6 +268,7 @@ function DailySyncContent() {
                     setDailyPlanState={setDailyPlanState}
                     setDailyPlanAction={setDailyPlan}
                     loading={loading}
+                    refreshSessionKey={refreshSessionKey}
                   />
                 </div>
                 {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}

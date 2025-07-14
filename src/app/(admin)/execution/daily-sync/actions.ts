@@ -332,36 +332,103 @@ export async function logActivity(formData: FormData) {
   if (!user) throw new Error('User not authenticated');
   
   const taskId = formData.get('taskId')?.toString();
-  const taskTitle = formData.get('taskTitle')?.toString();
-  const duration = parseInt(formData.get('duration')?.toString() || '0');
+  const taskTitle = formData.get('taskTitle')?.toString(); // tidak dipakai di tabel
+  const duration = parseInt(formData.get('duration')?.toString() || '0'); // dalam detik
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
-  const date = formData.get('date')?.toString();
-  
-  if (!taskTitle || !duration || !sessionType || !date) {
+  const date = formData.get('date')?.toString(); // format YYYY-MM-DD
+
+  // Logging input
+  console.log('[logActivity] input:', { taskId, taskTitle, duration, sessionType, date, userId: user.id });
+
+  if (!taskId || !duration || !sessionType) {
+    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType });
     throw new Error('Missing required fields');
   }
 
+  // Hitung waktu
+  const now = new Date();
+  const end_time = now.toISOString();
+  const start_time = new Date(now.getTime() - duration * 1000).toISOString();
+  const duration_minutes = Math.round(duration / 60) || 1; // minimal 1 menit
+
   try {
     const { data: activity, error } = await supabase
-      .from('pomodoro_sessions')
+      .from('activity_logs')
       .insert({
         user_id: user.id,
-        task_id: taskId || null,
-        task_title: taskTitle,
-        duration_seconds: duration,
-        session_type: sessionType,
-        session_date: date,
-        completed_at: new Date().toISOString()
+        task_id: taskId,
+        type: sessionType,
+        start_time,
+        end_time,
+        duration_minutes
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[logActivity] Supabase error:', error);
+      throw error;
+    }
     
     revalidatePath('/execution/daily-sync');
     return activity;
   } catch (error) {
-    console.error('Error logging activity:', error);
+    console.error('[logActivity] Exception:', error);
+    throw error;
+  }
+} 
+
+// Update daily session target for a daily plan item
+export async function updateDailySessionTarget(dailyPlanItemId: string, newTarget: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { error } = await supabase
+      .from('daily_plan_items')
+      .update({ daily_session_target: newTarget })
+      .eq('id', dailyPlanItemId);
+
+    if (error) throw error;
+    revalidatePath('/execution/daily-sync');
+    return { success: true, message: 'Target sesi harian berhasil diupdate.' };
+  } catch (error) {
+    console.error('Error updating daily session target:', error);
+    throw error;
+  }
+}
+
+// Count completed FOCUS sessions for a daily plan item on a specific date
+export async function countCompletedSessions(dailyPlanItemId: string, date: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // Ambil item_id dari daily_plan_items
+    const { data: dailyPlanItem, error: itemError } = await supabase
+      .from('daily_plan_items')
+      .select('item_id')
+      .eq('id', dailyPlanItemId)
+      .single();
+    if (itemError) throw itemError;
+    const itemId = dailyPlanItem?.item_id;
+    if (!itemId) throw new Error('Item ID not found');
+
+    // Hitung jumlah sesi FOCUS di activity_logs untuk item_id dan tanggal
+    // start_time format: 2025-07-13T10:00:00.000Z, kita filter dengan LIKE '2025-07-13%'
+    const { count, error: countError } = await supabase
+      .from('activity_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('task_id', itemId)
+      .eq('type', 'FOCUS')
+      .like('start_time', `${date}%`);
+    if (countError) throw countError;
+    return count || 0;
+  } catch (error) {
+    console.error('Error counting completed sessions:', error);
     throw error;
   }
 } 
