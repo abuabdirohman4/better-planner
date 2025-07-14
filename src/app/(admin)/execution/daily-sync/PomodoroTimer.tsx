@@ -211,12 +211,12 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
   };
 
   // Handler untuk reset ke idle setelah break selesai
-  // const handleReset = () => {
-  //   setTimerState('IDLE');
-  //   setSecondsElapsed(0);
-  //   setBreakType(null);
-  //   setSessionJustCompleted(null);
-  // };
+  const handleReset = () => {
+    setTimerState('IDLE');
+    setSecondsElapsed(0);
+    setBreakType(null);
+    setSessionJustCompleted(null);
+  };
 
   // Helper to get total seconds for progress
   let totalSeconds = 0;
@@ -300,13 +300,10 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
               </>
             ) : timerState === 'IDLE' && sessionJustCompleted === 'BREAK' ? (
               <>
-                {/* <Button variant="plain" size="sm" className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 !p-0 cursor-pointer z-10" onClick={handleReset}>
-                  <PlayIcon className="w-10 h-10 text-brand-500" />
+                <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={handleReset}>
+                  <PlayIcon className="w-16 h-16 text-brand-500" />
                 </Button>
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold text-green-500 select-none">{breakType === 'LONG' ? formatTime(LONG_BREAK_DURATION) : formatTime(SHORT_BREAK_DURATION)}</span>
-                <div className="absolute left-1/2 top-[70%] -translate-x-1/2">
-                  <Button size="sm" variant="outline" onClick={handleReset}>Selesai</Button>
-                </div> */}
+                <span className="-mt-3 text-sm text-green-500 select-none">{breakType === 'LONG' ? formatTime(LONG_BREAK_DURATION) : formatTime(SHORT_BREAK_DURATION)}</span>
               </>
             ) : (
               <>
