@@ -36,11 +36,7 @@ function DailySyncContent() {
 
   // Log setiap kali currentWeek berubah
   useEffect(() => {
-    console.info('[DailySync] currentWeek:', currentWeek.toISOString());
     const monday = ensureMonday(currentWeek);
-    console.info('[DailySync] ensureMonday(currentWeek):', monday.toISOString());
-    const weekDatesLog = getWeekDates(currentWeek).map(d => d.toISOString().slice(0, 10));
-    console.info('[DailySync] getWeekDates(currentWeek):', weekDatesLog);
   }, [currentWeek]);
 
   const weekDates = getWeekDates(currentWeek);
@@ -55,8 +51,6 @@ function DailySyncContent() {
     const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
     const todayStr = today.toISOString().slice(0, 10);
     const todayIndex = weekDateStrs.indexOf(todayStr);
-    // Log weekDates dan todayIndex
-    console.info('[DailySync] weekDates:', weekDateStrs, 'todayIndex:', todayIndex);
     // If today is in this week, select today, otherwise select Monday (index 0)
     return todayIndex !== -1 ? todayIndex : 0;
   };
@@ -68,12 +62,9 @@ function DailySyncContent() {
 
   // Log setiap kali selectedDayIdx berubah
   useEffect(() => {
-    console.info('[DailySync] selectedDayIdx:', selectedDayIdx, 'selectedDateStr:', selectedDateStr);
   }, [selectedDayIdx, selectedDateStr]);
 
   // Log setiap render utama
-  console.info('[DailySync] render selectedDateStr:', selectedDateStr);
-
   // Tambahkan state loading dan dailyPlan di sini
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -149,9 +140,7 @@ function DailySyncContent() {
     const weekNumber = startWeek + weekIdx - 1;
     const rawDate = getDateFromWeek(year, weekNumber, 1);
     rawDate.setHours(12, 0, 0, 0); // Set jam ke 12 siang
-    console.info('[DailySync] getDateFromWeek:', rawDate.toISOString());
     const monday = ensureMonday(rawDate);
-    console.info('[DailySync] ensureMonday(getDateFromWeek):', monday.toISOString());
     setCurrentWeek(monday);
     const defaultDayIdx = getDefaultDayIndexForWeek(monday);
     setSelectedDayIdx(defaultDayIdx);
@@ -164,7 +153,6 @@ function DailySyncContent() {
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   }) => {
-    console.info('[DailySync] handleSessionComplete', { selectedDateStr, sessionData });
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -193,11 +181,9 @@ function DailySyncContent() {
 
   // Handler untuk force refresh count di TaskCard
   const handleForceRefresh = (taskId: string) => {
-    console.info('[DailySync] forceRefreshTaskId set:', taskId);
     setForceRefreshTaskId(taskId);
     setTimeout(() => {
       setForceRefreshTaskId(null);
-      console.info('[DailySync] forceRefreshTaskId reset');
     }, 500);
   };
 

@@ -337,9 +337,6 @@ export async function logActivity(formData: FormData) {
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   const date = formData.get('date')?.toString(); // format YYYY-MM-DD
 
-  // Logging input
-  console.log('[logActivity] input:', { taskId, taskTitle, duration, sessionType, date, userId: user.id });
-
   if (!taskId || !duration || !sessionType) {
     console.error('[logActivity] Missing required fields', { taskId, duration, sessionType });
     throw new Error('Missing required fields');
