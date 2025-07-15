@@ -334,10 +334,12 @@ export async function logActivity(formData: FormData) {
   const taskId = formData.get('taskId')?.toString();
   const duration = parseInt(formData.get('duration')?.toString() || '0'); // dalam detik
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
-  const localDate = formData.get('localDate')?.toString();
+  const date = formData.get('date')?.toString();
 
-  if (!taskId || !duration || !sessionType || !localDate) {
-    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType, localDate });
+  console.log('[logActivity] FormData:', { taskId, duration, sessionType, date });
+
+  if (!taskId || !duration || !sessionType || !date) {
+    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType, date });
     throw new Error('Missing required fields');
   }
 
@@ -357,7 +359,7 @@ export async function logActivity(formData: FormData) {
         start_time,
         end_time,
         duration_minutes,
-        local_date: localDate,
+        local_date: date,
       })
       .select()
       .single();

@@ -12,6 +12,7 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { getDailyPlan, setDailyPlan } from './actions';
+import { useRouter } from 'next/navigation';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -31,6 +32,8 @@ function ensureMonday(date: Date) {
 }
 
 function DailySyncContent() {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const { year, quarter } = useWeek();
   const today = getTodayDate();
   const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(today));
@@ -42,9 +45,9 @@ function DailySyncContent() {
   const weekDates = getWeekDates(currentWeek);
   const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
   const [shouldStartTimer, setShouldStartTimer] = useState(false);
-  const [, startTransition] = useTransition();
   const [refreshSessionKey, setRefreshSessionKey] = useState<Record<string, number>>({});
   const [forceRefreshTaskId, setForceRefreshTaskId] = useState<string | null>(null);
+  const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
 
   // Helper function to determine default day index for a week
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
@@ -155,15 +158,23 @@ function DailySyncContent() {
   }) => {
     startTransition(async () => {
       try {
+        // Cek field wajib
+        if (!sessionData.taskId || !sessionData.duration || !sessionData.type) {
+          console.error('Missing required fields', sessionData);
+          return;
+        }
         const formData = new FormData();
         formData.append('taskId', sessionData.taskId);
         formData.append('taskTitle', sessionData.taskTitle);
         formData.append('duration', sessionData.duration.toString());
         formData.append('sessionType', sessionData.type);
-        // Kirim localDate (format YYYY-MM-DD) sesuai waktu lokal user
-        const localDate = new Date().toLocaleDateString('en-CA');
-        formData.append('localDate', localDate);
+        formData.append('date', selectedDateStr);
         await logActivity(formData);
+        // Setelah log berhasil, refresh ActivityLog
+        setActivityLogRefreshKey((k) => k + 1);
+        startTransition(() => {
+          router.refresh();
+        });
         // Refresh progres sesi untuk taskId
         setRefreshSessionKey(prev => ({
           ...prev,
@@ -282,7 +293,7 @@ function DailySyncContent() {
                     onForceRefresh={handleForceRefresh}
                   />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
-                    <ActivityLog date={selectedDateStr} />
+                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
                   </div>
                 </div>
               </div>

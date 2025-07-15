@@ -4,6 +4,7 @@ import { getTodayActivityLogs } from './actions';
 
 interface ActivityLogProps {
   date: string;
+  refreshKey?: number;
 }
 
 interface ActivityLogItem {
@@ -45,7 +46,7 @@ function formatDuration(minutes: number) {
   return m === 0 ? `${h} jam` : `${h} jam ${m} menit`;
 }
 
-const ActivityLog: React.FC<ActivityLogProps> = ({ date }) => {
+const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +55,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date }) => {
     getTodayActivityLogs(date)
       .then((data) => setLogs(data))
       .finally(() => setLoading(false));
-  }, [date]);
+  }, [date, refreshKey]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 max-h-[420px] flex flex-col">
