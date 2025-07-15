@@ -2,7 +2,7 @@
 // import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import { MoreDotIcon } from "@/icons";
 
@@ -65,13 +65,13 @@ export default function MonthlyTarget() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  function toggleDropdown() {
+  const toggleDropdown = useCallback(() => {
     setIsOpen(!isOpen);
-  }
+  }, [isOpen]);
 
-  function closeDropdown() {
+  const closeDropdown = useCallback(() => {
     setIsOpen(false);
-  }
+  }, []);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03]">
