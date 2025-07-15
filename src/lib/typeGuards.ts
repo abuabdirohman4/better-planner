@@ -36,7 +36,7 @@ export const isArray = (value: unknown): value is unknown[] =>
 /**
  * Type guard for function values
  */
-export const isFunction = (value: unknown): value is Function => 
+export const isFunction = (value: unknown): value is (...args: unknown[]) => unknown => 
   typeof value === 'function';
 
 /**

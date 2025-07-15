@@ -48,7 +48,7 @@ export default function SignUpForm({ error, defaultEmail }: { error?: string | n
             className="w-4 h-4"
           />
           <label htmlFor="terms-agree" className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
-            By creating an account you agree to the <a href="#" className="underline">Terms and Conditions</a> and <a href="#" className="underline">Privacy Policy</a>.
+            By creating an account you agree to the <button type="button" className="underline text-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 rounded">Terms and Conditions</button> and <button type="button" className="underline text-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 rounded">Privacy Policy</button>.
           </label>
         </div>
         <button type="submit" className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
