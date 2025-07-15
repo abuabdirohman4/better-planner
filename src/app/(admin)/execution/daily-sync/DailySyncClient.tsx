@@ -85,14 +85,6 @@ const TaskCard: React.FC<{
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'DONE': return 'bg-green-100 text-green-800 border-green-200';
-      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
       <div className="flex items-start justify-between mb-2">
@@ -143,24 +135,15 @@ const TaskCard: React.FC<{
               +
             </button>
           </div>
-          <select
-            value={item.status}
-            onChange={(e) => onStatusChange(item.item_id, e.target.value as 'TODO' | 'IN_PROGRESS' | 'DONE')}
-            className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(item.status)}`}
-          >
-            <option value="TODO">Belum Dimulai</option>
-            <option value="IN_PROGRESS">Sedang Dikerjakan</option>
-            <option value="DONE">Selesai</option>
-          </select>
         </div>
       </div>
-      {item.quest_title && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-          {item.quest_title}
-        </div>
-      )}
       <div className="flex items-center justify-between">
-        <div></div>
+        {item.quest_title && (
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {item.quest_title}
+          </div>
+        )}
+        {/* <div></div> */}
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"

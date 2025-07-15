@@ -192,7 +192,26 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
         clearInterval(intervalRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerState, breakType, activeTask]);
+
+  // Update document.title based on timer state and activeTask
+  useEffect(() => {
+    // Only run on client
+    if (typeof window === 'undefined') return;
+    const defaultTitle = 'Daily Sync | Better Planner';
+    if (timerState === 'FOCUSING' && activeTask) {
+      const timeStr = formatTime(secondsElapsed);
+      const newTitle = `${timeStr} ${activeTask.title}r`;
+      if (document.title !== newTitle) {
+        document.title = newTitle;
+      }
+    } else {
+      if (document.title !== defaultTitle) {
+        document.title = defaultTitle;
+      }
+    }
+  }, [timerState, secondsElapsed, activeTask]);
 
   // Panggil onSessionComplete hanya di efek, setelah render
   useEffect(() => {
