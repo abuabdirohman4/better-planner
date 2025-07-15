@@ -28,33 +28,6 @@ type Task = {
   parent_task_id: string | null;
 };
 
-function TaskItemDraggable({ task, id }: { task: Task; id: string }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`p-3 rounded-lg border bg-white dark:bg-gray-800 shadow-sm cursor-move mb-2 transition ${isDragging ? "opacity-60" : ""}`}
-      style={{ transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined }}
-    >
-      <span className="font-medium">{task.title}</span>
-    </div>
-  );
-}
-
-function DayDroppable({ date, children }: { date: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: date });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`min-h-[60px] transition rounded-lg ${isOver ? "bg-blue-50 dark:bg-blue-900/30" : ""}`}
-    >
-      {children}
-    </div>
-  );
-}
-
 // Import missing functions
 const getUnscheduledTasks = async (year: number, quarter: number) =>
   (await import("../../planning/quests/actions")).getUnscheduledTasks(year, quarter);
@@ -73,31 +46,15 @@ function ensureMonday(date: Date) {
   return d;
 }
 
-export default function WeeklySyncClient() {
-  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
-  const [taskPool, setTaskPool] = useState<Task[]>([]);
-  const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
-  const [loading, setLoading] = useState(false);
-  const { year, quarter } = useWeek();
-  const weekDates = getWeekDates(currentWeek);
-  // State untuk dropdown week
-  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
-  const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
-  const [goals, setGoals] = useState<WeeklyGoal[]>([]);
-  const [goalProgress, setGoalProgress] = useState<{ [key: number]: { completed: number; total: number; percentage: number } }>({});
-  const [refreshFlag, setRefreshFlag] = useState(0);
-  const [toDontList, setToDontList] = useState<Rule[]>([]);
-  const [toDontListLoading, setToDontListLoading] = useState(true);
-
-  // Optimized calculations using useMemo
-  const weekCalculations = useMemo(() => {
+// Custom hook for week calculations
+function useWeekCalculations(currentWeek: Date, year: number, quarter: number, selectedWeekInQuarter: number | undefined) {
+  return useMemo(() => {
     const currentWeekNumber = getWeekOfYear(currentWeek);
     const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
     const totalWeeks = endWeek - startWeek + 1;
     const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
     const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
 
-    // Calculate week range using getDateFromWeek for consistency
     const weekStartDate = getDateFromWeek(year, startWeek + displayWeek - 1, 1);
     const weekEndDate = getDateFromWeek(year, startWeek + displayWeek - 1, 7);
     const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
@@ -114,9 +71,14 @@ export default function WeeklySyncClient() {
       weekRangeLabel
     };
   }, [currentWeek, year, quarter, selectedWeekInQuarter]);
+}
 
-  // Destructure for easier access
-  const { displayWeek, totalWeeks, weekRangeLabel } = weekCalculations;
+// Custom hook for task data management
+function useTaskData(year: number, quarter: number, currentWeek: Date) {
+  const [taskPool, setTaskPool] = useState<Task[]>([]);
+  const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
+  const [loading, setLoading] = useState(false);
+  const weekDates = getWeekDates(currentWeek);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,22 +109,20 @@ export default function WeeklySyncClient() {
       }
     };
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWeek, year, quarter]);
+  }, [currentWeek, year, quarter, weekDates]);
 
-  useEffect(() => {
-    setToDontListLoading(true);
-    getWeeklyRules(year, displayWeek).then(data => {
-      setToDontList(data);
-      setToDontListLoading(false);
-    });
-  }, [year, displayWeek, refreshFlag]);
+  return { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates };
+}
+
+// Custom hook for weekly goals
+function useWeeklyGoals(year: number, displayWeek: number, refreshFlag: number) {
+  const [goals, setGoals] = useState<WeeklyGoal[]>([]);
+  const [goalProgress, setGoalProgress] = useState<{ [key: number]: { completed: number; total: number; percentage: number } }>({});
 
   useEffect(() => {
     const fetchGoals = async () => {
       const fetchedGoals = await getWeeklyGoals(year, displayWeek);
       setGoals(fetchedGoals);
-      // Hitung progress untuk setiap goal slot
       const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
       await Promise.all(
         fetchedGoals.map(async (goal) => {
@@ -179,11 +139,153 @@ export default function WeeklySyncClient() {
     fetchGoals();
   }, [year, displayWeek, refreshFlag]);
 
-  // Handler untuk refresh data dari child
-  const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
-  const handleRefreshToDontList = () => setRefreshFlag(f => f + 1);
+  return { goals, goalProgress };
+}
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+// Custom hook for to-dont list
+function useToDontList(year: number, displayWeek: number, refreshFlag: number) {
+  const [toDontList, setToDontList] = useState<Rule[]>([]);
+  const [toDontListLoading, setToDontListLoading] = useState(true);
+
+  useEffect(() => {
+    setToDontListLoading(true);
+    getWeeklyRules(year, displayWeek).then(data => {
+      setToDontList(data);
+      setToDontListLoading(false);
+    });
+  }, [year, displayWeek, refreshFlag]);
+
+  return { toDontList, toDontListLoading };
+}
+
+// Component for task item
+function TaskItemDraggable({ task, id }: { task: Task; id: string }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`p-3 rounded-lg border bg-white dark:bg-gray-800 shadow-sm cursor-move mb-2 transition ${isDragging ? "opacity-60" : ""}`}
+      style={{ transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined }}
+    >
+      <span className="font-medium">{task.title}</span>
+    </div>
+  );
+}
+
+// Component for droppable day
+function DayDroppable({ date, children }: { date: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: date });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[60px] transition rounded-lg ${isOver ? "bg-blue-50 dark:bg-blue-900/30" : ""}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Component for week selector
+function WeekSelector({ 
+  displayWeek, 
+  totalWeeks, 
+  isWeekDropdownOpen, 
+  setIsWeekDropdownOpen, 
+  handleSelectWeek, 
+  goPrevWeek, 
+  goNextWeek 
+}: {
+  displayWeek: number;
+  totalWeeks: number;
+  isWeekDropdownOpen: boolean;
+  setIsWeekDropdownOpen: (value: boolean) => void;
+  handleSelectWeek: (weekIdx: number) => void;
+  goPrevWeek: () => void;
+  goNextWeek: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
+        &lt;
+      </Button>
+      <div className="relative">
+        <button
+          className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
+          aria-haspopup="listbox"
+          aria-expanded={isWeekDropdownOpen}
+        >
+          <span>Week {displayWeek}</span>
+        </button>
+        <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
+          <div className="max-h-64 overflow-y-auto">
+            {Array.from({ length: totalWeeks }, (_, i) => (
+              <DropdownItem
+                key={i + 1}
+                onClick={() => handleSelectWeek(i + 1)}
+                className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
+              >
+                Week {i + 1}
+              </DropdownItem>
+            ))}
+          </div>
+        </Dropdown>
+      </div>
+      <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
+        &gt;
+      </Button>
+    </div>
+  );
+}
+
+// Component for task calendar
+function TaskCalendar({ 
+  weekDates, 
+  weekTasks, 
+  handleDragEnd 
+}: {
+  weekDates: Date[];
+  weekTasks: { [date: string]: Task[] };
+  handleDragEnd: (event: DragEndEvent) => void;
+}) {
+  return (
+    <section>
+      <h4 className="text-base font-semibold mb-2">Kalender Mingguan</h4>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 gap-4 md:grid md:grid-rows-7 md:grid-cols-1">
+          {weekDates.map((date: Date, idx: number) => {
+            const dateStr = date.toISOString().slice(0, 10);
+            return (
+              <ComponentCard
+                key={dateStr}
+                title={`${daysOfWeek[idx]}, ${formatDateIndo(date)}`}
+              >
+                <DayDroppable date={dateStr}>
+                  {weekTasks[dateStr] && weekTasks[dateStr].length === 0 ? <div className="text-gray-400">Belum ada tugas</div> : null}
+                  {weekTasks[dateStr] ? weekTasks[dateStr].map((task) => (
+                      <TaskItemDraggable key={task.id} task={task} id={task.id} />
+                    )) : null}
+                </DayDroppable>
+              </ComponentCard>
+            );
+          })}
+        </div>
+      </DndContext>
+    </section>
+  );
+}
+
+// Component for task pool
+// Custom hook for drag end handling
+function useDragEndHandler(
+  taskPool: Task[],
+  setTaskPool: (tasks: Task[]) => void,
+  weekTasks: { [date: string]: Task[] },
+  setWeekTasks: (tasks: { [date: string]: Task[] }) => void
+) {
+  return async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
     const taskId = active.id as string;
@@ -237,6 +339,47 @@ export default function WeeklySyncClient() {
       CustomToast.success("Tugas berhasil dijadwalkan");
     }
   };
+}
+
+function TaskPool({ taskPool, loading }: { taskPool: Task[]; loading: boolean }) {
+  return (
+    <section>
+      <h4 className="text-base font-semibold mb-2">Kolam Tugas</h4>
+      <ComponentCard title="Kolam Tugas" desc="Tugas yang belum terjadwal">
+        {loading ? (
+          <div className="text-gray-400">Loading...</div>
+        ) : (
+          <DayDroppable date="task-pool">
+            {taskPool.length === 0 && <div className="text-gray-400">Tidak ada tugas</div>}
+            {taskPool.map((task) => (
+              <TaskItemDraggable key={task.id} task={task} id={task.id} />
+            ))}
+          </DayDroppable>
+        )}
+      </ComponentCard>
+    </section>
+  );
+}
+
+export default function WeeklySyncClient() {
+  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
+  const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
+  const [refreshFlag, setRefreshFlag] = useState(0);
+  
+  const { year, quarter } = useWeek();
+  const weekCalculations = useWeekCalculations(currentWeek, year, quarter, selectedWeekInQuarter);
+  const { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates } = useTaskData(year, quarter, currentWeek);
+  const { goals, goalProgress } = useWeeklyGoals(year, weekCalculations.displayWeek, refreshFlag);
+  const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
+
+  const { displayWeek, totalWeeks } = weekCalculations;
+
+  // Handler untuk refresh data dari child
+  const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
+  const handleRefreshToDontList = () => setRefreshFlag(f => f + 1);
+
+  const handleDragEnd = useDragEndHandler(taskPool, setTaskPool, weekTasks, setWeekTasks);
 
   // Handler pilih week dari dropdown
   const handleSelectWeek = (weekIdx: number) => {
@@ -252,8 +395,7 @@ export default function WeeklySyncClient() {
     if (isWeekDropdownOpen) {
       setIsWeekDropdownOpen(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWeek]);
+  }, [currentWeek, isWeekDropdownOpen]);
 
   // Reset selectedWeekInQuarter jika navigasi dengan tombol prev/next
   const goPrevWeek = () => {
@@ -263,6 +405,7 @@ export default function WeeklySyncClient() {
     setCurrentWeek(ensureMonday(prev));
     setSelectedWeekInQuarter(undefined);
   };
+  
   const goNextWeek = () => {
     if (displayWeek >= totalWeeks) return;
     const next = new Date(currentWeek);
@@ -281,56 +424,18 @@ export default function WeeklySyncClient() {
 
   return (
     <div className="container mx-auto py-8 pt-0">
-      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hidden">
-        <div className="text-sm">
-          <strong>Debug:</strong>
-          <div>
-            Quarter: {quarter} <br />
-            Week: {weekDates[0].toISOString().slice(0, 10)} - {weekDates[6].toISOString().slice(0, 10)} <br/> <br/>
-            Week {displayWeek} <br/>
-            {weekRangeLabel}
-            {/* <div className="text-xs text-gray-500 mt-1 text-center">
-            </div> */}
-          </div>
-        </div>
-        <div className="text-sm">Loading: {loading ? "Yes" : "No"}, Task Pool: {taskPool.length} tasks</div>
-      </div>
-
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Weekly Sync</h2>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
-            &lt;
-          </Button>
-          {/* Dropdown Week Selector */}
-          <div className="relative">
-            <button
-              className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
-              onClick={() => setIsWeekDropdownOpen((v) => !v)}
-              aria-haspopup="listbox"
-              aria-expanded={isWeekDropdownOpen}
-            >
-              <span>Week {displayWeek}</span>
-            </button>
-            <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
-              <div className="max-h-64 overflow-y-auto">
-                {Array.from({ length: totalWeeks }, (_, i) => (
-                  <DropdownItem
-                    key={i + 1}
-                    onClick={() => handleSelectWeek(i + 1)}
-                    className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
-                  >
-                    Week {i + 1}
-                  </DropdownItem>
-                ))}
-              </div>
-            </Dropdown>
-          </div>
-          <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
-            &gt;
-          </Button>
-        </div>
+        <WeekSelector
+          displayWeek={displayWeek}
+          totalWeeks={totalWeeks}
+          isWeekDropdownOpen={isWeekDropdownOpen}
+          setIsWeekDropdownOpen={setIsWeekDropdownOpen}
+          handleSelectWeek={handleSelectWeek}
+          goPrevWeek={goPrevWeek}
+          goNextWeek={goNextWeek}
+        />
       </div>
 
       {/* Kolom 3 Goal Mingguan */}
@@ -341,6 +446,7 @@ export default function WeeklySyncClient() {
         goalProgress={goalProgress}
         onRefreshGoals={handleRefreshGoals}
       />
+      
       {/* === To Don't List Card === */}
       <ToDontListCard
         year={year}
@@ -352,46 +458,8 @@ export default function WeeklySyncClient() {
 
       {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
-        {/* Kolom Kiri: Kolam Tugas */}
-        <section>
-          <h4 className="text-base font-semibold mb-2">Kolam Tugas</h4>
-          <ComponentCard title="Kolam Tugas" desc="Tugas yang belum terjadwal">
-            {loading ? (
-              <div className="text-gray-400">Loading...</div>
-            ) : (
-              <DayDroppable date="task-pool">
-                {taskPool.length === 0 && <div className="text-gray-400">Tidak ada tugas</div>}
-                {taskPool.map((task) => (
-                  <TaskItemDraggable key={task.id} task={task} id={task.id} />
-                ))}
-              </DayDroppable>
-            )}
-          </ComponentCard>
-        </section>
-        {/* Kolom Kanan: Kalender Mingguan */}
-        <section>
-          <h4 className="text-base font-semibold mb-2">Kalender Mingguan</h4>
-          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 gap-4 md:grid md:grid-rows-7 md:grid-cols-1">
-              {weekDates.map((date: Date, idx: number) => {
-                const dateStr = date.toISOString().slice(0, 10);
-                return (
-                  <ComponentCard
-                    key={dateStr}
-                    title={`${daysOfWeek[idx]}, ${formatDateIndo(date)}`}
-                  >
-                    <DayDroppable date={dateStr}>
-                      {weekTasks[dateStr] && weekTasks[dateStr].length === 0 ? <div className="text-gray-400">Belum ada tugas</div> : null}
-                      {weekTasks[dateStr] ? weekTasks[dateStr].map((task) => (
-                          <TaskItemDraggable key={task.id} task={task} id={task.id} />
-                        )) : null}
-                    </DayDroppable>
-                  </ComponentCard>
-                );
-              })}
-            </div>
-          </DndContext>
-        </section>
+        <TaskPool taskPool={taskPool} loading={loading} />
+        <TaskCalendar weekDates={weekDates} weekTasks={weekTasks} handleDragEnd={handleDragEnd} />
       </div>
     </div>
   );

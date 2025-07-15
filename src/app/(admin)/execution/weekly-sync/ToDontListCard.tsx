@@ -24,6 +24,149 @@ export type Rule = {
   display_order: number;
 };
 
+// Custom hook for rule editing management
+function useRuleEditing() {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [focusRuleId, setFocusRuleId] = useState<string | null>(null);
+  const [focusRuleIdAfterInsert, setFocusRuleIdAfterInsert] = useState<string | null>(null);
+
+  return {
+    editingId,
+    setEditingId,
+    editingText,
+    setEditingText,
+    focusRuleId,
+    setFocusRuleId,
+    focusRuleIdAfterInsert,
+    setFocusRuleIdAfterInsert
+  };
+}
+
+// Custom hook for new rule management
+function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], onRefresh: () => void) {
+  const [newRule, setNewRule] = useState("");
+  const [newRuleLoading, setNewRuleLoading] = useState(false);
+  const [loadingInsertAt, setLoadingInsertAt] = useState<number | null>(null);
+
+  const handleAddRule = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newRule.trim()) return;
+    setNewRuleLoading(true);
+    const formData = new FormData();
+    formData.append("rule_text", newRule);
+    formData.append("year", String(year));
+    formData.append("week_number", String(weekNumber));
+    const res = await addWeeklyRule(formData);
+    if (res.success) {
+      setNewRule("");
+      onRefresh();
+    } else {
+      CustomToast.error("Gagal", res.message);
+    }
+    setNewRuleLoading(false);
+  };
+
+  const handleBulkPaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    const lines = pastedText.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return;
+    e.preventDefault();
+    setNewRuleLoading(true);
+    for (const line of lines) {
+      const formData = new FormData();
+      formData.append("rule_text", line);
+      formData.append("year", String(year));
+      formData.append("week_number", String(weekNumber));
+      await addWeeklyRule(formData);
+    }
+    setNewRule("");
+    onRefresh();
+    setNewRuleLoading(false);
+  };
+
+  const handleAddEmptyRuleAt = async (idx: number) => {
+    setLoadingInsertAt(idx + 1);
+    const newOrder = (rules[rules.length - 1]?.display_order ?? 0) + 1;
+    const formData = new FormData();
+    formData.append("rule_text", "");
+    formData.append("year", String(year));
+    formData.append("week_number", String(weekNumber));
+    formData.append("display_order", String(newOrder));
+    const res = await addWeeklyRule(formData);
+    if (res.success && res.id) {
+      onRefresh();
+    } else if (res.success) {
+      onRefresh();
+    } else {
+      CustomToast.error("Gagal menambah aturan", res.message);
+    }
+    setLoadingInsertAt(null);
+  };
+
+  return {
+    newRule,
+    setNewRule,
+    newRuleLoading,
+    loadingInsertAt,
+    handleAddRule,
+    handleBulkPaste,
+    handleAddEmptyRuleAt
+  };
+}
+
+// Custom hook for rule operations
+function useRuleOperations(rules: Rule[], onRefresh: () => void) {
+  const handleSaveEdit = async (id: string, editingId: string | null, editingText: string, setEditingId: (id: string | null) => void, setEditingText: (text: string) => void) => {
+    if (editingId !== id) return;
+    const rule = rules.find(r => r.id === id);
+    if (!rule || editingText.trim() === rule.rule_text) {
+      setEditingId(null);
+      setEditingText("");
+      return;
+    }
+    const res = await updateWeeklyRule(id, editingText.trim());
+    if (res.success) {
+      onRefresh();
+    } else {
+      CustomToast.error("Gagal", res.message);
+    }
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  const handleDelete = async (id: string) => {
+    const res = await deleteWeeklyRule(id);
+    if (!res.success) {
+      CustomToast.error("Gagal", res.message);
+      onRefresh();
+    } else {
+      onRefresh();
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = rules.findIndex(r => r.id === active.id);
+    const newIndex = rules.findIndex(r => r.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newRules = arrayMove(rules, oldIndex, newIndex).map((r, idx) => ({ ...r, display_order: idx + 1 }));
+    const res = await updateWeeklyRuleOrder(newRules.map(r => ({ id: r.id, display_order: r.display_order })));
+    if (!res.success) {
+      CustomToast.error("Gagal update urutan", res.message);
+    }
+    onRefresh();
+  };
+
+  return {
+    handleSaveEdit,
+    handleDelete,
+    handleDragEnd
+  };
+}
+
+// Component for sortable rule item
 const SortableRuleItem = forwardRef<HTMLInputElement, {
   rule: Rule;
   editingId: string | null;
@@ -109,112 +252,85 @@ const SortableRuleItem = forwardRef<HTMLInputElement, {
 );
 SortableRuleItem.displayName = "SortableRuleItem";
 
+// Component for empty state input
+function EmptyStateInput({ 
+  newRule, 
+  setNewRule, 
+  handleAddRule, 
+  handleBulkPaste, 
+  newRuleLoading, 
+  inputRefs 
+}: {
+  newRule: string;
+  setNewRule: (value: string) => void;
+  handleAddRule: (e?: React.FormEvent) => void;
+  handleBulkPaste: (e: React.ClipboardEvent<HTMLInputElement>) => void;
+  newRuleLoading: boolean;
+  inputRefs: React.MutableRefObject<(HTMLInputElement | null)[]>;
+}) {
+  return (
+    <div className="flex items-center py-2 group w-full">
+      <span className="w-6 mr-1" />
+      <input
+        ref={el => { inputRefs.current[0] = el; }}
+        className="flex-1 border rounded px-2 py-1 mr-2 dark:bg-gray-800"
+        value={newRule}
+        onChange={e => setNewRule(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            handleAddRule();
+            setNewRule("");
+          }
+        }}
+        onPaste={handleBulkPaste}
+        placeholder="Masukkan aturan..."
+        disabled={newRuleLoading}
+        autoFocus
+      />
+    </div>
+  );
+}
+
+// Component for loading skeleton
+function LoadingSkeleton() {
+  return (
+    <div className="flex items-center py-2 group w-full animate-pulse">
+      <span className="w-6 mr-2" />
+      <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+    </div>
+  );
+}
+
 const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules, loading, onRefresh }) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState("");
-  const [focusRuleId, setFocusRuleId] = useState<string | null>(null);
-  const [newRule, setNewRule] = useState("");
-  const [newRuleLoading, setNewRuleLoading] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [focusRuleIdAfterInsert, setFocusRuleIdAfterInsert] = useState<string | null>(null);
-  const [loadingInsertAt, setLoadingInsertAt] = useState<number | null>(null);
-
-  // Save edit
-  const handleSaveEdit = async (id: string) => {
-    if (editingId !== id) return;
-    const rule = rules.find(r => r.id === id);
-    if (!rule || editingText.trim() === rule.rule_text) {
-      setEditingId(null);
-      setEditingText("");
-      return;
-    }
-    const res = await updateWeeklyRule(id, editingText.trim());
-    if (res.success) {
-      onRefresh();
-      // CustomToast.success(res.message);
-    } else {
-      CustomToast.error("Gagal", res.message);
-    }
-    setEditingId(null);
-    setEditingText("");
-  };
-
-  // Delete rule (by keyboard)
-  const handleDelete = async (id: string) => {
-    const idx = rules.findIndex(r => r.id === id);
-    const res = await deleteWeeklyRule(id);
-    if (!res.success) {
-      CustomToast.error("Gagal", res.message);
-      onRefresh();
-    } else {
-      // Fokus ke input di atasnya
-      setTimeout(() => {
-        if (inputRefs.current[idx - 1]) inputRefs.current[idx - 1]?.focus();
-      }, 100);
-      onRefresh();
-    }
-  };
-
-  // Add new rule (inline input bawah)
-  const handleAddRule = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!newRule.trim()) return;
-    setNewRuleLoading(true);
-    const formData = new FormData();
-    formData.append("rule_text", newRule);
-    formData.append("year", String(year));
-    formData.append("week_number", String(weekNumber));
-    const res = await addWeeklyRule(formData);
-    if (res.success) {
-      setNewRule("");
-      onRefresh();
-    } else {
-      CustomToast.error("Gagal", res.message);
-    }
-    setNewRuleLoading(false);
-    // Fokus ke input baru
-    setTimeout(() => {
-      if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
-    }, 100);
-  };
-
-  // Bulk paste handler
-  const handleBulkPaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pastedText = e.clipboardData.getData('text');
-    const lines = pastedText.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length <= 1) return; // Bukan multi-line
-    e.preventDefault();
-    setNewRuleLoading(true);
-    for (const line of lines) {
-      const formData = new FormData();
-      formData.append("rule_text", line);
-      formData.append("year", String(year));
-      formData.append("week_number", String(weekNumber));
-      await addWeeklyRule(formData);
-    }
-    setNewRule("");
-    onRefresh();
-    setTimeout(() => {
-      if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
-    }, 100);
-    setNewRuleLoading(false);
-  };
-
-  // Drag & drop handler
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = rules.findIndex(r => r.id === active.id);
-    const newIndex = rules.findIndex(r => r.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const newRules = arrayMove(rules, oldIndex, newIndex).map((r, idx) => ({ ...r, display_order: idx + 1 }));
-    const res = await updateWeeklyRuleOrder(newRules.map(r => ({ id: r.id, display_order: r.display_order })));
-    if (!res.success) {
-      CustomToast.error("Gagal update urutan", res.message);
-    }
-    onRefresh();
-  };
+  
+  const {
+    editingId,
+    setEditingId,
+    editingText,
+    setEditingText,
+    focusRuleId,
+    setFocusRuleId,
+    focusRuleIdAfterInsert,
+    setFocusRuleIdAfterInsert
+  } = useRuleEditing();
+  
+  const {
+    newRule,
+    setNewRule,
+    newRuleLoading,
+    loadingInsertAt,
+    handleAddRule,
+    handleBulkPaste,
+    handleAddEmptyRuleAt
+  } = useNewRuleManagement(year, weekNumber, rules, onRefresh);
+  
+  const {
+    handleSaveEdit,
+    handleDelete,
+    handleDragEnd
+  } = useRuleOperations(rules, onRefresh);
 
   // Fokus ke input atas setelah hapus
   const focusInputAbove = (idx: number) => {
@@ -223,38 +339,12 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
     }, 100);
   };
 
-  // Handler insert di posisi mana pun
-  const handleAddEmptyRuleAt = async (idx: number) => {
-    setLoadingInsertAt(idx + 1);
-    // Hitung display_order baru (selalu tambah di paling bawah)
-    const newOrder = (rules[rules.length - 1]?.display_order ?? 0) + 1;
-    const formData = new FormData();
-    formData.append("rule_text", "");
-    formData.append("year", String(year));
-    formData.append("week_number", String(weekNumber));
-    formData.append("display_order", String(newOrder));
-    const res = await addWeeklyRule(formData);
-    if (res.success && res.id) {
-      setFocusRuleIdAfterInsert(res.id);
-      onRefresh();
-    } else if (res.success) {
-      setTimeout(() => {
-        if (inputRefs.current[idx + 1]) inputRefs.current[idx + 1]?.focus();
-      }, 100);
-      onRefresh();
-    } else {
-      CustomToast.error("Gagal menambah aturan", res.message);
-    }
-    setLoadingInsertAt(null);
-  };
-
   // Bulk paste handler untuk input terakhir
   const handleBulkPasteLast = async (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length <= 1) return; // Bukan multi-line
+    if (lines.length <= 1) return;
     e.preventDefault();
-    setNewRuleLoading(true);
     for (const line of lines) {
       const formData = new FormData();
       formData.append("rule_text", line);
@@ -263,10 +353,6 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
       await addWeeklyRule(formData);
     }
     onRefresh();
-    setTimeout(() => {
-      if (inputRefs.current[rules.length]) inputRefs.current[rules.length]?.focus();
-    }, 100);
-    setNewRuleLoading(false);
   };
 
   return (
@@ -275,66 +361,46 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
         <SortableContext items={rules.map(r => r.id)} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-1">
             {loading ? (
-              <div className="flex items-center py-2 group w-full animate-pulse">
-                <span className="w-6 mr-2" />
-                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-              </div>
+              <LoadingSkeleton />
             ) : rules.length === 0 ? (
-              <div className="flex items-center py-2 group w-full">
-                <span className="w-6 mr-1" />
-                <input
-                  ref={el => { inputRefs.current[0] = el; }}
-                  className="flex-1 border rounded px-2 py-1 mr-2 dark:bg-gray-800"
-                  value={newRule}
-                  onChange={e => setNewRule(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      handleAddRule();
-                      setNewRule("");
-                    }
-                  }}
-                  onPaste={handleBulkPaste}
-                  placeholder="Masukkan aturan..."
-                  disabled={newRuleLoading}
-                  autoFocus
-                />
-              </div>
+              <EmptyStateInput
+                newRule={newRule}
+                setNewRule={setNewRule}
+                handleAddRule={handleAddRule}
+                handleBulkPaste={handleBulkPaste}
+                newRuleLoading={newRuleLoading}
+                inputRefs={inputRefs}
+              />
             ) : (
-              rules.map((rule, idx) => [
-                <SortableRuleItem
-                  key={rule.id}
-                  rule={rule}
-                  editingId={editingId}
-                  editingText={editingText}
-                  setEditingId={setEditingId}
-                  setEditingText={setEditingText}
-                  handleSaveEdit={handleSaveEdit}
-                  handleDelete={handleDelete}
-                  setFocusRuleId={setFocusRuleId}
-                  focusRuleId={focusRuleId}
-                  focusInputAbove={focusInputAbove}
-                  ref={el => { inputRefs.current[idx] = el; }}
-                  isLastItem={idx === rules.length - 1}
-                  handleAddEmptyRuleAt={() => handleAddEmptyRuleAt(idx)}
-                  handleBulkPasteLast={handleBulkPasteLast}
-                  focusRuleIdAfterInsert={focusRuleIdAfterInsert}
-                  setFocusRuleIdAfterInsert={setFocusRuleIdAfterInsert}
-                  idx={idx}
-                  inputRefs={inputRefs}
-                />,
-                loadingInsertAt === idx + 1 && (
-                  <div key={`skeleton-${idx + 1}`} className="flex items-center py-2 group w-full animate-pulse">
-                    <span className="w-6 mr-2" />
-                    <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-                  </div>
-                )
-              ])
+              rules.map((rule, idx) => (
+                <React.Fragment key={rule.id}>
+                  <SortableRuleItem
+                    rule={rule}
+                    editingId={editingId}
+                    editingText={editingText}
+                    setEditingId={setEditingId}
+                    setEditingText={setEditingText}
+                    handleSaveEdit={(id) => handleSaveEdit(id, editingId, editingText, setEditingId, setEditingText)}
+                    handleDelete={handleDelete}
+                    setFocusRuleId={setFocusRuleId}
+                    focusRuleId={focusRuleId}
+                    focusInputAbove={focusInputAbove}
+                    ref={el => { inputRefs.current[idx] = el; }}
+                    isLastItem={idx === rules.length - 1}
+                    handleAddEmptyRuleAt={() => handleAddEmptyRuleAt(idx)}
+                    handleBulkPasteLast={handleBulkPasteLast}
+                    focusRuleIdAfterInsert={focusRuleIdAfterInsert}
+                    setFocusRuleIdAfterInsert={setFocusRuleIdAfterInsert}
+                    idx={idx}
+                    inputRefs={inputRefs}
+                  />
+                  {loadingInsertAt === idx + 1 && (
+                    <LoadingSkeleton key={`skeleton-${idx + 1}`} />
+                  )}
+                </React.Fragment>
+              ))
             )}
-            {/* Skeleton loading bar saat insert */}
-            {newRuleLoading ? <div className="flex items-center py-2 group w-full animate-pulse">
-                <span className="w-6 mr-2" />
-                <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-              </div> : null}
+            {newRuleLoading && <LoadingSkeleton />}
           </div>
         </SortableContext>
       </DndContext>
