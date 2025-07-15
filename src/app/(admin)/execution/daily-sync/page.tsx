@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useTransition, useEffect } from "react";
+import React, { useState, useMemo, useTransition, useEffect, useCallback } from "react";
 
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -158,7 +158,7 @@ function useTimerManagement(selectedDateStr: string) {
     };
   }, [timerState, secondsElapsed, activeTaskCtx]);
 
-  const handleSessionComplete = async (sessionData: {
+  const handleSessionComplete = useCallback(async (sessionData: {
     taskId: string;
     taskTitle: string;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
@@ -185,7 +185,7 @@ function useTimerManagement(selectedDateStr: string) {
         console.error('Error logging session:', err);
       }
     });
-  };
+  }, [selectedDateStr, setActivityLogRefreshKey]);
 
       const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
       startFocusSession(task);

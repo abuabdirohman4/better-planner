@@ -400,7 +400,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
                 </React.Fragment>
               ))
             )}
-            {newRuleLoading && <LoadingSkeleton />}
+            {newRuleLoading ? <LoadingSkeleton /> : null}
           </div>
         </SortableContext>
       </DndContext>

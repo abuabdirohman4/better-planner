@@ -1,5 +1,5 @@
 import debounce from 'lodash/debounce';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 
@@ -20,24 +20,14 @@ interface Task {
   status: 'TODO' | 'DONE';
 }
 
-export default function QuestWorkspace({ quest }: { quest: { id: string; title: string; motivation?: string } }) {
+// Custom hook for milestone state and logic
+function useMilestoneState(questId: string) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(true);
-  const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
   const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
   const [lastSubmittedMilestone, setLastSubmittedMilestone] = useState(['', '', '']);
-  const [activeMilestoneIdx, setActiveMilestoneIdx] = useState(0);
-  const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
 
-  // Debounced auto-save
-  const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
-    try {
-      await updateQuestMotivation(quest.id, val);
-    } catch {}
-  }, 1500), [quest.id]);
-
-  // Debounced auto-save milestone title
   const debouncedSaveMilestone = useMemo(() => 
     debounce(async (id: string, val: string) => {
       try {
@@ -46,25 +36,26 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     }, 1500)
   , []);
 
-  const fetchMilestones = async () => {
+  const fetchMilestones = useCallback(async () => {
     setLoadingMilestones(true);
     try {
-      const data = await getMilestonesForQuest(quest.id);
+      const data = await getMilestonesForQuest(questId);
       setMilestones(data || []);
     } finally {
       setLoadingMilestones(false);
     }
-  };
+  }, [questId]);
 
   // Debounce submit milestone berbasis useEffect per slot (3 useEffect terpisah)
   useEffect(() => {
     const val = newMilestoneInputs[0];
-    if (!val || val === lastSubmittedMilestone[0]) return;
+    const lastVal = lastSubmittedMilestone[0];
+    if (!val || val === lastVal) return;
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 0 ? true : v));
       try {
         const formData = new FormData();
-        formData.append('quest_id', quest.id);
+        formData.append('quest_id', questId);
         formData.append('title', val);
         fetchMilestones();
         setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
@@ -74,17 +65,18 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       }
     }, 1500);
     return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[0], quest.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newMilestoneInputs[0], lastSubmittedMilestone[0], questId, fetchMilestones]);
 
   useEffect(() => {
     const val = newMilestoneInputs[1];
-    if (!val || val === lastSubmittedMilestone[1]) return;
+    const lastVal = lastSubmittedMilestone[1];
+    if (!val || val === lastVal) return;
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 1 ? true : v));
       try {
         const formData = new FormData();
-        formData.append('quest_id', quest.id);
+        formData.append('quest_id', questId);
         formData.append('title', val);
         fetchMilestones();
         setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
@@ -94,17 +86,18 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       }
     }, 1500);
     return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[1], quest.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newMilestoneInputs[1], lastSubmittedMilestone[1], questId, fetchMilestones]);
 
   useEffect(() => {
     const val = newMilestoneInputs[2];
-    if (!val || val === lastSubmittedMilestone[2]) return;
+    const lastVal = lastSubmittedMilestone[2];
+    if (!val || val === lastVal) return;
     const handler = setTimeout(async () => {
       setNewMilestoneLoading(l => l.map((v, i) => i === 2 ? true : v));
       try {
         const formData = new FormData();
-        formData.append('quest_id', quest.id);
+        formData.append('quest_id', questId);
         formData.append('title', val);
         fetchMilestones();
         setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
@@ -114,21 +107,49 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       }
     }, 1500);
     return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[2], quest.id]);
-
-  const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMotivationValue(e.target.value);
-    debouncedSaveMotivation(e.target.value);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newMilestoneInputs[2], lastSubmittedMilestone[2], questId, fetchMilestones]);
 
   useEffect(() => {
     fetchMilestones();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quest.id]);
+  }, [questId, fetchMilestones]);
 
-  // MilestoneBar: 3 milestone vertical
-  const renderMilestoneBar = () => (
+  return {
+    milestones,
+    setMilestones,
+    loadingMilestones,
+    newMilestoneInputs,
+    setNewMilestoneInputs,
+    newMilestoneLoading,
+    setNewMilestoneLoading,
+    lastSubmittedMilestone,
+    setLastSubmittedMilestone,
+    debouncedSaveMilestone,
+    fetchMilestones
+  };
+}
+
+// MilestoneBar component
+function MilestoneBar({
+  milestones,
+  setMilestones,
+  newMilestoneInputs,
+  setNewMilestoneInputs,
+  newMilestoneLoading,
+  activeMilestoneIdx,
+  setActiveMilestoneIdx,
+  debouncedSaveMilestone
+}: {
+  milestones: Milestone[];
+  setMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>;
+  newMilestoneInputs: string[];
+  setNewMilestoneInputs: React.Dispatch<React.SetStateAction<string[]>>;
+  newMilestoneLoading: boolean[];
+  activeMilestoneIdx: number;
+  setActiveMilestoneIdx: (idx: number) => void;
+  debouncedSaveMilestone: (id: string, val: string) => void;
+}) {
+  return (
     <div className="flex flex-col gap-4 justify-center mb-6">
       {Array.from({ length: 3 }).map((_, idx) => {
         const milestone = milestones[idx];
@@ -170,6 +191,34 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
       })}
     </div>
   );
+}
+
+export default function QuestWorkspace({ quest }: { quest: { id: string; title: string; motivation?: string } }) {
+  const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
+  const [activeMilestoneIdx, setActiveMilestoneIdx] = useState(0);
+  const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
+
+  const {
+    milestones,
+    setMilestones,
+    loadingMilestones,
+    newMilestoneInputs,
+    setNewMilestoneInputs,
+    newMilestoneLoading,
+    debouncedSaveMilestone
+  } = useMilestoneState(quest.id);
+
+  const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMotivationValue(e.target.value);
+    debouncedSaveMotivation(e.target.value);
+  };
+
+  // Debounced auto-save
+  const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
+    try {
+      await updateQuestMotivation(quest.id, val);
+    } catch {}
+  }, 1500), [quest.id]);
 
   return (
     <div className="flex gap-8">
@@ -183,7 +232,16 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
             rows={3}
           />
           <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
-          {renderMilestoneBar()}
+          <MilestoneBar
+            milestones={milestones}
+            setMilestones={setMilestones}
+            newMilestoneInputs={newMilestoneInputs}
+            setNewMilestoneInputs={setNewMilestoneInputs}
+            newMilestoneLoading={newMilestoneLoading}
+            activeMilestoneIdx={activeMilestoneIdx}
+            setActiveMilestoneIdx={setActiveMilestoneIdx}
+            debouncedSaveMilestone={debouncedSaveMilestone}
+          />
           <div className="space-y-4 mb-4">
             {loadingMilestones ? (
               <p className="text-gray-400">Memuat milestone...</p>
@@ -207,7 +265,6 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           <TaskDetailCard
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
-            milestoneId={milestones[activeMilestoneIdx]?.id || ''}
           />
         </div> : null}
     </div>

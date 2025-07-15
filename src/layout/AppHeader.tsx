@@ -1,11 +1,97 @@
 "use client";
-import React, { useState ,useEffect,useRef, Suspense} from "react";
+import React, { useState ,useEffect, Suspense} from "react";
 
 import QuarterSelector from "@/components/common/QuarterSelector";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+
+// Date Time Display Component
+function DateTimeDisplay({ isClient, currentDateTime }: { isClient: boolean; currentDateTime: Date | null }) {
+  const formatDateTime = (date: Date) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const day = days[date.getDay()];
+    const dateStr = date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+    });
+    const timeStr = date.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    return { day, date: dateStr, time: timeStr };
+  };
+
+  let day = "", date = "", time = "";
+  if (currentDateTime) {
+    const formatted = formatDateTime(currentDateTime);
+    day = formatted.day;
+    date = formatted.date;
+    time = formatted.time;
+  }
+
+  return (
+    <div className="hidden lg:flex flex-col items-end text-sm text-gray-600 dark:text-gray-400">
+      {isClient && currentDateTime ? (
+        <>
+          <div className="text-medium font-mono">{time}</div>
+          <div className="font-medium">{day}, {date}</div>
+        </>
+      ) : (
+        <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      )}
+    </div>
+  );
+}
+
+// Application Menu Component
+function ApplicationMenu({ 
+  isOpen, 
+  onToggle, 
+  isClient, 
+  currentDateTime 
+}: { 
+  isOpen: boolean; 
+  onToggle: () => void;
+  isClient: boolean;
+  currentDateTime: Date | null;
+}) {
+  return (
+    <>
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
+            fill="currentColor"
+          />
+        </svg>
+      </button>
+      <div
+        className={`${isOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+      >
+        <div className="flex items-center gap-2 2xsm:gap-3">
+          <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} />
+          <ThemeToggleButton />
+          <NotificationDropdown />
+        </div>
+        <UserDropdown />
+      </div>
+    </>
+  );
+}
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -27,31 +113,6 @@ const AppHeader: React.FC = () => {
     return () => clearInterval(timer);
   }, [isClient]);
 
-  const formatDateTime = (date: Date) => {
-    // const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const day = days[date.getDay()];
-    const dateStr = date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      // year: 'numeric'
-    });
-    const timeStr = date.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    return { day, date: dateStr, time: timeStr };
-  };
-
-  let day = "", date = "", time = "";
-  if (currentDateTime) {
-    const formatted = formatDateTime(currentDateTime);
-    day = formatted.day;
-    date = formatted.date;
-    time = formatted.time;
-  }
-
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
       toggleSidebar();
@@ -63,22 +124,6 @@ const AppHeader: React.FC = () => {
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 lg:z-10 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -120,53 +165,18 @@ const AppHeader: React.FC = () => {
                 />
               </svg>
             )}
-            {/* Cross Icon */}
           </button>
           <div className="block lg:ml-4">
             <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />}>
               <QuarterSelector />
             </Suspense>
           </div>
-
-          <button
-            onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M5.99902 10.4951C6.82745 10.4951 7.49902 11.1667 7.49902 11.9951V12.0051C7.49902 12.8335 6.82745 13.5051 5.99902 13.5051C5.1706 13.5051 4.49902 12.8335 4.49902 12.0051V11.9951C4.49902 11.1667 5.1706 10.4951 5.99902 10.4951ZM17.999 10.4951C18.8275 10.4951 19.499 11.1667 19.499 11.9951V12.0051C19.499 12.8335 18.8275 13.5051 17.999 13.5051C17.1706 13.5051 16.499 12.8335 16.499 12.0051V11.9951C16.499 11.1667 17.1706 10.4951 17.999 10.4951ZM13.499 11.9951C13.499 11.1667 12.8275 10.4951 11.999 10.4951C11.1706 10.4951 10.499 11.1667 10.499 11.9951V12.0051C10.499 12.8335 11.1706 13.5051 11.999 13.5051C12.8275 13.5051 13.499 12.8335 13.499 12.0051V11.9951Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        </div>
-        <div
-          className={`${isApplicationMenuOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
-        >
-          <div className="flex items-center gap-2 2xsm:gap-3">
-            {/* Current Date & Time Display */}
-            <div className="hidden lg:flex flex-col items-end text-sm text-gray-600 dark:text-gray-400">
-              {isClient && currentDateTime ? (
-                <>
-                  <div className="text-medium font-mono">{time}</div>
-                  <div className="font-medium">{day}, {date}</div>
-                </>
-              ) : (
-                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              )}
-            </div>
-            <ThemeToggleButton />
-            <NotificationDropdown />
-          </div>
-          <UserDropdown />
+          <ApplicationMenu 
+            isOpen={isApplicationMenuOpen} 
+            onToggle={toggleApplicationMenu}
+            isClient={isClient}
+            currentDateTime={currentDateTime}
+          />
         </div>
       </div>
     </header>
