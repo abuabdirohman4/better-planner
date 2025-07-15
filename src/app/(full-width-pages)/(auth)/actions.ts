@@ -4,23 +4,41 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+import { handleApiError, handleAuthError } from '@/lib/errorUtils';
+import { isNonEmptyString, isValidEmail } from '@/lib/typeGuards';
+
 export async function login(formData: FormData) {
   const supabase = await createClient();
 
-  // type-safe-next-auth
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  // Type-safe form data extraction
+  const email = formData.get("email");
+  const password = formData.get("password");
 
-  const { error } = await supabase.auth.signInWithPassword(data);
-
-  if (error) {
-    return redirect("/signin?message=Could not authenticate user");
+  // Validation
+  if (!isNonEmptyString(email) || !isValidEmail(email)) {
+    return redirect("/signin?message=Email tidak valid");
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  if (!isNonEmptyString(password)) {
+    return redirect("/signin?message=Password tidak boleh kosong");
+  }
+
+  const data = { email, password };
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword(data);
+
+    if (error) {
+      const errorMessage = handleAuthError(error);
+      return redirect(`/signin?message=${encodeURIComponent(errorMessage)}`);
+    }
+
+    revalidatePath("/", "layout");
+    redirect("/");
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'autentikasi');
+    return redirect(`/signin?message=${encodeURIComponent(errorInfo.message || 'Gagal login')}`);
+  }
 }
 
 export async function signup(formData: FormData) {

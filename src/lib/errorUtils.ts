@@ -1,0 +1,97 @@
+/**
+ * Centralized error handling utilities
+ * Provides consistent error handling patterns across the application
+ */
+
+export type ErrorContext = 
+  | 'menyimpan data'
+  | 'memuat data'
+  | 'menghapus data'
+  | 'mengupdate data'
+  | 'autentikasi'
+  | 'validasi'
+  | 'network'
+  | 'unknown';
+
+export interface ErrorInfo {
+  context: ErrorContext;
+  message?: string;
+  originalError?: unknown;
+  timestamp: number;
+}
+
+/**
+ * Standardized error handler for API operations
+ */
+export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo => {
+  const errorInfo: ErrorInfo = {
+    context,
+    timestamp: Date.now(),
+    originalError: error,
+  };
+
+  // Extract meaningful error message
+  if (error instanceof Error) {
+    errorInfo.message = error.message;
+  } else if (typeof error === 'string') {
+    errorInfo.message = error;
+  } else if (error && typeof error === 'object' && 'message' in error) {
+    errorInfo.message = String(error.message);
+  } else {
+    errorInfo.message = 'Terjadi kesalahan yang tidak diketahui';
+  }
+
+  // Log error for debugging
+  console.error(`[${context.toUpperCase()}] Error:`, {
+    message: errorInfo.message,
+    originalError: error,
+    timestamp: new Date(errorInfo.timestamp).toISOString(),
+  });
+
+  return errorInfo;
+};
+
+/**
+ * Type-safe error handler that returns a standardized error message
+ */
+export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String(error.message);
+  }
+  return 'Terjadi kesalahan yang tidak diketahui';
+};
+
+/**
+ * Validation error handler
+ */
+export const handleValidationError = (field: string, value: unknown): string => {
+  return `Field '${field}' tidak valid: ${JSON.stringify(value)}`;
+};
+
+/**
+ * Network error handler
+ */
+export const handleNetworkError = (error: unknown): string => {
+  const message = getErrorMessage(error);
+  if (message.includes('fetch') || message.includes('network')) {
+    return 'Koneksi jaringan bermasalah. Silakan coba lagi.';
+  }
+  return message;
+};
+
+/**
+ * Authentication error handler
+ */
+export const handleAuthError = (error: unknown): string => {
+  const message = getErrorMessage(error);
+  if (message.includes('auth') || message.includes('login')) {
+    return 'Sesi Anda telah berakhir. Silakan login kembali.';
+  }
+  return message;
+}; 

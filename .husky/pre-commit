@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linting
+npm run lint
+
+# Run tests
+npm run test:ci
+
+# Check TypeScript
+npx tsc --noEmit
+
+# Check for console.log statements (except in test files)
+if grep -r "console\.log" src/ --include="*.ts" --include="*.tsx" | grep -v "__tests__" | grep -v ".test." | grep -v ".spec."; then
+  echo "❌ Found console.log statements in source code. Please remove them or use console.warn/error instead."
+  exit 1
+fi
+
+# Check for TODO comments
+if grep -r "TODO:" src/ --include="*.ts" --include="*.tsx"; then
+  echo "⚠️  Found TODO comments. Please address them before committing."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!" 
