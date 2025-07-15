@@ -136,24 +136,14 @@ const TaskCard: React.FC<{
               +
             </button>
           </div>
-          {/* <select
-            value={item.status}
-            onChange={(e) => onStatusChange(item.item_id, e.target.value as 'TODO' | 'IN_PROGRESS' | 'DONE')}
-            className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(item.status)}`}
-          >
-            <option value="TODO">Belum Dimulai</option>
-            <option value="IN_PROGRESS">Sedang Dikerjakan</option>
-            <option value="DONE">Selesai</option>
-          </select> */}
         </div>
       </div>
+      <div className="flex items-center justify-between">
       {item.quest_title && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           {item.quest_title}
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div></div>
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"
