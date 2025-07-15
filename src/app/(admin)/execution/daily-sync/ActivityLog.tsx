@@ -135,7 +135,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   // Helper format waktu
   const formatTime = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   };
   const formatTotal = (minutes: number) => {
     const h = Math.floor(minutes / 60);
@@ -144,8 +144,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 max-h-[420px] flex flex-col">
-      <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
+    <div className="bg-white dark:bg-gray-800 max-h-[420px] flex flex-col">
       <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">Memuat aktivitas...</div>
@@ -154,9 +153,9 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {summary.map((item, idx) => (
-              <div key={idx} className="">
+              <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
                 <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-block bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded-full text-xs font-semibold">
@@ -167,8 +166,12 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
                 <ul className="space-y-1 ml-2">
                   {item.sessions.map((log) => (
                     <li key={log.id} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-                      <span className="">•</span>
-                      <span>{formatTime(log.start_time)} <span className="mx-1">→</span> {formatTime(log.end_time)}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-2 font-mono">
+                        <span className="w-9 text-left">{formatTime(log.start_time)}</span>
+                        <span className="w-6 text-center">→</span>
+                        <span className="w-12 text-left">{formatTime(log.end_time)}</span>
+                      </span>
                     </li>
                   ))}
                 </ul>

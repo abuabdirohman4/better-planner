@@ -296,6 +296,7 @@ function DailySyncContent() {
                     onForceRefresh={handleForceRefresh}
                   />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
+                    <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
                     <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
                   </div>
                 </div>

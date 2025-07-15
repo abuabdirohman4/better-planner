@@ -345,7 +345,7 @@ export async function logActivity(formData: FormData) {
   }
 
   // Kalkulasi durasi dinamis
-  const durationInMinutes = Math.max(1, Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000 / 60));
+  const durationInMinutes = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000 / 60;
 
   try {
     const { data: activity, error } = await supabase
