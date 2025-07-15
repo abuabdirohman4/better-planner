@@ -124,12 +124,13 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                   />
                 );
               } else {
+                const slotName = idx === 0 ? 'slot-0' : idx === 1 ? 'slot-1' : 'slot-2';
                 return (
-                  <div key={idx} className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">
+                  <div key={`empty-task-${milestone.id}-${slotName}`} className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">
                     <div className='flex gap-2 w-3/4'>
                       <span className="font-medium text-lg w-6 text-center select-none">{idx + 1}.</span>
                       <input
-                        key={idx}
+                        key={`input-${milestone.id}-${slotName}`}
                         className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 focus:outline-none focus:ring-0"
                         placeholder="Tambah langkah untuk milestone..."
                         value={newTaskInputs[idx]}

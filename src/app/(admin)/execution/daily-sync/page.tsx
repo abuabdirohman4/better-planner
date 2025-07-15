@@ -259,7 +259,7 @@ function DailySyncContent() {
             <div className="flex items-center gap-2">
               {weekDates.map((date, idx) => (
                 <button
-                  key={idx}
+                  key={`day-${date.toISOString()}`}
                   onClick={() => setSelectedDayIdx(idx)}
                   className={`w-24 min-w-[110px] px-3 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
                 >

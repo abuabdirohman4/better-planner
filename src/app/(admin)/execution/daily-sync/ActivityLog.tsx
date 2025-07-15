@@ -154,8 +154,8 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {summary.map((item, idx) => (
-              <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
+            {summary.map((item) => (
+              <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
                 <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-block bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded-full text-xs font-semibold">
