@@ -9,6 +9,15 @@ export interface Task {
   item_type: string;
 }
 
+interface SessionCompleteData {
+  taskId: string;
+  taskTitle: string;
+  duration: number;
+  type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  startTime: string;
+  endTime: string;
+}
+
 interface TimerContextType {
   timerState: TimerState;
   secondsElapsed: number;
@@ -21,29 +30,39 @@ interface TimerContextType {
   resumeTimer: () => void;
   stopTimer: () => void;
   resetTimer: () => void;
+  lastSessionComplete: SessionCompleteData | null;
+  setLastSessionComplete: (data: SessionCompleteData | null) => void;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 // Durasi default (detik)
-const FOCUS_DURATION = 25 * 60;
+const FOCUS_DURATION = 15; // Pastikan integer
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
 
 const LOCAL_STORAGE_KEY = 'better-planner-timer-state-v1';
 
-function loadPersistedState() {
+type PersistedState = Partial<{
+  timerState: TimerState;
+  secondsElapsed: number;
+  activeTask: Task | null;
+  sessionCount: number;
+  breakType: 'SHORT' | 'LONG' | null;
+}>;
+
+function loadPersistedState(): PersistedState | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    return JSON.parse(raw) as PersistedState;
   } catch {
     return null;
   }
 }
 
-function persistState(state: any) {
+function persistState(state: PersistedState) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
@@ -56,6 +75,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
   const [breakType, setBreakType] = useState<'SHORT' | 'LONG' | null>(null);
+  const [lastSessionComplete, setLastSessionComplete] = useState<SessionCompleteData | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load state dari localStorage saat mount
@@ -79,7 +99,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (timerState === 'FOCUSING' || timerState === 'BREAK') {
       intervalRef.current = setInterval(() => {
-        setSecondsElapsed(prev => prev + 1);
+        setSecondsElapsed(prev => Math.round(prev + 1));
       }, 1000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -92,6 +112,20 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   // Otomatis stop timer jika waktu habis
   useEffect(() => {
     if (timerState === 'FOCUSING' && secondsElapsed >= FOCUS_DURATION) {
+      // Sesi fokus selesai
+      if (activeTask) {
+        const now = new Date();
+        const endTime = now.toISOString();
+        const startTime = new Date(now.getTime() - FOCUS_DURATION * 1000).toISOString();
+        setLastSessionComplete({
+          taskId: activeTask.id,
+          taskTitle: activeTask.title,
+          duration: Math.round(FOCUS_DURATION),
+          type: 'FOCUS',
+          startTime,
+          endTime
+        });
+      }
       setTimerState('BREAK_TIME');
       setSessionCount(c => c + 1);
     } else if (timerState === 'BREAK' && breakType === 'SHORT' && secondsElapsed >= SHORT_BREAK_DURATION) {
@@ -101,7 +135,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       setTimerState('IDLE');
       setBreakType(null);
     }
-  }, [timerState, secondsElapsed, breakType]);
+  }, [timerState, secondsElapsed, breakType, activeTask]);
 
   // Kontrol
   const startFocusSession = (task: Task) => {
@@ -123,6 +157,20 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     setTimerState(breakType ? 'BREAK' : 'FOCUSING');
   };
   const stopTimer = () => {
+    // Jika sedang fokus, log sesi cancel
+    if (timerState === 'FOCUSING' && activeTask && secondsElapsed > 0) {
+      const now = new Date();
+      const endTime = now.toISOString();
+      const startTime = new Date(now.getTime() - secondsElapsed * 1000).toISOString();
+      setLastSessionComplete({
+        taskId: activeTask.id,
+        taskTitle: activeTask.title,
+        duration: Math.round(secondsElapsed),
+        type: 'FOCUS',
+        startTime,
+        endTime
+      });
+    }
     setTimerState('IDLE');
     setSecondsElapsed(0);
     setActiveTask(null);
@@ -147,6 +195,8 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     resumeTimer,
     stopTimer,
     resetTimer,
+    lastSessionComplete,
+    setLastSessionComplete,
   };
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

@@ -3,7 +3,7 @@ import React from 'react';
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/context/TimerContext';
 
-const FOCUS_DURATION = 25 * 60;
+const FOCUS_DURATION = 0.25 * 60;
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
 
@@ -70,11 +70,9 @@ export default function PomodoroTimer() {
     activeTask,
     breakType,
     startFocusSession,
-    startBreak,
     pauseTimer,
     resumeTimer,
     stopTimer,
-    resetTimer,
   } = useTimer();
 
   // Helper to get total seconds for progress
@@ -96,7 +94,7 @@ export default function PomodoroTimer() {
   }
 
   // Tampilkan waktu
-  let timeDisplay = formatTime(secondsElapsed);
+  const timeDisplay = formatTime(secondsElapsed);
 
   // Pilih ikon & handler sesuai state
   let IconComponent = PlayIcon;
@@ -144,6 +142,17 @@ export default function PomodoroTimer() {
       {/* Judul dan subjudul */}
       {activeTask && (
         <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div>
+      )}
+      {/* Tombol Cancel */}
+      {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2 text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onClick={stopTimer}
+        >
+          Cancel
+        </Button>
       )}
     </div>
   );

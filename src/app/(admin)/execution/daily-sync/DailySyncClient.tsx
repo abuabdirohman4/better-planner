@@ -2,6 +2,7 @@
 import React, { useState, useTransition } from "react";
 import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, countCompletedSessions } from "./actions";
 import Spinner from '@/components/ui/spinner/Spinner';
+import { useActivityStore } from '@/stores/activityStore';
 
 interface WeeklyTaskItem {
   id: string;
@@ -55,6 +56,7 @@ const TaskCard: React.FC<{
   const [loading, setLoading] = React.useState(true);
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
   const [savingTarget, setSavingTarget] = React.useState(false);
+  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -65,8 +67,7 @@ const TaskCard: React.FC<{
         setLoading(false);
       }
     });
-    return () => { cancelled = true; };
-  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId]);
+  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId, lastActivityTimestamp]);
 
   // Update target jika prop berubah (misal setelah update dari server)
   React.useEffect(() => {
@@ -82,14 +83,6 @@ const TaskCard: React.FC<{
       if (onTargetChange) onTargetChange(item.id, newTarget);
     } finally {
       setSavingTarget(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'DONE': return 'bg-green-100 text-green-800 border-green-200';
-      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -143,7 +136,7 @@ const TaskCard: React.FC<{
               +
             </button>
           </div>
-          <select
+          {/* <select
             value={item.status}
             onChange={(e) => onStatusChange(item.item_id, e.target.value as 'TODO' | 'IN_PROGRESS' | 'DONE')}
             className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(item.status)}`}
@@ -151,7 +144,7 @@ const TaskCard: React.FC<{
             <option value="TODO">Belum Dimulai</option>
             <option value="IN_PROGRESS">Sedang Dikerjakan</option>
             <option value="DONE">Selesai</option>
-          </select>
+          </select> */}
         </div>
       </div>
       {item.quest_title && (
@@ -238,13 +231,22 @@ const TaskColumn: React.FC<{
       )}
 
       <div className="space-y-2">
-                        {items.length === 0 ? (
-                          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+        {items.length === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
             Tidak ada tugas {title.toLowerCase()} hari ini
           </div>
-                        ) : (
+        ) : (
           items.map((item) => (
-            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} onSetActiveTask={onSetActiveTask} selectedDate={selectedDate} onTargetChange={onTargetChange} refreshKey={refreshSessionKey?.[item.id] || 0} forceRefreshTaskId={forceRefreshTaskId} />
+            <TaskCard
+              key={item.id}
+              item={item}
+              onStatusChange={onStatusChange}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={onTargetChange}
+              refreshKey={refreshSessionKey?.[item.id] || 0}
+              forceRefreshTaskId={forceRefreshTaskId}
+            />
           ))
         )}
       </div>
