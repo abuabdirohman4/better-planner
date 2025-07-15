@@ -1,7 +1,8 @@
 "use server"
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+
+import { createClient } from '@/lib/supabase/server';
 
 // Get tasks available for selection from weekly goals for the current week
 export async function getTasksForWeek(year: number, weekNumber: number) {
@@ -336,8 +337,6 @@ export async function logActivity(formData: FormData) {
   const date = formData.get('date')?.toString();
   const startTime = formData.get('startTime')?.toString();
   const endTime = formData.get('endTime')?.toString();
-
-  console.log('[logActivity] FormData:', { taskId, sessionType, date, startTime, endTime });
 
   if (!taskId || !sessionType || !date || !startTime || !endTime) {
     console.error('[logActivity] Missing required fields', { taskId, sessionType, date, startTime, endTime });
