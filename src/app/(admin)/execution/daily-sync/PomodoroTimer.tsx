@@ -90,7 +90,7 @@ export default function PomodoroTimer() {
   if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
     progress = secondsElapsed / totalSeconds;
   } else {
-    progress = 0;
+    progress = 1;
   }
 
   // Tampilkan waktu

@@ -59,7 +59,7 @@ const TaskCard: React.FC<{
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
 
   React.useEffect(() => {
-    let cancelled = false;
+    const cancelled = false;
     setLoading(true);
     countCompletedSessions(item.id, selectedDate || '').then((count) => {
       if (!cancelled) {

@@ -12,7 +12,6 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { getDailyPlan, setDailyPlan } from './actions';
-import { useRouter } from 'next/navigation';
 import { useTimer } from '@/context/TimerContext';
 import { useActivityStore } from '@/stores/activityStore';
 
@@ -34,7 +33,6 @@ function ensureMonday(date: Date) {
 }
 
 function DailySyncContent() {
-  const router = useRouter();
   const [, startTransition] = useTransition();
   const { year, quarter } = useWeek();
   const today = getTodayDate();
