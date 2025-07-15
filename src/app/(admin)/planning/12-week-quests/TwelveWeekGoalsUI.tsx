@@ -250,7 +250,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
             <table className="min-w-full border-collapse border text-xs">
               <thead>
                 <tr>
-                  <th className="border px-1 py-1 min-w-14 bg-gray-50"></th>
+                  <th className="border px-1 py-1 min-w-14 bg-gray-50" />
                   {quests.map((q) => (
                     <th key={q.label} className={`border px-1 py-1 min-w-14 bg-gray-50 font-bold`}>
                       {q.label}
@@ -268,7 +268,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
                     </th>
                     {quests.map((colQ, j) => {
                       if (i === j) {
-                        return <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>;
+                        return <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center" />;
                       }
                       if (i < j) {
                         const key = `${rowQ.label}-${colQ.label}`;
@@ -304,7 +304,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
                       }
                       // i > j: cell bawah, tampilkan kotak abu-abu kosong
                       return (
-                        <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center"></td>
+                        <td key={colQ.label} className="border px-1 py-1 bg-gray-100 text-center" />
                       );
                     })}
                   </tr>

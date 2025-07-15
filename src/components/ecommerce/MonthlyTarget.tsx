@@ -155,7 +155,7 @@ export default function MonthlyTarget() {
           </p>
         </div>
 
-        <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
+        <div className="w-px bg-gray-200 h-7 dark:bg-gray-800" />
 
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
@@ -180,7 +180,7 @@ export default function MonthlyTarget() {
           </p>
         </div>
 
-        <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
+        <div className="w-px bg-gray-200 h-7 dark:bg-gray-800" />
 
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">

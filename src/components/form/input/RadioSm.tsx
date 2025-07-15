@@ -48,7 +48,7 @@ const RadioSm: React.FC<RadioProps> = ({
             className={`h-1.5 w-1.5 rounded-full ${
               checked ? "bg-white" : "bg-white dark:bg-[#1e2636]"
             }`}
-          ></span>
+           />
         </span>
       </span>
       {label}

@@ -10,7 +10,7 @@ export default function OneIsToOne() {
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         className="w-full h-full"
-      ></iframe>
+       />
     </div>
   );
 }

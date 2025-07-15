@@ -12,7 +12,7 @@ const Spinner: React.FC<SpinnerProps> = ({
   <div
     className={`animate-spin rounded-full border-t-2 border-b-2 ${colorClass}`}
     style={{ width: size, height: size }}
-  ></div>
+   />
 );
 
 export default Spinner; 

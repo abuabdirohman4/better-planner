@@ -60,7 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div
           className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
           onClick={onClose}
-        ></div>
+         />
       )}
       <div
         ref={modalRef}

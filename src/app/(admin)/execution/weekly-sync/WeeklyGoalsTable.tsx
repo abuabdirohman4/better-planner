@@ -278,7 +278,7 @@ export default function WeeklyGoalsTable({ goals = [], goalProgress = {}, onRefr
                         <div 
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${progress.percentage}%` }}
-                        ></div>
+                         />
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {progress.completed}/{progress.total}

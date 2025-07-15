@@ -143,7 +143,7 @@ const TaskCard: React.FC<{
         <div className="text-xs text-gray-500 dark:text-gray-400">
           {item.quest_title}
         </div>
-      ) : <div></div>}
+      ) : <div />}
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"

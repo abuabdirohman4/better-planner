@@ -123,7 +123,7 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
           <div className="block lg:ml-4">
-            <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>}>
+            <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />}>
               <QuarterSelector />
             </Suspense>
           </div>
