@@ -155,20 +155,23 @@ function DailySyncContent() {
     taskTitle: string;
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+    startTime: string;
+    endTime: string;
   }) => {
     startTransition(async () => {
       try {
         // Cek field wajib
-        if (!sessionData.taskId || !sessionData.duration || !sessionData.type) {
+        if (!sessionData.taskId || !sessionData.type || !sessionData.startTime || !sessionData.endTime) {
           console.error('Missing required fields', sessionData);
           return;
         }
         const formData = new FormData();
         formData.append('taskId', sessionData.taskId);
         formData.append('taskTitle', sessionData.taskTitle);
-        formData.append('duration', sessionData.duration.toString());
         formData.append('sessionType', sessionData.type);
         formData.append('date', selectedDateStr);
+        formData.append('startTime', sessionData.startTime);
+        formData.append('endTime', sessionData.endTime);
         await logActivity(formData);
         // Setelah log berhasil, refresh ActivityLog
         setActivityLogRefreshKey((k) => k + 1);

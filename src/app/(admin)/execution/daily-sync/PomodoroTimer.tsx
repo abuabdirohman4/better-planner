@@ -13,6 +13,8 @@ interface PomodoroTimerProps {
     taskTitle: string;
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+    startTime: string;
+    endTime: string;
   }) => void;
   shouldStart?: boolean;
   onStarted?: () => void;
@@ -120,6 +122,8 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
     taskTitle: string;
     duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+    startTime: string;
+    endTime: string;
   }>(null);
 
   // Auto start timer if shouldStart is true
@@ -147,21 +151,31 @@ export default function PomodoroTimer({ activeTask, onSessionComplete, shouldSta
             playNotificationSound();
             if (timerState === 'FOCUSING') {
               if (activeTask) {
+                const now = new Date();
+                const endTime = now.toISOString();
+                const startTime = new Date(now.getTime() - secondsElapsed * 1000).toISOString();
                 setPendingSessionComplete({
                   taskId: activeTask.id,
                   taskTitle: activeTask.title,
                   duration: FOCUS_DURATION,
-                  type: 'FOCUS'
+                  type: 'FOCUS',
+                  startTime,
+                  endTime
                 });
               }
               setTimerState('BREAK_TIME');
               setSessionJustCompleted('FOCUS');
             } else {
+              const now = new Date();
+              const endTime = now.toISOString();
+              const startTime = new Date(now.getTime() - secondsElapsed * 1000).toISOString();
               setPendingSessionComplete({
                 taskId: activeTask?.id || '',
                 taskTitle: activeTask?.title || 'Break',
                 duration: breakType === 'SHORT' ? SHORT_BREAK_DURATION : LONG_BREAK_DURATION,
-                type: breakType === 'SHORT' ? 'SHORT_BREAK' : 'LONG_BREAK'
+                type: breakType === 'SHORT' ? 'SHORT_BREAK' : 'LONG_BREAK',
+                startTime,
+                endTime
               });
               setTimerState('IDLE');
               setSessionJustCompleted('BREAK');

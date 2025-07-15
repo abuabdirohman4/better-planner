@@ -332,22 +332,20 @@ export async function logActivity(formData: FormData) {
   if (!user) throw new Error('User not authenticated');
   
   const taskId = formData.get('taskId')?.toString();
-  const duration = parseInt(formData.get('duration')?.toString() || '0'); // dalam detik
   const sessionType = formData.get('sessionType')?.toString() as 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   const date = formData.get('date')?.toString();
+  const startTime = formData.get('startTime')?.toString();
+  const endTime = formData.get('endTime')?.toString();
 
-  console.log('[logActivity] FormData:', { taskId, duration, sessionType, date });
+  console.log('[logActivity] FormData:', { taskId, sessionType, date, startTime, endTime });
 
-  if (!taskId || !duration || !sessionType || !date) {
-    console.error('[logActivity] Missing required fields', { taskId, duration, sessionType, date });
+  if (!taskId || !sessionType || !date || !startTime || !endTime) {
+    console.error('[logActivity] Missing required fields', { taskId, sessionType, date, startTime, endTime });
     throw new Error('Missing required fields');
   }
 
-  // Hitung waktu
-  const now = new Date();
-  const end_time = now.toISOString();
-  const start_time = new Date(now.getTime() - duration * 1000).toISOString();
-  const duration_minutes = Math.round(duration / 60) || 1; // minimal 1 menit
+  // Kalkulasi durasi dinamis
+  const durationInMinutes = Math.max(1, Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000 / 60));
 
   try {
     const { data: activity, error } = await supabase
@@ -356,9 +354,9 @@ export async function logActivity(formData: FormData) {
         user_id: user.id,
         task_id: taskId,
         type: sessionType,
-        start_time,
-        end_time,
-        duration_minutes,
+        start_time: startTime,
+        end_time: endTime,
+        duration_minutes: durationInMinutes,
         local_date: date,
       })
       .select()
@@ -449,26 +447,63 @@ export async function getTodayActivityLogs(date: string) {
   if (error) throw error;
   if (!logs || logs.length === 0) return [];
 
-  // Untuk setiap log FOCUS, ambil judul tugas dari tabel tasks
-  const logsWithTitle = await Promise.all(
+  // Untuk setiap log, traverse ke atas untuk ambil task, milestone, quest
+  const logsWithHierarchy = await Promise.all(
     logs.map(async (log) => {
       let task_title = null;
-      if (log.type === 'FOCUS' && log.task_id) {
-        const { data: task, error: taskError } = await supabase
+      let task_type = null;
+      let milestone_id = null;
+      let milestone_title = null;
+      let quest_id = null;
+      let quest_title = null;
+
+      if (log.task_id) {
+        // Ambil task
+        const { data: task } = await supabase
           .from('tasks')
-          .select('title')
+          .select('id, title, type, milestone_id')
           .eq('id', log.task_id)
           .single();
-        if (!taskError && task) {
+        if (task) {
           task_title = task.title;
+          task_type = task.type;
+          milestone_id = task.milestone_id;
+        }
+        // Ambil milestone jika ada
+        if (milestone_id) {
+          const { data: milestone } = await supabase
+            .from('milestones')
+            .select('id, title, quest_id')
+            .eq('id', milestone_id)
+            .single();
+          if (milestone) {
+            milestone_title = milestone.title;
+            quest_id = milestone.quest_id;
+          }
+          // Ambil quest jika ada
+          if (quest_id) {
+            const { data: quest } = await supabase
+              .from('quests')
+              .select('id, title')
+              .eq('id', quest_id)
+              .single();
+            if (quest) {
+              quest_title = quest.title;
+            }
+          }
         }
       }
       return {
         ...log,
         task_title,
+        task_type,
+        milestone_id,
+        milestone_title,
+        quest_id,
+        quest_title,
       };
     })
   );
 
-  return logsWithTitle;
+  return logsWithHierarchy;
 } 

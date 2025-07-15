@@ -15,6 +15,10 @@ interface ActivityLogItem {
   start_time: string;
   end_time: string;
   duration_minutes: number;
+  milestone_id?: string;
+  milestone_title?: string | null;
+  quest_id?: string;
+  quest_title?: string | null;
 }
 
 const ICONS = {
@@ -46,6 +50,61 @@ function formatDuration(minutes: number) {
   return m === 0 ? `${h} jam` : `${h} jam ${m} menit`;
 }
 
+// Struktur pohon
+interface ActivityLogTree {
+  id: string;
+  title: string;
+  type: 'quest' | 'milestone' | 'task';
+  children: ActivityLogTree[];
+  logs?: ActivityLogItem[]; // hanya di level task
+}
+
+// Komponen rekursif untuk render pohon
+const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node, level = 0 }) => {
+  return (
+    <div style={{ marginLeft: level * 20 }} className="mb-2">
+      <div className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+        {node.title}
+      </div>
+      {node.children && node.children.length > 0 && (
+        <div className="mt-1">
+          {node.children.map((child) => (
+            <LogTreeItem key={child.id} node={child} level={level + 1} />
+          ))}
+        </div>
+      )}
+      {node.logs && node.logs.length > 0 && (
+        <ul className="mt-1 space-y-1">
+          {node.logs.map((log) => {
+            const icon = ICONS[log.type] || ICONS.BREAK;
+            let title = '';
+            if (log.type === 'FOCUS') {
+              title = log.task_title ? `Fokus pada: ${log.task_title}` : 'Sesi Fokus';
+            } else if (log.type === 'SHORT_BREAK') {
+              title = 'Istirahat Pendek';
+            } else if (log.type === 'LONG_BREAK') {
+              title = 'Istirahat Panjang';
+            } else {
+              title = 'Istirahat';
+            }
+            return (
+              <li key={log.id} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
+                <div className="shrink-0">{icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 dark:text-gray-100 text-xs">{title}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatTimeRange(log.start_time, log.end_time)} &bull; {formatDuration(log.duration_minutes)}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,43 +116,65 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
       .finally(() => setLoading(false));
   }, [date, refreshKey]);
 
+  // Group logs by task_id
+  const grouped = logs.reduce((acc, log) => {
+    if (!log.task_id) return acc;
+    if (!acc[log.task_id]) {
+      acc[log.task_id] = {
+        title: log.task_title || 'Task',
+        sessions: [],
+        totalMinutes: 0,
+      };
+    }
+    acc[log.task_id].sessions.push(log);
+    acc[log.task_id].totalMinutes += log.duration_minutes;
+    return acc;
+  }, {} as Record<string, { title: string; sessions: ActivityLogItem[]; totalMinutes: number }>);
+  const summary = Object.values(grouped);
+
+  // Helper format waktu
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  const formatTotal = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h} hrs${m > 0 ? ' ' + m + ' mins' : ''}` : `${m} mins`;
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 max-h-[420px] flex flex-col">
       <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
       <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">Memuat aktivitas...</div>
-        ) : logs.length === 0 ? (
+        ) : summary.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (
-          <ul className="space-y-3">
-            {logs.map((log) => {
-              const icon = ICONS[log.type] || ICONS.BREAK;
-              let title = '';
-              if (log.type === 'FOCUS') {
-                title = log.task_title ? `Fokus pada: ${log.task_title}` : 'Sesi Fokus';
-              } else if (log.type === 'SHORT_BREAK') {
-                title = 'Istirahat Pendek';
-              } else if (log.type === 'LONG_BREAK') {
-                title = 'Istirahat Panjang';
-              } else {
-                title = 'Istirahat';
-              }
-              return (
-                <li key={log.id} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-md px-3 py-2">
-                  <div className="shrink-0">{icon}</div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">{title}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatTimeRange(log.start_time, log.end_time)} &bull; {formatDuration(log.duration_minutes)}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-6">
+            {summary.map((item, idx) => (
+              <div key={idx} className="">
+                <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded-full text-xs font-semibold">
+                    {item.sessions.length} sessions
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-300">({formatTotal(item.totalMinutes)})</span>
+                </div>
+                <ul className="space-y-1 ml-2">
+                  {item.sessions.map((log) => (
+                    <li key={log.id} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                      <span className="">•</span>
+                      <span>{formatTime(log.start_time)} <span className="mx-1">→</span> {formatTime(log.end_time)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
