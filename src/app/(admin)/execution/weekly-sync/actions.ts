@@ -1,8 +1,64 @@
 "use server";
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
+
+type WeeklyGoalItem = { id: string; item_id: string; item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' };
+
+type ParentQuestInfo = {
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+};
+
+type QuestDetails = {
+  title: string;
+  priority_score?: number;
+  quest_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+  status: string;
+};
+
+type MilestoneDetails = {
+  title: string;
+  display_order?: number;
+  quest_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+  status: string;
+};
+
+type TaskDetails = {
+  title: string;
+  status: string;
+  display_order?: number;
+  milestone_id?: string;
+  parent_task_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+};
+
+type ItemDetails = {
+  id: string;
+  item_id: string;
+  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  title: string;
+  priority_score?: number;
+  display_order?: number;
+  status: string;
+  quest_id?: string;
+  milestone_id?: string;
+  parent_task_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+};
 
 // Get selectable items (Main Quests and their Milestones) for the current quarter
 export async function getSelectableItems(year: number, quarter: number) {
@@ -155,6 +211,147 @@ export async function getHierarchicalData(year: number, quarter: number) {
   }
 }
 
+// Utility: Get parent quest info
+async function getParentQuestInfo(supabase: SupabaseClient, questId: string | undefined): Promise<ParentQuestInfo> {
+  if (!questId) return { parent_quest_id: undefined, parent_quest_title: undefined, parent_quest_priority_score: undefined };
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('id, title, priority_score')
+    .eq('id', questId)
+    .single();
+  return {
+    parent_quest_id: quest?.id,
+    parent_quest_title: quest?.title,
+    parent_quest_priority_score: quest?.priority_score
+  };
+}
+
+// Utility: Get quest details
+async function getQuestDetails(supabase: SupabaseClient, itemId: string): Promise<QuestDetails> {
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('id, title, priority_score')
+    .eq('id', itemId)
+    .single();
+  
+  return {
+    title: quest?.title || '',
+    priority_score: quest?.priority_score,
+    quest_id: quest?.id,
+    parent_quest_id: quest?.id,
+    parent_quest_title: quest?.title,
+    parent_quest_priority_score: quest?.priority_score,
+    status: 'TODO' // Quests don't have status, default to TODO
+  };
+}
+
+// Utility: Get milestone details
+async function getMilestoneDetails(supabase: SupabaseClient, itemId: string): Promise<MilestoneDetails> {
+  const { data: milestone } = await supabase
+    .from('milestones')
+    .select('title, display_order, quest_id')
+    .eq('id', itemId)
+    .single();
+  
+  const baseDetails = {
+    title: milestone?.title || '',
+    display_order: milestone?.display_order,
+    quest_id: milestone?.quest_id
+  };
+
+  if (milestone?.quest_id) {
+    const parent = await getParentQuestInfo(supabase, milestone.quest_id);
+    return {
+      ...baseDetails,
+      parent_quest_id: parent.parent_quest_id,
+      parent_quest_title: parent.parent_quest_title,
+      parent_quest_priority_score: parent.parent_quest_priority_score,
+      status: 'TODO' // Milestones don't have status, default to TODO
+    };
+  }
+
+  return {
+    ...baseDetails,
+    parent_quest_id: undefined,
+    parent_quest_title: undefined,
+    parent_quest_priority_score: undefined,
+    status: 'TODO' // Milestones don't have status, default to TODO
+  };
+}
+
+// Utility: Get parent quest from milestone
+async function getParentQuestFromMilestone(supabase: SupabaseClient, milestoneId: string): Promise<ParentQuestInfo> {
+  const { data: milestone } = await supabase
+    .from('milestones')
+    .select('id, quest_id')
+    .eq('id', milestoneId)
+    .single();
+  
+  if (milestone?.quest_id) {
+    return await getParentQuestInfo(supabase, milestone.quest_id);
+  }
+  
+  return {
+    parent_quest_id: undefined,
+    parent_quest_title: undefined,
+    parent_quest_priority_score: undefined
+  };
+}
+
+// Utility: Get task details
+async function getTaskDetails(supabase: SupabaseClient, itemId: string): Promise<TaskDetails> {
+  const { data: task } = await supabase
+    .from('tasks')
+    .select('title, status, display_order, milestone_id, parent_task_id')
+    .eq('id', itemId)
+    .single();
+  
+  const baseDetails = {
+    title: task?.title || '',
+    status: task?.status || 'TODO',
+    display_order: task?.display_order,
+    milestone_id: task?.milestone_id,
+    parent_task_id: task?.parent_task_id || undefined
+  };
+
+  if (task?.milestone_id) {
+    const parent = await getParentQuestFromMilestone(supabase, task.milestone_id);
+    return {
+      ...baseDetails,
+      parent_quest_id: parent.parent_quest_id,
+      parent_quest_title: parent.parent_quest_title,
+      parent_quest_priority_score: parent.parent_quest_priority_score
+    };
+  }
+
+  return {
+    ...baseDetails,
+    parent_quest_id: undefined,
+    parent_quest_title: undefined,
+    parent_quest_priority_score: undefined
+  };
+}
+
+// Utility: Get item details (refactored)
+async function getItemDetails(supabase: SupabaseClient, item: WeeklyGoalItem): Promise<ItemDetails> {
+  let details: QuestDetails | MilestoneDetails | TaskDetails = {} as QuestDetails;
+
+  if (item.item_type === 'QUEST') {
+    details = await getQuestDetails(supabase, item.item_id);
+  } else if (item.item_type === 'MILESTONE') {
+    details = await getMilestoneDetails(supabase, item.item_id);
+  } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
+    details = await getTaskDetails(supabase, item.item_id);
+  }
+
+  return {
+    id: item.id,
+    item_id: item.item_id,
+    item_type: item.item_type,
+    ...details
+  };
+}
+
 // Get weekly goals for a specific week (3 slots)
 export async function getWeeklyGoals(year: number, weekNumber: number) {
   const supabase = await createClient();
@@ -185,129 +382,7 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
 
         // Get details for each item
         const itemsWithDetails = await Promise.all(
-          (goalItems || []).map(async (item) => {
-            let title = '';
-            let status = 'TODO';
-            let priority_score: number | undefined = undefined;
-            let display_order: number | undefined = undefined;
-            let quest_id: string | undefined = undefined;
-            let milestone_id: string | undefined = undefined;
-            let parent_task_id: string | undefined = undefined;
-
-            // New: parent quest info
-            let parent_quest_id: string | undefined = undefined;
-            let parent_quest_title: string | undefined = undefined;
-            let parent_quest_priority_score: number | undefined = undefined;
-
-            if (item.item_type === 'QUEST') {
-              const { data: quest } = await supabase
-                .from('quests')
-                .select('id, title, priority_score')
-                .eq('id', item.item_id)
-                .single();
-              title = quest?.title || '';
-              priority_score = quest?.priority_score;
-              quest_id = quest?.id;
-              // Parent quest info
-              parent_quest_id = quest?.id;
-              parent_quest_title = quest?.title;
-              parent_quest_priority_score = quest?.priority_score;
-            } else if (item.item_type === 'MILESTONE') {
-              const { data: milestone } = await supabase
-                .from('milestones')
-                .select('title, display_order, quest_id')
-                .eq('id', item.item_id)
-                .single();
-              title = milestone?.title || '';
-              display_order = milestone?.display_order;
-              quest_id = milestone?.quest_id;
-              // Parent quest info
-              if (milestone?.quest_id) {
-                const { data: quest } = await supabase
-                  .from('quests')
-                  .select('id, title, priority_score')
-                  .eq('id', milestone.quest_id)
-                  .single();
-                parent_quest_id = quest?.id;
-                parent_quest_title = quest?.title;
-                parent_quest_priority_score = quest?.priority_score;
-              }
-            } else if (item.item_type === 'TASK') {
-              const { data: task } = await supabase
-                .from('tasks')
-                .select('title, status, display_order, milestone_id, parent_task_id')
-                .eq('id', item.item_id)
-                .single();
-              title = task?.title || '';
-              status = task?.status || 'TODO';
-              display_order = task?.display_order;
-              milestone_id = task?.milestone_id;
-              parent_task_id = task?.parent_task_id;
-              // Parent quest info
-              if (task?.milestone_id) {
-                const { data: milestone } = await supabase
-                  .from('milestones')
-                  .select('id, quest_id')
-                  .eq('id', task.milestone_id)
-                  .single();
-                if (milestone?.quest_id) {
-                  const { data: quest } = await supabase
-                    .from('quests')
-                    .select('id, title, priority_score')
-                    .eq('id', milestone.quest_id)
-                    .single();
-                  parent_quest_id = quest?.id;
-                  parent_quest_title = quest?.title;
-                  parent_quest_priority_score = quest?.priority_score;
-                }
-              }
-            } else if (item.item_type === 'SUBTASK') {
-              const { data: subtask } = await supabase
-                .from('tasks')
-                .select('title, status, display_order, milestone_id, parent_task_id')
-                .eq('id', item.item_id)
-                .single();
-              title = subtask?.title || '';
-              status = subtask?.status || 'TODO';
-              display_order = subtask?.display_order;
-              milestone_id = subtask?.milestone_id;
-              parent_task_id = subtask?.parent_task_id;
-              // Parent quest info
-              if (subtask?.milestone_id) {
-                const { data: milestone } = await supabase
-                  .from('milestones')
-                  .select('id, quest_id')
-                  .eq('id', subtask.milestone_id)
-                  .single();
-                if (milestone?.quest_id) {
-                  const { data: quest } = await supabase
-                    .from('quests')
-                    .select('id, title, priority_score')
-                    .eq('id', milestone.quest_id)
-                    .single();
-                  parent_quest_id = quest?.id;
-                  parent_quest_title = quest?.title;
-                  parent_quest_priority_score = quest?.priority_score;
-                }
-              }
-            }
-
-            return {
-              id: item.id,
-              item_id: item.item_id,
-              item_type: item.item_type,
-              title,
-              status,
-              priority_score,
-              display_order,
-              quest_id,
-              milestone_id,
-              parent_task_id,
-              parent_quest_id,
-              parent_quest_title,
-              parent_quest_priority_score
-            };
-          })
+          (goalItems || []).map(item => getItemDetails(supabase, item))
         );
 
         return {
@@ -591,90 +666,117 @@ export async function setWeeklyFocusItems(data: {
   }
 }
 
-// Get completion progress for any item type
+type TaskStatus = { status: string };
+
+// Utility: Get quest completion progress
+async function getQuestProgress(supabase: SupabaseClient, questId: string): Promise<{completed: number; total: number}> {
+  const { data: tasks, error } = await supabase
+    .from('tasks')
+    .select('status')
+    .eq('quest_id', questId);
+
+  if (error) throw error;
+
+  const total = tasks?.length || 0;
+  const completed = tasks?.filter((task: TaskStatus) => task.status === 'DONE').length || 0;
+
+  return { completed, total };
+}
+
+// Utility: Get milestone completion progress
+async function getMilestoneProgress(supabase: SupabaseClient, milestoneId: string): Promise<{completed: number; total: number}> {
+  const { data: tasks, error } = await supabase
+    .from('tasks')
+    .select('status')
+    .eq('milestone_id', milestoneId);
+
+  if (error) throw error;
+
+  const total = tasks?.length || 0;
+  const completed = tasks?.filter((task: TaskStatus) => task.status === 'DONE').length || 0;
+
+  return { completed, total };
+}
+
+// Utility: Get task completion progress
+async function getTaskProgress(supabase: SupabaseClient, taskId: string): Promise<{completed: number; total: number}> {
+  const { data: subtasks, error: subtaskError } = await supabase
+    .from('tasks')
+    .select('status')
+    .eq('parent_task_id', taskId);
+
+  if (subtaskError) throw subtaskError;
+
+  if (subtasks && subtasks.length > 0) {
+    // Task has subtasks
+    const total = subtasks.length;
+    const completed = subtasks.filter((task: TaskStatus) => task.status === 'DONE').length;
+    return { completed, total };
+  } else {
+    // Task is standalone
+    const { data: task, error: taskError } = await supabase
+      .from('tasks')
+      .select('status')
+      .eq('id', taskId)
+      .single();
+
+    if (taskError) throw taskError;
+
+    const total = 1;
+    const completed = task?.status === 'DONE' ? 1 : 0;
+    return { completed, total };
+  }
+}
+
+// Utility: Get subtask completion progress
+async function getSubtaskProgress(supabase: SupabaseClient, subtaskId: string): Promise<{completed: number; total: number}> {
+  const { data: subtask, error } = await supabase
+    .from('tasks')
+    .select('status')
+    .eq('id', subtaskId)
+    .single();
+
+  if (error) throw error;
+
+  const total = 1;
+  const completed = subtask?.status === 'DONE' ? 1 : 0;
+
+  return { completed, total };
+}
+
+// Get completion progress for any item type (refactored)
 export async function getItemCompletionProgress(itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { completed: 0, total: 0, percentage: 0 };
 
   try {
-    let completed = 0;
-    let total = 0;
+    let progress: { completed: number; total: number };
 
     if (itemType === 'QUEST') {
-      // For quests, count all tasks under all milestones of this quest
-      const { data: tasks, error } = await supabase
-        .from('tasks')
-        .select('status')
-        .eq('quest_id', itemId);
-
-      if (error) throw error;
-
-      total = tasks?.length || 0;
-      completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+      progress = await getQuestProgress(supabase, itemId);
     } else if (itemType === 'MILESTONE') {
-      // For milestones, count all tasks under this milestone (including subtasks)
-      const { data: tasks, error } = await supabase
-        .from('tasks')
-        .select('status')
-        .eq('milestone_id', itemId);
-
-      if (error) throw error;
-
-      total = tasks?.length || 0;
-      completed = tasks?.filter(task => task.status === 'DONE').length || 0;
+      progress = await getMilestoneProgress(supabase, itemId);
     } else if (itemType === 'TASK') {
-      // For tasks, count subtasks if any, otherwise just the task itself
-      const { data: subtasks, error: subtaskError } = await supabase
-        .from('tasks')
-        .select('status')
-        .eq('parent_task_id', itemId);
-
-      if (subtaskError) throw subtaskError;
-
-      if (subtasks && subtasks.length > 0) {
-        // Task has subtasks
-        total = subtasks.length;
-        completed = subtasks.filter(task => task.status === 'DONE').length;
-      } else {
-        // Task is standalone
-        const { data: task, error: taskError } = await supabase
-          .from('tasks')
-          .select('status')
-          .eq('id', itemId)
-          .single();
-
-        if (taskError) throw taskError;
-
-        total = 1;
-        completed = task?.status === 'DONE' ? 1 : 0;
-      }
+      progress = await getTaskProgress(supabase, itemId);
     } else if (itemType === 'SUBTASK') {
-      // For subtasks, just check the subtask itself
-      const { data: subtask, error } = await supabase
-        .from('tasks')
-        .select('status')
-        .eq('id', itemId)
-        .single();
-
-      if (error) throw error;
-
-      total = 1;
-      completed = subtask?.status === 'DONE' ? 1 : 0;
+      progress = await getSubtaskProgress(supabase, itemId);
+    } else {
+      return { completed: 0, total: 0, percentage: 0 };
     }
 
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const percentage = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
     return {
-      completed,
-      total,
+      completed: progress.completed,
+      total: progress.total,
       percentage
     };
   } catch (error) {
     console.error('Error calculating completion progress:', error);
     return { completed: 0, total: 0, percentage: 0 };
   }
-} 
+}
 
 // === TO DON'T LIST (WEEKLY RULES) ACTIONS ===
 
