@@ -1,20 +1,22 @@
 "use client";
 
+import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
 import React, { useState, useEffect, useMemo } from "react";
+
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
-import CustomToast from "@/components/ui/toast/CustomToast";
-import { useWeek } from "@/hooks/useWeek";
-import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
-import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
-import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
-import WeeklyGoalsTable from "./WeeklyGoalsTable";
-import ToDontListCard from "./ToDontListCard";
 import Spinner from '@/components/ui/spinner/Spinner';
+import CustomToast from "@/components/ui/toast/CustomToast";
+import { useWeek } from "@/hooks/useWeek";
+import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
+import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
+
 import { getWeeklyGoals, calculateGoalProgress, getWeeklyRules } from './actions';
+import ToDontListCard from "./ToDontListCard";
 import type { Rule } from './ToDontListCard';
+import WeeklyGoalsTable from "./WeeklyGoalsTable";
 import type { WeeklyGoal } from './WeeklyGoalsTable';
 
 type Task = {
@@ -379,13 +381,10 @@ export default function WeeklySyncClient() {
                     title={`${daysOfWeek[idx]}, ${formatDateIndo(date)}`}
                   >
                     <DayDroppable date={dateStr}>
-                      {weekTasks[dateStr] && weekTasks[dateStr].length === 0 && (
-                        <div className="text-gray-400">Belum ada tugas</div>
-                      )}
-                      {weekTasks[dateStr] &&
-                        weekTasks[dateStr].map((task) => (
+                      {weekTasks[dateStr] && weekTasks[dateStr].length === 0 ? <div className="text-gray-400">Belum ada tugas</div> : null}
+                      {weekTasks[dateStr] ? weekTasks[dateStr].map((task) => (
                           <TaskItemDraggable key={task.id} task={task} id={task.id} />
-                        ))}
+                        )) : null}
                     </DayDroppable>
                   </ComponentCard>
                 );

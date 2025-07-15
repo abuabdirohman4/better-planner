@@ -7,10 +7,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "lint:strict": "next lint --max-warnings 0",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --watchAll=false",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install",
+    "fix:eslint": "next lint --fix --max-warnings 0 || echo 'Some issues need manual fixing'",
+    "fix:all": "npm run format && npm run lint:fix && npm run type-check",
+    "fix:errors": "next lint --fix --max-warnings 9999 && echo '✅ Auto-fix completed. Check remaining errors manually.'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

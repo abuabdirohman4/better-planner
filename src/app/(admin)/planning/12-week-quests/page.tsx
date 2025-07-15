@@ -1,6 +1,7 @@
-import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
-import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 import { Suspense } from "react";
+
+import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
+import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
 
 export const metadata = {
   title: "12 Week Quests | Better Planner",

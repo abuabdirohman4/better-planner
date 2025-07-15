@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
+
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
+
 import { setWeeklyGoalItems, removeWeeklyGoal } from './actions';
 import WeeklyFocusModal from './WeeklyFocusModal';
 
@@ -291,8 +293,7 @@ export default function WeeklyGoalsTable({ goals = [], goalProgress = {}, onRefr
       </ComponentCard>
 
       {/* Hierarchical Modal */}
-      {selectedSlot && (
-        <WeeklyFocusModal
+      {selectedSlot ? <WeeklyFocusModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
@@ -304,8 +305,7 @@ export default function WeeklyGoalsTable({ goals = [], goalProgress = {}, onRefr
             (goals.find(goal => goal.goal_slot === selectedSlot)?.items || []).map(item => ({ id: item.item_id, type: item.item_type }))
           }
           existingSelectedIds={getExistingSelectedIds(selectedSlot)}
-        />
-      )}
+        /> : null}
     </>
   );
 } 

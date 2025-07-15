@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/context/TimerContext';
 
@@ -140,9 +141,7 @@ export default function PomodoroTimer() {
         )}
       </div>
       {/* Judul dan subjudul */}
-      {activeTask && (
-        <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div>
-      )}
+      {activeTask ? <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div> : null}
       {/* Tombol Cancel */}
       {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
         <Button

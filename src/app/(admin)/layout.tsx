@@ -1,12 +1,14 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import React from "react";
+
 import { useSidebar } from "@/context/SidebarContext";
+import { TimerProvider } from '@/context/TimerContext';
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import React from "react";
-import { usePathname } from "next/navigation";
-import { TimerProvider } from '@/context/TimerContext';
+
 
 export default function AdminLayout({
   children,

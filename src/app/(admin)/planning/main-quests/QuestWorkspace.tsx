@@ -1,8 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
-import MilestoneItem from './MilestoneItem';
-import ComponentCard from '@/components/common/ComponentCard';
-import { updateQuestMotivation, updateMilestone, getMilestonesForQuest } from '../quests/actions';
 import debounce from 'lodash/debounce';
+import { useEffect, useState, useMemo } from 'react';
+
+import ComponentCard from '@/components/common/ComponentCard';
+
+import { updateQuestMotivation, updateMilestone, getMilestonesForQuest } from '../quests/actions';
+
+import MilestoneItem from './MilestoneItem';
 import TaskDetailCard from './TaskDetailCard';
 
 interface Milestone {
@@ -200,15 +203,13 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           </div>
         </ComponentCard>
       </div>
-      {activeSubTask && (
-        <div className="flex-1 max-w-2xl">
+      {activeSubTask ? <div className="flex-1 max-w-2xl">
           <TaskDetailCard
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
             milestoneId={milestones[activeMilestoneIdx]?.id || ''}
           />
-        </div>
-      )}
+        </div> : null}
     </div>
   );
 } 

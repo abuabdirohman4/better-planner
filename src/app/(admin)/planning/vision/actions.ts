@@ -1,7 +1,9 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+
+import { createClient } from '@/lib/supabase/server';
+
 import { LIFE_AREAS } from './constants';
 
 // Ambil semua visi milik user yang sedang login

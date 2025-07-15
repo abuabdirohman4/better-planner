@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions'
-import { createClient } from '@/lib/supabase/server'
 import QuarterUsageExample from "@/components/examples/QuarterUsageExample";
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",

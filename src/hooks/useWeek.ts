@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useQuarter } from './useQuarter';
+
 import { getWeekOfYear, getQuarterWeekRange } from '@/lib/quarterUtils';
+
+import { useQuarter } from './useQuarter';
 
 export function useWeek() {
   const { year, quarter } = useQuarter();

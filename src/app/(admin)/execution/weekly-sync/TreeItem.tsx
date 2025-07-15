@@ -24,14 +24,12 @@ const TreeItem: React.FC<TreeItemProps> = ({ item, level, colorClass }) => {
         <span className={`text-xs px-2 py-1 rounded ${colorClass}`}>{item.item_type}</span>
         <span className="text-sm text-gray-900 dark:text-white">{item.title}</span>
       </div>
-      {item.children && item.children.length > 0 && (
-        item.children
+      {item.children && item.children.length > 0 ? item.children
           .slice()
           .sort((a: TreeGoalItem, b: TreeGoalItem) => (a.display_order ?? 0) - (b.display_order ?? 0))
           .map((child: TreeGoalItem) => (
             <TreeItem key={child.id} item={child} level={level + 1} colorClass={colorClass} />
-          ))
-      )}
+          )) : null}
     </>
   );
 };

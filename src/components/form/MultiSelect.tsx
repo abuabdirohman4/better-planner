@@ -128,8 +128,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
             </div>
           </div>
 
-          {isOpen && (
-            <div
+          {isOpen ? <div
               className="absolute left-0 z-40 w-full overflow-y-auto bg-white rounded-lg shadow-sm top-full max-h-select dark:bg-gray-900"
               onClick={(e) => e.stopPropagation()}
             >
@@ -155,8 +154,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            </div> : null}
         </div>
       </div>
     </div>

@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
-import ComponentCard from '@/components/common/ComponentCard';
-import { addMultipleQuests, updateQuests, finalizeQuests } from "../quests/actions";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
+import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
-import CustomToast from '@/components/ui/toast/CustomToast';
 import Spinner from "@/components/ui/spinner/Spinner";
+import CustomToast from '@/components/ui/toast/CustomToast';
 import { useSidebar } from '@/context/SidebarContext';
 import { useQuarter } from "@/hooks/useQuarter";
+
+import { addMultipleQuests, updateQuests, finalizeQuests } from "../quests/actions";
 
 // Komponen ini adalah client UI/presentasi dan interaksi utama untuk 12 Week Goals.
 // - Menerima data quest dari parent (props initialQuests).

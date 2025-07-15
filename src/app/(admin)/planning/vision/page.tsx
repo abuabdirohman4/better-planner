@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { getVisions } from './actions';
 import VisionForm from './VisionForm';
 

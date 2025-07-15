@@ -1,6 +1,7 @@
+import Link from "next/link";
+
 import { login } from "@/app/(full-width-pages)/(auth)/actions";
 import Label from "@/components/form/Label";
-import Link from "next/link";
 
 export default function SignInForm() {
   return (

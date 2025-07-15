@@ -1,7 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { getTodayActivityLogs } from './actions';
+
 import { useActivityStore } from '@/stores/activityStore';
+
+import { getTodayActivityLogs } from './actions';
 
 interface ActivityLogProps {
   date: string;
@@ -67,15 +69,12 @@ const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node
       <div className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
         {node.title}
       </div>
-      {node.children && node.children.length > 0 && (
-        <div className="mt-1">
+      {node.children && node.children.length > 0 ? <div className="mt-1">
           {node.children.map((child) => (
             <LogTreeItem key={child.id} node={child} level={level + 1} />
           ))}
-        </div>
-      )}
-      {node.logs && node.logs.length > 0 && (
-        <ul className="mt-1 space-y-1">
+        </div> : null}
+      {node.logs && node.logs.length > 0 ? <ul className="mt-1 space-y-1">
           {node.logs.map((log) => {
             const icon = ICONS[log.type] || ICONS.BREAK;
             let title = '';
@@ -100,8 +99,7 @@ const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node
               </li>
             );
           })}
-        </ul>
-      )}
+        </ul> : null}
     </div>
   );
 };

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
 import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
+
 import { upsertVision } from './actions';
 import { LIFE_AREAS } from './constants';
-import Button from '@/components/ui/button/Button';
-import Label from '@/components/form/Label';
 
 type Vision = {
   life_area: string;

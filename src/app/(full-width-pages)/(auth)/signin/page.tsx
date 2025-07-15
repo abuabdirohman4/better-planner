@@ -1,7 +1,8 @@
-import SignInForm from "@/components/auth/SignInForm.server";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { Metadata } from "next";
 import Link from "next/link";
+
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import SignInForm from "@/components/auth/SignInForm.server";
 
 export const metadata: Metadata = {
   title: "SignIn Page | Better Planner",
@@ -31,15 +32,13 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
               Enter your email and password to sign in!
             </p>
           </div>
-          {message && (
-            <div className={`mb-4 p-3 rounded text-center ${
+          {message ? <div className={`mb-4 p-3 rounded text-center ${
               isSuccess 
                 ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400" 
                 : "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
             }`}>
               {message}
-            </div>
-          )}
+            </div> : null}
           <div>
             <GoogleSignInButton />
           </div>

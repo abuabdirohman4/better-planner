@@ -47,15 +47,13 @@ const TextArea: React.FC<TextareaProps> = ({
         disabled={disabled}
         className={textareaClasses}
       />
-      {hint && (
-        <p
+      {hint ? <p
           className={`mt-2 text-sm ${
             error ? "text-error-500" : "text-gray-500 dark:text-gray-400"
           }`}
         >
           {hint}
-        </p>
-      )}
+        </p> : null}
     </div>
   );
 };

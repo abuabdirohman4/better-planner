@@ -53,9 +53,9 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
     >
-      {startIcon && <span className="flex items-center">{startIcon}</span>}
+      {startIcon ? <span className="flex items-center">{startIcon}</span> : null}
       {children}
-      {endIcon && <span className="flex items-center">{endIcon}</span>}
+      {endIcon ? <span className="flex items-center">{endIcon}</span> : null}
     </button>
   );
 };

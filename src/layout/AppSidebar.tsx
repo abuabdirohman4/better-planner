@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React, { useEffect, useRef, useState,useCallback } from "react";
+
 import { useSidebar } from "../context/SidebarContext";
 import {
   CalenderIcon,
@@ -130,19 +131,15 @@ const AppSidebar: React.FC = () => {
               >
                 {nav.icon}
               </span>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
-              )}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
+              {(isExpanded || isHovered || isMobileOpen) ? <span className={`menu-item-text`}>{nav.name}</span> : null}
+              {(isExpanded || isHovered || isMobileOpen) ? <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200  ${
                     openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
                       : ""
                   }`}
-                />
-              )}
+                /> : null}
             </button>
           ) : (
             nav.path && (
@@ -161,14 +158,11 @@ const AppSidebar: React.FC = () => {
                 >
                   {nav.icon}
                 </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
-                )}
+                {(isExpanded || isHovered || isMobileOpen) ? <span className={`menu-item-text`}>{nav.name}</span> : null}
               </Link>
             )
           )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
-            <div
+          {nav.subItems && (isExpanded || isHovered || isMobileOpen) ? <div
               ref={(el) => {
                 subMenuRefs.current[`${menuType}-${index}`] = el;
               }}
@@ -193,8 +187,7 @@ const AppSidebar: React.FC = () => {
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
+                        {subItem.new ? <span
                             className={`ml-auto ${
                               isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
@@ -202,10 +195,8 @@ const AppSidebar: React.FC = () => {
                             } menu-dropdown-badge `}
                           >
                             new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
+                          </span> : null}
+                        {subItem.pro ? <span
                             className={`ml-auto ${
                               isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
@@ -213,15 +204,13 @@ const AppSidebar: React.FC = () => {
                             } menu-dropdown-badge `}
                           >
                             pro
-                          </span>
-                        )}
+                          </span> : null}
                       </span>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
+            </div> : null}
         </li>
       ))}
     </ul>

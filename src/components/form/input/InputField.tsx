@@ -79,8 +79,7 @@ const Input: FC<InputProps> = ({
       />
 
       {/* Optional Hint Text */}
-      {hint && (
-        <p
+      {hint ? <p
           className={`mt-1.5 text-xs ${
             error
               ? "text-error-500"
@@ -90,8 +89,7 @@ const Input: FC<InputProps> = ({
           }`}
         >
           {hint}
-        </p>
-      )}
+        </p> : null}
     </div>
   );
 };

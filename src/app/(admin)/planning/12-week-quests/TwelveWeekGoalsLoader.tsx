@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getAllQuestsForQuarter, getPairwiseResults } from "../quests/actions";
-import TwelveWeekGoalsUI from "./TwelveWeekGoalsUI";
+
 import { useQuarter } from "@/hooks/useQuarter";
+
+import { getAllQuestsForQuarter, getPairwiseResults } from "../quests/actions";
+
+import TwelveWeekGoalsUI from "./TwelveWeekGoalsUI";
 
 // Komponen ini adalah client data loader/wrapper untuk 12 Week Goals.
 // - Membaca quarter & year dari URL param `q` menggunakan useQuarter hook.

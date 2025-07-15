@@ -1,7 +1,7 @@
 "use client";
 import { useModal } from "@/hooks/useModal";
-import ComponentCard from "../../common/ComponentCard";
 
+import ComponentCard from "../../common/ComponentCard";
 import Button from "../../ui/button/Button";
 import { Modal } from "../../ui/modal";
 

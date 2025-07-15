@@ -1,19 +1,20 @@
 "use client";
 import React, { useState, useMemo, useTransition, useEffect } from "react";
-import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
-import PomodoroTimer from "./PomodoroTimer";
-import ActivityLog from "./ActivityLog";
-import { useWeek } from '@/hooks/useWeek';
-import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
-import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
-import { logActivity } from "./actions";
+
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
-import { getDailyPlan, setDailyPlan } from './actions';
 import { useTimer } from '@/context/TimerContext';
+import { useWeek } from '@/hooks/useWeek';
+import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
+import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
+
+import { getDailyPlan, setDailyPlan , logActivity } from './actions';
+import ActivityLog from "./ActivityLog";
+import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
+import PomodoroTimer from "./PomodoroTimer";
 
 const getTodayDate = () => {
   const today = new Date();

@@ -1,3 +1,6 @@
+import { Metadata } from "next";
+import React from "react";
+
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import CheckboxComponents from "@/components/form/form-elements/CheckboxComponents";
 import DefaultInputs from "@/components/form/form-elements/DefaultInputs";
@@ -9,8 +12,6 @@ import RadioButtons from "@/components/form/form-elements/RadioButtons";
 import SelectInputs from "@/components/form/form-elements/SelectInputs";
 import TextAreaInput from "@/components/form/form-elements/TextAreaInput";
 import ToggleSwitch from "@/components/form/form-elements/ToggleSwitch";
-import { Metadata } from "next";
-import React from "react";
 
 export const metadata: Metadata = {
   title: "Next.js Form Elements | TailAdmin - Next.js Dashboard Template",

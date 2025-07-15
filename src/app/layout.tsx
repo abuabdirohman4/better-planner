@@ -1,9 +1,10 @@
 import { Outfit } from 'next/font/google';
 import './globals.css';
 
+import { Toaster } from 'sonner';
+
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import { Toaster } from 'sonner';
 
 const outfit = Outfit({
   subsets: ["latin"],

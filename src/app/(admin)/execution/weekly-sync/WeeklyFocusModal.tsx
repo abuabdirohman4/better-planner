@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
+
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { getHierarchicalData } from './actions';
 import { useWeek } from '@/hooks/useWeek';
-import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
+
+import { getHierarchicalData } from './actions';
 
 interface HierarchicalItem {
   id: string;
@@ -285,16 +287,14 @@ export default function WeeklyFocusModal({
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   {task.title}
                 </span>
-                {task.subtasks && task.subtasks.length > 0 && (
-                  <button
+                {task.subtasks && task.subtasks.length > 0 ? <button
                     onClick={() => toggleExpanded(task.id)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
                     {expandedItems.has(task.id) ? '▼' : '▶'} Quests
-                  </button>
-                )}
+                  </button> : null}
               </div>
-              {task.subtasks && renderSubtasks(task.subtasks, task.id)}
+              {task.subtasks ? renderSubtasks(task.subtasks, task.id) : null}
             </div>
           ))}
         </div>
@@ -332,16 +332,14 @@ export default function WeeklyFocusModal({
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   {milestone.title}
                 </span>
-                {milestone.tasks && milestone.tasks.length > 0 && (
-                  <button
+                {milestone.tasks && milestone.tasks.length > 0 ? <button
                     onClick={() => toggleExpanded(milestone.id)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
                     {expandedItems.has(milestone.id) ? '▼' : '▶'} Langkah
-                  </button>
-                )}
+                  </button> : null}
               </div>
-              {milestone.tasks && renderTasks(milestone.tasks, milestone.id)}
+              {milestone.tasks ? renderTasks(milestone.tasks, milestone.id) : null}
             </div>
           ))}
         </div>
@@ -421,16 +419,14 @@ export default function WeeklyFocusModal({
                     <span className="font-medium text-gray-900 dark:text-white">
                       {quest.title}
                     </span>
-                    {quest.milestones && quest.milestones.length > 0 && (
-                      <button
+                    {quest.milestones && quest.milestones.length > 0 ? <button
                         onClick={() => toggleExpanded(quest.id)}
                         className="text-sm text-blue-600 hover:text-blue-800"
                       >
                         {expandedItems.has(quest.id) ? '▼' : '▶'} Milestones
-                      </button>
-                    )}
+                      </button> : null}
                   </div>
-                  {quest.milestones && renderMilestones(quest.milestones, quest.id)}
+                  {quest.milestones ? renderMilestones(quest.milestones, quest.id) : null}
                 </div>
               ))}
             </div>

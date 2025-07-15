@@ -1,6 +1,8 @@
-import TaskItem from './TaskItem';
 import { useState, useEffect } from 'react';
+
 import { getTasksForMilestone, addTask } from '../quests/actions';
+
+import TaskItem from './TaskItem';
 
 interface Task {
   id: string;

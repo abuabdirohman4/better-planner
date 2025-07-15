@@ -1,10 +1,12 @@
 "use client";
 import React, { useState } from "react";
+
+import { ChevronDownIcon } from "@/icons";
+
 import ComponentCard from "../../common/ComponentCard";
 import Label from "../Label";
-import Select from "../Select";
 import MultiSelect from "../MultiSelect";
-import { ChevronDownIcon } from "@/icons";
+import Select from "../Select";
 
 export default function SelectInputs() {
   const options = [

@@ -1,11 +1,13 @@
 "use client";
 import React from "react";
+
+import { useModal } from "@/hooks/useModal";
+
 import ComponentCard from "../../common/ComponentCard";
+import Input from "../../form/input/InputField";
+import Label from "../../form/Label";
 import Button from "../../ui/button/Button";
 import { Modal } from "../../ui/modal";
-import Label from "../../form/Label";
-import Input from "../../form/input/InputField";
-import { useModal } from "@/hooks/useModal";
 
 export default function FormInModal() {
   const { isOpen, openModal, closeModal } = useModal();

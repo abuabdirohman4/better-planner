@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import MainQuestsClient from './MainQuestsClient';
-import { getQuests } from '../quests/actions';
+
 import { parseQParam } from '@/lib/quarterUtils';
+
+import { getQuests } from '../quests/actions';
+
+import MainQuestsClient from './MainQuestsClient';
 
 export const metadata: Metadata = {
   title: "Main Quests | Better Planner",

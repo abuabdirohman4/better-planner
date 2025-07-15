@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useTransition } from "react";
-import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, countCompletedSessions } from "./actions";
+
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useActivityStore } from '@/stores/activityStore';
+
+import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, countCompletedSessions } from "./actions";
 
 interface WeeklyTaskItem {
   id: string;
@@ -90,8 +92,7 @@ const TaskCard: React.FC<{
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          {onSetActiveTask && (
-            <button
+          {onSetActiveTask ? <button
               className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
               onClick={() => onSetActiveTask({
                 id: item.item_id,
@@ -104,8 +105,7 @@ const TaskCard: React.FC<{
                 <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15"/>
                 <polygon points="8,6 14,10 8,14" fill="currentColor"/>
               </svg>
-            </button>
-          )}
+            </button> : null}
           <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
             {item.title || `Task ${item.item_id}`}
           </h4>
@@ -188,18 +188,15 @@ const TaskColumn: React.FC<{
     <div className="rounded-lg h-fit">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{title}</h3>
-        {onAddSideQuest && (
-        <button
+        {onAddSideQuest ? <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="text-brand-500 hover:text-brand-600 text-sm font-medium"
         >
             + Tambah Side Quest
-        </button>
-        )}
+        </button> : null}
       </div>
 
-      {showAddForm && onAddSideQuest && (
-        <form onSubmit={handleAddSideQuest} className="mb-4">
+      {showAddForm && onAddSideQuest ? <form onSubmit={handleAddSideQuest} className="mb-4">
           <div className="flex space-x-2">
             <input
               type="text"
@@ -217,8 +214,7 @@ const TaskColumn: React.FC<{
               {isPending ? '...' : 'Tambah'}
             </button>
           </div>
-        </form>
-      )}
+        </form> : null}
 
       <div className="space-y-2">
         {items.length === 0 ? (
@@ -242,16 +238,14 @@ const TaskColumn: React.FC<{
       </div>
 
       {/* Select Tasks button for Main Quest column */}
-      {onSelectTasks && (
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+      {onSelectTasks ? <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onSelectTasks}
             className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
           >
             Tambah Quest
           </button>
-        </div>
-      )}
+        </div> : null}
     </div>
   );
 };
@@ -325,11 +319,9 @@ const TaskSelectionModal: React.FC<{
                           {task.quest_title} • {task.type}
                         </div>
                                       </label>
-                      {selectedTasks[task.id] && (
-                        <div className="text-xs bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-full">
+                      {selectedTasks[task.id] ? <div className="text-xs bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-1 rounded-full">
                           Dalam Rencana
-                              </div>
-                        )}
+                              </div> : null}
                       </div>
                     ))}
                   </div>

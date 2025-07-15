@@ -1,8 +1,9 @@
 "use client";
+import debounce from 'lodash/debounce';
 import { useState, useEffect, useMemo, useRef } from 'react';
+
 // import Checkbox from '@/components/form/input/Checkbox';
 import { updateTask } from '../quests/actions';
-import debounce from 'lodash/debounce';
 
 interface TaskItemProps {
   task: { id: string; title: string; status: 'TODO' | 'DONE' };
@@ -57,9 +58,7 @@ export default function TaskItem({ task, onOpenSubtask, orderNumber, active }: T
   return (
     <div className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition ${active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700'}`}>
       <div className='flex gap-2 w-full'>
-        {orderNumber && (
-          <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span>
-        )}
+        {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
         <input
           className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none focus:ring-0"
           value={editValue}

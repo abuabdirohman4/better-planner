@@ -1,6 +1,7 @@
-import SignUpForm from "@/components/auth/SignUpForm.server";
-import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { Metadata } from "next";
+
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import SignUpForm from "@/components/auth/SignUpForm.server";
 
 export const metadata: Metadata = {
   title: "SignUp Page | Better Planner",

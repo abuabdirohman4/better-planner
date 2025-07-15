@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
-import QuestWorkspace from './QuestWorkspace';
+
 import ComponentCard from '@/components/common/ComponentCard';
+
+import QuestWorkspace from './QuestWorkspace';
 
 export default function MainQuestsClient({ quests }: { quests: { id: string; title: string; motivation?: string }[] }) {
   const [activeTab, setActiveTab] = useState(0);

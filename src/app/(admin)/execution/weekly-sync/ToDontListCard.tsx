@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useRef, forwardRef } from "react";
-import ComponentCard from "@/components/common/ComponentCard";
-import CustomToast from "@/components/ui/toast/CustomToast";
-import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "./actions";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import React, { useEffect, useState, useRef, forwardRef } from "react";
+
+import ComponentCard from "@/components/common/ComponentCard";
+import CustomToast from "@/components/ui/toast/CustomToast";
+
+import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "./actions";
 
 interface ToDontListCardProps {
   year: number;
@@ -329,12 +331,10 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
               ])
             )}
             {/* Skeleton loading bar saat insert */}
-            {newRuleLoading && (
-              <div className="flex items-center py-2 group w-full animate-pulse">
+            {newRuleLoading ? <div className="flex items-center py-2 group w-full animate-pulse">
                 <span className="w-6 mr-2" />
                 <div className="flex-1 h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-              </div>
-            )}
+              </div> : null}
           </div>
         </SortableContext>
       </DndContext>

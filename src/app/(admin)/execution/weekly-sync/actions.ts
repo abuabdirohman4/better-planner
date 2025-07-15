@@ -1,7 +1,8 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+
+import { createClient } from '@/lib/supabase/server';
 
 // Get selectable items (Main Quests and their Milestones) for the current quarter
 export async function getSelectableItems(year: number, quarter: number) {

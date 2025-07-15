@@ -1,6 +1,7 @@
 "use client";
-import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
 import { getWeekOfYear, getQuarterFromWeek, formatQParam } from "@/lib/quarterUtils";
 
 // Komponen ini adalah client-only redirector untuk halaman 12 Week Quests.
