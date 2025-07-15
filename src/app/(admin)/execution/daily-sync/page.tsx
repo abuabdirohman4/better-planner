@@ -13,6 +13,7 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { getDailyPlan, setDailyPlan } from './actions';
 import { useRouter } from 'next/navigation';
+import { useTimer } from '@/context/TimerContext';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -150,6 +151,8 @@ function DailySyncContent() {
     setIsWeekDropdownOpen(false);
   };
 
+  const { startFocusSession } = useTimer();
+
   const handleSessionComplete = async (sessionData: {
     taskId: string;
     taskTitle: string;
@@ -189,10 +192,9 @@ function DailySyncContent() {
     });
   };
 
-  // Ganti onSetActiveTask agar set shouldStartTimer true
+  // Ganti onSetActiveTask agar langsung trigger startFocusSession
   const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
-    setActiveTask(task);
-    setShouldStartTimer(true);
+    startFocusSession(task);
   };
 
   // Handler untuk force refresh count di TaskCard
@@ -288,13 +290,7 @@ function DailySyncContent() {
                 </div>
                 {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
                 <div className="flex flex-col gap-4 mt-4">
-                  <PomodoroTimer 
-                    activeTask={activeTask}
-                    shouldStart={shouldStartTimer}
-                    onStarted={() => setShouldStartTimer(false)}
-                    onSessionComplete={handleSessionComplete}
-                    onForceRefresh={handleForceRefresh}
-                  />
+                  <PomodoroTimer />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
                     <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
                     <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
