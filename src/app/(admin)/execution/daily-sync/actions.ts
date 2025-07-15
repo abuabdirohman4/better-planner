@@ -344,8 +344,9 @@ export async function logActivity(formData: FormData) {
     throw new Error('Missing required fields');
   }
 
-  // Kalkulasi durasi dinamis
-  const durationInMinutes = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000 / 60;
+  // Kalkulasi durasi dinamis (dibulatkan, minimal 1 menit)
+  const durationInSeconds = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000;
+  const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
 
   try {
     const { data: activity, error } = await supabase

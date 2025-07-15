@@ -13,6 +13,8 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { getDailyPlan, setDailyPlan } from './actions';
 import { useRouter } from 'next/navigation';
+import { useTimer } from '@/context/TimerContext';
+import { useActivityStore } from '@/stores/activityStore';
 
 const getTodayDate = () => {
   const today = new Date();
@@ -43,10 +45,6 @@ function DailySyncContent() {
   }, [currentWeek]);
 
   const weekDates = getWeekDates(currentWeek);
-  const [activeTask, setActiveTask] = useState<{ id: string; title: string; item_type: string } | null>(null);
-  const [shouldStartTimer, setShouldStartTimer] = useState(false);
-  const [refreshSessionKey, setRefreshSessionKey] = useState<Record<string, number>>({});
-  const [forceRefreshTaskId, setForceRefreshTaskId] = useState<string | null>(null);
   const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
 
   // Helper function to determine default day index for a week
@@ -150,10 +148,38 @@ function DailySyncContent() {
     setIsWeekDropdownOpen(false);
   };
 
+  const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete } = useTimer();
+
+  // Dynamic tab title for Pomodoro timer
+  React.useEffect(() => {
+    const defaultTitle = 'Daily Sync | Better Planner';
+    function formatTime(secs: number) {
+      const m = Math.floor(secs / 60).toString().padStart(2, '0');
+      const s = (secs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+    if (timerState === 'FOCUSING' && activeTaskCtx) {
+      document.title = `${formatTime(secondsElapsed)} ${activeTaskCtx.title}`;
+    } else {
+      document.title = defaultTitle;
+    }
+    return () => {
+      document.title = defaultTitle;
+    };
+  }, [timerState, secondsElapsed, activeTaskCtx]);
+
+  // Log ke activity_logs jika ada sesi selesai/cancel
+  React.useEffect(() => {
+    if (lastSessionComplete) {
+      handleSessionComplete(lastSessionComplete);
+      setLastSessionComplete(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSessionComplete]);
+
   const handleSessionComplete = async (sessionData: {
     taskId: string;
     taskTitle: string;
-    duration: number;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
     startTime: string;
     endTime: string;
@@ -175,32 +201,16 @@ function DailySyncContent() {
         await logActivity(formData);
         // Setelah log berhasil, refresh ActivityLog
         setActivityLogRefreshKey((k) => k + 1);
-        startTransition(() => {
-          router.refresh();
-        });
-        // Refresh progres sesi untuk taskId
-        setRefreshSessionKey(prev => ({
-          ...prev,
-          [sessionData.taskId]: (prev[sessionData.taskId] || 0) + 1
-        }));
+        useActivityStore.getState().triggerRefresh();
       } catch (err) {
         console.error('Error logging session:', err);
       }
     });
   };
 
-  // Ganti onSetActiveTask agar set shouldStartTimer true
+  // Ganti onSetActiveTask agar langsung trigger startFocusSession
   const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
-    setActiveTask(task);
-    setShouldStartTimer(true);
-  };
-
-  // Handler untuk force refresh count di TaskCard
-  const handleForceRefresh = (taskId: string) => {
-    setForceRefreshTaskId(taskId);
-    setTimeout(() => {
-      setForceRefreshTaskId(null);
-    }, 500);
+    startFocusSession(task);
   };
 
   return (
@@ -282,19 +292,12 @@ function DailySyncContent() {
                     setDailyPlanState={setDailyPlanState}
                     setDailyPlanAction={setDailyPlan}
                     loading={loading}
-                    refreshSessionKey={refreshSessionKey}
-                    forceRefreshTaskId={forceRefreshTaskId}
+                    // refreshSessionKey dihapus, tidak perlu lagi
                   />
                 </div>
                 {/* Kolom kanan: PomodoroTimer + Log Aktivitas */}
                 <div className="flex flex-col gap-4 mt-4">
-                  <PomodoroTimer 
-                    activeTask={activeTask}
-                    shouldStart={shouldStartTimer}
-                    onStarted={() => setShouldStartTimer(false)}
-                    onSessionComplete={handleSessionComplete}
-                    onForceRefresh={handleForceRefresh}
-                  />
+                  <PomodoroTimer />
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
                     <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
                     <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />

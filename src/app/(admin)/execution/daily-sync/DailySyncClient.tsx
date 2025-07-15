@@ -2,6 +2,7 @@
 import React, { useState, useTransition } from "react";
 import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, countCompletedSessions } from "./actions";
 import Spinner from '@/components/ui/spinner/Spinner';
+import { useActivityStore } from '@/stores/activityStore';
 
 interface WeeklyTaskItem {
   id: string;
@@ -55,6 +56,7 @@ const TaskCard: React.FC<{
   const [loading, setLoading] = React.useState(true);
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
   const [savingTarget, setSavingTarget] = React.useState(false);
+  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -65,8 +67,7 @@ const TaskCard: React.FC<{
         setLoading(false);
       }
     });
-    return () => { cancelled = true; };
-  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId]);
+  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId, lastActivityTimestamp]);
 
   // Update target jika prop berubah (misal setelah update dari server)
   React.useEffect(() => {
@@ -135,15 +136,24 @@ const TaskCard: React.FC<{
               +
             </button>
           </div>
+          {/* <select
+            value={item.status}
+            onChange={(e) => onStatusChange(item.item_id, e.target.value as 'TODO' | 'IN_PROGRESS' | 'DONE')}
+            className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(item.status)}`}
+          >
+            <option value="TODO">Belum Dimulai</option>
+            <option value="IN_PROGRESS">Sedang Dikerjakan</option>
+            <option value="DONE">Selesai</option>
+          </select> */}
         </div>
       </div>
+      {item.quest_title && (
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          {item.quest_title}
+        </div>
+      )}
       <div className="flex items-center justify-between">
-        {item.quest_title && (
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {item.quest_title}
-          </div>
-        )}
-        {/* <div></div> */}
+        <div></div>
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"
@@ -221,13 +231,22 @@ const TaskColumn: React.FC<{
       )}
 
       <div className="space-y-2">
-                        {items.length === 0 ? (
-                          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+        {items.length === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
             Tidak ada tugas {title.toLowerCase()} hari ini
           </div>
-                        ) : (
+        ) : (
           items.map((item) => (
-            <TaskCard key={item.id} item={item} onStatusChange={onStatusChange} onSetActiveTask={onSetActiveTask} selectedDate={selectedDate} onTargetChange={onTargetChange} refreshKey={refreshSessionKey?.[item.id] || 0} forceRefreshTaskId={forceRefreshTaskId} />
+            <TaskCard
+              key={item.id}
+              item={item}
+              onStatusChange={onStatusChange}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={onTargetChange}
+              refreshKey={refreshSessionKey?.[item.id] || 0}
+              forceRefreshTaskId={forceRefreshTaskId}
+            />
           ))
         )}
       </div>
@@ -239,7 +258,7 @@ const TaskColumn: React.FC<{
             onClick={onSelectTasks}
             className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
           >
-            Kelola Rencana Harian
+            Tambah Quest
           </button>
         </div>
       )}
@@ -341,7 +360,7 @@ const TaskSelectionModal: React.FC<{
             disabled={isLoading || Object.keys(selectedTasks).filter(k => selectedTasks[k]).length === 0}
             className="px-6 py-2 bg-brand-500 text-white rounded-md font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Menyimpan...' : `Update Rencana (${Object.keys(selectedTasks).filter(k => selectedTasks[k]).length} tugas)`}
+            {isLoading ? 'Menyimpan...' : `Pilih (${Object.keys(selectedTasks).filter(k => selectedTasks[k]).length} Quest)`}
           </button>
         </div>
       </div>

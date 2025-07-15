@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { getTodayActivityLogs } from './actions';
+import { useActivityStore } from '@/stores/activityStore';
 
 interface ActivityLogProps {
   date: string;
@@ -109,12 +110,13 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
   useEffect(() => {
     setLoading(true);
     getTodayActivityLogs(date)
       .then((data) => setLogs(data))
       .finally(() => setLoading(false));
-  }, [date, refreshKey]);
+  }, [date, refreshKey, lastActivityTimestamp]);
 
   // Group logs by task_id
   const grouped = logs.reduce((acc, log) => {
