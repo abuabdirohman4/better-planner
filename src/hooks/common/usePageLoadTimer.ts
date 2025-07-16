@@ -7,27 +7,31 @@ import { useEffect, useRef, useState } from 'react';
  */
 export function usePageLoadTimer(isLoading: boolean): number {
   const [elapsed, setElapsed] = useState(0);
-  const startTimeRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isStoppedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoading) {
-      startTimeRef.current = Date.now();
-      setElapsed(0);
+    // Mulai timer segera saat komponen mount
+    if (!isStoppedRef.current) {
       timerRef.current = setInterval(() => {
-        if (startTimeRef.current) {
+        if (!isStoppedRef.current) {
           setElapsed(((Date.now() - startTimeRef.current) / 1000));
         }
       }, 50);
-    } else {
+    }
+
+    // Stop timer ketika loading selesai
+    if (!isLoading && !isStoppedRef.current) {
+      isStoppedRef.current = true;
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      if (startTimeRef.current) {
-        setElapsed(((Date.now() - startTimeRef.current) / 1000));
-      }
+      // Set final time
+      setElapsed(((Date.now() - startTimeRef.current) / 1000));
     }
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);

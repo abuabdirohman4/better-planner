@@ -395,8 +395,11 @@ export default function WeeklySyncClient() {
 
   if (loading || toDontListLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[600px]">
+      <div className="flex flex-col justify-center items-center min-h-[600px]">
         <Spinner size={164} />
+        <div className="mt-4 text-lg font-semibold text-gray-600">
+          Loading... ({loadingTime}s)
+        </div>
       </div>
     );
   }
