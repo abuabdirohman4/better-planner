@@ -5,10 +5,10 @@ import React from "react";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { TimerProvider } from '@/context/TimerContext';
+import { useProgressiveLoading } from "@/hooks/common/useProgressiveLoading";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-
 
 export default function AdminLayout({
   children,
@@ -18,6 +18,9 @@ export default function AdminLayout({
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const pathname = usePathname();
   const isTwelveWeeksGoals = pathname.includes("/planning/12-week-quests");
+
+  // Enable progressive loading for better performance
+  useProgressiveLoading();
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen

@@ -16,28 +16,15 @@ function toSWRKey(key: readonly unknown[]): string {
 
 /**
  * Prefetch critical data for instant navigation experience
- * This function fetches all essential data that users commonly access
+ * OPTIMIZED: Only prefetch essential data to reduce initial load time
  */
 export async function prefetchCriticalData() {
   try {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentQuarter = Math.ceil((currentDate.getMonth() + 1) / 3);
-    const currentWeek = getWeekOfYear(currentDate);
-    const today = currentDate.toISOString().split('T')[0];
-
-    // Prefetch all critical data in parallel
+    // OPTIMIZATION: Only prefetch dashboard data initially
+    // Other data will be loaded progressively
     const prefetchedData = await Promise.allSettled([
-      // Planning Data (High Priority)
-      prefetchQuests(currentYear, currentQuarter),
-      prefetchVisions(),
-      
-      // Dashboard Data (High Priority)
-      prefetchDashboardData(),
-      
-      // Execution Data (Medium Priority)
-      prefetchWeeklyData(currentYear, currentWeek),
-      prefetchDailyData(today),
+      // Dashboard Data (High Priority - Only essential metrics)
+      prefetchDashboardMetrics(),
     ]);
 
     // Convert to SWR fallback format using proper key format
@@ -54,6 +41,26 @@ export async function prefetchCriticalData() {
     return fallback;
   } catch (error) {
     console.error('❌ Critical data prefetching failed:', error);
+    return {};
+  }
+}
+
+/**
+ * Prefetch only essential dashboard metrics (optimized)
+ */
+async function prefetchDashboardMetrics() {
+  try {
+    const [todayTasks, activeQuests] = await Promise.all([
+      getTodayTasks(),
+      getActiveQuests(),
+    ]);
+
+    return {
+      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
+      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
+    };
+  } catch (error) {
+    console.error('❌ Failed to prefetch dashboard metrics:', error);
     return {};
   }
 }
@@ -164,6 +171,43 @@ async function prefetchDailyData(date: string) {
   } catch (error) {
     console.error('❌ Failed to prefetch daily data:', error);
     return {};
+  }
+}
+
+/**
+ * Progressive loading: Prefetch data based on user's current page
+ * This is called after initial load to prefetch relevant data
+ */
+export async function prefetchPageData(pathname: string) {
+  try {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentQuarter = Math.ceil((currentDate.getMonth() + 1) / 3);
+    const currentWeek = getWeekOfYear(currentDate);
+    const today = currentDate.toISOString().split('T')[0];
+
+    // Prefetch data based on current page
+    if (pathname.includes('/planning/12-week-quests') || pathname.includes('/planning/main-quests')) {
+      await Promise.allSettled([
+        prefetchQuests(currentYear, currentQuarter),
+        prefetchVisions(),
+      ]);
+    } else if (pathname.includes('/execution/weekly-sync')) {
+      await Promise.allSettled([
+        prefetchWeeklyData(currentYear, currentWeek),
+      ]);
+    } else if (pathname.includes('/execution/daily-sync')) {
+      await Promise.allSettled([
+        prefetchDailyData(today),
+      ]);
+    } else if (pathname.includes('/dashboard')) {
+      // Dashboard already has basic data, prefetch additional metrics
+      await Promise.allSettled([
+        prefetchDashboardData(),
+      ]);
+    }
+  } catch (error) {
+    console.error('❌ Page-specific prefetching failed:', error);
   }
 }
 

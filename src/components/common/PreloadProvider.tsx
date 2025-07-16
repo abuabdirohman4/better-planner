@@ -12,7 +12,7 @@ interface PreloadProviderProps {
 
 /**
  * Provider component that handles critical data prefetching
- * This component runs once when the app loads to prefetch essential data
+ * OPTIMIZED: Reduced initial load time with progressive loading
  */
 export default function PreloadProvider({ children }: PreloadProviderProps) {
   const [isPreloading, setIsPreloading] = useState(true);
@@ -22,12 +22,21 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
   useEffect(() => {
     const preloadData = async () => {
       try {
-        // Prefetch critical data
-        const prefetchedFallback = await prefetchCriticalData();
+        // OPTIMIZATION: Set a timeout to prevent blocking the UI
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Prefetch timeout')), 3000); // 3 second timeout
+        });
+
+        // Prefetch critical data with timeout
+        const prefetchedFallback = await Promise.race([
+          prefetchCriticalData(),
+          timeoutPromise
+        ]) as Record<string, unknown>;
+        
         setFallback(prefetchedFallback);
         setIsPreloading(false);
       } catch (error) {
-        console.error('❌ Critical data preloading failed:', error);
+        console.warn('⚠️ Critical data preloading failed or timed out:', error);
         setPreloadError(error instanceof Error ? error.message : 'Unknown error');
         setIsPreloading(false);
       }
@@ -43,6 +52,7 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">Memuat aplikasi...</p>
         </div>
       </div>
     );
