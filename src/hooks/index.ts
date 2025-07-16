@@ -15,4 +15,5 @@ export { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } fr
 export { useQuarter } from './common/useQuarter';
 export { useWeek } from './common/useWeek';
 export { useModal } from './common/useModal';
-export { default as useGoBack } from './common/useGoBack'; 
+export { default as useGoBack } from './common/useGoBack';
+export { useProgressiveLoading, usePrefetchOnDemand } from './common/useProgressiveLoading'; 

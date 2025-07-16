@@ -1,12 +1,11 @@
 import { Outfit } from 'next/font/google';
 import { Toaster } from 'sonner';
-import { SWRConfig } from 'swr';
 
 import './globals.css';
 
+import PreloadProvider from '@/components/common/PreloadProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import { swrConfig } from '@/lib/swr';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -20,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
       <body>
-        <SWRConfig value={swrConfig}>
+        <PreloadProvider>
           <ThemeProvider>
             <SidebarProvider>{children}</SidebarProvider>
           </ThemeProvider>
@@ -28,7 +27,7 @@ export default function RootLayout({
             position="top-right"
             richColors
           />
-        </SWRConfig>
+        </PreloadProvider>
       </body>
     </html>
   );

@@ -459,56 +459,39 @@ export async function setWeeklyGoalItems(data: {
   }
 }
 
-// Calculate progress for a collection of items
+// Calculate progress for a collection of items - OPTIMIZED VERSION
 export async function calculateGoalProgress(items: Array<{ item_id: string; item_type: string }>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { completed: 0, total: 0, percentage: 0 };
 
   try {
+    // Group items by type for batch queries
+    const taskIds = items.filter(item => item.item_type === 'TASK' || item.item_type === 'SUBTASK').map(item => item.item_id);
+    const milestoneIds = items.filter(item => item.item_type === 'MILESTONE').map(item => item.item_id);
+    const questIds = items.filter(item => item.item_type === 'QUEST').map(item => item.item_id);
+    
+    // Single batch queries for each type
+    const [taskResults, milestoneResults, questResults] = await Promise.all([
+      taskIds.length > 0 ? supabase.from('tasks').select('id,status').in('id', taskIds) : { data: [] },
+      milestoneIds.length > 0 ? supabase.from('milestones').select('id,status').in('id', milestoneIds) : { data: [] },
+      questIds.length > 0 ? supabase.from('quests').select('id,status').in('id', questIds) : { data: [] }
+    ]);
+    
+    // Create a map for quick status lookup
+    const statusMap = new Map();
+    [...(taskResults.data || []), ...(milestoneResults.data || []), ...(questResults.data || [])]
+      .forEach(item => statusMap.set(item.id, item.status));
+    
+    // Calculate progress
     let totalCompleted = 0;
-    let totalItems = 0;
-
+    const totalItems = items.length;
+    
     for (const item of items) {
-      let status: string | undefined = undefined;
-      try {
-        if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('status')
-            .eq('id', item.item_id)
-            .single();
-          status = task?.status;
-          if (!task) {
-            console.error('Task/Subtask not found for item_id', item.item_id);
-          }
-        } else if (item.item_type === 'MILESTONE') {
-          const { data: milestone } = await supabase
-            .from('milestones')
-            .select('status')
-            .eq('id', item.item_id)
-            .single();
-          status = milestone?.status;
-          if (!milestone) {
-            console.error('Milestone not found for item_id', item.item_id);
-          }
-        } else if (item.item_type === 'QUEST') {
-          const { data: quest } = await supabase
-            .from('quests')
-            .select('status')
-            .eq('id', item.item_id)
-            .single();
-          status = quest?.status;
-          if (!quest) {
-            console.error('Quest not found for item_id', item.item_id);
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching status for item', item, e);
-      }
-      totalItems += 1;
+      const status = statusMap.get(item.item_id);
       if (status === 'DONE') totalCompleted += 1;
     }
+    
     const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
     return {
       completed: totalCompleted,
