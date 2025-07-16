@@ -1,0 +1,28 @@
+{
+  "name": "better-planner-testing",
+  "version": "1.0.0",
+  "description": "Testing scripts and tools for Better Planner application",
+  "main": "index.js",
+  "scripts": {
+    "test:performance": "node performance/final-performance-test.js",
+    "test:performance-basic": "node performance/performance-test.js",
+    "test:performance-auth": "node performance/performance-test-auth.js",
+    "test:performance-comprehensive": "node performance/simple-performance-test.js",
+    "test:investigate": "node performance/investigate-timeout.js",
+    "test:all": "npm run test:performance && npm run test:performance-comprehensive"
+  },
+  "keywords": [
+    "testing",
+    "performance",
+    "puppeteer",
+    "better-planner"
+  ],
+  "author": "Better Planner Team",
+  "license": "MIT",
+  "devDependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

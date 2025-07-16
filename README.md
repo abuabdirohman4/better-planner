@@ -78,6 +78,7 @@ npm run dev
 
 ## 🧪 **Testing**
 
+### **Unit & Integration Tests**
 ```bash
 # Run all tests
 npm run test
@@ -91,6 +92,42 @@ npm run test:coverage
 # Run tests in CI mode
 npm run test:ci
 ```
+
+### **Performance Testing**
+```bash
+# Navigate to testing folder
+cd testing
+
+# Install testing dependencies
+npm install
+
+# Run comprehensive performance test
+npm run test:performance
+
+# Run basic performance test
+npm run test:performance-basic
+
+# Run performance test with authentication
+npm run test:performance-auth
+
+# Run comprehensive analysis
+npm run test:performance-comprehensive
+
+# Investigate timeout issues
+npm run test:investigate
+
+# Run all performance tests
+npm run test:all
+```
+
+**📊 Latest Performance Results:**
+- **Success Rate**: 100% (8/8 pages)
+- **Average Load Time**: 189ms ⚡
+- **Performance Rating**: 9/10 🏆
+- **Memory Usage**: 1MB average
+- **Total Size**: 10KB average
+
+See `testing/performance/performance-report.md` for detailed analysis.
 
 ## 🔧 **Development Commands**
 
