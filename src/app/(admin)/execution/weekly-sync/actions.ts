@@ -5,44 +5,37 @@ import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
 
-type WeeklyGoalItem = { id: string; item_id: string; item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' };
-
-type ParentQuestInfo = {
-  parent_quest_id?: string;
-  parent_quest_title?: string;
-  parent_quest_priority_score?: number;
-};
-
-type QuestDetails = {
+// Database entity interfaces
+interface Quest {
+  id: string;
   title: string;
   priority_score?: number;
-  quest_id?: string;
-  parent_quest_id?: string;
-  parent_quest_title?: string;
-  parent_quest_priority_score?: number;
-  status: string;
-};
+  status?: string;
+}
 
-type MilestoneDetails = {
+interface Milestone {
+  id: string;
   title: string;
   display_order?: number;
   quest_id?: string;
-  parent_quest_id?: string;
-  parent_quest_title?: string;
-  parent_quest_priority_score?: number;
-  status: string;
-};
+  status?: string;
+}
 
-type TaskDetails = {
+interface Task {
+  id: string;
   title: string;
-  status: string;
+  status?: string;
   display_order?: number;
   milestone_id?: string;
   parent_task_id?: string;
-  parent_quest_id?: string;
-  parent_quest_title?: string;
-  parent_quest_priority_score?: number;
-};
+}
+
+interface WeeklyGoalItem {
+  id: string;
+  item_id: string;
+  item_type: string;
+  weekly_goal_id: string;
+}
 
 type ItemDetails = {
   id: string;
@@ -129,14 +122,14 @@ export async function removeWeeklyGoal(goalId: string) {
 
 // ===== NEW 3-SLOT TABLE WEEKLY GOALS ACTIONS =====
 
-// Get hierarchical data (Quest -> Milestone -> Task -> Sub-task) for the current quarter
+// Get hierarchical data (Quest -> Milestone -> Task -> Sub-task) for the current quarter - OPTIMIZED VERSION
 export async function getHierarchicalData(year: number, quarter: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   try {
-    // Get committed quests for the quarter
+    // Step 1: Get all committed quests for the quarter
     const { data: quests, error: questError } = await supabase
       .from('quests')
       .select('id, title')
@@ -147,62 +140,92 @@ export async function getHierarchicalData(year: number, quarter: number) {
       .order('priority_score', { ascending: false });
 
     if (questError) throw questError;
+    if (!quests || quests.length === 0) return [];
 
-    // Build hierarchical structure
-    const hierarchicalData = await Promise.all(
-      (quests || []).map(async (quest) => {
-        // Get milestones for this quest
-        const { data: milestones, error: milestoneError } = await supabase
-          .from('milestones')
-          .select('id, title')
-          .eq('quest_id', quest.id)
-          .order('display_order', { ascending: true });
+    // Step 2: Get all milestones for all quests in one query
+    const questIds = quests.map(q => q.id);
+    const { data: allMilestones, error: milestoneError } = await supabase
+      .from('milestones')
+      .select('id, title, quest_id')
+      .in('quest_id', questIds)
+      .order('display_order', { ascending: true });
 
-        if (milestoneError) throw milestoneError;
+    if (milestoneError) throw milestoneError;
 
-        // Get tasks for each milestone
-        const milestonesWithTasks = await Promise.all(
-          (milestones || []).map(async (milestone) => {
-            const { data: tasks, error: taskError } = await supabase
-              .from('tasks')
-              .select('id, title, status')
-              .eq('milestone_id', milestone.id)
-              .is('parent_task_id', null) // Only parent tasks
-              .order('display_order', { ascending: true });
+    // Step 3: Get all parent tasks for all milestones in one query
+    const milestoneIds = allMilestones?.map(m => m.id) || [];
+    const { data: allParentTasks, error: taskError } = await supabase
+      .from('tasks')
+      .select('id, title, status, milestone_id')
+      .in('milestone_id', milestoneIds)
+      .is('parent_task_id', null) // Only parent tasks
+      .order('display_order', { ascending: true });
 
-            if (taskError) throw taskError;
+    if (taskError) throw taskError;
 
-            // Get subtasks for each task
-            const tasksWithSubtasks = await Promise.all(
-              (tasks || []).map(async (task) => {
-                const { data: subtasks, error: subtaskError } = await supabase
-                  .from('tasks')
-                  .select('id, title, status')
-                  .eq('parent_task_id', task.id)
-                  .order('display_order', { ascending: true });
+    // Step 4: Get all subtasks for all parent tasks in one query
+    const parentTaskIds = allParentTasks?.map(t => t.id) || [];
+    const { data: allSubtasks, error: subtaskError } = await supabase
+      .from('tasks')
+      .select('id, title, status, parent_task_id')
+      .in('parent_task_id', parentTaskIds)
+      .order('display_order', { ascending: true });
 
-                if (subtaskError) throw subtaskError;
+    if (subtaskError) throw subtaskError;
 
-                return {
-                  ...task,
-                  subtasks: subtasks || []
-                };
-              })
-            );
+    // Step 5: Create lookup maps for efficient data access
+    const milestoneMap = new Map<string, typeof allMilestones>();
+    const taskMap = new Map<string, typeof allParentTasks>();
+    const subtaskMap = new Map<string, typeof allSubtasks>();
 
-            return {
-              ...milestone,
-              tasks: tasksWithSubtasks
-            };
-          })
-        );
+    // Group milestones by quest_id
+    allMilestones?.forEach(milestone => {
+      const questMilestones = milestoneMap.get(milestone.quest_id) || [];
+      questMilestones.push(milestone);
+      milestoneMap.set(milestone.quest_id, questMilestones);
+    });
+
+    // Group tasks by milestone_id
+    allParentTasks?.forEach(task => {
+      const milestoneTasks = taskMap.get(task.milestone_id) || [];
+      milestoneTasks.push(task);
+      taskMap.set(task.milestone_id, milestoneTasks);
+    });
+
+    // Group subtasks by parent_task_id
+    allSubtasks?.forEach(subtask => {
+      const taskSubtasks = subtaskMap.get(subtask.parent_task_id) || [];
+      taskSubtasks.push(subtask);
+      subtaskMap.set(subtask.parent_task_id, taskSubtasks);
+    });
+
+    // Step 6: Build hierarchical structure with in-memory mapping
+    const hierarchicalData = quests.map(quest => {
+      const questMilestones = milestoneMap.get(quest.id) || [];
+      
+      const milestonesWithTasks = questMilestones.map(milestone => {
+        const milestoneTasks = taskMap.get(milestone.id) || [];
+        
+        const tasksWithSubtasks = milestoneTasks.map(task => {
+          const taskSubtasks = subtaskMap.get(task.id) || [];
+          
+          return {
+            ...task,
+            subtasks: taskSubtasks
+          };
+        });
 
         return {
-          ...quest,
-          milestones: milestonesWithTasks
+          ...milestone,
+          tasks: tasksWithSubtasks
         };
-      })
-    );
+      });
+
+      return {
+        ...quest,
+        milestones: milestonesWithTasks
+      };
+    });
 
     return hierarchicalData;
   } catch (error) {
@@ -211,155 +234,143 @@ export async function getHierarchicalData(year: number, quarter: number) {
   }
 }
 
-// Utility: Get parent quest info
-async function getParentQuestInfo(supabase: SupabaseClient, questId: string | undefined): Promise<ParentQuestInfo> {
-  if (!questId) return { parent_quest_id: undefined, parent_quest_title: undefined, parent_quest_priority_score: undefined };
-  const { data: quest } = await supabase
-    .from('quests')
-    .select('id, title, priority_score')
-    .eq('id', questId)
-    .single();
+// Helper function to build quest item details
+function buildQuestItemDetails(item: { id: string; item_id: string; item_type: string }, questMap: Map<string, Quest>): ItemDetails {
+  const quest = questMap.get(item.item_id);
   return {
-    parent_quest_id: quest?.id,
-    parent_quest_title: quest?.title,
-    parent_quest_priority_score: quest?.priority_score
-  };
-}
-
-// Utility: Get quest details
-async function getQuestDetails(supabase: SupabaseClient, itemId: string): Promise<QuestDetails> {
-  const { data: quest } = await supabase
-    .from('quests')
-    .select('id, title, priority_score')
-    .eq('id', itemId)
-    .single();
-  
-  return {
+    id: item.id,
+    item_id: item.item_id,
+    item_type: item.item_type as 'QUEST',
     title: quest?.title || '',
     priority_score: quest?.priority_score,
     quest_id: quest?.id,
     parent_quest_id: quest?.id,
     parent_quest_title: quest?.title,
     parent_quest_priority_score: quest?.priority_score,
-    status: 'TODO' // Quests don't have status, default to TODO
+    status: 'TODO'
   };
 }
 
-// Utility: Get milestone details
-async function getMilestoneDetails(supabase: SupabaseClient, itemId: string): Promise<MilestoneDetails> {
-  const { data: milestone } = await supabase
-    .from('milestones')
-    .select('title, display_order, quest_id')
-    .eq('id', itemId)
-    .single();
-  
-  const baseDetails = {
+// Helper function to build milestone item details
+function buildMilestoneItemDetails(item: { id: string; item_id: string; item_type: string }, milestoneMap: Map<string, Milestone>, parentQuestMap: Map<string, Quest>): ItemDetails {
+  const milestone = milestoneMap.get(item.item_id);
+  const parentQuest = milestone?.quest_id ? parentQuestMap.get(milestone.quest_id) : null;
+  return {
+    id: item.id,
+    item_id: item.item_id,
+    item_type: item.item_type as 'MILESTONE',
     title: milestone?.title || '',
     display_order: milestone?.display_order,
-    quest_id: milestone?.quest_id
-  };
-
-  if (milestone?.quest_id) {
-    const parent = await getParentQuestInfo(supabase, milestone.quest_id);
-    return {
-      ...baseDetails,
-      parent_quest_id: parent.parent_quest_id,
-      parent_quest_title: parent.parent_quest_title,
-      parent_quest_priority_score: parent.parent_quest_priority_score,
-      status: 'TODO' // Milestones don't have status, default to TODO
-    };
-  }
-
-  return {
-    ...baseDetails,
-    parent_quest_id: undefined,
-    parent_quest_title: undefined,
-    parent_quest_priority_score: undefined,
-    status: 'TODO' // Milestones don't have status, default to TODO
+    quest_id: milestone?.quest_id,
+    parent_quest_id: parentQuest?.id,
+    parent_quest_title: parentQuest?.title,
+    parent_quest_priority_score: parentQuest?.priority_score,
+    status: 'TODO'
   };
 }
 
-// Utility: Get parent quest from milestone
-async function getParentQuestFromMilestone(supabase: SupabaseClient, milestoneId: string): Promise<ParentQuestInfo> {
-  const { data: milestone } = await supabase
-    .from('milestones')
-    .select('id, quest_id')
-    .eq('id', milestoneId)
-    .single();
-  
-  if (milestone?.quest_id) {
-    return await getParentQuestInfo(supabase, milestone.quest_id);
-  }
-  
+// Helper function to build task/subtask item details
+function buildTaskItemDetails(item: { id: string; item_id: string; item_type: string }, taskMap: Map<string, Task>, milestoneMap: Map<string, Milestone>, parentQuestMap: Map<string, Quest>): ItemDetails {
+  const task = taskMap.get(item.item_id);
+  const milestone = task?.milestone_id ? milestoneMap.get(task.milestone_id) : null;
+  const parentQuest = milestone?.quest_id ? parentQuestMap.get(milestone.quest_id) : null;
   return {
-    parent_quest_id: undefined,
-    parent_quest_title: undefined,
-    parent_quest_priority_score: undefined
-  };
-}
-
-// Utility: Get task details
-async function getTaskDetails(supabase: SupabaseClient, itemId: string): Promise<TaskDetails> {
-  const { data: task } = await supabase
-    .from('tasks')
-    .select('title, status, display_order, milestone_id, parent_task_id')
-    .eq('id', itemId)
-    .single();
-  
-  const baseDetails = {
+    id: item.id,
+    item_id: item.item_id,
+    item_type: item.item_type as 'TASK' | 'SUBTASK',
     title: task?.title || '',
     status: task?.status || 'TODO',
     display_order: task?.display_order,
     milestone_id: task?.milestone_id,
-    parent_task_id: task?.parent_task_id || undefined
-  };
-
-  if (task?.milestone_id) {
-    const parent = await getParentQuestFromMilestone(supabase, task.milestone_id);
-    return {
-      ...baseDetails,
-      parent_quest_id: parent.parent_quest_id,
-      parent_quest_title: parent.parent_quest_title,
-      parent_quest_priority_score: parent.parent_quest_priority_score
-    };
-  }
-
-  return {
-    ...baseDetails,
-    parent_quest_id: undefined,
-    parent_quest_title: undefined,
-    parent_quest_priority_score: undefined
+    parent_task_id: task?.parent_task_id,
+    parent_quest_id: parentQuest?.id,
+    parent_quest_title: parentQuest?.title,
+    parent_quest_priority_score: parentQuest?.priority_score
   };
 }
 
-// Utility: Get item details (refactored)
-async function getItemDetails(supabase: SupabaseClient, item: WeeklyGoalItem): Promise<ItemDetails> {
-  let details: QuestDetails | MilestoneDetails | TaskDetails = {} as QuestDetails;
-
-  if (item.item_type === 'QUEST') {
-    details = await getQuestDetails(supabase, item.item_id);
-  } else if (item.item_type === 'MILESTONE') {
-    details = await getMilestoneDetails(supabase, item.item_id);
-  } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
-    details = await getTaskDetails(supabase, item.item_id);
+// Helper function to build item details with reduced complexity
+function buildItemDetails(
+  item: { id: string; item_id: string; item_type: string },
+  questMap: Map<string, Quest>,
+  milestoneMap: Map<string, Milestone>,
+  taskMap: Map<string, Task>,
+  parentQuestMap: Map<string, Quest>
+): ItemDetails {
+  switch (item.item_type) {
+    case 'QUEST':
+      return buildQuestItemDetails(item, questMap);
+    case 'MILESTONE':
+      return buildMilestoneItemDetails(item, milestoneMap, parentQuestMap);
+    case 'TASK':
+    case 'SUBTASK':
+      return buildTaskItemDetails(item, taskMap, milestoneMap, parentQuestMap);
+    default:
+      return {
+        id: item.id,
+        item_id: item.item_id,
+        item_type: item.item_type as 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK',
+        title: '',
+        status: 'TODO'
+      };
   }
-
-  return {
-    id: item.id,
-    item_id: item.item_id,
-    item_type: item.item_type,
-    ...details
-  };
 }
 
-// Get weekly goals for a specific week (3 slots)
+// Helper function to group items by type
+function groupItemsByType(allGoalItems: WeeklyGoalItem[]) {
+  const questIds: string[] = [];
+  const milestoneIds: string[] = [];
+  const taskIds: string[] = [];
+  const subtaskIds: string[] = [];
+
+  allGoalItems?.forEach(item => {
+    switch (item.item_type) {
+      case 'QUEST':
+        questIds.push(item.item_id);
+        break;
+      case 'MILESTONE':
+        milestoneIds.push(item.item_id);
+        break;
+      case 'TASK':
+        taskIds.push(item.item_id);
+        break;
+      case 'SUBTASK':
+        subtaskIds.push(item.item_id);
+        break;
+    }
+  });
+
+  return { questIds, milestoneIds, taskIds, subtaskIds };
+}
+
+// Helper function to collect parent quest IDs
+function collectParentQuestIds(milestoneResults: Milestone[], taskResults: Task[], subtaskResults: Task[], milestoneMap: Map<string, Milestone>): Set<string> {
+  const parentQuestIds = new Set<string>();
+  
+  // Add quest IDs from milestones
+  milestoneResults.forEach(milestone => {
+    if (milestone.quest_id) parentQuestIds.add(milestone.quest_id);
+  });
+  
+  // Add quest IDs from tasks (via their milestones)
+  [...taskResults, ...subtaskResults].forEach(task => {
+    if (task.milestone_id) {
+      const milestone = milestoneMap.get(task.milestone_id);
+      if (milestone?.quest_id) parentQuestIds.add(milestone.quest_id);
+    }
+  });
+
+  return parentQuestIds;
+}
+
+// Get weekly goals for a specific week (3 slots) - OPTIMIZED VERSION
 export async function getWeeklyGoals(year: number, weekNumber: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   try {
-    // Get all 3 goal slots for the week
+    // Step 1: Get all 3 goal slots for the week
     const { data: weeklyGoals, error } = await supabase
       .from('weekly_goals')
       .select('id, goal_slot')
@@ -369,29 +380,60 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
       .order('goal_slot', { ascending: true });
 
     if (error) throw error;
+    if (!weeklyGoals || weeklyGoals.length === 0) return [];
 
-    // Get items for each goal slot
-    const goalsWithItems = await Promise.all(
-      (weeklyGoals || []).map(async (goal) => {
-        const { data: goalItems, error: itemsError } = await supabase
-          .from('weekly_goal_items')
-          .select('id, item_id, item_type')
-          .eq('weekly_goal_id', goal.id);
+    // Step 2: Get all goal items for all goals in one query
+    const goalIds = weeklyGoals.map(goal => goal.id);
+    const { data: allGoalItems, error: itemsError } = await supabase
+      .from('weekly_goal_items')
+      .select('id, item_id, item_type, weekly_goal_id')
+      .in('weekly_goal_id', goalIds);
 
-        if (itemsError) throw itemsError;
+    if (itemsError) throw itemsError;
 
-        // Get details for each item
-        const itemsWithDetails = await Promise.all(
-          (goalItems || []).map(item => getItemDetails(supabase, item))
-        );
+    // Step 3: Group items by type for batch queries
+    const { questIds, milestoneIds, taskIds, subtaskIds } = groupItemsByType(allGoalItems || []);
 
-        return {
-          id: goal.id,
-          goal_slot: goal.goal_slot,
-          items: itemsWithDetails
-        };
-      })
+    // Step 4: Batch queries for all item details
+    const [questResults, milestoneResults, taskResults, subtaskResults] = await Promise.all([
+      questIds.length > 0 ? supabase.from('quests').select('id, title, priority_score').in('id', questIds) : { data: [] },
+      milestoneIds.length > 0 ? supabase.from('milestones').select('id, title, display_order, quest_id').in('id', milestoneIds) : { data: [] },
+      taskIds.length > 0 ? supabase.from('tasks').select('id, title, status, display_order, milestone_id, parent_task_id').in('id', taskIds) : { data: [] },
+      subtaskIds.length > 0 ? supabase.from('tasks').select('id, title, status, display_order, milestone_id, parent_task_id').in('id', subtaskIds) : { data: [] }
+    ]);
+
+    // Step 5: Create lookup maps
+    const questMap = new Map((questResults.data || []).map(q => [q.id, q]));
+    const milestoneMap = new Map((milestoneResults.data || []).map(m => [m.id, m]));
+    const taskMap = new Map([...(taskResults.data || []), ...(subtaskResults.data || [])].map(t => [t.id, t]));
+
+    // Step 6: Get parent quest info for milestones and tasks (batch query)
+    const parentQuestIds = collectParentQuestIds(
+      milestoneResults.data || [],
+      taskResults.data || [],
+      subtaskResults.data || [],
+      milestoneMap
     );
+
+    const parentQuestResults = parentQuestIds.size > 0 
+      ? await supabase.from('quests').select('id, title, priority_score').in('id', Array.from(parentQuestIds))
+      : { data: [] };
+
+    const parentQuestMap = new Map((parentQuestResults.data || []).map(q => [q.id, q]));
+
+    // Step 7: Group items by goal and build final structure
+    const goalsWithItems = weeklyGoals.map(goal => {
+      const goalItems = allGoalItems?.filter(item => item.weekly_goal_id === goal.id) || [];
+      const itemsWithDetails = goalItems.map(item => 
+        buildItemDetails(item, questMap, milestoneMap, taskMap, parentQuestMap)
+      );
+      
+      return {
+        id: goal.id,
+        goal_slot: goal.goal_slot,
+        items: itemsWithDetails
+      };
+    });
 
     return goalsWithItems;
   } catch (error) {
@@ -506,14 +548,14 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
 
 // ===== NEW HIERARCHICAL WEEKLY FOCUS ACTIONS =====
 
-// Get weekly focus for a specific week
+// Get weekly focus for a specific week - OPTIMIZED VERSION
 export async function getWeeklyFocus(year: number, weekNumber: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   try {
-    // Get weekly focus record
+    // Step 1: Get weekly focus record
     const { data: weeklyFocus, error: focusError } = await supabase
       .from('weekly_focuses')
       .select('id')
@@ -523,64 +565,78 @@ export async function getWeeklyFocus(year: number, weekNumber: number) {
       .single();
 
     if (focusError && focusError.code !== 'PGRST116') throw focusError; // PGRST116 = no rows returned
-
     if (!weeklyFocus) return null;
 
-    // Get focus items
+    // Step 2: Get all focus items
     const { data: focusItems, error: itemsError } = await supabase
       .from('weekly_focus_items')
       .select('id, item_id, item_type')
       .eq('weekly_focus_id', weeklyFocus.id);
 
     if (itemsError) throw itemsError;
+    if (!focusItems || focusItems.length === 0) {
+      return {
+        id: weeklyFocus.id,
+        items: []
+      };
+    }
 
-    // Get details for each item
-    const itemsWithDetails = await Promise.all(
-      (focusItems || []).map(async (item) => {
-        let title = '';
-        let status = 'TODO';
+    // Step 3: Group items by type for batch queries
+    const questIds: string[] = [];
+    const milestoneIds: string[] = [];
+    const taskIds: string[] = [];
+    const subtaskIds: string[] = [];
 
-        if (item.item_type === 'QUEST') {
-          const { data: quest } = await supabase
-            .from('quests')
-            .select('title')
-            .eq('id', item.item_id)
-            .single();
-          title = quest?.title || '';
-        } else if (item.item_type === 'MILESTONE') {
-          const { data: milestone } = await supabase
-            .from('milestones')
-            .select('title')
-            .eq('id', item.item_id)
-            .single();
-          title = milestone?.title || '';
-        } else if (item.item_type === 'TASK') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('title, status')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          status = task?.status || 'TODO';
-        } else if (item.item_type === 'SUBTASK') {
-          const { data: subtask } = await supabase
-            .from('tasks')
-            .select('title, status')
-            .eq('id', item.item_id)
-            .single();
-          title = subtask?.title || '';
-          status = subtask?.status || 'TODO';
-        }
+    focusItems.forEach(item => {
+      if (item.item_type === 'QUEST') {
+        questIds.push(item.item_id);
+      } else if (item.item_type === 'MILESTONE') {
+        milestoneIds.push(item.item_id);
+      } else if (item.item_type === 'TASK') {
+        taskIds.push(item.item_id);
+      } else if (item.item_type === 'SUBTASK') {
+        subtaskIds.push(item.item_id);
+      }
+    });
 
-        return {
-          id: item.id,
-          item_id: item.item_id,
-          item_type: item.item_type,
-          title,
-          status
-        };
-      })
-    );
+    // Step 4: Batch queries for all item details
+    const [questResults, milestoneResults, taskResults, subtaskResults] = await Promise.all([
+      questIds.length > 0 ? supabase.from('quests').select('id, title').in('id', questIds) : { data: [] },
+      milestoneIds.length > 0 ? supabase.from('milestones').select('id, title').in('id', milestoneIds) : { data: [] },
+      taskIds.length > 0 ? supabase.from('tasks').select('id, title, status').in('id', taskIds) : { data: [] },
+      subtaskIds.length > 0 ? supabase.from('tasks').select('id, title, status').in('id', subtaskIds) : { data: [] }
+    ]);
+
+    // Step 5: Create lookup maps
+    const questMap = new Map((questResults.data || []).map(q => [q.id, q]));
+    const milestoneMap = new Map((milestoneResults.data || []).map(m => [m.id, m]));
+    const taskMap = new Map([...(taskResults.data || []), ...(subtaskResults.data || [])].map(t => [t.id, t]));
+
+    // Step 6: Build items with details using in-memory mapping
+    const itemsWithDetails = focusItems.map(item => {
+      let title = '';
+      let status = 'TODO';
+
+      if (item.item_type === 'QUEST') {
+        const quest = questMap.get(item.item_id);
+        title = quest?.title || '';
+      } else if (item.item_type === 'MILESTONE') {
+        const milestone = milestoneMap.get(item.item_id);
+        title = milestone?.title || '';
+      } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
+        const task = taskMap.get(item.item_id);
+        title = task?.title || '';
+        status = task?.status || 'TODO';
+      }
+
+      return {
+        id: item.id,
+        item_id: item.item_id,
+        item_type: item.item_type,
+        title,
+        status
+      };
+    });
 
     return {
       id: weeklyFocus.id,
