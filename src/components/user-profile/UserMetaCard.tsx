@@ -2,7 +2,7 @@
 import Image from "next/image";
 import React from "react";
 
-import { useModal } from "../../hooks/useModal";
+import { useModal } from "../../hooks/common/useModal";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Button from "../ui/button/Button";
