@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getWeeklyGoals, getWeeklyRules, calculateBatchGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyGoals, getWeeklyRules, calculateWeeklyGoalsProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
@@ -112,7 +112,8 @@ export function useWeeklyGoals(year: number, weekNumber: number) {
 }
 
 /**
- * Custom hook for fetching weekly goals with progress
+ * Custom hook for fetching weekly goals with progress - OPTIMIZED VERSION
+ * Uses single RPC call instead of multiple queries for much better performance
  */
 export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
   const { goals, error, isLoading, mutate } = useWeeklyGoals(year, weekNumber);
@@ -122,15 +123,18 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
     error: progressError, 
     isLoading: progressLoading 
   } = useSWR(
-    goals.length > 0 ? ['weekly-goals-progress', year, weekNumber, goals] : null,
+    ['weekly-goals-progress-optimized', year, weekNumber],
     async () => {
-      // Hanya 1x fetch batch untuk semua goals
-      return await calculateBatchGoalProgress(goals);
+      // ✅ OPTIMIZED: Single RPC call instead of multiple queries
+      return await calculateWeeklyGoalsProgress(year, weekNumber);
     },
     {
       revalidateOnFocus: false,
-      dedupingInterval: 4 * 60 * 1000, // 4 minutes
-      errorRetryCount: 3,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased for better caching
+      errorRetryCount: 2, // reduced from 3
+      errorRetryInterval: 1000, // 1 second
+      focusThrottleInterval: 5000, // 5 seconds
     }
   );
 

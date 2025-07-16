@@ -362,6 +362,48 @@ export async function calculateBatchGoalProgress(goals: Array<{ goal_slot: numbe
   return progressData;
 }
 
+// ========= OPTIMIZED VERSION: Single RPC Call for Progress Calculation =========
+
+/**
+ * Calculate progress for all weekly goals using optimized RPC function
+ * Replaces calculateBatchGoalProgress with single database call
+ * @param year Year
+ * @param weekNumber Week number
+ * @returns Object mapping goal_slot to progress { completed, total, percentage }
+ */
+export async function calculateWeeklyGoalsProgress(year: number, weekNumber: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  try {
+    const { data, error } = await supabase.rpc('calculate_weekly_goals_progress', {
+      p_user_id: user.id,
+      p_year: year,
+      p_week_number: weekNumber
+    });
+
+    if (error) {
+      console.error("Error calling progress RPC function:", error);
+      return {};
+    }
+
+    // Convert string keys to number keys for consistency
+    const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
+    if (data) {
+      Object.keys(data).forEach(key => {
+        const slot = parseInt(key);
+        progressData[slot] = data[key];
+      });
+    }
+
+    return progressData;
+  } catch (error) {
+    console.error('Error calculating weekly goals progress:', error);
+    return {};
+  }
+}
+
 // ===== NEW HIERARCHICAL WEEKLY FOCUS ACTIONS =====
 
 // Get weekly focus for a specific week - OPTIMIZED VERSION
