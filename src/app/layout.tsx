@@ -20,6 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
       <body>
+        {/* Inject global timer for Weekly Sync loading measurement */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ === undefined) { window.__WEEKLY_SYNC_START__ = performance.now(); }`,
+          }}
+        />
         <SWRProvider>
           <PreloadProvider>
             <ThemeProvider>

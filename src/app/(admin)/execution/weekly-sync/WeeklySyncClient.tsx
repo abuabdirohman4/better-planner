@@ -9,7 +9,6 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import CustomToast from "@/components/ui/toast/CustomToast";
-import { usePageLoadTimer } from "@/hooks/common/usePageLoadTimer";
 import { useWeek } from "@/hooks/common/useWeek";
 import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/execution/useWeeklySync";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
@@ -337,6 +336,12 @@ function TaskPool({ taskPool, loading }: { taskPool: Task[]; loading: boolean })
   );
 }
 
+declare global {
+  interface Window {
+    __WEEKLY_SYNC_START__?: number;
+  }
+}
+
 export default function WeeklySyncClient() {
   const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
@@ -350,9 +355,20 @@ export default function WeeklySyncClient() {
   const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-  
-  // Timer untuk tracking waktu loading halaman
-  const loadingTime = usePageLoadTimer(loading || toDontListLoading);
+
+  // Timer untuk tracking waktu loading halaman (global, akurat)
+  const [loadingTime, setLoadingTime] = useState<number | null>(null);
+  useEffect(() => {
+    if (!loading && !toDontListLoading && loadingTime === null) {
+      const start = typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ ? window.__WEEKLY_SYNC_START__ : performance.now();
+      const elapsed = (performance.now() - start) / 1000;
+      setLoadingTime(Math.round(elapsed * 10) / 10);
+      // Reset agar navigasi berikutnya fresh
+      if (typeof window !== 'undefined') {
+        window.__WEEKLY_SYNC_START__ = performance.now();
+      }
+    }
+  }, [loading, toDontListLoading, loadingTime]);
 
   // Handler untuk refresh data dari child
   const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
@@ -398,7 +414,7 @@ export default function WeeklySyncClient() {
       <div className="flex flex-col justify-center items-center min-h-[600px]">
         <Spinner size={164} />
         <div className="mt-4 text-lg font-semibold text-gray-600">
-          Loading... ({loadingTime}s)
+          Loading...
         </div>
       </div>
     );
@@ -409,7 +425,7 @@ export default function WeeklySyncClient() {
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">
-          Weekly Sync (waktu loading: {loadingTime}s)
+          Weekly Sync{loadingTime !== null ? ` (waktu loading: ${loadingTime}s)` : ''}
         </h2>
         <WeekSelector
           displayWeek={displayWeek}
