@@ -1,5 +1,5 @@
 "use client";
-import { useQuarter } from "@/hooks/useQuarter";
+import { useQuarter } from "@/hooks/common/useQuarter";
 import { getQuarterDates } from "@/lib/quarterUtils";
 
 export default function QuarterUsageExample() {
@@ -66,7 +66,7 @@ export default function QuarterUsageExample() {
           <h3 className="font-semibold mb-2">How to Use:</h3>
           <pre className="text-sm text-gray-600 dark:text-gray-400 overflow-auto">
 {`// In your page component:
-import { useQuarter } from "@/hooks/useQuarter";
+import { useQuarter } from "@/hooks/common/useQuarter";
 
 export default function MyPage() {
   const quarterData = useQuarter();

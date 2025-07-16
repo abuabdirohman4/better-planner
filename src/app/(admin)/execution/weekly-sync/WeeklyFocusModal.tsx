@@ -5,7 +5,7 @@ import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 
 import Button from '@/components/ui/button/Button';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { useWeek } from '@/hooks/useWeek';
+import { useWeek } from '@/hooks/common/useWeek';
 
 import { getHierarchicalData } from './actions';
 

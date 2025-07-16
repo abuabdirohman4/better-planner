@@ -12,7 +12,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import React, { useRef, useState, useEffect } from "react";
 
 import { Modal } from "@/components/ui/modal";
-import { useModal } from "@/hooks/useModal";
+import { useModal } from "@/hooks/common/useModal";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {

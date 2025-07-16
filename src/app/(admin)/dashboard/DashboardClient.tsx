@@ -2,7 +2,7 @@
 
 import QuarterUsageExample from "@/components/examples/QuarterUsageExample";
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from '@/hooks/useDashboard';
+import { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from '@/hooks/dashboard/useDashboard';
 
 interface DashboardClientProps {
   userEmail?: string;

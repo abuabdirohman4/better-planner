@@ -6,7 +6,7 @@ import Button from '@/components/ui/button/Button';
 import Spinner from "@/components/ui/spinner/Spinner";
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { useSidebar } from '@/context/SidebarContext';
-import { useQuarter } from "@/hooks/useQuarter";
+import { useQuarter } from "@/hooks/common/useQuarter";
 
 import { addMultipleQuests, updateQuests, finalizeQuests } from "../quests/actions";
 

@@ -3,8 +3,8 @@ import { useState } from "react";
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useQuarter } from '@/hooks/useQuarter';
-import { useMainQuests } from '@/hooks/useQuests';
+import { useQuarter } from '@/hooks/common/useQuarter';
+import { useMainQuests } from '@/hooks/planning/useQuests';
 
 import QuestWorkspace from './QuestWorkspace';
 

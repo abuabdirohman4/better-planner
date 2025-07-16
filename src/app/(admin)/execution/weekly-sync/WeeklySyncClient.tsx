@@ -9,8 +9,8 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import CustomToast from "@/components/ui/toast/CustomToast";
-import { useWeek } from "@/hooks/useWeek";
-import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/useWeeklySync";
+import { useWeek } from "@/hooks/common/useWeek";
+import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/execution/useWeeklySync";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 

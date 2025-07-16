@@ -6,7 +6,7 @@ import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
-import { useVisions } from '@/hooks/useVision';
+import { useVisions } from '@/hooks/planning/useVision';
 
 import { upsertVision } from './actions';
 import { LIFE_AREAS } from './constants';

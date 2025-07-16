@@ -2,7 +2,7 @@
 import React, { useState, useTransition } from "react";
 
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useCompletedSessions, useTasksForWeek } from "@/hooks/useDailySync";
+import { useCompletedSessions, useTasksForWeek } from "@/hooks/execution/useDailySync";
 
 import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
 
