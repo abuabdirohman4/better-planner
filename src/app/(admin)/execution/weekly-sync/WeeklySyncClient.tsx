@@ -9,6 +9,7 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import CustomToast from "@/components/ui/toast/CustomToast";
+import { usePageLoadTimer } from "@/hooks/common/usePageLoadTimer";
 import { useWeek } from "@/hooks/common/useWeek";
 import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/execution/useWeeklySync";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
@@ -349,6 +350,9 @@ export default function WeeklySyncClient() {
   const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
 
   const { displayWeek, totalWeeks } = weekCalculations;
+  
+  // Timer untuk tracking waktu loading halaman
+  const loadingTime = usePageLoadTimer(loading || toDontListLoading);
 
   // Handler untuk refresh data dari child
   const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
@@ -401,7 +405,9 @@ export default function WeeklySyncClient() {
     <div className="container mx-auto py-8 pt-0">
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">Weekly Sync</h2>
+        <h2 className="text-xl font-bold">
+          Weekly Sync (waktu loading: {loadingTime}s)
+        </h2>
         <WeekSelector
           displayWeek={displayWeek}
           totalWeeks={totalWeeks}
