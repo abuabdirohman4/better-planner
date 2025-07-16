@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 import PreloadProvider from '@/components/common/PreloadProvider';
+import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 
@@ -19,15 +20,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
       <body>
-        <PreloadProvider>
-          <ThemeProvider>
-            <SidebarProvider>{children}</SidebarProvider>
-          </ThemeProvider>
-          <Toaster 
-            position="top-right"
-            richColors
-          />
-        </PreloadProvider>
+        <SWRProvider>
+          <PreloadProvider>
+            <ThemeProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+            </ThemeProvider>
+            <Toaster 
+              position="top-right"
+              richColors
+            />
+          </PreloadProvider>
+        </SWRProvider>
       </body>
     </html>
   );
