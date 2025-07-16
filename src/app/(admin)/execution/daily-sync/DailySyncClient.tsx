@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useTransition } from "react";
+import useSWR from 'swr';
+
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useActivityStore } from '@/stores/activityStore';
-import useSWR from 'swr';
+
 import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, getTasksForWeek, countCompletedSessions } from "./actions";
 
 // SWR-based hooks
