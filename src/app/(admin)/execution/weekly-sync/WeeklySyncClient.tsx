@@ -111,7 +111,7 @@ function useTaskData(year: number, quarter: number, currentWeek: Date) {
       }
     };
     fetchData();
-  }, [currentWeek, year, quarter]);
+  }, [currentWeek, year, quarter, weekDates]);
 
   return { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates };
 }
