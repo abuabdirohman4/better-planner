@@ -310,6 +310,58 @@ export async function calculateGoalProgress(items: Array<{ item_id: string; item
   }
 }
 
+/**
+ * Calculate progress for all weekly goals in a single batch request
+ * @param goals Array of WeeklyGoal (each with goal_slot and items)
+ * @returns Object mapping goal_slot to progress { completed, total, percentage }
+ */
+export async function calculateBatchGoalProgress(goals: Array<{ goal_slot: number; items: Array<{ item_id: string; item_type: string }> }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  // Kumpulkan semua item dari semua goals
+  const allItems: Array<{ item_id: string; item_type: string; goal_slot: number }> = [];
+  goals.forEach(goal => {
+    goal.items.forEach(item => {
+      allItems.push({ ...item, goal_slot: goal.goal_slot });
+    });
+  });
+
+  // Group item_ids by type
+  const taskIds = allItems.filter(item => item.item_type === 'TASK' || item.item_type === 'SUBTASK').map(item => item.item_id);
+  const milestoneIds = allItems.filter(item => item.item_type === 'MILESTONE').map(item => item.item_id);
+  const questIds = allItems.filter(item => item.item_type === 'QUEST').map(item => item.item_id);
+
+  // Batch query untuk semua item sekaligus
+  const [taskResults, milestoneResults, questResults] = await Promise.all([
+    taskIds.length > 0 ? supabase.from('tasks').select('id,status').in('id', taskIds) : { data: [] },
+    milestoneIds.length > 0 ? supabase.from('milestones').select('id,status').in('id', milestoneIds) : { data: [] },
+    questIds.length > 0 ? supabase.from('quests').select('id,status').in('id', questIds) : { data: [] }
+  ]);
+
+  // Buat map status
+  const statusMap = new Map();
+  [...(taskResults.data || []), ...(milestoneResults.data || []), ...(questResults.data || [])]
+    .forEach(item => statusMap.set(item.id, item.status));
+
+  // Hitung progress per goal_slot
+  const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
+  goals.forEach(goal => {
+    const items = goal.items;
+    let totalCompleted = 0;
+    const totalItems = items.length;
+    for (const item of items) {
+      const status = statusMap.get(item.item_id);
+      if (status === 'DONE') totalCompleted += 1;
+    }
+    const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+    progressData[goal.goal_slot] = { completed: totalCompleted, total: totalItems, percentage };
+  });
+
+  return progressData;
+}
+
 // ===== NEW HIERARCHICAL WEEKLY FOCUS ACTIONS =====
 
 // Get weekly focus for a specific week - OPTIMIZED VERSION

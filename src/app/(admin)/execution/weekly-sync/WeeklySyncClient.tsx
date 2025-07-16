@@ -436,7 +436,7 @@ export default function WeeklySyncClient() {
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">
-          Weekly Sync{loadingTime !== null ? ` (loading: ${loadingTime}s)` : ''}
+          Weekly Sync{loadingTime !== null ? ` (${loadingTime}s)` : ''}
         </h2>
         <WeekSelector
           displayWeek={displayWeek}

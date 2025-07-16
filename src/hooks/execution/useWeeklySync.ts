@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyGoals, getWeeklyRules, calculateBatchGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
@@ -124,22 +124,8 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
   } = useSWR(
     goals.length > 0 ? ['weekly-goals-progress', year, weekNumber, goals] : null,
     async () => {
-      // OPTIMIZATION: Calculate progress for all goals in parallel to avoid N+1 queries
-      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-      
-      // Process all goals in parallel
-      await Promise.all(
-        goals.map(async (goal: WeeklyGoal) => {
-          if (goal.items.length > 0) {
-            const progress = await calculateGoalProgress(goal.items);
-            progressData[goal.goal_slot as number] = progress;
-          } else {
-            progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
-          }
-        })
-      );
-
-      return progressData;
+      // Hanya 1x fetch batch untuk semua goals
+      return await calculateBatchGoalProgress(goals);
     },
     {
       revalidateOnFocus: false,
