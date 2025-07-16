@@ -175,8 +175,8 @@ function useSubtaskCRUD(taskId: string, milestoneId: string, subtasks: Subtask[]
 }
 
 // Custom hook for subtask operations
-function useSubtaskOperations(taskId: string, _milestoneId: string, subtasks: Subtask[], setSubtasks: React.Dispatch<React.SetStateAction<Subtask[]>>) {
-  const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
+function useSubtaskOperations(taskId: string, _milestoneId: string, subtasks: Subtask[], setSubtasks: React.Dispatch<React.SetStateAction<Subtask[]>>, draftTitles: Record<string, string>, setDraftTitles: React.Dispatch<React.SetStateAction<Record<string, string>>>) {
+  const { focusSubtaskId, setFocusSubtaskId } = useSubtaskState();
   const { handleSubtaskEnter, handleCheck, handleDeleteSubtask } = useSubtaskCRUD(taskId, _milestoneId, subtasks, setSubtasks);
 
   const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
@@ -303,7 +303,7 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     if (newSubtaskTitle) debouncedInsertNewSubtask(newSubtaskTitle);
   }, [newSubtaskTitle, debouncedInsertNewSubtask]);
 
-  const handleBulkPasteEmpty = async (e: React.ClipboardEvent, handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<number>) => {
+  const handleBulkPasteEmpty = async (e: React.ClipboardEvent, handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<number | null>) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').filter(line => line.trim());
     
@@ -317,12 +317,14 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     for (let i = 1; i < lines.length; i++) {
       const idx = localSubtasks.length - 1;
       const newOrder = await handleSubtaskEnter(idx, lines[i], localSubtasks);
-      localSubtasks.push({
-        id: `dummy-${i}`,
-        title: lines[i],
-        status: 'TODO' as const,
-        display_order: newOrder,
-      });
+      if (newOrder !== null) {
+        localSubtasks.push({
+          id: `dummy-${i}`,
+          title: lines[i],
+          status: 'TODO' as const,
+          display_order: newOrder,
+        });
+      }
     }
   };
 
@@ -597,30 +599,12 @@ function SubtaskList({
   );
 }
 
-export default function TaskDetailCard({ task, onBack }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; }) {
-  const [editSubtaskId] = useState<string | null>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const editInputRef = useRef<HTMLInputElement | null>(null);
-
+export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; }) {
   const { subtasks, setSubtasks, loadingSubtasks, fetchSubtasks } = useSubtaskManagement(task.id);
-  const { 
-    focusSubtaskId, 
-    setFocusSubtaskId, 
-    draftTitles, 
-    setDraftTitles,
-    handleSubtaskEnter, 
-    handleSubtaskEnterWithFocus, 
-    handleCheck, 
-    handleDraftTitleChange, 
-    handleDeleteSubtask, 
-    handleDragEnd 
-  } = useSubtaskOperations(task.id, task.id, subtasks, setSubtasks);
-  const { 
-    newSubtaskTitle, 
-    setNewSubtaskTitle, 
-    newSubtaskLoading, 
-    handleBulkPasteEmpty 
-  } = useNewSubtaskManagement(task.id, task.id, subtasks, fetchSubtasks);
+  const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
+  const { handleSubtaskEnter, handleCheck } = useSubtaskCRUD(task.id, milestoneId, subtasks, setSubtasks);
+  const { handleDraftTitleChange, handleDeleteSubtask: handleDeleteSubtaskWithFocus, handleDragEnd } = useSubtaskOperations(task.id, milestoneId, subtasks, setSubtasks, draftTitles, setDraftTitles);
+  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, subtasks, fetchSubtasks);
 
   useEffect(() => {
     if (focusSubtaskId) {
@@ -631,36 +615,19 @@ export default function TaskDetailCard({ task, onBack }: { task: { id: string; t
     }
   }, [focusSubtaskId, subtasks]);
 
-  useEffect(() => {
-    if (!editSubtaskId && editInputRef.current) {
-      editInputRef.current.focus();
-    }
-  }, [editSubtaskId]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    const focused = subtasks.find(st => st.title === '' && st.id !== focusSubtaskId);
-    if (focused && focusSubtaskId && !subtasks.some(st => st.id === focusSubtaskId)) {
-      setFocusSubtaskId(focused.id);
-    }
-  }, [subtasks, focusSubtaskId, setFocusSubtaskId]);
+  const handleSubtaskEnterWithOverride = async (idx: number, title: string, subtasksOverride: Subtask[]): Promise<number> => {
+    const result = await handleSubtaskEnter(idx, title, subtasksOverride);
+    return typeof result === 'number' ? result : -1;
+  };
 
-  useEffect(() => {
-    const focused = subtasks.find(st => st.title === '' && st.id !== focusSubtaskId);
-    if (focused && focusSubtaskId && !subtasks.some(st => st.id === focusSubtaskId)) {
-      setFocusSubtaskId(focused.id);
-      setDraftTitles(draft => {
-        const newDraft = { ...draft };
-        if (draft[focusSubtaskId]) {
-          newDraft[focused.id] = draft[focusSubtaskId];
-          delete newDraft[focusSubtaskId];
-        }
-        return newDraft;
-      });
-    }
-  }, [subtasks, focusSubtaskId, setFocusSubtaskId, setDraftTitles]);
+  const handleBulkPasteEmptyWrapper = (e: React.ClipboardEvent) => {
+    handleBulkPasteEmpty(e, handleSubtaskEnter);
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="flex-1 max-w-2xl mx-auto">
       <TaskHeader task={task} onBack={onBack} />
       <SubtaskList
         subtasks={subtasks}
@@ -668,15 +635,15 @@ export default function TaskDetailCard({ task, onBack }: { task: { id: string; t
         newSubtaskTitle={newSubtaskTitle}
         setNewSubtaskTitle={setNewSubtaskTitle}
         newSubtaskLoading={newSubtaskLoading}
-        handleBulkPasteEmpty={(e) => handleBulkPasteEmpty(e, handleSubtaskEnter)}
+        handleBulkPasteEmpty={handleBulkPasteEmptyWrapper}
         handleSubtaskEnter={handleSubtaskEnter}
-        handleSubtaskEnterWithOverride={handleSubtaskEnterWithFocus}
+        handleSubtaskEnterWithOverride={handleSubtaskEnterWithOverride}
         handleCheck={handleCheck}
         focusSubtaskId={focusSubtaskId}
         setFocusSubtaskId={setFocusSubtaskId}
         draftTitles={draftTitles}
         handleDraftTitleChange={handleDraftTitleChange}
-        handleDeleteSubtask={handleDeleteSubtask}
+        handleDeleteSubtask={handleDeleteSubtaskWithFocus}
         handleDragEnd={handleDragEnd}
       />
     </div>

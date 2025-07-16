@@ -77,7 +77,8 @@ function usePairwiseComparison(year: number, quarter: number, initialPairwiseRes
         }
       } catch {}
     }
-  }, [localKey, initialPairwiseResults]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localKey, JSON.stringify(initialPairwiseResults)]);
 
   useEffect(() => {
     try {
@@ -133,7 +134,8 @@ function useRankingCalculation(quests: Quest[], pairwiseResults: { [key: string]
       };
     }).sort((a, b) => b.score - a.score);
     setRanking(result);
-  }, [pairwiseResults, quests.length, quests, initialQuests]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(pairwiseResults), JSON.stringify(quests), JSON.stringify(initialQuests)]);
 
   return { ranking, setRanking };
 }
@@ -321,7 +323,6 @@ function PairwiseMatrix({ quests, pairwiseResults, onPairwiseClick, isExpanded }
   isExpanded: boolean;
 }) {
   return (
-    <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
       <ComponentCard className="text-center !shadow-none !bg-transparent !rounded-none !border-0 p-0" title="HIGHEST FIRST" classNameTitle="text-xl font-semibold text-gray-900 mt-4 dark:text-white">
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse border text-xs">
@@ -360,7 +361,6 @@ function PairwiseMatrix({ quests, pairwiseResults, onPairwiseClick, isExpanded }
           </table>
         </div>
       </ComponentCard>
-    </div>
   );
 }
 
@@ -402,7 +402,8 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
   useEffect(() => {
     handleReset();
     setRanking(null);
-  }, [localKey, handleReset, setRanking]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localKey]);
 
   if (loading) {
     return (
@@ -429,7 +430,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
         onQuestChange={handleQuestTitleChange}
         onSave={handleSaveQuests}
       />
-      <div className="flex flex-col">
+      <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
         <PairwiseMatrix
           quests={quests}
           pairwiseResults={pairwiseResults}

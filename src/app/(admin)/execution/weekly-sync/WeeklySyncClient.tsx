@@ -78,7 +78,9 @@ function useTaskData(year: number, quarter: number, currentWeek: Date) {
   const [taskPool, setTaskPool] = useState<Task[]>([]);
   const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
   const [loading, setLoading] = useState(false);
-  const weekDates = getWeekDates(currentWeek);
+  
+  // Memoize weekDates to prevent infinite re-renders
+  const weekDates = useMemo(() => getWeekDates(currentWeek), [currentWeek]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,7 +111,7 @@ function useTaskData(year: number, quarter: number, currentWeek: Date) {
       }
     };
     fetchData();
-  }, [currentWeek, year, quarter, weekDates]);
+  }, [currentWeek, year, quarter]);
 
   return { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates };
 }

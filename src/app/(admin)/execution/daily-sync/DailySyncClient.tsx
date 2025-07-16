@@ -227,7 +227,8 @@ const TaskColumn: React.FC<{
   onTargetChange?: (itemId: string, newTarget: number) => void;
   refreshSessionKey?: Record<string, number>;
   forceRefreshTaskId?: string | null;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey, forceRefreshTaskId }) => {
+  showAddQuestButton?: boolean;
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddSideQuest = (title: string) => {
@@ -271,20 +272,33 @@ const TaskColumn: React.FC<{
             forceRefreshTaskId={forceRefreshTaskId}
           />
         ))}
-        {items.length === 0 && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        {items.length === 0 ? (
+          <div className="text-center text-gray-500 dark:text-gray-400">
+            <p className="mb-6 py-8">Tidak ada tugas main quest hari ini</p>
             {onSelectTasks ? (
-              <button
-                onClick={onSelectTasks}
-                className="text-brand-500 hover:text-brand-600 font-medium"
-              >
-                + Pilih Task dari Weekly Goals
-              </button>
-            ) : (
-              <p>Tidak ada task</p>
-            )}
+              <div className="border-t border-gray-200 pt-4">
+                <button
+                  onClick={onSelectTasks}
+                  className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+                >
+                  Tambah Quest
+                </button>
+              </div>
+            ) : null}
           </div>
-        )}
+        ) : null}
+        
+        {/* Tombol Tambah Quest di dalam card Main Quest - hanya muncul jika ada task */}
+        {showAddQuestButton && items.length > 0 ? (
+          <div className="flex justify-center mt-6">
+            <button 
+              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+              onClick={onSelectTasks}
+            >
+              Tambah Quest
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -314,44 +328,75 @@ const TaskSelectionModal: React.FC<{
   if (!isOpen) return null;
 
   const groupedTasks = groupByGoalSlot(tasks);
+  const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pilih Task untuk Daily Plan</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+    <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Kelola Rencana Harian</h2>
+          <p className="text-gray-600 mb-2">
+            Tugas yang sudah tercentang adalah yang sudah ada di rencana harian. Anda bisa menambah atau menghapus tugas sesuai kebutuhan.
+          </p>
+          <p className="text-blue-600 font-medium">
+            {selectedCount} tugas dipilih
+          </p>
         </div>
-        
+
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Spinner size={32} />
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => (
-              <div key={goalSlot} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Goal Slot {goalSlot}</h3>
-                <div className="space-y-2">
-                  {slotTasks.map((task) => (
-                    <label key={task.id} className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedTasks[task.id] || false}
-                        onChange={() => onTaskToggle(task.id)}
-                        className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
-                      />
-                      <span className="text-sm text-gray-900 dark:text-gray-100">{task.title}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">({task.quest_title})</span>
-                    </label>
-                  ))}
+              <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
+                <div className="space-y-3">
+                  {slotTasks.map((task) => {
+                    const isSelected = selectedTasks[task.id] || false;
+                    return (
+                      <div 
+                        key={task.id} 
+                        className={`flex items-center space-x-3 cursor-pointer p-3 rounded-lg transition-colors ${
+                          isSelected 
+                            ? 'bg-blue-50 border border-blue-200' 
+                            : 'bg-gray-50 border border-transparent'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => onTaskToggle(task.id)}
+                          className={`w-4 h-4 rounded focus:ring-2 ${
+                            isSelected
+                              ? 'text-blue-600 bg-blue-600 border-blue-600 focus:ring-blue-500'
+                              : 'text-brand-500 bg-gray-100 border-gray-300 focus:ring-brand-500'
+                          }`}
+                        />
+                        <div className="flex-1">
+                          <span className={`text-sm font-medium block ${
+                            isSelected ? 'text-gray-900' : 'text-gray-900'
+                          }`}>
+                            {task.title}
+                          </span>
+                          <span className={`text-xs block ${
+                            isSelected ? 'text-gray-600' : 'text-gray-500'
+                          }`}>
+                            {task.quest_title} • {task.type}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
         )}
-        
-        <div className="flex justify-end space-x-3 mt-6">
+
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
           <button
             onClick={onClose}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
@@ -360,9 +405,9 @@ const TaskSelectionModal: React.FC<{
           </button>
           <button
             onClick={onSave}
-            className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600"
+            className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 font-medium"
           >
-            Simpan
+            Pilih ({selectedCount} Quest)
           </button>
         </div>
       </div>
@@ -568,6 +613,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onTargetChange={handleTargetChange}
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}
+            showAddQuestButton={true}
           />
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -584,6 +630,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           />
         </div>
       </div>
+      
       <TaskSelectionModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

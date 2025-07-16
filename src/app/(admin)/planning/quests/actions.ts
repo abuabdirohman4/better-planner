@@ -242,6 +242,18 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
   const title = title_val ? title_val.toString() : null;
   const parent_task_id = parent_task_id_val ? parent_task_id_val.toString() : null;
   if (!milestone_id) throw new Error('milestone_id wajib diisi');
+  
+  // Validasi milestone_id exists
+  const { data: milestoneExists, error: milestoneError } = await supabase
+    .from('milestones')
+    .select('id')
+    .eq('id', milestone_id)
+    .single();
+  
+  if (milestoneError || !milestoneExists) {
+    throw new Error('Milestone tidak ditemukan atau tidak valid');
+  }
+  
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User tidak ditemukan');
   interface InsertTaskData {

@@ -265,6 +265,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           <TaskDetailCard
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
+            milestoneId={milestones[activeMilestoneIdx]?.id || ''}
           />
         </div> : null}
     </div>

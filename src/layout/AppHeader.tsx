@@ -171,13 +171,13 @@ const AppHeader: React.FC = () => {
               <QuarterSelector />
             </Suspense>
           </div>
-          <ApplicationMenu 
-            isOpen={isApplicationMenuOpen} 
-            onToggle={toggleApplicationMenu}
-            isClient={isClient}
-            currentDateTime={currentDateTime}
-          />
         </div>
+        <ApplicationMenu 
+          isOpen={isApplicationMenuOpen} 
+          onToggle={toggleApplicationMenu}
+          isClient={isClient}
+          currentDateTime={currentDateTime}
+        />
       </div>
     </header>
   );
