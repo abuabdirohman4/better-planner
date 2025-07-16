@@ -1,12 +1,27 @@
 "use client";
 import React, { useState, useTransition } from "react";
-
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useCompletedSessions, useTasksForWeek } from "@/hooks/execution/useDailySync";
+import { useActivityStore } from '@/stores/activityStore';
+import useSWR from 'swr';
+import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, getTasksForWeek, countCompletedSessions } from "./actions";
 
-import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
+// SWR-based hooks
+const useDailyPlan = (date: string) => {
+    const { data, error, mutate, isLoading } = useSWR(['dailyPlan', date], () => getDailyPlan(date));
+    return { dailyPlan: data, error, mutate, isLoading };
+};
 
+const useTasksForWeek = (year: number, weekNumber: number) => {
+    const { data, error, mutate, isLoading } = useSWR(['tasksForWeek', year, weekNumber], () => getTasksForWeek(year, weekNumber));
+    return { tasks: data, error, mutate, isLoading };
+};
 
+const useCompletedSessions = (itemId: string, date: string, lastActivityTimestamp: number) => {
+    const { data, error, isLoading, mutate } = useSWR(['completedSessions', itemId, date, lastActivityTimestamp], () => countCompletedSessions(itemId, date));
+    return { completedCount: data, error, isLoading, mutate };
+};
+
+// Interfaces
 interface WeeklyTaskItem {
   id: string;
   type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
@@ -15,8 +30,7 @@ interface WeeklyTaskItem {
   quest_title: string;
   goal_slot: number;
 }
-
-interface DailyPlanItem {
+export interface DailyPlanItem {
   id: string;
   item_id: string;
   item_type: string;
@@ -25,13 +39,11 @@ interface DailyPlanItem {
   quest_title?: string;
   daily_session_target?: number;
 }
-
 export interface DailyPlan {
   id: string;
   plan_date: string;
-  daily_plan_items?: DailyPlanItem[];
+  daily_plan_items: DailyPlanItem[];
 }
-
 interface DailySyncClientProps {
   year: number;
   quarter: number;
@@ -42,25 +54,16 @@ interface DailySyncClientProps {
   setDailyPlanState: (plan: DailyPlan | null) => void;
   setDailyPlanAction?: typeof setDailyPlan;
   loading: boolean;
-  refreshSessionKey?: Record<string, number>;
-  forceRefreshTaskId?: string | null;
 }
 
 // Custom hook for task session management
-function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: number, forceRefreshTaskId?: string | null) {
+function useTaskSession(item: DailyPlanItem, selectedDate: string) {
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
   const [savingTarget, setSavingTarget] = React.useState(false);
+  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
 
-  // SWR hook for completed sessions
-  const { completedCount, isLoading, mutate } = useCompletedSessions(item.id, selectedDate || '');
-
-  // Trigger refresh when refreshKey or forceRefreshTaskId changes
-  React.useEffect(() => {
-    if (refreshKey || forceRefreshTaskId) {
-      mutate();
-    }
-  }, [refreshKey, forceRefreshTaskId, mutate]);
-
+  const { completedCount, isLoading } = useCompletedSessions(item.id, selectedDate || '', lastActivityTimestamp);
+  
   // Update target when item changes
   React.useEffect(() => {
     setTarget(item.daily_session_target ?? 1);
@@ -79,7 +82,7 @@ function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: 
   };
 
   return {
-    completed: completedCount,
+    completed: completedCount || 0,
     loading: isLoading,
     target,
     savingTarget,
@@ -94,10 +97,8 @@ const TaskCard: React.FC<{
   onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
-  refreshKey?: number;
-  forceRefreshTaskId?: string | null;
-}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, refreshKey, forceRefreshTaskId }) => {
-  const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(item, selectedDate || '', refreshKey, forceRefreshTaskId);
+}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange }) => {
+  const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(item, selectedDate || '');
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
@@ -135,17 +136,13 @@ const TaskCard: React.FC<{
               disabled={savingTarget || target <= 1}
               onClick={() => handleTargetChange(target - 1, onTargetChange)}
               aria-label="Kurangi target"
-            >
-              –
-            </button>
+            >–</button>
             <button
               className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
               disabled={savingTarget}
               onClick={() => handleTargetChange(target + 1, onTargetChange)}
               aria-label="Tambah target"
-            >
-              +
-            </button>
+            >+</button>
           </div>
         </div>
       </div>
@@ -160,7 +157,7 @@ const TaskCard: React.FC<{
             type="checkbox"
             checked={item.status === 'DONE'}
             onChange={(e) => onStatusChange(item.item_id, e.target.checked ? 'DONE' : 'TODO')}
-            className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+            className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-2"
           />
         </div>
       </div>
@@ -223,10 +220,8 @@ const TaskColumn: React.FC<{
   onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
-  refreshSessionKey?: Record<string, number>;
-  forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, showAddQuestButton }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddSideQuest = (title: string) => {
@@ -244,9 +239,7 @@ const TaskColumn: React.FC<{
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="text-brand-500 hover:text-brand-600 text-sm font-medium"
-          >
-            + Tambah Side Quest
-          </button>
+          >+ Tambah Side Quest</button>
         ) : null}
       </div>
 
@@ -266,35 +259,28 @@ const TaskColumn: React.FC<{
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={onTargetChange}
-            refreshKey={refreshSessionKey?.[item.id]}
-            forceRefreshTaskId={forceRefreshTaskId}
           />
         ))}
         {items.length === 0 ? (
           <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="mb-6 py-8">Tidak ada tugas main quest hari ini</p>
+            <p className="mb-6 py-8">Tidak ada tugas {title.toLowerCase()} hari ini</p>
             {onSelectTasks ? (
               <div className="border-t border-gray-200 pt-4">
                 <button
                   onClick={onSelectTasks}
                   className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-                >
-                  Tambah Quest
-                </button>
+                >Tambah Quest</button>
               </div>
             ) : null}
           </div>
         ) : null}
         
-        {/* Tombol Tambah Quest di dalam card Main Quest - hanya muncul jika ada task */}
         {showAddQuestButton && items.length > 0 ? (
           <div className="flex justify-center mt-6">
             <button 
               className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
               onClick={onSelectTasks}
-            >
-              Tambah Quest
-            </button>
+            >Tambah Quest</button>
           </div>
         ) : null}
       </div>
@@ -312,6 +298,8 @@ const TaskSelectionModal: React.FC<{
   onSave: () => void;
   isLoading: boolean;
 }> = ({ isOpen, onClose, tasks, selectedTasks, onTaskToggle, onSave, isLoading }) => {
+  if (!isOpen) return null;
+
   const groupByGoalSlot = (tasks: WeeklyTaskItem[]) => {
     const groups: Record<number, WeeklyTaskItem[]> = {};
     tasks.forEach(task => {
@@ -322,16 +310,13 @@ const TaskSelectionModal: React.FC<{
     });
     return groups;
   };
-
-  if (!isOpen) return null;
-
+  
   const groupedTasks = groupByGoalSlot(tasks);
   const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
     <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Kelola Rencana Harian</h2>
           <p className="text-gray-600 mb-2">
@@ -398,15 +383,11 @@ const TaskSelectionModal: React.FC<{
           <button
             onClick={onClose}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-          >
-            Batal
-          </button>
+          >Batal</button>
           <button
             onClick={onSave}
             className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 font-medium"
-          >
-            Pilih ({selectedCount} Quest)
-          </button>
+          >Pilih ({selectedCount} Quest)</button>
         </div>
       </div>
     </div>
@@ -426,8 +407,6 @@ function useDailyPlanManagement(
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [, startTransition] = useTransition();
-
-  // SWR hook for weekly tasks
   const { tasks: weeklyTasks, mutate } = useTasksForWeek(year, weekNumber);
 
   const getCurrentDailyPlanSelections = () => {
@@ -445,7 +424,6 @@ function useDailyPlanManagement(
     const currentSelections = getCurrentDailyPlanSelections();
     setSelectedTasks(currentSelections);
     try {
-      // Refresh tasks data
       await mutate();
     } catch (err) {
       console.error('Error loading weekly tasks:', err);
@@ -465,7 +443,7 @@ function useDailyPlanManagement(
     const selectedItems = Object.entries(selectedTasks)
       .filter(([, selected]) => selected)
       .map(([taskId]) => {
-        const task = weeklyTasks.find(t => t.id === taskId);
+        const task = weeklyTasks?.find((t: WeeklyTaskItem) => t.id === taskId);
         return {
           item_id: taskId,
           item_type: task?.type || 'TASK'
@@ -530,7 +508,7 @@ function useDailyPlanManagement(
   };
 
   return {
-    weeklyTasks,
+    weeklyTasks: weeklyTasks || [],
     selectedTasks,
     showModal,
     setShowModal,
@@ -544,18 +522,14 @@ function useDailyPlanManagement(
   };
 }
 
-// Utility function to group items by type
 const groupItemsByType = (items: DailyPlanItem[] = []) => {
   const groups = {
     'MAIN_QUEST': [] as DailyPlanItem[],
-    'WORK': [] as DailyPlanItem[],
     'SIDE_QUEST': [] as DailyPlanItem[]
   };
   items.forEach(item => {
-    if (item.item_type === 'QUEST' || item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
+    if (['QUEST', 'TASK', 'SUBTASK'].includes(item.item_type)) {
       groups['MAIN_QUEST'].push(item);
-    } else if (item.item_type === 'MILESTONE') {
-      groups['WORK'].push(item);
     } else if (item.item_type === 'SIDE_QUEST') {
       groups['SIDE_QUEST'].push(item);
     }
@@ -572,8 +546,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   setDailyPlanState, 
   setDailyPlanAction, 
   loading, 
-  refreshSessionKey, 
-  forceRefreshTaskId 
 }) => {
   const {
     weeklyTasks,
@@ -611,8 +583,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
             showAddQuestButton={true}
           />
         </div>
@@ -625,8 +595,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
           />
         </div>
       </div>

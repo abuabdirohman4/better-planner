@@ -1,43 +1,49 @@
 "use client";
-import React, { useState, useMemo, useTransition, useEffect, useCallback } from "react";
-
+import React, { useState, useMemo, useTransition, useEffect } from "react";
+import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
+import PomodoroTimer from "./PomodoroTimer";
+import ActivityLog from "./ActivityLog";
+import { useWeek } from '@/hooks/useWeek';
+import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
+import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
+import { logActivity } from "./actions";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
+import { getDailyPlan, setDailyPlan } from './actions';
 import { useTimer } from '@/context/TimerContext';
-import { useWeek } from '@/hooks/common/useWeek';
-import { useDailyPlan } from '@/hooks/execution/useDailySync';
-import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
-import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
-
-import { setDailyPlan , logActivity } from './actions';
-import ActivityLog from "./ActivityLog";
-import DailySyncClient from "./DailySyncClient";
-import PomodoroTimer from "./PomodoroTimer";
 
 const getTodayDate = () => {
   const today = new Date();
-  today.setHours(12, 0, 0, 0);
+  today.setHours(12, 0, 0, 0); // Gunakan jam 12 siang untuk menghindari bug zona waktu
   return today;
 };
 
+// Helper: pastikan date adalah hari Senin
 function ensureMonday(date: Date) {
   const d = new Date(date);
-  d.setHours(12, 0, 0, 0);
+  d.setHours(12, 0, 0, 0); // Set jam ke 12 siang
   const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
+  // 0 = Minggu, 1 = Senin, ...
+  const diff = (day === 0 ? -6 : 1 - day); // Jika Minggu, mundur 6 hari, selain itu ke Senin
   d.setDate(d.getDate() + diff);
   return d;
 }
 
-// Custom hook for week management
-function useWeekManagement() {
+function DailySyncContent() {
+  const [, startTransition] = useTransition();
   const { year, quarter } = useWeek();
   const today = getTodayDate();
   const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(today));
-  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    // Log atau efek lain saat minggu berubah
+  }, [currentWeek]);
+
+  const weekDates = getWeekDates(currentWeek);
+  const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
 
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
     const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
@@ -46,86 +52,66 @@ function useWeekManagement() {
     return todayIndex !== -1 ? todayIndex : 0;
   };
 
+  const [selectedDayIdx, setSelectedDayIdx] = useState(() => getDefaultDayIndexForWeek(currentWeek));
+  const selectedDate = weekDates[selectedDayIdx];
+  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+
+  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getDailyPlan(selectedDateStr)
+      .then(plan => setDailyPlanState(plan))
+      .finally(() => setLoading(false));
+  }, [selectedDateStr]);
+
+  useEffect(() => {
+    if (!loading && initialLoading) {
+      setInitialLoading(false);
+    }
+  }, [loading, initialLoading]);
+
+  useEffect(() => {
+    setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWeek]);
+
   const weekCalculations = useMemo(() => {
     const currentWeekNumber = getWeekOfYear(currentWeek);
     const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
     const totalWeeks = endWeek - startWeek + 1;
     const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
-    const displayWeek = weekInQuarter;
-    const weekStartDate = getDateFromWeek(year, startWeek + displayWeek - 1, 1);
-    const weekEndDate = getDateFromWeek(year, startWeek + displayWeek - 1, 7);
     return {
-      currentWeekNumber,
-      startWeek,
-      endWeek,
+      displayWeek: weekInQuarter,
       totalWeeks,
-      weekInQuarter,
-      displayWeek,
-      weekStartDate,
-      weekEndDate
+      startWeek,
     };
   }, [currentWeek, year, quarter]);
+
+  const { displayWeek, totalWeeks, startWeek } = weekCalculations;
 
   const goPrevWeek = () => {
     const prev = new Date(currentWeek);
     prev.setDate(currentWeek.getDate() - 7);
-    prev.setHours(12, 0, 0, 0);
-    const monday = ensureMonday(prev);
-    setCurrentWeek(monday);
-    return getDefaultDayIndexForWeek(monday);
+    setCurrentWeek(ensureMonday(prev));
   };
-
   const goNextWeek = () => {
     const next = new Date(currentWeek);
     next.setDate(currentWeek.getDate() + 7);
-    next.setHours(12, 0, 0, 0);
-    const monday = ensureMonday(next);
-    setCurrentWeek(monday);
-    return getDefaultDayIndexForWeek(monday);
+    setCurrentWeek(ensureMonday(next));
   };
 
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const handleSelectWeek = (weekIdx: number) => {
-    const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
     const rawDate = getDateFromWeek(year, weekNumber, 1);
-    rawDate.setHours(12, 0, 0, 0);
-    const monday = ensureMonday(rawDate);
-    setCurrentWeek(monday);
+    setCurrentWeek(ensureMonday(rawDate));
     setIsWeekDropdownOpen(false);
-    return getDefaultDayIndexForWeek(monday);
   };
 
-  return {
-    year,
-    quarter,
-    currentWeek,
-    weekCalculations,
-    isWeekDropdownOpen,
-    setIsWeekDropdownOpen,
-    getDefaultDayIndexForWeek,
-    goPrevWeek,
-    goNextWeek,
-    handleSelectWeek
-  };
-}
-
-// Custom hook for daily plan management
-function useDailyPlanManagement(selectedDateStr: string) {
-  const { dailyPlan, isLoading, mutate } = useDailyPlan(selectedDateStr);
-
-  return {
-    loading: isLoading,
-    initialLoading: isLoading,
-    dailyPlan,
-    setDailyPlanState: () => mutate()
-  };
-}
-
-// Custom hook for timer management
-function useTimerManagement(selectedDateStr: string) {
   const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete } = useTimer();
-  const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const defaultTitle = 'Daily Sync | Better Planner';
@@ -135,7 +121,7 @@ function useTimerManagement(selectedDateStr: string) {
       return `${m}:${s}`;
     }
     if (timerState === 'FOCUSING' && activeTaskCtx) {
-      document.title = `${formatTime(secondsElapsed)} ${activeTaskCtx.title}`;
+      document.title = `${formatTime(secondsElapsed)} - ${activeTaskCtx.title} | Better Planner`;
     } else {
       document.title = defaultTitle;
     }
@@ -144,7 +130,7 @@ function useTimerManagement(selectedDateStr: string) {
     };
   }, [timerState, secondsElapsed, activeTaskCtx]);
 
-  const handleSessionComplete = useCallback(async (sessionData: {
+  const handleSessionComplete = async (sessionData: {
     taskId: string;
     taskTitle: string;
     type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
@@ -171,162 +157,18 @@ function useTimerManagement(selectedDateStr: string) {
         console.error('Error logging session:', err);
       }
     });
-  }, [selectedDateStr, setActivityLogRefreshKey]);
-
-      const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
-      startFocusSession(task);
-    };
+  };
 
   useEffect(() => {
     if (lastSessionComplete) {
       handleSessionComplete(lastSessionComplete);
       setLastSessionComplete(null);
     }
-  }, [lastSessionComplete, handleSessionComplete, setLastSessionComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSessionComplete]);
 
-  return {
-    handleSetActiveTask,
-    activityLogRefreshKey
-  };
-}
-
-// Component for week selector
-function WeekSelector({ 
-  displayWeek, 
-  totalWeeks, 
-  isWeekDropdownOpen, 
-  setIsWeekDropdownOpen, 
-  handleSelectWeek, 
-  goPrevWeek, 
-  goNextWeek 
-}: {
-  displayWeek: number;
-  totalWeeks: number;
-  isWeekDropdownOpen: boolean;
-  setIsWeekDropdownOpen: (value: boolean) => void;
-  handleSelectWeek: (weekIdx: number) => void;
-  goPrevWeek: () => void;
-  goNextWeek: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <Button size="sm" className="!py-5" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
-        &lt;
-      </Button>
-      <div className="relative">
-        <button
-          className="flex items-center justify-center gap-1 px-8 py-4 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
-          onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
-          aria-haspopup="listbox"
-          aria-expanded={isWeekDropdownOpen}
-        >
-          <span>Week {displayWeek}</span>
-        </button>
-        <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
-          <div className="max-h-64 overflow-y-auto">
-            {Array.from({ length: totalWeeks }, (_, i) => (
-              <DropdownItem
-                key={i + 1}
-                onClick={() => handleSelectWeek(i + 1)}
-                className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
-              >
-                Week {i + 1}
-              </DropdownItem>
-            ))}
-          </div>
-        </Dropdown>
-      </div>
-      <Button size="sm" className="!py-5" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
-        &gt;
-      </Button>
-    </div>
-  );
-}
-
-// Component for day selector
-function DaySelector({ 
-  weekDates, 
-  selectedDayIdx, 
-  setSelectedDayIdx 
-}: {
-  weekDates: Date[];
-  selectedDayIdx: number;
-  setSelectedDayIdx: (idx: number) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {weekDates.map((date, idx) => (
-        <button
-          key={`day-${date.toISOString()}`}
-          onClick={() => setSelectedDayIdx(idx)}
-          className={`w-24 min-w-[110px] px-3 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
-        >
-          {daysOfWeek[idx]}
-          <span className="block text-xs mt-1 whitespace-nowrap">
-            {date.getDate()} {date.toLocaleDateString('en-US', { month: 'short' })} {date.getFullYear()}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// Component for brain dump section
-function BrainDumpSection() {
-  return (
-    <div className="mt-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          [Brain Dump Placeholder]
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DailySyncContent() {
-  const {
-    year,
-    quarter,
-    currentWeek,
-    weekCalculations,
-    isWeekDropdownOpen,
-    setIsWeekDropdownOpen,
-    getDefaultDayIndexForWeek,
-    goPrevWeek,
-    goNextWeek,
-    handleSelectWeek
-  } = useWeekManagement();
-
-  const weekDates = getWeekDates(currentWeek);
-  const [selectedDayIdx, setSelectedDayIdx] = useState(() => getDefaultDayIndexForWeek(currentWeek));
-  const selectedDate = weekDates[selectedDayIdx];
-  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
-
-  const { displayWeek, totalWeeks } = weekCalculations;
-
-  const { loading, initialLoading, dailyPlan, setDailyPlanState } = useDailyPlanManagement(selectedDateStr);
-
-  const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
-
-  useEffect(() => {
-    setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));
-  }, [currentWeek, getDefaultDayIndexForWeek]);
-
-  const handleGoPrevWeek = () => {
-    const defaultDayIdx = goPrevWeek();
-    setSelectedDayIdx(defaultDayIdx);
-  };
-
-  const handleGoNextWeek = () => {
-    const defaultDayIdx = goNextWeek();
-    setSelectedDayIdx(defaultDayIdx);
-  };
-
-  const handleSelectWeekWithDay = (weekIdx: number) => {
-    const defaultDayIdx = handleSelectWeek(weekIdx);
-    setSelectedDayIdx(defaultDayIdx);
+  const handleSetActiveTask = (task: { id: string; title: string; item_type: string }) => {
+    startFocusSession(task);
   };
 
   return (
@@ -338,20 +180,51 @@ function DailySyncContent() {
       ) : (
         <>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-            <WeekSelector
-              displayWeek={displayWeek}
-              totalWeeks={totalWeeks}
-              isWeekDropdownOpen={isWeekDropdownOpen}
-              setIsWeekDropdownOpen={setIsWeekDropdownOpen}
-              handleSelectWeek={handleSelectWeekWithDay}
-              goPrevWeek={handleGoPrevWeek}
-              goNextWeek={handleGoNextWeek}
-            />
-            <DaySelector
-              weekDates={weekDates}
-              selectedDayIdx={selectedDayIdx}
-              setSelectedDayIdx={setSelectedDayIdx}
-            />
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="!py-5" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
+                &lt;
+              </Button>
+              <div className="relative">
+                <button
+                  className="flex items-center justify-center gap-1 px-8 py-4 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => setIsWeekDropdownOpen((v) => !v)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isWeekDropdownOpen}
+                >
+                  <span>Week {displayWeek}</span>
+                </button>
+                <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
+                  <div className="max-h-64 overflow-y-auto">
+                    {Array.from({ length: totalWeeks }, (_, i) => (
+                      <DropdownItem
+                        key={i + 1}
+                        onClick={() => handleSelectWeek(i + 1)}
+                        className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
+                      >
+                        Week {i + 1}
+                      </DropdownItem>
+                    ))}
+                  </div>
+                </Dropdown>
+              </div>
+              <Button size="sm" className="!py-5" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
+                &gt;
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              {weekDates.map((date, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDayIdx(idx)}
+                  className={`w-24 min-w-[110px] px-3 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
+                >
+                  {daysOfWeek[idx]}
+                  <span className="block text-xs mt-1 whitespace-nowrap">
+                    {date.getDate()} {date.toLocaleDateString('en-US', { month: 'short' })} {date.getFullYear()}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
           {loading ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
@@ -381,7 +254,14 @@ function DailySyncContent() {
                   </div>
                 </div>
               </div>
-              <BrainDumpSection />
+              <div className="mt-8">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    [Brain Dump Placeholder]
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </>

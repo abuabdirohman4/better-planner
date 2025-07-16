@@ -1,21 +1,22 @@
 import { SWRConfiguration } from 'swr';
 
 /**
- * Enhanced SWR configuration for optimal prefetching and caching
+ * OPTIMIZED: Enhanced SWR configuration for minimal prefetching and better caching
+ * Reduced network requests and improved performance
  */
 export const swrConfig: SWRConfiguration = {
-  // Prefetching configuration
+  // OPTIMIZATION: Disabled aggressive revalidation
   revalidateOnFocus: false, // Don't revalidate when user comes back to tab
-  revalidateOnReconnect: true, // Revalidate when internet comes back
+  revalidateOnReconnect: false, // Disabled to reduce unnecessary requests
   revalidateIfStale: false, // Don't revalidate if data is fresh
   
-  // Cache configuration
-  dedupingInterval: 10 * 60 * 1000, // 10 minutes - prevent duplicate requests
-  focusThrottleInterval: 5000, // Throttle focus events
+  // OPTIMIZATION: Increased cache duration to reduce requests
+  dedupingInterval: 15 * 60 * 1000, // Increased from 10 minutes to 15 minutes
+  focusThrottleInterval: 10000, // Increased from 5s to 10s
   
-  // Error handling
-  errorRetryCount: 3,
-  errorRetryInterval: 1000,
+  // OPTIMIZATION: Reduced error retry to prevent excessive requests
+  errorRetryCount: 2, // Reduced from 3 to 2
+  errorRetryInterval: 2000, // Increased from 1s to 2s
   
   // Keep data in cache longer
   keepPreviousData: true, // Show previous data while revalidating

@@ -1,21 +1,24 @@
 "use client";
 
-import { DndContext, closestCenter, useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 
 import ComponentCard from "@/components/common/ComponentCard";
+import MobileSkeleton, { ProgressiveLoadingMessage } from "@/components/common/MobileSkeleton";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
-import CustomToast from "@/components/ui/toast/CustomToast";
 import { useWeek } from "@/hooks/common/useWeek";
 import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/execution/useWeeklySync";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
+import { isMobileDevice } from "@/lib/deviceUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 
 import ToDontListCard from "./ToDontListCard";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
+
+// Lazy load heavy drag & drop component for better performance
+const TaskDragDrop = lazy(() => import("./TaskDragDrop"));
 
 type Task = {
   id: string;
@@ -26,143 +29,9 @@ type Task = {
   parent_task_id: string | null;
 };
 
-// Import missing functions
-const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
-  (await import("../../planning/quests/actions")).scheduleTask(taskId, newScheduledDate);
+type LoadingStage = 'initializing' | 'loading-goals' | 'loading-tasks' | 'optimizing' | 'complete';
 
-// Helper: pastikan date adalah hari Senin
-function ensureMonday(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-// Custom hook for week calculations
-function useWeekCalculations(currentWeek: Date, year: number, quarter: number, selectedWeekInQuarter: number | undefined) {
-  return useMemo(() => {
-    const currentWeekNumber = getWeekOfYear(currentWeek);
-    const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
-    const totalWeeks = endWeek - startWeek + 1;
-    const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
-    const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
-
-    const weekStartDate = getDateFromWeek(year, startWeek + displayWeek - 1, 1);
-    const weekEndDate = getDateFromWeek(year, startWeek + displayWeek - 1, 7);
-    const weekRangeLabel = `${formatDateIndo(weekStartDate)} – ${formatDateIndo(weekEndDate)}`;
-
-    return {
-      currentWeekNumber,
-      startWeek,
-      endWeek,
-      totalWeeks,
-      weekInQuarter,
-      displayWeek,
-      weekStartDate,
-      weekEndDate,
-      weekRangeLabel
-    };
-  }, [currentWeek, year, quarter, selectedWeekInQuarter]);
-}
-
-// Custom hook for task data management
-function useTaskData(year: number, quarter: number, currentWeek: Date) {
-  // Memoize weekDates to prevent infinite re-renders
-  const weekDates = useMemo(() => getWeekDates(currentWeek), [currentWeek]);
-  
-  const startDate = weekDates[0].toISOString().slice(0, 10);
-  const endDate = weekDates[6].toISOString().slice(0, 10);
-
-  // SWR hooks for data fetching
-  const { unscheduledTasks, isLoading: unscheduledLoading } = useUnscheduledTasks(year, quarter);
-  const { scheduledTasks, isLoading: scheduledLoading } = useScheduledTasksForWeek(startDate, endDate);
-
-  // Process scheduled tasks into grouped format
-  const weekTasks = useMemo(() => {
-    const grouped: { [date: string]: Task[] } = {};
-    weekDates.forEach((d) => {
-      const key = d.toISOString().slice(0, 10);
-      grouped[key] = [];
-    });
-    scheduledTasks.forEach((task: Task) => {
-      const key = task.scheduled_date?.slice(0, 10);
-      if (key && grouped[key]) grouped[key].push(task);
-    });
-    return grouped;
-  }, [scheduledTasks, weekDates]);
-
-  const loading = unscheduledLoading || scheduledLoading;
-
-  return { 
-    taskPool: unscheduledTasks, 
-    setTaskPool: () => {}, // SWR handles updates automatically
-    weekTasks, 
-    setWeekTasks: () => {}, // SWR handles updates automatically
-    loading, 
-    weekDates 
-  };
-}
-
-// Custom hook for weekly goals
-function useWeeklyGoals(year: number, displayWeek: number, refreshFlag: number) {
-  const { goals, goalProgress, mutate } = useWeeklyGoalsWithProgress(year, displayWeek);
-  
-  // Trigger refresh when refreshFlag changes
-  useEffect(() => {
-    if (refreshFlag > 0) {
-      mutate();
-    }
-  }, [refreshFlag, mutate]);
-
-  return { goals, goalProgress };
-}
-
-// Custom hook for to-dont list
-function useToDontList(year: number, displayWeek: number, refreshFlag: number) {
-  const { rules: toDontList, isLoading: toDontListLoading, mutate } = useWeeklyRules(year, displayWeek);
-  
-  // Trigger refresh when refreshFlag changes
-  useEffect(() => {
-    if (refreshFlag > 0) {
-      mutate();
-    }
-  }, [refreshFlag, mutate]);
-
-  return { toDontList, toDontListLoading };
-}
-
-// Component for task item
-function TaskItemDraggable({ task, id }: { task: Task; id: string }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`p-3 rounded-lg border bg-white dark:bg-gray-800 shadow-sm cursor-move mb-2 transition ${isDragging ? "opacity-60" : ""}`}
-      style={{ transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined }}
-    >
-      <span className="font-medium">{task.title}</span>
-    </div>
-  );
-}
-
-// Component for droppable day
-function DayDroppable({ date, children }: { date: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: date });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`min-h-[60px] transition rounded-lg ${isOver ? "bg-blue-50 dark:bg-blue-900/30" : ""}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-// Component for week selector
+// Week selector component
 function WeekSelector({ 
   displayWeek, 
   totalWeeks, 
@@ -175,208 +44,237 @@ function WeekSelector({
   displayWeek: number;
   totalWeeks: number;
   isWeekDropdownOpen: boolean;
-  setIsWeekDropdownOpen: (value: boolean) => void;
+  setIsWeekDropdownOpen: (open: boolean) => void;
   handleSelectWeek: (weekIdx: number) => void;
   goPrevWeek: () => void;
   goNextWeek: () => void;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
-        &lt;
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={goPrevWeek}
+        disabled={displayWeek <= 1}
+      >
+        ←
       </Button>
       <div className="relative">
-        <button
-          className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+        <Button 
+          variant="outline" 
+          size="sm"
           onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
-          aria-haspopup="listbox"
-          aria-expanded={isWeekDropdownOpen}
+          className="dropdown-toggle"
         >
-          <span>Week {displayWeek}</span>
-        </button>
-        <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
-          <div className="max-h-64 overflow-y-auto">
-            {Array.from({ length: totalWeeks }, (_, i) => (
-              <DropdownItem
-                key={i + 1}
-                onClick={() => handleSelectWeek(i + 1)}
-                className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
-              >
-                Week {i + 1}
-              </DropdownItem>
-            ))}
-          </div>
+          Minggu {displayWeek} dari {totalWeeks}
+        </Button>
+        <Dropdown
+          isOpen={isWeekDropdownOpen}
+          onClose={() => setIsWeekDropdownOpen(false)}
+        >
+          {Array.from({ length: totalWeeks }, (_, i) => (
+            <DropdownItem key={i + 1} onClick={() => handleSelectWeek(i + 1)}>
+              Minggu {i + 1}
+            </DropdownItem>
+          ))}
         </Dropdown>
       </div>
-      <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
-        &gt;
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={goNextWeek}
+        disabled={displayWeek >= totalWeeks}
+      >
+        →
       </Button>
     </div>
   );
 }
 
-// Component for task calendar
-function TaskCalendar({ 
-  weekDates, 
-  weekTasks, 
-  handleDragEnd 
-}: {
-  weekDates: Date[];
-  weekTasks: { [date: string]: Task[] };
-  handleDragEnd: (event: DragEndEvent) => void;
+// Loading screen component
+function LoadingScreen({ loadingStage, isMobile }: {
+  loadingStage: LoadingStage;
+  isMobile: boolean;
 }) {
   return (
-    <section>
-      <h4 className="text-base font-semibold mb-2">Kalender Mingguan</h4>
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 gap-4 md:grid md:grid-rows-7 md:grid-cols-1">
-          {weekDates.map((date: Date, idx: number) => {
-            const dateStr = date.toISOString().slice(0, 10);
+    <div className="container mx-auto py-8 pt-0">
+      <div className="flex flex-col justify-center items-center min-h-[400px] mb-8">
+        <Spinner size={isMobile ? 128 : 164} />
+        <div className="mt-4 text-lg font-semibold text-gray-600">
+          Loading Weekly Sync...
+        </div>
+        <div className="mt-4 w-full max-w-md">
+          <ProgressiveLoadingMessage stage={loadingStage} isMobile={isMobile} />
+        </div>
+      </div>
+      
+      <div className="mt-8 w-full max-w-4xl mx-auto">
+        <MobileSkeleton variant="weekly-sync" />
+      </div>
+    </div>
+  );
+}
+
+// Mobile-optimized simplified task view (without drag & drop)
+function SimplifiedTaskView({ taskPool, weekTasks, weekDates, loading }: {
+  taskPool: Task[];
+  weekTasks: { [date: string]: Task[] };
+  weekDates: Date[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return <MobileSkeleton variant="task-list" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <ComponentCard title="Tugas Belum Terjadwal" className="lg:hidden">
+        <div className="space-y-2">
+          {taskPool.length === 0 ? (
+            <p className="text-gray-500 text-sm">Tidak ada tugas yang belum terjadwal</p>
+          ) : (
+            taskPool.map((task) => (
+              <div key={task.id} className="p-3 bg-gray-50 rounded border">
+                <div className="font-medium text-sm">{task.title}</div>
+                <div className="text-xs text-gray-500 mt-1">Status: {task.status}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </ComponentCard>
+
+      <ComponentCard title="Tugas Mingguan" className="lg:hidden">
+        <div className="space-y-4">
+          {weekDates.map((date) => {
+            const dateKey = date.toISOString().slice(0, 10);
+            const tasks = weekTasks[dateKey] || [];
+            
             return (
-              <ComponentCard
-                key={dateStr}
-                title={`${daysOfWeek[idx]}, ${formatDateIndo(date)}`}
-              >
-                <DayDroppable date={dateStr}>
-                  {weekTasks[dateStr] && weekTasks[dateStr].length === 0 ? <div className="text-gray-400">Belum ada tugas</div> : null}
-                  {weekTasks[dateStr] ? weekTasks[dateStr].map((task) => (
-                      <TaskItemDraggable key={task.id} task={task} id={task.id} />
-                    )) : null}
-                </DayDroppable>
-              </ComponentCard>
+              <div key={dateKey} className="border rounded p-3">
+                <div className="font-medium text-sm text-center mb-3">
+                  {formatDateIndo(date)} - {daysOfWeek[date.getDay()]}
+                </div>
+                <div className="space-y-2">
+                  {tasks.length === 0 ? (
+                    <p className="text-gray-500 text-xs text-center">Tidak ada tugas</p>
+                  ) : (
+                    tasks.map((task) => (
+                      <div key={task.id} className="p-2 bg-blue-50 rounded text-sm">
+                        {task.title}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
-      </DndContext>
-    </section>
+      </ComponentCard>
+    </div>
   );
 }
 
-// Component for task pool
-// Custom hook for drag end handling
-function useDragEndHandler(
-  taskPool: Task[],
-  setTaskPool: (tasks: Task[]) => void,
-  weekTasks: { [date: string]: Task[] },
-  setWeekTasks: (tasks: { [date: string]: Task[] }) => void
-) {
-  return async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-    const taskId = active.id as string;
-    const overId = over.id as string;
-    let movedTask: Task | null = null;
-    let fromPool = false;
-    let fromDate: string | null = null;
-    const poolIdx = taskPool.findIndex((t) => t.id === taskId);
-    if (poolIdx !== -1) {
-      movedTask = taskPool[poolIdx];
-      fromPool = true;
-    } else {
-      for (const date in weekTasks) {
-        const idx = weekTasks[date].findIndex((t) => t.id === taskId);
-        if (idx !== -1) {
-          movedTask = weekTasks[date][idx];
-          fromDate = date;
-          break;
+// Helper function to ensure Monday as the start of the week
+function ensureMonday(date: Date): Date {
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(date.setDate(diff));
+}
+
+// Custom hook for week calculations
+function useWeekCalculations(currentWeek: Date, year: number, quarter: number, selectedWeekInQuarter?: number) {
+  return useMemo(() => {
+    const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+    const totalWeeks = endWeek - startWeek + 1;
+    const displayWeek = selectedWeekInQuarter || (getWeekOfYear(currentWeek) - startWeek + 1);
+    
+    return {
+      startWeek,
+      totalWeeks,
+      displayWeek
+    };
+  }, [currentWeek, year, quarter, selectedWeekInQuarter]);
+}
+
+// Custom hook for task data
+function useTaskData(year: number, quarter: number, currentWeek: Date) {
+  const [taskPool, setTaskPool] = useState<Task[]>([]);
+  const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
+  
+  const weekDates = useMemo(() => getWeekDates(currentWeek), [currentWeek]);
+  const startDate = weekDates[0].toISOString().slice(0, 10);
+  const endDate = weekDates[6].toISOString().slice(0, 10);
+  
+  const { unscheduledTasks, isLoading: unscheduledLoading } = useUnscheduledTasks(year, quarter);
+  const { scheduledTasks, isLoading: scheduledLoading } = useScheduledTasksForWeek(startDate, endDate);
+  
+  const loading = unscheduledLoading || scheduledLoading;
+
+  useEffect(() => {
+    if (unscheduledTasks) {
+      setTaskPool(unscheduledTasks);
+    }
+  }, [unscheduledTasks]);
+
+  useEffect(() => {
+    if (scheduledTasks) {
+      const tasksMap: { [date: string]: Task[] } = {};
+      scheduledTasks.forEach((task: Task) => {
+        if (task.scheduled_date) {
+          const date = task.scheduled_date.slice(0, 10);
+          if (!tasksMap[date]) tasksMap[date] = [];
+          tasksMap[date].push(task);
         }
-      }
+      });
+      setWeekTasks(tasksMap);
     }
-    if (!movedTask) return;
-    let newTaskPool = [...taskPool];
-    const newWeekTasks = { ...weekTasks };
-    if (overId === "task-pool") {
-      if (!fromPool) {
-        newTaskPool = [movedTask, ...newTaskPool];
-        if (fromDate) {
-          newWeekTasks[fromDate] = newWeekTasks[fromDate].filter((t) => t.id !== taskId);
-        }
-      }
-    } else {
-      if (fromPool) {
-        newTaskPool = newTaskPool.filter((t) => t.id !== taskId);
-        newWeekTasks[overId] = [movedTask, ...newWeekTasks[overId]];
-      } else if (fromDate && fromDate !== overId) {
-        newWeekTasks[fromDate] = newWeekTasks[fromDate].filter((t) => t.id !== taskId);
-        newWeekTasks[overId] = [movedTask, ...newWeekTasks[overId]];
-      }
-    }
-    setTaskPool(newTaskPool);
-    setWeekTasks(newWeekTasks);
-    let newDate: string | null = null;
-    if (overId !== "task-pool") newDate = overId;
-    const res = await scheduleTask(taskId, newDate);
-    if (!res.success) {
-      setTaskPool(taskPool);
-      setWeekTasks(weekTasks);
-      CustomToast.error("Gagal update tugas", res.message);
-    } else {
-      CustomToast.success("Tugas berhasil dijadwalkan");
-    }
+  }, [scheduledTasks]);
+
+  return {
+    taskPool,
+    setTaskPool,
+    weekTasks,
+    setWeekTasks,
+    loading,
+    weekDates
   };
 }
 
-function TaskPool({ taskPool, loading }: { taskPool: Task[]; loading: boolean }) {
-  return (
-    <section>
-      <h4 className="text-base font-semibold mb-2">Kolam Tugas</h4>
-      <ComponentCard title="Kolam Tugas" desc="Tugas yang belum terjadwal">
-        {loading ? (
-          <div className="text-gray-400">Loading...</div>
-        ) : (
-          <DayDroppable date="task-pool">
-            {taskPool.length === 0 && <div className="text-gray-400">Tidak ada tugas</div>}
-            {taskPool.map((task) => (
-              <TaskItemDraggable key={task.id} task={task} id={task.id} />
-            ))}
-          </DayDroppable>
-        )}
-      </ComponentCard>
-    </section>
-  );
+// Custom hook for weekly goals
+function useWeeklyGoals(year: number, weekNumber: number) {
+  const { goals, goalProgress } = useWeeklyGoalsWithProgress(year, weekNumber);
+  
+  return useMemo(() => {
+    return { goals: goals || [], goalProgress: goalProgress || {} };
+  }, [goals, goalProgress]);
 }
 
-declare global {
-  interface Window {
-    __WEEKLY_SYNC_START__?: number;
-  }
+// Custom hook for to-don't list
+function useToDontList(year: number, weekNumber: number) {
+  const { rules: toDontList, isLoading: toDontListLoading } = useWeeklyRules(year, weekNumber);
+  
+  return { toDontList: toDontList || [], toDontListLoading };
 }
 
-export default function WeeklySyncClient() {
-  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
+// Custom hook for progressive loading
+function useProgressiveLoading(loading: boolean, toDontListLoading: boolean, isMobile: boolean): LoadingStage {
+  return useMemo(() => {
+    if (loading && toDontListLoading) return 'initializing';
+    if (loading) return 'loading-goals';
+    if (toDontListLoading) return 'loading-tasks';
+    if (isMobile) return 'optimizing';
+    return 'complete';
+  }, [loading, toDontListLoading, isMobile]);
+}
+
+// Custom hook for week navigation logic
+function useWeekNavigation(year: number, quarter: number, currentWeek: Date, setCurrentWeek: (week: Date) => void) {
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
-  const [refreshFlag, setRefreshFlag] = useState(0);
   
-  const { year, quarter } = useWeek();
   const weekCalculations = useWeekCalculations(currentWeek, year, quarter, selectedWeekInQuarter);
-  const { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates } = useTaskData(year, quarter, currentWeek);
-  const { goals, goalProgress } = useWeeklyGoals(year, weekCalculations.displayWeek, refreshFlag);
-  const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
-
   const { displayWeek, totalWeeks } = weekCalculations;
-
-  // Timer untuk tracking waktu loading halaman (global, akurat)
-  const [loadingTime, setLoadingTime] = useState<number | null>(null);
-  useEffect(() => {
-    if (!loading && !toDontListLoading && loadingTime === null) {
-      const start = typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ ? window.__WEEKLY_SYNC_START__ : performance.now();
-      const elapsed = (performance.now() - start) / 1000;
-      setLoadingTime(Math.round(elapsed * 10) / 10);
-      // Reset agar navigasi berikutnya fresh
-      if (typeof window !== 'undefined') {
-        window.__WEEKLY_SYNC_START__ = performance.now();
-      }
-    }
-  }, [loading, toDontListLoading, loadingTime]);
-
-  // Handler untuk refresh data dari child
-  const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
-  const handleRefreshToDontList = () => setRefreshFlag(f => f + 1);
-
-  const handleDragEnd = useDragEndHandler(taskPool, setTaskPool, weekTasks, setWeekTasks);
-
-  // Handler pilih week dari dropdown
+  
   const handleSelectWeek = (weekIdx: number) => {
     const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
@@ -385,14 +283,6 @@ export default function WeeklySyncClient() {
     setSelectedWeekInQuarter(weekIdx);
   };
 
-  // Tutup dropdown setelah currentWeek berubah agar label sinkron
-  useEffect(() => {
-    if (isWeekDropdownOpen) {
-      setIsWeekDropdownOpen(false);
-    }
-  }, [currentWeek, isWeekDropdownOpen]);
-
-  // Reset selectedWeekInQuarter jika navigasi dengan tombol prev/next
   const goPrevWeek = () => {
     if (displayWeek <= 1) return;
     const prev = new Date(currentWeek);
@@ -409,69 +299,152 @@ export default function WeeklySyncClient() {
     setSelectedWeekInQuarter(undefined);
   };
 
+  // Close dropdown after currentWeek changes
+  useEffect(() => {
+    if (isWeekDropdownOpen) {
+      setIsWeekDropdownOpen(false);
+    }
+  }, [currentWeek, isWeekDropdownOpen]);
+
+  return {
+    displayWeek,
+    totalWeeks,
+    isWeekDropdownOpen,
+    setIsWeekDropdownOpen,
+    handleSelectWeek,
+    goPrevWeek,
+    goNextWeek,
+    weekCalculations
+  };
+}
+
+// Main component with reduced complexity
+export default function WeeklySyncClient() {
+  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(new Date()));
+
+  const [showDragDrop, setShowDragDrop] = useState(false);
+  const [loadingTime, setLoadingTime] = useState<number | null>(null);
+  
+  const isMobile = isMobileDevice();
+  const { year, quarter } = useWeek();
+  
+  const weekNavigation = useWeekNavigation(year, quarter, currentWeek, setCurrentWeek);
+  const { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates } = useTaskData(year, quarter, currentWeek);
+  const { goals, goalProgress } = useWeeklyGoals(year, weekNavigation.displayWeek);
+  const { toDontList, toDontListLoading } = useToDontList(year, weekNavigation.displayWeek);
+  
+  const loadingStage = useProgressiveLoading(loading, toDontListLoading, isMobile);
+
+  // Performance timer tracking
+  useEffect(() => {
+    if (!loading && !toDontListLoading && loadingTime === null) {
+             const windowObj = window as { __WEEKLY_SYNC_START__?: number };
+       const start = typeof window !== 'undefined' && windowObj.__WEEKLY_SYNC_START__ 
+         ? windowObj.__WEEKLY_SYNC_START__ 
+         : performance.now();
+       const elapsed = (performance.now() - start) / 1000;
+       setLoadingTime(Math.round(elapsed * 10) / 10);
+       if (typeof window !== 'undefined') {
+         windowObj.__WEEKLY_SYNC_START__ = performance.now();
+       }
+    }
+  }, [loading, toDontListLoading, loadingTime]);
+
+  // Progressive enhancement for desktop drag & drop
+  useEffect(() => {
+    if (!isMobile && !loading && !toDontListLoading) {
+      const timer = setTimeout(() => {
+        setShowDragDrop(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, loading, toDontListLoading]);
+
+  const handleRefreshGoals = () => {
+    // Refresh will be handled by SWR revalidation
+  };
+  const handleRefreshToDontList = () => {
+    // Refresh will be handled by SWR revalidation
+  };
+
   if (loading || toDontListLoading) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[600px]">
-        <Spinner size={164} />
-        <div className="mt-4 text-lg font-semibold text-gray-600">
-          Loading Weekly Sync...
-        </div>
-        {/* Skeleton loading for better UX */}
-        <div className="mt-8 w-full max-w-4xl space-y-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4" />
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen loadingStage={loadingStage} isMobile={isMobile} />;
   }
 
   return (
     <div className="container mx-auto py-8 pt-0">
-      {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">
           Weekly Sync{loadingTime !== null ? ` (${loadingTime}s)` : ''}
+          {isMobile ? <span className="text-sm text-gray-500 ml-2">Mobile</span> : null}
         </h2>
         <WeekSelector
-          displayWeek={displayWeek}
-          totalWeeks={totalWeeks}
-          isWeekDropdownOpen={isWeekDropdownOpen}
-          setIsWeekDropdownOpen={setIsWeekDropdownOpen}
-          handleSelectWeek={handleSelectWeek}
-          goPrevWeek={goPrevWeek}
-          goNextWeek={goNextWeek}
+          displayWeek={weekNavigation.displayWeek}
+          totalWeeks={weekNavigation.totalWeeks}
+          isWeekDropdownOpen={weekNavigation.isWeekDropdownOpen}
+          setIsWeekDropdownOpen={weekNavigation.setIsWeekDropdownOpen}
+          handleSelectWeek={weekNavigation.handleSelectWeek}
+          goPrevWeek={weekNavigation.goPrevWeek}
+          goNextWeek={weekNavigation.goNextWeek}
         />
       </div>
 
-      {/* Kolom 3 Goal Mingguan */}
       <WeeklyGoalsTable
         year={year}
-        weekNumber={displayWeek}
+        weekNumber={weekNavigation.displayWeek}
         goals={goals}
         goalProgress={goalProgress}
         onRefreshGoals={handleRefreshGoals}
       />
       
-      {/* === To Don't List Card === */}
       <ToDontListCard
         year={year}
-        weekNumber={displayWeek}
+        weekNumber={weekNavigation.displayWeek}
         rules={toDontList}
         loading={toDontListLoading}
         onRefresh={handleRefreshToDontList}
       />
 
-      {/* Layout: Kolam Tugas kiri, Kalender Mingguan kanan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
-        <TaskPool taskPool={taskPool} loading={loading} />
-        <TaskCalendar weekDates={weekDates} weekTasks={weekTasks} handleDragEnd={handleDragEnd} />
-      </div>
+      {isMobile ? (
+        <SimplifiedTaskView
+          taskPool={taskPool}
+          weekTasks={weekTasks}
+          weekDates={weekDates}
+          loading={loading}
+        />
+      ) : (
+        <div className="mt-6">
+          {!showDragDrop ? (
+            <div className="text-center py-8">
+              <Button
+                onClick={() => setShowDragDrop(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Tampilkan Task Scheduler
+              </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                Klik untuk mengaktifkan drag & drop task scheduling
+              </p>
+            </div>
+          ) : (
+            <Suspense fallback={
+              <div className="flex justify-center items-center py-8">
+                <Spinner size={32} />
+                <span className="ml-2 text-gray-600">Loading task scheduler...</span>
+              </div>
+            }>
+              <TaskDragDrop
+                taskPool={taskPool}
+                setTaskPool={setTaskPool}
+                weekTasks={weekTasks}
+                setWeekTasks={setWeekTasks}
+                weekDates={weekDates}
+                loading={loading}
+              />
+            </Suspense>
+          )}
+        </div>
+      )}
     </div>
   );
 } 

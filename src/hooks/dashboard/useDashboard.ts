@@ -4,7 +4,8 @@ import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } fr
 import { dashboardKeys } from '@/lib/swr';
 
 /**
- * Custom hook for fetching today's tasks count
+ * OPTIMIZED: Custom hook for fetching today's tasks count
+ * Reduced deduping interval for better performance
  */
 export function useTodayTasks() {
   const { 
@@ -17,8 +18,9 @@ export function useTodayTasks() {
     () => getTodayTasks(),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
-      errorRetryCount: 3,
+      dedupingInterval: 5 * 60 * 1000, // Increased from 2 minutes to 5 minutes
+      errorRetryCount: 2, // Reduced from 3 to 2
+      revalidateOnReconnect: false, // Disabled to reduce unnecessary requests
     }
   );
 
@@ -31,7 +33,8 @@ export function useTodayTasks() {
 }
 
 /**
- * Custom hook for fetching active quests count
+ * OPTIMIZED: Custom hook for fetching active quests count
+ * Reduced deduping interval for better performance
  */
 export function useActiveQuests() {
   const { 
@@ -44,8 +47,9 @@ export function useActiveQuests() {
     () => getActiveQuests(),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
+      dedupingInterval: 10 * 60 * 1000, // Increased from 5 minutes to 10 minutes
+      errorRetryCount: 2, // Reduced from 3 to 2
+      revalidateOnReconnect: false, // Disabled to reduce unnecessary requests
     }
   );
 
@@ -58,7 +62,8 @@ export function useActiveQuests() {
 }
 
 /**
- * Custom hook for fetching habits streak
+ * OPTIMIZED: Custom hook for fetching habits streak
+ * Reduced deduping interval for better performance
  */
 export function useHabitsStreak() {
   const { 
@@ -71,8 +76,9 @@ export function useHabitsStreak() {
     () => getHabitsStreak(),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 1 * 60 * 1000, // 1 minute
-      errorRetryCount: 3,
+      dedupingInterval: 5 * 60 * 1000, // Increased from 1 minute to 5 minutes
+      errorRetryCount: 2, // Reduced from 3 to 2
+      revalidateOnReconnect: false, // Disabled to reduce unnecessary requests
     }
   );
 
@@ -85,7 +91,8 @@ export function useHabitsStreak() {
 }
 
 /**
- * Custom hook for fetching weekly progress
+ * OPTIMIZED: Custom hook for fetching weekly progress
+ * Reduced deduping interval for better performance
  */
 export function useWeeklyProgress() {
   const { 
@@ -98,8 +105,9 @@ export function useWeeklyProgress() {
     () => getWeeklyProgress(),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 3 * 60 * 1000, // 3 minutes
-      errorRetryCount: 3,
+      dedupingInterval: 10 * 60 * 1000, // Increased from 3 minutes to 10 minutes
+      errorRetryCount: 2, // Reduced from 3 to 2
+      revalidateOnReconnect: false, // Disabled to reduce unnecessary requests
     }
   );
 

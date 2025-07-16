@@ -2,10 +2,9 @@ import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } fr
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getAllQuestsForQuarter, getQuests, getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
-import { getVisions } from '@/app/(admin)/planning/vision/actions';
 import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
-import { questKeys, visionKeys, dashboardKeys, weeklyGoalKeys, weeklySyncKeys, dailyPlanKeys } from '@/lib/swr';
+import { questKeys, dashboardKeys, weeklyGoalKeys, weeklySyncKeys, dailyPlanKeys } from '@/lib/swr';
 
 /**
  * Convert array key to SWR-compatible string key
@@ -16,16 +15,16 @@ function toSWRKey(key: readonly unknown[]): string {
 }
 
 /**
- * Prefetch critical data for instant navigation experience
- * OPTIMIZED: Only prefetch essential data to reduce initial load time
+ * OPTIMIZED: Minimal prefetching for critical data only
+ * Reduces initial load time and network requests
  */
 export async function prefetchCriticalData() {
   try {
-    // OPTIMIZATION: Only prefetch dashboard data initially
-    // Other data will be loaded progressively
+    // OPTIMIZATION: Only prefetch essential dashboard data
+    // Remove aggressive prefetching to reduce initial load
     const prefetchedData = await Promise.allSettled([
-      // Dashboard Data (High Priority - Only essential metrics)
-      prefetchDashboardMetrics(),
+      // Only fetch today's tasks initially (most important metric)
+      prefetchTodayTasksOnly(),
     ]);
 
     // Convert to SWR fallback format using proper key format
@@ -47,21 +46,16 @@ export async function prefetchCriticalData() {
 }
 
 /**
- * Prefetch only essential dashboard metrics (optimized)
+ * OPTIMIZED: Prefetch only today's tasks (minimal data)
  */
-async function prefetchDashboardMetrics() {
+async function prefetchTodayTasksOnly() {
   try {
-    const [todayTasks, activeQuests] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-    ]);
-
+    const todayTasks = await getTodayTasks();
     return {
       [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
     };
   } catch (error) {
-    console.error('❌ Failed to prefetch dashboard metrics:', error);
+    console.error('❌ Failed to prefetch today tasks:', error);
     return {};
   }
 }
@@ -86,44 +80,7 @@ async function prefetchQuests(year: number, quarter: number) {
   }
 }
 
-/**
- * Prefetch visions data
- */
-async function prefetchVisions() {
-  try {
-    const visions = await getVisions();
-    return {
-      [toSWRKey(visionKeys.list())]: visions,
-    };
-  } catch (error) {
-    console.error('❌ Failed to prefetch visions:', error);
-    return {};
-  }
-}
-
-/**
- * Prefetch dashboard data
- */
-async function prefetchDashboardData() {
-  try {
-    const [todayTasks, activeQuests, habitsStreak, weeklyProgress] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-      getHabitsStreak(),
-      getWeeklyProgress(),
-    ]);
-
-    return {
-      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
-      [toSWRKey(dashboardKeys.habitsStreak())]: habitsStreak,
-      [toSWRKey(dashboardKeys.weeklyProgress())]: weeklyProgress,
-    };
-  } catch (error) {
-    console.error('❌ Failed to prefetch dashboard data:', error);
-    return {};
-  }
-}
+// Removed unused functions to reduce bundle size and fix linting errors
 
 /**
  * Prefetch weekly data for current week
@@ -187,8 +144,8 @@ async function prefetchDailyData(date: string) {
 }
 
 /**
- * Progressive loading: Prefetch data based on user's current page
- * This is called after initial load to prefetch relevant data
+ * OPTIMIZED: Progressive loading with reduced frequency
+ * Prefetch data based on user's current page with better timing
  */
 export async function prefetchPageData(pathname: string) {
   try {
@@ -198,24 +155,27 @@ export async function prefetchPageData(pathname: string) {
     const currentWeek = getWeekOfYear(currentDate);
     const today = currentDate.toISOString().split('T')[0];
 
-    // Prefetch data based on current page
+    // OPTIMIZATION: Only prefetch data for the specific page user is on
+    // Don't prefetch adjacent data automatically
     if (pathname.includes('/planning/12-week-quests') || pathname.includes('/planning/main-quests')) {
+      // Only prefetch quests data when user is actually on quests page
       await Promise.allSettled([
         prefetchQuests(currentYear, currentQuarter),
-        prefetchVisions(),
       ]);
     } else if (pathname.includes('/execution/weekly-sync')) {
+      // Only prefetch weekly data when user is on weekly sync page
       await Promise.allSettled([
         prefetchWeeklyData(currentYear, currentWeek),
       ]);
     } else if (pathname.includes('/execution/daily-sync')) {
+      // Only prefetch daily data when user is on daily sync page
       await Promise.allSettled([
         prefetchDailyData(today),
       ]);
     } else if (pathname.includes('/dashboard')) {
-      // Dashboard already has basic data, prefetch additional metrics
+      // Dashboard: only prefetch remaining metrics if not already loaded
       await Promise.allSettled([
-        prefetchDashboardData(),
+        prefetchRemainingDashboardMetrics(),
       ]);
     }
   } catch (error) {
@@ -224,27 +184,34 @@ export async function prefetchPageData(pathname: string) {
 }
 
 /**
- * Prefetch adjacent data (next/previous quarter/week) for smooth navigation
+ * OPTIMIZED: Prefetch only remaining dashboard metrics
+ */
+async function prefetchRemainingDashboardMetrics() {
+  try {
+    const [activeQuests, habitsStreak, weeklyProgress] = await Promise.all([
+      getActiveQuests(),
+      getHabitsStreak(),
+      getWeeklyProgress(),
+    ]);
+
+    return {
+      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
+      [toSWRKey(dashboardKeys.habitsStreak())]: habitsStreak,
+      [toSWRKey(dashboardKeys.weeklyProgress())]: weeklyProgress,
+    };
+  } catch (error) {
+    console.error('❌ Failed to prefetch remaining dashboard metrics:', error);
+    return {};
+  }
+}
+
+/**
+ * OPTIMIZED: Disabled automatic adjacent data prefetching
+ * This was causing too many unnecessary requests
  */
 export async function prefetchAdjacentData() {
-  try {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentQuarter = Math.ceil((currentDate.getMonth() + 1) / 3);
-    const currentWeek = getWeekOfYear(currentDate);
-
-    // Prefetch next and previous quarter data
-    await Promise.allSettled([
-      prefetchQuests(currentYear, currentQuarter + 1),
-      prefetchQuests(currentYear, currentQuarter - 1),
-    ]);
-
-    // Prefetch next and previous week data
-    await Promise.allSettled([
-      prefetchWeeklyData(currentYear, currentWeek + 1),
-      prefetchWeeklyData(currentYear, currentWeek - 1),
-    ]);
-  } catch (error) {
-    console.error('❌ Adjacent data prefetching failed:', error);
-  }
+  // OPTIMIZATION: Disabled automatic adjacent data prefetching
+  // This was causing excessive network requests
+  // Users can manually navigate to adjacent periods when needed
+  return;
 } 

@@ -11,8 +11,8 @@ interface PreloadProviderProps {
 }
 
 /**
- * Provider component that handles critical data prefetching
- * OPTIMIZED: Reduced initial load time with progressive loading
+ * OPTIMIZED: Provider component that handles minimal critical data prefetching
+ * Reduced initial load time with minimal data fetching
  */
 export default function PreloadProvider({ children }: PreloadProviderProps) {
   const [isPreloading, setIsPreloading] = useState(true);
@@ -22,12 +22,12 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
   useEffect(() => {
     const preloadData = async () => {
       try {
-        // OPTIMIZATION: Set a timeout to prevent blocking the UI
+        // OPTIMIZATION: Reduced timeout to prevent blocking the UI
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Prefetch timeout')), 3000); // 3 second timeout
+          setTimeout(() => reject(new Error('Prefetch timeout')), 1500); // Reduced from 3s to 1.5s
         });
 
-        // Prefetch critical data with timeout
+        // Prefetch minimal critical data with timeout
         const prefetchedFallback = await Promise.race([
           prefetchCriticalData(),
           timeoutPromise
@@ -46,12 +46,13 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
     preloadData();
   }, []);
 
-  // Show loading state if preloading is still in progress
+  // OPTIMIZATION: Show minimal loading state
   if (isPreloading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
@@ -79,7 +80,7 @@ function CachePopulator({ fallback }: { fallback: Record<string, unknown> }) {
   const { mutate } = useSWRConfig();
 
   useEffect(() => {
-    // Add a small delay to ensure SWR is ready
+    // OPTIMIZATION: Reduced delay to ensure SWR is ready faster
     const timer = setTimeout(() => {
       // Populate cache with prefetched data using mutate
       Object.entries(fallback).forEach(([key, data]) => {
@@ -90,7 +91,7 @@ function CachePopulator({ fallback }: { fallback: Record<string, unknown> }) {
           console.warn('⚠️ Failed to populate cache for key:', key, error);
         }
       });
-    }, 100); // 100ms delay
+    }, 50); // Reduced from 100ms to 50ms
 
     return () => clearTimeout(timer);
   }, [fallback, mutate]);

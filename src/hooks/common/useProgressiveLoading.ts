@@ -2,25 +2,24 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSWRConfig } from 'swr';
 
-import { prefetchAdjacentData, prefetchPageData } from '@/lib/prefetchUtils';
+import { prefetchPageData } from '@/lib/prefetchUtils';
 
 /**
- * Hook for progressive loading of data based on current page
- * Prefetches relevant data for the current page and adjacent pages
+ * OPTIMIZED: Hook for progressive loading with reduced frequency
+ * Prefetches relevant data for the current page only when needed
  */
 export function useProgressiveLoading() {
   const { mutate } = useSWRConfig();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Delay prefetching to not block initial load
+    // OPTIMIZATION: Increased delay to reduce initial load impact
+    // Only prefetch data after user has been on page for 5 seconds
     const timer = setTimeout(() => {
-      // Prefetch data specific to current page
+      // OPTIMIZATION: Only prefetch data for current page
+      // Removed adjacent data prefetching to reduce network requests
       prefetchPageData(pathname);
-      
-      // Prefetch adjacent data for smooth navigation
-      prefetchAdjacentData();
-    }, 2000); // Wait 2 seconds after initial load (reduced from 3s)
+    }, 5000); // Increased from 2s to 5s to reduce initial load impact
 
     return () => clearTimeout(timer);
   }, [mutate, pathname]);
