@@ -4,6 +4,29 @@ import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(ad
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
+// Import types from WeeklyGoalsTable component
+interface GoalItem {
+  id: string;
+  item_id: string;
+  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  title: string;
+  status: string;
+  display_order?: number;
+  priority_score?: number;
+  quest_id?: string;
+  milestone_id?: string;
+  parent_task_id?: string;
+  parent_quest_id?: string;
+  parent_quest_title?: string;
+  parent_quest_priority_score?: number;
+}
+
+export interface WeeklyGoal {
+  id: string;
+  goal_slot: number;
+  items: GoalItem[];
+}
+
 /**
  * Custom hook for fetching unscheduled tasks
  */
@@ -63,7 +86,7 @@ export function useScheduledTasksForWeek(startDate: string, endDate: string) {
  */
 export function useWeeklyGoals(year: number, weekNumber: number) {
   const { 
-    data: goals = [], 
+    data: goals = [] as WeeklyGoal[], 
     error, 
     isLoading,
     mutate 
@@ -100,7 +123,7 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
     async () => {
       const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
       await Promise.all(
-        goals.map(async (goal) => {
+        goals.map(async (goal: WeeklyGoal) => {
           if (goal.items.length > 0) {
             const progress = await calculateGoalProgress(goal.items);
             progressData[goal.goal_slot as number] = progress;

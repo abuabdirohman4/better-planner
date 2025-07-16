@@ -3,6 +3,7 @@ import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getAllQuestsForQuarter, getQuests } from '@/app/(admin)/planning/quests/actions';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
+import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
 import { questKeys, visionKeys, dashboardKeys, weeklyGoalKeys, weeklySyncKeys, dailyPlanKeys } from '@/lib/swr';
 
@@ -137,7 +138,7 @@ async function prefetchWeeklyData(year: number, weekNumber: number) {
     // Prefetch progress data for weekly goals to avoid N+1 queries
     const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
     await Promise.all(
-      weeklyGoals.map(async (goal) => {
+      weeklyGoals.map(async (goal: WeeklyGoal) => {
         if (goal.items.length > 0) {
           const progress = await calculateGoalProgress(goal.items);
           progressData[goal.goal_slot as number] = progress;
