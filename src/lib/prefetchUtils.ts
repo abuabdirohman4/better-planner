@@ -1,7 +1,7 @@
 import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } from '@/app/(admin)/dashboard/actions';
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
-import { getAllQuestsForQuarter, getQuests } from '@/app/(admin)/planning/quests/actions';
+import { getAllQuestsForQuarter, getQuests, getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
 import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
@@ -130,27 +130,38 @@ async function prefetchDashboardData() {
  */
 async function prefetchWeeklyData(year: number, weekNumber: number) {
   try {
-    const [weeklyGoals, weeklyRules] = await Promise.all([
+    // OPTIMIZATION: Prefetch all weekly data in parallel with aggressive caching
+    const [weeklyGoals, weeklyRules, unscheduledTasks, scheduledTasks] = await Promise.all([
       getWeeklyGoals(year, weekNumber),
       getWeeklyRules(year, weekNumber),
+      getUnscheduledTasks(year, Math.ceil((new Date().getMonth() + 1) / 3)), // current quarter
+      getScheduledTasksForWeek(
+        new Date().toISOString().slice(0, 10), // today
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) // next week
+      ),
     ]);
 
-    // Prefetch progress data for weekly goals to avoid N+1 queries
-    const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-    await Promise.all(
-      weeklyGoals.map(async (goal: WeeklyGoal) => {
-        if (goal.items.length > 0) {
-          const progress = await calculateGoalProgress(goal.items);
-          progressData[goal.goal_slot as number] = progress;
-        } else {
-          progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
-        }
-      })
-    );
+          // OPTIMIZATION: Prefetch progress data for weekly goals to avoid N+1 queries
+      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
+      await Promise.all(
+        weeklyGoals.map(async (goal: WeeklyGoal) => {
+          if (goal.items.length > 0) {
+            const progress = await calculateGoalProgress(goal.items);
+            progressData[goal.goal_slot as number] = progress;
+          } else {
+            progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
+          }
+        })
+      );
 
     return {
       [toSWRKey(weeklyGoalKeys.list(year, weekNumber))]: weeklyGoals,
       [toSWRKey(weeklySyncKeys.weeklyRules(year, weekNumber))]: weeklyRules,
+      [toSWRKey(weeklySyncKeys.unscheduledTasks(year, Math.ceil((new Date().getMonth() + 1) / 3)))]: unscheduledTasks,
+      [toSWRKey(weeklySyncKeys.scheduledTasks(
+        new Date().toISOString().slice(0, 10),
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      ))]: scheduledTasks,
       // Prefetch progress data with the same key format as useWeeklyGoalsWithProgress
       [toSWRKey(['weekly-goals-progress', year, weekNumber, weeklyGoals])]: progressData,
     };

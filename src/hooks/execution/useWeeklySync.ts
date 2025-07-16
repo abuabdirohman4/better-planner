@@ -95,8 +95,11 @@ export function useWeeklyGoals(year: number, weekNumber: number) {
     () => getWeeklyGoals(year, weekNumber),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 4 * 60 * 1000, // 4 minutes
-      errorRetryCount: 3,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased from 4
+      errorRetryCount: 2, // reduced from 3
+      errorRetryInterval: 1000, // 1 second
+      focusThrottleInterval: 5000, // 5 seconds
     }
   );
 
@@ -121,7 +124,10 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
   } = useSWR(
     goals.length > 0 ? ['weekly-goals-progress', year, weekNumber, goals] : null,
     async () => {
+      // OPTIMIZATION: Calculate progress for all goals in parallel to avoid N+1 queries
       const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
+      
+      // Process all goals in parallel
       await Promise.all(
         goals.map(async (goal: WeeklyGoal) => {
           if (goal.items.length > 0) {
@@ -132,6 +138,7 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
           }
         })
       );
+
       return progressData;
     },
     {
@@ -164,8 +171,11 @@ export function useWeeklyRules(year: number, weekNumber: number) {
     () => getWeeklyRules(year, weekNumber),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased from 5
+      errorRetryCount: 2, // reduced from 3
+      errorRetryInterval: 1000, // 1 second
+      focusThrottleInterval: 5000, // 5 seconds
     }
   );
 

@@ -414,7 +414,18 @@ export default function WeeklySyncClient() {
       <div className="flex flex-col justify-center items-center min-h-[600px]">
         <Spinner size={164} />
         <div className="mt-4 text-lg font-semibold text-gray-600">
-          Loading...
+          Loading Weekly Sync...
+        </div>
+        {/* Skeleton loading for better UX */}
+        <div className="mt-8 w-full max-w-4xl space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -425,7 +436,7 @@ export default function WeeklySyncClient() {
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">
-          Weekly Sync{loadingTime !== null ? ` (waktu loading: ${loadingTime}s)` : ''}
+          Weekly Sync{loadingTime !== null ? ` (loading: ${loadingTime}s)` : ''}
         </h2>
         <WeekSelector
           displayWeek={displayWeek}
