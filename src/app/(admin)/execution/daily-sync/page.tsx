@@ -6,14 +6,15 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTimer } from '@/context/TimerContext';
+import { useDailyPlan } from '@/hooks/useDailySync';
 import { useWeek } from '@/hooks/useWeek';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
 
-import { getDailyPlan, setDailyPlan , logActivity } from './actions';
+import { setDailyPlan , logActivity } from './actions';
 import ActivityLog from "./ActivityLog";
-import DailySyncClient, { type DailyPlan } from "./DailySyncClient";
+import DailySyncClient from "./DailySyncClient";
 import PomodoroTimer from "./PomodoroTimer";
 
 const getTodayDate = () => {
@@ -110,28 +111,13 @@ function useWeekManagement() {
 
 // Custom hook for daily plan management
 function useDailyPlanManagement(selectedDateStr: string) {
-  const [loading, setLoading] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [dailyPlan, setDailyPlanState] = useState<DailyPlan | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    getDailyPlan(selectedDateStr)
-      .then(plan => setDailyPlanState(plan))
-      .finally(() => setLoading(false));
-  }, [selectedDateStr]);
-
-  useEffect(() => {
-    if (!loading && initialLoading) {
-      setInitialLoading(false);
-    }
-  }, [loading, initialLoading]);
+  const { dailyPlan, isLoading, mutate } = useDailyPlan(selectedDateStr);
 
   return {
-    loading,
-    initialLoading,
+    loading: isLoading,
+    initialLoading: isLoading,
     dailyPlan,
-    setDailyPlanState
+    setDailyPlanState: () => mutate()
   };
 }
 

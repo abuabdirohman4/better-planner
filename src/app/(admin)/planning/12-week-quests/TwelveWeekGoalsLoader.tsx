@@ -1,9 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
 
 import { useQuarter } from "@/hooks/useQuarter";
-
-import { getAllQuestsForQuarter, getPairwiseResults } from "../quests/actions";
+import { useQuestsAndPairwise } from "@/hooks/useQuests";
 
 import TwelveWeekGoalsUI from "./TwelveWeekGoalsUI";
 
@@ -15,30 +13,28 @@ import TwelveWeekGoalsUI from "./TwelveWeekGoalsUI";
 
 export default function TwelveWeekGoalsLoader() {
   const { year, quarter } = useQuarter();
-  const [quests, setQuests] = useState<{ id?: string; title: string; is_committed?: boolean; priority_score?: number }[]>([]);
-  const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
+  const { quests, pairwiseResults, error, isLoading } = useQuestsAndPairwise(year, quarter);
+
+  // Handle localStorage fallback for pairwise results only if server data is empty
+  const finalPairwiseResults = pairwiseResults || (() => {
+    try {
+      const localKey = `better-planner-pairwise-${year}-Q${quarter}`;
+      const saved = localStorage.getItem(localKey);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  if (error) {
+    console.error('Error loading data:', error);
+  }
   
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      getAllQuestsForQuarter(year, quarter),
-      getPairwiseResults(year, quarter),
-    ]).then(([questsResult, pairwiseResult]) => {
-      setQuests(questsResult);
-      if (pairwiseResult) {
-        setPairwiseResults(pairwiseResult);
-      } else {
-        // Fallback ke localStorage jika belum ada di DB
-        try {
-          const localKey = `better-planner-pairwise-${year}-Q${quarter}`;
-          const saved = localStorage.getItem(localKey);
-          if (saved) setPairwiseResults(JSON.parse(saved));
-        } catch {}
-      }
-      setLoading(false);
-    });
-  }, [year, quarter]);
-  
-  return <TwelveWeekGoalsUI initialQuests={quests} initialPairwiseResults={pairwiseResults} loading={loading} />;
+  return (
+    <TwelveWeekGoalsUI 
+      initialQuests={quests} 
+      initialPairwiseResults={finalPairwiseResults} 
+      loading={isLoading} 
+    />
+  );
 } 

@@ -2,11 +2,24 @@
 import { useState } from "react";
 
 import ComponentCard from '@/components/common/ComponentCard';
+import Spinner from '@/components/ui/spinner/Spinner';
+import { useQuarter } from '@/hooks/useQuarter';
+import { useMainQuests } from '@/hooks/useQuests';
 
 import QuestWorkspace from './QuestWorkspace';
 
-export default function MainQuestsClient({ quests }: { quests: { id: string; title: string; motivation?: string }[] }) {
+export default function MainQuestsClient() {
+  const { year, quarter } = useQuarter();
+  const { quests, isLoading } = useMainQuests(year, quarter);
   const [activeTab, setActiveTab] = useState(0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size={64} />
+      </div>
+    );
+  }
 
   if (!quests || quests.length === 0) {
     return (

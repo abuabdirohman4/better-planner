@@ -10,14 +10,12 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import CustomToast from "@/components/ui/toast/CustomToast";
 import { useWeek } from "@/hooks/useWeek";
+import { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoalsWithProgress, useWeeklyRules } from "@/hooks/useWeeklySync";
 import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 
-import { getWeeklyGoals, calculateGoalProgress, getWeeklyRules } from './actions';
 import ToDontListCard from "./ToDontListCard";
-import type { Rule } from './ToDontListCard';
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
-import type { WeeklyGoal } from './WeeklyGoalsTable';
 
 type Task = {
   id: string;
@@ -29,10 +27,6 @@ type Task = {
 };
 
 // Import missing functions
-const getUnscheduledTasks = async (year: number, quarter: number) =>
-  (await import("../../planning/quests/actions")).getUnscheduledTasks(year, quarter);
-const getScheduledTasksForWeek = async (startDate: string, endDate: string) =>
-  (await import("../../planning/quests/actions")).getScheduledTasksForWeek(startDate, endDate);
 const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
   (await import("../../planning/quests/actions")).scheduleTask(taskId, newScheduledDate);
 
@@ -75,87 +69,66 @@ function useWeekCalculations(currentWeek: Date, year: number, quarter: number, s
 
 // Custom hook for task data management
 function useTaskData(year: number, quarter: number, currentWeek: Date) {
-  const [taskPool, setTaskPool] = useState<Task[]>([]);
-  const [weekTasks, setWeekTasks] = useState<{ [date: string]: Task[] }>({});
-  const [loading, setLoading] = useState(false);
-  
   // Memoize weekDates to prevent infinite re-renders
   const weekDates = useMemo(() => getWeekDates(currentWeek), [currentWeek]);
+  
+  const startDate = weekDates[0].toISOString().slice(0, 10);
+  const endDate = weekDates[6].toISOString().slice(0, 10);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const startDate = weekDates[0].toISOString().slice(0, 10);
-      const endDate = weekDates[6].toISOString().slice(0, 10);
-      try {
-        const [unscheduled, scheduled]: [Task[], Task[]] = await Promise.all([
-          getUnscheduledTasks(year, quarter),
-          getScheduledTasksForWeek(startDate, endDate),
-        ]);
-        setTaskPool(unscheduled);
-        const grouped: { [date: string]: Task[] } = {};
-        weekDates.forEach((d) => {
-          const key = d.toISOString().slice(0, 10);
-          grouped[key] = [];
-        });
-        scheduled.forEach((task: Task) => {
-          const key = task.scheduled_date?.slice(0, 10);
-          if (key && grouped[key]) grouped[key].push(task);
-        });
-        setWeekTasks(grouped);
-      } catch (e: unknown) {
-        const msg = typeof e === 'object' && e && 'message' in e ? (e as { message: string }).message : 'Unknown error';
-        CustomToast.error("Gagal memuat data", msg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [currentWeek, year, quarter, weekDates]);
+  // SWR hooks for data fetching
+  const { unscheduledTasks, isLoading: unscheduledLoading } = useUnscheduledTasks(year, quarter);
+  const { scheduledTasks, isLoading: scheduledLoading } = useScheduledTasksForWeek(startDate, endDate);
 
-  return { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates };
+  // Process scheduled tasks into grouped format
+  const weekTasks = useMemo(() => {
+    const grouped: { [date: string]: Task[] } = {};
+    weekDates.forEach((d) => {
+      const key = d.toISOString().slice(0, 10);
+      grouped[key] = [];
+    });
+    scheduledTasks.forEach((task: Task) => {
+      const key = task.scheduled_date?.slice(0, 10);
+      if (key && grouped[key]) grouped[key].push(task);
+    });
+    return grouped;
+  }, [scheduledTasks, weekDates]);
+
+  const loading = unscheduledLoading || scheduledLoading;
+
+  return { 
+    taskPool: unscheduledTasks, 
+    setTaskPool: () => {}, // SWR handles updates automatically
+    weekTasks, 
+    setWeekTasks: () => {}, // SWR handles updates automatically
+    loading, 
+    weekDates 
+  };
 }
 
 // Custom hook for weekly goals
 function useWeeklyGoals(year: number, displayWeek: number, refreshFlag: number) {
-  const [goals, setGoals] = useState<WeeklyGoal[]>([]);
-  const [goalProgress, setGoalProgress] = useState<{ [key: number]: { completed: number; total: number; percentage: number } }>({});
-
+  const { goals, goalProgress, mutate } = useWeeklyGoalsWithProgress(year, displayWeek);
+  
+  // Trigger refresh when refreshFlag changes
   useEffect(() => {
-    const fetchGoals = async () => {
-      const fetchedGoals = await getWeeklyGoals(year, displayWeek);
-      setGoals(fetchedGoals);
-      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-      await Promise.all(
-        fetchedGoals.map(async (goal) => {
-          if (goal.items.length > 0) {
-            const progress = await calculateGoalProgress(goal.items);
-            progressData[goal.goal_slot as number] = progress;
-          } else {
-            progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
-          }
-        })
-      );
-      setGoalProgress(progressData);
-    };
-    fetchGoals();
-  }, [year, displayWeek, refreshFlag]);
+    if (refreshFlag > 0) {
+      mutate();
+    }
+  }, [refreshFlag, mutate]);
 
   return { goals, goalProgress };
 }
 
 // Custom hook for to-dont list
 function useToDontList(year: number, displayWeek: number, refreshFlag: number) {
-  const [toDontList, setToDontList] = useState<Rule[]>([]);
-  const [toDontListLoading, setToDontListLoading] = useState(true);
-
+  const { rules: toDontList, isLoading: toDontListLoading, mutate } = useWeeklyRules(year, displayWeek);
+  
+  // Trigger refresh when refreshFlag changes
   useEffect(() => {
-    setToDontListLoading(true);
-    getWeeklyRules(year, displayWeek).then(data => {
-      setToDontList(data);
-      setToDontListLoading(false);
-    });
-  }, [year, displayWeek, refreshFlag]);
+    if (refreshFlag > 0) {
+      mutate();
+    }
+  }, [refreshFlag, mutate]);
 
   return { toDontList, toDontListLoading };
 }

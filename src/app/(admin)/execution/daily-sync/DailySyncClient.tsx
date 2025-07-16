@@ -2,9 +2,10 @@
 import React, { useState, useTransition } from "react";
 
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useActivityStore } from '@/stores/activityStore';
+import { useCompletedSessions, useTasksForWeek } from "@/hooks/useDailySync";
 
-import { getTasksForWeek, getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget, countCompletedSessions } from "./actions";
+import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
+
 
 interface WeeklyTaskItem {
   id: string;
@@ -47,23 +48,20 @@ interface DailySyncClientProps {
 
 // Custom hook for task session management
 function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: number, forceRefreshTaskId?: string | null) {
-  const [completed, setCompleted] = React.useState<number | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
   const [savingTarget, setSavingTarget] = React.useState(false);
-  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
 
+  // SWR hook for completed sessions
+  const { completedCount, isLoading, mutate } = useCompletedSessions(item.id, selectedDate || '');
+
+  // Trigger refresh when refreshKey or forceRefreshTaskId changes
   React.useEffect(() => {
-    const cancelled = false;
-    setLoading(true);
-    countCompletedSessions(item.id, selectedDate || '').then((count) => {
-      if (!cancelled) {
-        setCompleted(count);
-        setLoading(false);
-      }
-    });
-  }, [item.id, selectedDate, refreshKey, forceRefreshTaskId, lastActivityTimestamp]);
+    if (refreshKey || forceRefreshTaskId) {
+      mutate();
+    }
+  }, [refreshKey, forceRefreshTaskId, mutate]);
 
+  // Update target when item changes
   React.useEffect(() => {
     setTarget(item.daily_session_target ?? 1);
   }, [item.daily_session_target]);
@@ -81,8 +79,8 @@ function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: 
   };
 
   return {
-    completed,
-    loading,
+    completed: completedCount,
+    loading: isLoading,
     target,
     savingTarget,
     handleTargetChange
@@ -424,11 +422,13 @@ function useDailyPlanManagement(
   setDailyPlanState: (plan: DailyPlan | null) => void,
   setDailyPlanAction?: typeof setDailyPlan
 ) {
-  const [weeklyTasks, setWeeklyTasks] = useState<WeeklyTaskItem[]>([]);
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [, startTransition] = useTransition();
+
+  // SWR hook for weekly tasks
+  const { tasks: weeklyTasks, mutate } = useTasksForWeek(year, weekNumber);
 
   const getCurrentDailyPlanSelections = () => {
     if (!dailyPlan?.daily_plan_items) return {};
@@ -445,8 +445,8 @@ function useDailyPlanManagement(
     const currentSelections = getCurrentDailyPlanSelections();
     setSelectedTasks(currentSelections);
     try {
-      const tasks = await getTasksForWeek(year, weekNumber);
-      setWeeklyTasks(tasks);
+      // Refresh tasks data
+      await mutate();
     } catch (err) {
       console.error('Error loading weekly tasks:', err);
     } finally {

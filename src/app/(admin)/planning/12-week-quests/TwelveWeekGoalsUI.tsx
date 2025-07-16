@@ -39,7 +39,14 @@ function useQuestState(initialQuests: { id?: string, title: string, label?: stri
       });
       setQuests(padded);
     } else {
-      setQuests(QUEST_LABELS.map(label => ({ label, title: "" })));
+      // Only reset if we don't have any quests with titles
+      setQuests(prev => {
+        const hasTitles = prev.some(q => q.title.trim() !== "");
+        if (hasTitles) {
+          return prev; // Keep existing data
+        }
+        return QUEST_LABELS.map(label => ({ label, title: "" }));
+      });
     }
   }, [initialQuests]);
 
@@ -67,23 +74,34 @@ function usePairwiseComparison(year: number, quarter: number, initialPairwiseRes
   const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
+    // Prioritize server data over localStorage
     if (initialPairwiseResults && Object.keys(initialPairwiseResults).length > 0) {
       setPairwiseResults(initialPairwiseResults);
     } else {
+      // Fallback to localStorage only if no server data
       try {
         const saved = localStorage.getItem(localKey);
         if (saved) {
-          setPairwiseResults(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (parsed && Object.keys(parsed).length > 0) {
+            setPairwiseResults(parsed);
+          }
         }
-      } catch {}
+      } catch {
+        // Ignore localStorage errors
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localKey, JSON.stringify(initialPairwiseResults)]);
+  }, [initialPairwiseResults, localKey]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(localKey, JSON.stringify(pairwiseResults));
-    } catch {}
+    // Only save to localStorage if we have data and it's different from server data
+    if (Object.keys(pairwiseResults).length > 0) {
+      try {
+        localStorage.setItem(localKey, JSON.stringify(pairwiseResults));
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
   }, [pairwiseResults, localKey]);
 
   const handlePairwiseClick = (row: number, col: number, winner: 'row' | 'col', quests: Quest[]) => {
@@ -120,24 +138,27 @@ function useRankingCalculation(quests: Quest[], pairwiseResults: { [key: string]
       setRanking(null);
       return;
     }
+    
     const scores: { [label: string]: number } = {};
     quests.forEach(q => { scores[q.label] = 0; });
+    
     Object.values(pairwiseResults).forEach(winner => {
       if (scores[winner] !== undefined) scores[winner] += 1;
     });
-    const result = quests.map((q, idx) => {
-      const initial = initialQuests[idx];
+    
+    const result = quests.map((q) => {
+      const initial = initialQuests.find(init => init.label === q.label);
       return {
         ...q,
         score: scores[q.label] || 0,
         id: initial?.id,
       };
     }).sort((a, b) => b.score - a.score);
+    
     setRanking(result);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(pairwiseResults), JSON.stringify(quests), JSON.stringify(initialQuests)]);
+  }, [quests, pairwiseResults, initialQuests]);
 
-  return { ranking, setRanking };
+  return { ranking };
 }
 
 // Custom hook for quest operations
@@ -396,14 +417,8 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
 
   const { quests, highlightEmpty, handleQuestTitleChange } = useQuestState(initialQuests);
   const { pairwiseResults, handlePairwiseClick, handleReset, localKey } = usePairwiseComparison(year, quarter, initialPairwiseResults);
-  const { ranking, setRanking } = useRankingCalculation(quests, pairwiseResults, initialQuests);
+  const { ranking } = useRankingCalculation(quests, pairwiseResults, initialQuests);
   const { handleSaveQuests, handleCommit } = useQuestOperations(year, quarter, quests, initialQuests);
-
-  useEffect(() => {
-    handleReset();
-    setRanking(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localKey]);
 
   if (loading) {
     return (

@@ -1,41 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
+import Spinner from '@/components/ui/spinner/Spinner';
 import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
+import { useVisions } from '@/hooks/useVision';
 
 import { upsertVision } from './actions';
 import { LIFE_AREAS } from './constants';
 
-type Vision = {
-  life_area: string;
-  vision_3_5_year?: string;
-  vision_10_year?: string;
-};
-
-interface VisionFormProps {
-  visions: Vision[];
-}
-
-export default function VisionForm({ visions }: VisionFormProps) {
-  const [formData, setFormData] = useState<Record<string, string>>({});
+export default function VisionForm() {
+  const { visions, isLoading, mutate } = useVisions();
+  const [localFormData, setLocalFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form data from visions
-  useEffect(() => {
+  // Initialize form data from visions using useMemo
+  const initialFormData = useMemo(() => {
     const initialData: Record<string, string> = {};
     LIFE_AREAS.forEach(area => {
       const vision = visions.find(v => v.life_area === area);
       initialData[`${area}-vision_3_5_year`] = vision?.vision_3_5_year || '';
       initialData[`${area}-vision_10_year`] = vision?.vision_10_year || '';
     });
-    setFormData(initialData);
+    return initialData;
   }, [visions]);
 
+  // Initialize local form data only once when visions are loaded
+  useEffect(() => {
+    if (visions.length > 0 && Object.keys(localFormData).length === 0) {
+      setLocalFormData(initialFormData);
+    }
+  }, [visions, initialFormData, localFormData]);
+
   const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({
+    setLocalFormData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -48,14 +48,15 @@ export default function VisionForm({ visions }: VisionFormProps) {
     try {
       // Create FormData from our state
       const formDataObj = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(localFormData).forEach(([key, value]) => {
         formDataObj.append(key, value);
       });
 
       // Call server action
       await upsertVision(formDataObj);
 
-      // Show success toast
+      // Invalidate cache and show success toast
+      await mutate();
       showSuccessToast('Data visi berhasil disimpan!');
     } catch {
       showErrorToast('Gagal menyimpan data', 'Terjadi kesalahan saat menyimpan data');
@@ -63,6 +64,14 @@ export default function VisionForm({ visions }: VisionFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner size={64} />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -90,7 +99,7 @@ export default function VisionForm({ visions }: VisionFormProps) {
                     id={`${area}-vision_3_5_year`}
                     name={`${area}-vision_3_5_year`}
                     className="w-full rounded-lg border px-4 py-2.5 text-sm"
-                    value={formData[`${area}-vision_3_5_year`] || ''}
+                    value={localFormData[`${area}-vision_3_5_year`] || ''}
                     onChange={(e) => handleInputChange(`${area}-vision_3_5_year`, e.target.value)}
                     rows={3}
                   />
@@ -103,7 +112,7 @@ export default function VisionForm({ visions }: VisionFormProps) {
                     id={`${area}-vision_10_year`}
                     name={`${area}-vision_10_year`}
                     className="w-full rounded-lg border px-4 py-2.5 text-sm"
-                    value={formData[`${area}-vision_10_year`] || ''}
+                    value={localFormData[`${area}-vision_10_year`] || ''}
                     onChange={(e) => handleInputChange(`${area}-vision_10_year`, e.target.value)}
                     rows={3}
                   />
@@ -125,7 +134,7 @@ export default function VisionForm({ visions }: VisionFormProps) {
               id={`${area}-vision_3_5_year`}
               name={`${area}-vision_3_5_year`}
               className="w-full rounded-lg border px-4 py-2.5 text-sm mb-3"
-              value={formData[`${area}-vision_3_5_year`] || ''}
+              value={localFormData[`${area}-vision_3_5_year`] || ''}
               onChange={(e) => handleInputChange(`${area}-vision_3_5_year`, e.target.value)}
               rows={3}
             />
@@ -136,7 +145,7 @@ export default function VisionForm({ visions }: VisionFormProps) {
               id={`${area}-vision_10_year`}
               name={`${area}-vision_10_year`}
               className="w-full rounded-lg border px-4 py-2.5 text-sm"
-              value={formData[`${area}-vision_10_year`] || ''}
+              value={localFormData[`${area}-vision_10_year`] || ''}
               onChange={(e) => handleInputChange(`${area}-vision_10_year`, e.target.value)}
               rows={3}
             />
