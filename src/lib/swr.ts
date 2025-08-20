@@ -118,6 +118,7 @@ export const dailySyncKeys = {
  */
 export const dashboardKeys = {
   all: ['dashboard'] as const,
+  allMetrics: () => [...dashboardKeys.all, 'metrics'] as const,
   todayTasks: () => [...dashboardKeys.all, 'today-tasks'] as const,
   activeQuests: () => [...dashboardKeys.all, 'active-quests'] as const,
   habitsStreak: () => [...dashboardKeys.all, 'habits-streak'] as const,

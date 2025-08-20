@@ -2,19 +2,15 @@
 
 import QuarterUsageExample from "@/components/examples/QuarterUsageExample";
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from '@/hooks/dashboard/useDashboard';
+import { useDashboardMetrics } from '@/hooks/dashboard/useDashboard';
 
 interface DashboardClientProps {
   userEmail?: string;
 }
 
 export default function DashboardClient({ userEmail }: DashboardClientProps) {
-  const { todayTasks, isLoading: todayTasksLoading } = useTodayTasks();
-  const { activeQuests, isLoading: activeQuestsLoading } = useActiveQuests();
-  const { habitsStreak, isLoading: habitsStreakLoading } = useHabitsStreak();
-  const { weeklyProgress, isLoading: weeklyProgressLoading } = useWeeklyProgress();
-
-  const isLoading = todayTasksLoading || activeQuestsLoading || habitsStreakLoading || weeklyProgressLoading;
+  const { metrics, isLoading } = useDashboardMetrics();
+  const { todayTasks, activeQuests, habitsStreak, weeklyProgress } = metrics;
 
   if (isLoading) {
     return (

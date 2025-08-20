@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getAllQuestsForQuarter, getPairwiseResults, getQuests } from '@/app/(admin)/planning/quests/actions';
+import { getAllQuestsForQuarter, getPairwiseResults, getMainQuestsWithDetails } from '@/app/(admin)/planning/quests/actions';
 import { questKeys, pairwiseKeys } from '@/lib/swr';
 
 /**
@@ -41,7 +41,7 @@ export function useMainQuests(year: number, quarter: number) {
     mutate 
   } = useSWR(
     questKeys.mainQuests(year, quarter),
-    () => getQuests(year, quarter, true), // isCommitted = true
+    () => getMainQuestsWithDetails(year, quarter), // Menggunakan fungsi baru yang dioptimalkan
     {
       revalidateOnFocus: false,
       dedupingInterval: 5 * 60 * 1000, // 5 minutes

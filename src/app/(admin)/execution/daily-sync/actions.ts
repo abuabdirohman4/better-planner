@@ -116,96 +116,21 @@ export async function getDailyPlan(date: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
-  const user_id = user.id;
 
   try {
-    const { data: plan, error } = await supabase
-      .from('daily_plans')
-      .select('*, daily_plan_items(*)')
-      .eq('plan_date', date)
-      .eq('user_id', user_id)
-      .single();
+    const { data, error } = await supabase
+      .rpc('get_daily_plan_with_details', {
+        p_user_id: user.id,
+        p_plan_date: date,
+      });
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+    if (error) {
+      console.error('Error fetching daily plan with details:', error);
+      throw error;
+    }
     
-    // If no plan exists, return null
-    if (!plan) return null;
+    return data;
 
-    // Fetch detailed information for each daily plan item
-    const itemsWithDetails = await Promise.all(
-      (plan.daily_plan_items || []).map(async (item: { item_id: string; item_type: string; [key: string]: unknown }) => {
-        let title = '';
-        let quest_title = '';
-
-        if (item.item_type === 'QUEST') {
-          const { data: quest } = await supabase
-            .from('quests')
-            .select('id, title')
-            .eq('id', item.item_id)
-            .single();
-          title = quest?.title || '';
-          quest_title = title;
-        } else if (item.item_type === 'MILESTONE') {
-          const { data: milestone } = await supabase
-            .from('milestones')
-            .select('id, title, quest_id')
-            .eq('id', item.item_id)
-            .single();
-          title = milestone?.title || '';
-          
-          if (milestone?.quest_id) {
-            const { data: quest } = await supabase
-              .from('quests')
-              .select('id, title')
-              .eq('id', milestone.quest_id)
-              .single();
-            quest_title = quest?.title || '';
-          }
-        } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title, milestone_id')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          
-          if (task?.milestone_id) {
-            const { data: milestone } = await supabase
-              .from('milestones')
-              .select('id, title, quest_id')
-              .eq('id', task.milestone_id)
-              .single();
-            
-            if (milestone?.quest_id) {
-              const { data: quest } = await supabase
-                .from('quests')
-                .select('id, title')
-                .eq('id', milestone.quest_id)
-                .single();
-              quest_title = quest?.title || '';
-            }
-          }
-        } else if (item.item_type === 'SIDE_QUEST') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-        }
-
-        return {
-          ...item,
-          title,
-          quest_title
-        };
-      })
-    );
-
-    return {
-      ...plan,
-      daily_plan_items: itemsWithDetails
-    };
   } catch (error) {
     console.error('Error fetching daily plan:', error);
     throw error;

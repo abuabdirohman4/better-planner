@@ -1,20 +1,20 @@
 import useSWR from 'swr';
 
-import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } from '@/app/(admin)/dashboard/actions';
+import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { dashboardKeys } from '@/lib/swr';
 
 /**
- * Custom hook for fetching today's tasks count
+ * Custom hook for fetching all dashboard metrics in a single call.
  */
-export function useTodayTasks() {
+export function useDashboardMetrics() {
   const { 
-    data: todayTasks = 0, 
+    data, 
     error, 
     isLoading,
     mutate 
   } = useSWR(
-    dashboardKeys.todayTasks(),
-    () => getTodayTasks(),
+    dashboardKeys.allMetrics(),
+    getDashboardMetrics,
     {
       revalidateOnFocus: false,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes
@@ -23,88 +23,7 @@ export function useTodayTasks() {
   );
 
   return {
-    todayTasks,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching active quests count
- */
-export function useActiveQuests() {
-  const { 
-    data: activeQuests = 0, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    dashboardKeys.activeQuests(),
-    () => getActiveQuests(),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
-    }
-  );
-
-  return {
-    activeQuests,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching habits streak
- */
-export function useHabitsStreak() {
-  const { 
-    data: habitsStreak = 0, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    dashboardKeys.habitsStreak(),
-    () => getHabitsStreak(),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 1 * 60 * 1000, // 1 minute
-      errorRetryCount: 3,
-    }
-  );
-
-  return {
-    habitsStreak,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching weekly progress
- */
-export function useWeeklyProgress() {
-  const { 
-    data: weeklyProgress = 0, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    dashboardKeys.weeklyProgress(),
-    () => getWeeklyProgress(),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 3 * 60 * 1000, // 3 minutes
-      errorRetryCount: 3,
-    }
-  );
-
-  return {
-    weeklyProgress,
+    metrics: data || { todayTasks: 0, activeQuests: 0, habitsStreak: 0, weeklyProgress: 0 },
     error,
     isLoading,
     mutate,

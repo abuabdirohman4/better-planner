@@ -1,7 +1,7 @@
-import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } from '@/app/(admin)/dashboard/actions';
+import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions'; // Import fungsi baru
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
-import { getAllQuestsForQuarter, getQuests, getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
+import { getAllQuestsForQuarter, getUnscheduledTasks, getScheduledTasksForWeek, getMainQuestsWithDetails } from '@/app/(admin)/planning/quests/actions';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
 import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
@@ -51,14 +51,9 @@ export async function prefetchCriticalData() {
  */
 async function prefetchDashboardMetrics() {
   try {
-    const [todayTasks, activeQuests] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-    ]);
-
+    const metrics = await getDashboardMetrics();
     return {
-      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
+      [toSWRKey(dashboardKeys.allMetrics())]: metrics,
     };
   } catch (error) {
     console.error('❌ Failed to prefetch dashboard metrics:', error);
@@ -73,7 +68,7 @@ async function prefetchQuests(year: number, quarter: number) {
   try {
     const [allQuests, mainQuests] = await Promise.all([
       getAllQuestsForQuarter(year, quarter),
-      getQuests(year, quarter, true),
+      getMainQuestsWithDetails(year, quarter), // Diganti dari getQuests
     ]);
 
     return {
@@ -97,30 +92,6 @@ async function prefetchVisions() {
     };
   } catch (error) {
     console.error('❌ Failed to prefetch visions:', error);
-    return {};
-  }
-}
-
-/**
- * Prefetch dashboard data
- */
-async function prefetchDashboardData() {
-  try {
-    const [todayTasks, activeQuests, habitsStreak, weeklyProgress] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-      getHabitsStreak(),
-      getWeeklyProgress(),
-    ]);
-
-    return {
-      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
-      [toSWRKey(dashboardKeys.habitsStreak())]: habitsStreak,
-      [toSWRKey(dashboardKeys.weeklyProgress())]: weeklyProgress,
-    };
-  } catch (error) {
-    console.error('❌ Failed to prefetch dashboard data:', error);
     return {};
   }
 }
@@ -215,7 +186,7 @@ export async function prefetchPageData(pathname: string) {
     } else if (pathname.includes('/dashboard')) {
       // Dashboard already has basic data, prefetch additional metrics
       await Promise.allSettled([
-        prefetchDashboardData(),
+        prefetchDashboardMetrics(),
       ]);
     }
   } catch (error) {
