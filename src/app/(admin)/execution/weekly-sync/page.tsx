@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 
+import PerformanceWrapper from '@/components/common/PerformanceWrapper';
+
 import WeeklySyncClient from "./WeeklySyncClient";
 
 export const metadata: Metadata = {
@@ -16,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default function WeeklySyncPage() {
-  return <WeeklySyncClient />;
+  return (
+    <PerformanceWrapper pageName="Weekly Sync" autoSave={true} autoSend={false}>
+      <WeeklySyncClient />
+    </PerformanceWrapper>
+  );
 } 

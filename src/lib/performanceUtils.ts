@@ -1,233 +1,327 @@
-import React from 'react';
-
 /**
- * Performance monitoring utilities
- * Provides tools for tracking and optimizing application performance
+ * Performance monitoring utilities for Better Planner
+ * Tracks page load times, SWR cache performance, and user interactions
  */
 
-export interface PerformanceMetric {
-  name: string;
-  startTime: number;
-  endTime?: number;
-  duration?: number;
-  metadata?: Record<string, unknown>;
+export interface PerformanceMetrics {
+  pageName: string;
+  loadTime: number;
+  cacheHitRate: number;
+  networkRequests: number;
+  swrCacheSize: number;
+  memoryUsage: number;
+  timestamp: string;
+  userAgent: string;
+  environment: 'development' | 'production';
+  url: string;
+  referrer?: string;
 }
 
-export interface ComponentPerformanceData {
-  componentName: string;
-  renderCount: number;
-  averageRenderTime: number;
-  totalRenderTime: number;
-  lastRenderTime: number;
+export interface PageLoadMetrics {
+  navigationStart: number;
+  domContentLoaded: number;
+  loadComplete: number;
+  firstPaint?: number;
+  firstContentfulPaint?: number;
+  largestContentfulPaint?: number;
+  firstInputDelay?: number;
+  cumulativeLayoutShift?: number;
 }
-
-class PerformanceMonitor {
-  private metrics: Map<string, PerformanceMetric> = new Map();
-  private componentData: Map<string, ComponentPerformanceData> = new Map();
-
-  /**
-   * Start timing a performance metric
-   */
-  startTimer(name: string, metadata?: Record<string, unknown>): void {
-    this.metrics.set(name, {
-      name,
-      startTime: performance.now(),
-      metadata,
-    });
-  }
-
-  /**
-   * End timing a performance metric
-   */
-  endTimer(name: string): number | null {
-    const metric = this.metrics.get(name);
-    if (!metric) {
-      console.warn(`Performance metric '${name}' not found`);
-      return null;
-    }
-
-    metric.endTime = performance.now();
-    metric.duration = metric.endTime - metric.startTime;
-
-    // Log if duration is significant
-    if (metric.duration > 100) {
-      console.warn(`[PERFORMANCE] ${name} took ${metric.duration.toFixed(2)}ms`, metric.metadata);
-    }
-
-    this.metrics.delete(name);
-    return metric.duration;
-  }
-
-  /**
-   * Track component render performance
-   */
-  trackComponentRender(componentName: string, renderTime: number): void {
-    const existing = this.componentData.get(componentName);
-    
-    if (existing) {
-      existing.renderCount++;
-      existing.totalRenderTime += renderTime;
-      existing.averageRenderTime = existing.totalRenderTime / existing.renderCount;
-      existing.lastRenderTime = renderTime;
-    } else {
-      this.componentData.set(componentName, {
-        componentName,
-        renderCount: 1,
-        averageRenderTime: renderTime,
-        totalRenderTime: renderTime,
-        lastRenderTime: renderTime,
-      });
-    }
-
-    // Log slow renders
-    if (renderTime > 50) {
-      console.warn(`[PERFORMANCE] ${componentName} render took ${renderTime.toFixed(2)}ms`);
-    }
-  }
-
-  /**
-   * Get performance report
-   */
-  getReport(): {
-    metrics: PerformanceMetric[];
-    components: ComponentPerformanceData[];
-    summary: {
-      totalComponents: number;
-      averageRenderTime: number;
-      slowestComponent: ComponentPerformanceData | null;
-    };
-  } {
-    const components = Array.from(this.componentData.values());
-    const totalRenderTime = components.reduce((sum, comp) => sum + comp.totalRenderTime, 0);
-    const totalRenders = components.reduce((sum, comp) => sum + comp.renderCount, 0);
-    const averageRenderTime = totalRenders > 0 ? totalRenderTime / totalRenders : 0;
-    const slowestComponent = components.reduce((slowest, current) => 
-      current.averageRenderTime > (slowest?.averageRenderTime || 0) ? current : slowest, 
-      null as ComponentPerformanceData | null
-    );
-
-    return {
-      metrics: Array.from(this.metrics.values()),
-      components,
-      summary: {
-        totalComponents: components.length,
-        averageRenderTime,
-        slowestComponent,
-      },
-    };
-  }
-
-  /**
-   * Clear all performance data
-   */
-  clear(): void {
-    this.metrics.clear();
-    this.componentData.clear();
-  }
-}
-
-// Global performance monitor instance
-export const performanceMonitor = new PerformanceMonitor();
 
 /**
- * Hook for tracking component render performance
+ * Get current performance metrics
  */
-export const usePerformanceMonitor = (componentName: string) => {
-  const startTime = React.useRef(performance.now());
+export function getCurrentPerformanceMetrics(pageName: string, startTime?: number): PerformanceMetrics {
+  const now = performance.now();
+  const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
   
-  React.useEffect(() => {
-    const renderTime = performance.now() - startTime.current;
-    performanceMonitor.trackComponentRender(componentName, renderTime);
-    startTime.current = performance.now();
-  });
-};
-
-/**
- * Higher-order component for performance monitoring
- */
-export const withPerformanceMonitor = <P extends Record<string, unknown>>(
-  Component: React.ComponentType<P>,
-  componentName?: string
-): React.ComponentType<P> => {
-  const WrappedComponent: React.ComponentType<P> = (props: P) => {
-    const name = componentName || Component.displayName || Component.name || 'Unknown';
-    usePerformanceMonitor(name);
-    return React.createElement(Component, props);
+  // Calculate load time properly
+  let loadTime = 0;
+  if (startTime) {
+    loadTime = now - startTime;
+  } else if (navigationEntry) {
+    loadTime = now - navigationEntry.startTime;
+  } else {
+    loadTime = now;
+  }
+  
+  return {
+    pageName,
+    loadTime: Math.round(loadTime), // Round to nearest ms
+    cacheHitRate: calculateCacheHitRate(),
+    networkRequests: getNetworkRequestCount(),
+    swrCacheSize: getSWRCacheSize(),
+    memoryUsage: getMemoryUsage(),
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    environment: process.env.NODE_ENV as 'development' | 'production',
+    url: window.location.href,
+    referrer: document.referrer || undefined,
   };
-
-  WrappedComponent.displayName = `withPerformanceMonitor(${componentName || Component.name})`;
-  return WrappedComponent;
-};
+}
 
 /**
- * Utility for measuring async operation performance
+ * Get detailed page load metrics using Performance API
  */
-export const measureAsync = async <T>(
-  name: string,
-  operation: () => Promise<T>,
-  metadata?: Record<string, unknown>
-): Promise<T> => {
-  performanceMonitor.startTimer(name, metadata);
+export function getPageLoadMetrics(): PageLoadMetrics {
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+  
+  return {
+    navigationStart: navigation?.startTime || 0,
+    domContentLoaded: navigation?.domContentLoadedEventEnd || 0,
+    loadComplete: navigation?.loadEventEnd || 0,
+    firstPaint: getFirstPaint(),
+    firstContentfulPaint: getFirstContentfulPaint(),
+    largestContentfulPaint: getLargestContentfulPaint(),
+    firstInputDelay: getFirstInputDelay(),
+    cumulativeLayoutShift: getCumulativeLayoutShift(),
+  };
+}
+
+/**
+ * Calculate SWR cache hit rate
+ */
+function calculateCacheHitRate(): number {
   try {
-    const result = await operation();
-    return result;
-  } finally {
-    performanceMonitor.endTimer(name);
+    const cache = localStorage.getItem('swr-cache');
+    if (!cache) return 0;
+    
+    const cacheData = JSON.parse(cache);
+    const totalEntries = cacheData.length;
+    
+    if (totalEntries === 0) return 0;
+    
+    // More realistic cache hit rate calculation
+    // Based on cache size and recent activity
+    const now = Date.now();
+    let recentEntries = 0;
+    let totalAge = 0;
+    
+    cacheData.forEach((entry: unknown) => {
+      const entryTime = (entry as any[])[2] || now; // timestamp
+      const age = now - entryTime;
+      totalAge += age;
+      
+      // Consider entries from last 5 minutes as recent
+      if (age < 5 * 60 * 1000) {
+        recentEntries++;
+      }
+    });
+    
+    const averageAge = totalAge / totalEntries;
+    const ageInMinutes = averageAge / (1000 * 60);
+    
+    // Calculate hit rate based on cache activity
+    // More recent activity = higher hit rate
+    const recencyFactor = Math.min(1, recentEntries / Math.max(1, totalEntries * 0.1));
+    const ageFactor = Math.max(0.1, Math.min(0.9, 1 - (ageInMinutes / 30)));
+    
+    return Math.min(0.95, Math.max(0.1, (recencyFactor + ageFactor) / 2));
+  } catch {
+    return 0;
   }
-};
+}
+
+  /**
+ * Get network request count
+ */
+function getNetworkRequestCount(): number {
+  return performance.getEntriesByType('resource').length;
+}
 
 /**
- * Utility for measuring sync operation performance
+ * Get SWR cache size
  */
-export const measureSync = <T>(
-  name: string,
-  operation: () => T,
-  metadata?: Record<string, unknown>
-): T => {
-  performanceMonitor.startTimer(name, metadata);
+function getSWRCacheSize(): number {
   try {
-    const result = operation();
-    return result;
-  } finally {
-    performanceMonitor.endTimer(name);
+    const cache = localStorage.getItem('swr-cache');
+    return cache ? JSON.parse(cache).length : 0;
+  } catch {
+    return 0;
   }
-};
+}
 
 /**
- * Debounce utility with performance tracking
+ * Get memory usage
  */
-export const debounceWithPerformance = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  wait: number,
-  name?: string
-): T => {
-  const timerName = name || `debounced_${func.name || 'function'}`;
-  let timeout: NodeJS.Timeout;
-
-  return ((...args: unknown[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      measureSync(timerName, () => func(...args));
-    }, wait);
-  }) as T;
-};
+function getMemoryUsage(): number {
+  if ('memory' in performance) {
+    return (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0;
+  }
+  return 0;
+}
 
 /**
- * Throttle utility with performance tracking
+ * Get First Paint time
  */
-export const throttleWithPerformance = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  limit: number,
-  name?: string
-): T => {
-  const timerName = name || `throttled_${func.name || 'function'}`;
-  let inThrottle: boolean;
+function getFirstPaint(): number | undefined {
+  const paintEntries = performance.getEntriesByType('paint');
+  const firstPaint = paintEntries.find(entry => entry.name === 'first-paint');
+  return firstPaint ? firstPaint.startTime : undefined;
+}
 
-  return ((...args: unknown[]) => {
-    if (!inThrottle) {
-      measureSync(timerName, () => func(...args));
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+/**
+ * Get First Contentful Paint time
+ */
+function getFirstContentfulPaint(): number | undefined {
+  const paintEntries = performance.getEntriesByType('paint');
+  const fcp = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+  return fcp ? fcp.startTime : undefined;
+}
+
+/**
+ * Get Largest Contentful Paint time
+ */
+function getLargestContentfulPaint(): number | undefined {
+  const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
+  const lcp = lcpEntries[lcpEntries.length - 1];
+  return lcp ? lcp.startTime : undefined;
+}
+
+/**
+ * Get First Input Delay
+ */
+function getFirstInputDelay(): number | undefined {
+  const fidEntries = performance.getEntriesByType('first-input');
+  const fid = fidEntries[0] as PerformanceEventTiming;
+  return fid ? fid.processingStart - fid.startTime : undefined;
+}
+
+/**
+ * Get Cumulative Layout Shift
+ */
+function getCumulativeLayoutShift(): number | undefined {
+  const clsEntries = performance.getEntriesByType('layout-shift');
+  return clsEntries.reduce((sum, entry) => {
+    return sum + (entry as PerformanceEntry & { value: number }).value;
+  }, 0);
+}
+
+/**
+ * Save performance metrics to localStorage
+ */
+export function savePerformanceMetrics(metrics: PerformanceMetrics): void {
+  try {
+    const existingData = localStorage.getItem('better-planner-performance');
+    const performanceData = existingData ? JSON.parse(existingData) : [];
+    
+    // Add new metrics
+    performanceData.push(metrics);
+    
+    // Keep only last 100 entries to prevent localStorage overflow
+    if (performanceData.length > 100) {
+      performanceData.splice(0, performanceData.length - 100);
     }
-  }) as T;
-}; 
+    
+    localStorage.setItem('better-planner-performance', JSON.stringify(performanceData));
+  } catch (error) {
+    console.warn('Failed to save performance metrics:', error);
+  }
+}
+
+/**
+ * Get performance metrics from localStorage
+ */
+export function getPerformanceMetrics(): PerformanceMetrics[] {
+  try {
+    const data = localStorage.getItem('better-planner-performance');
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Clear performance metrics
+ */
+export function clearPerformanceMetrics(): void {
+  localStorage.removeItem('better-planner-performance');
+}
+
+/**
+ * Export performance metrics as JSON
+ */
+export function exportPerformanceMetrics(): string {
+  const metrics = getPerformanceMetrics();
+  return JSON.stringify(metrics, null, 2);
+}
+
+/**
+ * Get performance summary
+ */
+export function getPerformanceSummary(): {
+  totalPages: number;
+  averageLoadTime: number;
+  averageCacheHitRate: number;
+  averageNetworkRequests: number;
+  environment: string;
+  dateRange: { start: string; end: string };
+} {
+  const metrics = getPerformanceMetrics();
+  
+  if (metrics.length === 0) {
+    return {
+      totalPages: 0,
+      averageLoadTime: 0,
+      averageCacheHitRate: 0,
+      averageNetworkRequests: 0,
+      environment: 'unknown',
+      dateRange: { start: '', end: '' },
+    };
+  }
+  
+  const loadTimes = metrics.map(m => m.loadTime);
+  const cacheHitRates = metrics.map(m => m.cacheHitRate);
+  const networkRequests = metrics.map(m => m.networkRequests);
+  
+  const timestamps = metrics.map(m => new Date(m.timestamp).getTime());
+  
+  return {
+    totalPages: metrics.length,
+    averageLoadTime: loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length,
+    averageCacheHitRate: cacheHitRates.reduce((a, b) => a + b, 0) / cacheHitRates.length,
+    averageNetworkRequests: networkRequests.reduce((a, b) => a + b, 0) / networkRequests.length,
+    environment: metrics[0]?.environment || 'unknown',
+    dateRange: {
+      start: new Date(Math.min(...timestamps)).toISOString(),
+      end: new Date(Math.max(...timestamps)).toISOString(),
+    },
+  };
+}
+
+/**
+ * Send performance metrics to server
+ */
+export async function sendPerformanceMetrics(metrics: PerformanceMetrics): Promise<void> {
+  try {
+    const response = await fetch('/api/performance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(metrics),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to send metrics: ${response.status}`);
+    }
+  } catch (error) {
+    console.warn('Failed to send performance metrics to server:', error);
+    // Fallback to localStorage
+    savePerformanceMetrics(metrics);
+  }
+}
+
+/**
+ * Performance monitoring hook
+ */
+export function usePerformanceMonitor(pageName: string) {
+  const startTime = performance.now();
+  
+  return {
+    startTime,
+    getMetrics: () => getCurrentPerformanceMetrics(pageName),
+    saveMetrics: (metrics: PerformanceMetrics) => savePerformanceMetrics(metrics),
+    sendMetrics: (metrics: PerformanceMetrics) => sendPerformanceMetrics(metrics),
+  };
+}

@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 
 import './globals.css';
 
+import PerformanceToggle from '@/components/common/PerformanceToggle';
 import PreloadProvider from '@/components/common/PreloadProvider';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
@@ -26,17 +27,18 @@ export default function RootLayout({
             __html: `if (typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ === undefined) { window.__WEEKLY_SYNC_START__ = performance.now(); }`,
           }}
         />
-        <SWRProvider>
-          <PreloadProvider>
-            <ThemeProvider>
-              <SidebarProvider>{children}</SidebarProvider>
-            </ThemeProvider>
-            <Toaster 
-              position="top-right"
-              richColors
-            />
-          </PreloadProvider>
-        </SWRProvider>
+               <SWRProvider>
+                 <PreloadProvider>
+                   <ThemeProvider>
+                     <SidebarProvider>{children}</SidebarProvider>
+                   </ThemeProvider>
+                   <Toaster
+                     position="top-right"
+                     richColors
+                   />
+                   <PerformanceToggle />
+                 </PreloadProvider>
+               </SWRProvider>
       </body>
     </html>
   );

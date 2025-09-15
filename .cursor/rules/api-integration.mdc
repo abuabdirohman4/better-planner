@@ -6,6 +6,142 @@ alwaysApply: true
 
 # API Integration & Data Management
 
+## Server Actions (Primary Pattern)
+
+### Server Actions Setup
+
+```typescript
+// actions/example.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from '@/lib/supabase/server';
+import { handleApiError } from '@/lib/errorUtils';
+
+export async function getData(): Promise<DataType[]> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('table_name')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    handleApiError(error, 'memuat data');
+    return [];
+  }
+}
+
+export async function createData(formData: FormData): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Process form data
+    const title = formData.get("title");
+    if (!isNonEmptyString(title)) {
+      throw new Error('Title is required');
+    }
+
+    const { error } = await supabase
+      .from('table_name')
+      .insert({
+        title,
+        user_id: user.id,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath('/path-to-revalidate');
+  } catch (error) {
+    handleApiError(error, 'menyimpan data');
+    throw error;
+  }
+}
+```
+
+### Server Actions with SWR
+
+```typescript
+// hooks/useData.ts
+import useSWR from 'swr';
+import { getData } from '@/actions/example';
+import { dataKeys } from '@/lib/swr';
+
+export function useData() {
+  const { 
+    data = [], 
+    error, 
+    isLoading,
+    mutate 
+  } = useSWR(
+    dataKeys.all(),
+    () => getData(),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+      errorRetryCount: 3,
+    }
+  );
+
+  return {
+    data,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+```
+
+### Server Actions Best Practices
+
+```typescript
+// ✅ ALWAYS use "use server" directive
+"use server";
+
+// ✅ ALWAYS check authentication
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) {
+  throw new Error('User not authenticated');
+}
+
+// ✅ ALWAYS use centralized error handling
+try {
+  // Server action logic
+} catch (error) {
+  handleApiError(error, 'context');
+  throw error;
+}
+
+// ✅ ALWAYS revalidate paths after mutations
+revalidatePath('/dashboard');
+revalidatePath('/planning/quests');
+
+// ✅ ALWAYS validate form data with type guards
+const email = formData.get("email");
+if (!isNonEmptyString(email) || !isValidEmail(email)) {
+  throw new Error('Email tidak valid');
+}
+```
+
 ## SWR Configuration
 
 ### SWR Setup

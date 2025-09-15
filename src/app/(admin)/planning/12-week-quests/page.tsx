@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 
+import PerformanceWrapper from '@/components/common/PerformanceWrapper';
+
 import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
 
@@ -10,7 +12,7 @@ export const metadata = {
 
 export default function Page() {
   return  (
-    <>
+    <PerformanceWrapper pageName="12 Week Quests" autoSave={true} autoSend={false}>
       <Suspense fallback={null}>
         <TwelveWeekGoalsRedirector />
       </Suspense>
@@ -19,6 +21,6 @@ export default function Page() {
           <TwelveWeekGoalsLoader />
         </Suspense>
       </div>
-    </>
+    </PerformanceWrapper>
   );
 } 
