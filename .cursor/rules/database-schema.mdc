@@ -1,0 +1,267 @@
+---
+description: "Database schema reference, data validation, and Google Sheets integration patterns"
+globs: ["**/lib/**/*.ts", "**/api/**/*.ts", "**/hooks/**/*.ts", "**/types.ts", "**/google-sheets.ts"]
+alwaysApply: true
+---
+
+# Database Schema Reference
+
+## Overview
+
+Better Habit uses Google Sheets as the primary database. This file contains comprehensive reference for database structure, data validation, and API integration patterns.
+
+## Database Documentation
+
+**📋 Main Reference**: `docs/database-schema.md`
+
+This file contains complete documentation about:
+- Habits and HabitLog table structure
+- Data formats and validation
+- API integration patterns
+- Business rules and constraints
+- Performance considerations
+
+## Quick Reference
+
+### Habits Table Structure
+
+```typescript
+interface Habit {
+    id: number;                    // Primary key
+    displayName: string;           // Habit name
+    description: string;           // Habit description/goal
+    iconName: string;              // Icon name
+    category: "Spiritual" | "Health" | "Mind" | "To Dont List";
+    timeOfDay: "Morning" | "Afternoon" | "Evening" | "All Day";
+    frequencyType: "daily" | "weekly" | "custom";
+    frequencyDays?: string;        // Days of the week (1-7)
+    reminderTime?: string;         // Reminder time (HH:MM)
+    isReminderOn: boolean;         // Reminder status
+    isActive: boolean;             // Active status
+    createdAt: string;             // Creation timestamp
+}
+```
+
+### HabitLog Table Structure
+
+```typescript
+interface HabitLog {
+    id: number;                    // Primary key
+    habitId: number;               // Foreign key to Habits
+    date: string;                  // Date (YYYY-MM-DD)
+    completedValue?: number;       // Achieved value
+    completedAt: string;           // Completion timestamp
+}
+```
+
+## Data Validation Rules
+
+### Boolean Values
+- **Database**: `1` (true) or `0` (false)
+- **API**: `true` or `false`
+- **Conversion**: `row.isActive === "1" || row.isActive === true`
+
+### Date Formats
+- **Database**: `YYYY-MM-DD` for date
+- **DateTime**: `YYYY-MM-DD HH:MM:SS`
+- **API**: ISO 8601 format
+
+### Frequency Days
+- **Format**: Comma-separated string `"1,2,3,4,5"`
+- **Mapping**: 1=Monday, 2=Tuesday, ..., 7=Sunday
+- **Validation**: Only numbers 1-7, comma-separated
+
+### Time Format
+- **Format**: `HH:MM` (24-hour)
+- **Example**: `"07:00"`, `"19:30"`
+- **Regex**: `^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$`
+
+## API Integration Patterns
+
+### Google Sheets CSV Processing
+
+```typescript
+// Headers transformation
+const transformHeaders = (header: string) => {
+    return header
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+};
+
+// Data type conversion
+const processHabitData = (row: any): Habit => ({
+    id: parseInt(row.id),
+    displayName: row.displayName,
+    description: row.description || "",
+    iconName: row.iconName,
+    type: row.type as "do" | "dont",
+    frequencyType: row.frequencyType as "daily" | "weekly" | "custom",
+    frequencyDays: row.frequencyDays || undefined,
+    reminderTime: row.reminderTime || undefined,
+    isReminderOn: row.isReminderOn === "1" || row.isReminderOn === true,
+    isActive: row.isActive === "1" || row.isActive === true,
+    createdAt: row.createdAt,
+});
+```
+
+### Error Handling
+
+```typescript
+// CSV parsing error handling
+const handleCSVError = (error: any) => {
+    console.error("CSV parsing error:", error);
+    // Fallback ke authenticated method
+    return googleSheets.getCSVWithAuth(spreadsheetId, sheetName);
+};
+
+// Data validation
+const validateHabitData = (data: CreateHabitData) => {
+    if (!data.displayName || data.displayName.length > 100) {
+        throw new Error("Display name must be 1-100 characters");
+    }
+    if (!["do", "dont"].includes(data.type)) {
+        throw new Error("Type must be 'do' or 'dont'");
+    }
+    if (!["daily", "weekly", "custom"].includes(data.frequencyType)) {
+        throw new Error("Frequency type must be 'daily', 'weekly', or 'custom'");
+    }
+    // Description is optional, no validation needed
+};
+```
+
+## Business Rules
+
+### 1. Habit Creation
+- `id` must be unique and auto-increment
+- `display_name` cannot be empty (1-100 characters)
+- `description` is optional and can be empty
+- `type` only "do" or "dont"
+- `frequency_type` only "daily", "weekly", or "custom"
+
+### 2. Habit Logging
+- `habit_id` must reference existing Habits
+- `date` cannot be in the future
+- `completed_value` optional, if present must be positive
+- One habit can only have one log per day
+
+### 3. Data Integrity
+- Cannot delete habit that has logs
+- Update habit must maintain reference in HabitLog
+- Soft delete using `is_active` flag
+
+## Performance Guidelines
+
+### 1. CSV Optimization
+- Use CSV format for better performance
+- Implement caching with SWR
+- Batch operations for multiple updates
+
+### 2. Data Filtering
+- Filter `is_active = 1` at API level
+- Implement pagination for large data
+- Cache frequently accessed data
+
+### 3. Error Recovery
+- Fallback to authenticated API if CSV fails
+- Retry mechanism for network errors
+- Graceful degradation for corrupted data
+
+## Common Patterns
+
+### 1. Fetching Habits
+```typescript
+const { habits, isLoading, error } = useHabits();
+
+// Filter active habits
+const activeHabits = habits.filter(habit => habit.isActive);
+```
+
+### 2. Toggle Habit Completion
+```typescript
+const { toggleCompletion } = useHabitLogs(habitId);
+
+const handleToggle = async (date: string) => {
+    try {
+        await toggleCompletion(date);
+        // UI will update automatically via SWR
+    } catch (error) {
+        console.error("Failed to toggle completion:", error);
+    }
+};
+```
+
+### 3. Creating New Habit
+```typescript
+const { createHabit } = useHabits();
+
+const handleCreateHabit = async (habitData: CreateHabitData) => {
+    try {
+        const newHabit = await createHabit(habitData);
+        // Navigate or update UI
+    } catch (error) {
+        console.error("Failed to create habit:", error);
+    }
+};
+```
+
+## Development Guidelines
+
+### 1. Type Safety
+- Always use TypeScript interfaces
+- Validate data on client and server
+- Handle type conversion correctly
+
+### 2. Error Handling
+- Implement proper error boundaries
+- Return user-friendly error messages
+- Log errors for debugging
+
+### 3. Testing
+- Test data transformation functions
+- Mock Google Sheets API responses
+- Test error scenarios
+
+## Migration & Updates
+
+### 1. Schema Changes
+- Always add new columns at the end
+- Do not remove existing columns
+- Use default values for new columns
+
+### 2. Data Migration
+- Backup data before schema changes
+- Test migration in staging environment
+- Rollback plan if migration fails
+
+## Security Considerations
+
+### 1. Data Validation
+- Validate all input data
+- Sanitize data before saving
+- Implement rate limiting
+
+### 2. Access Control
+- Use service account for API access
+- Do not expose sensitive data
+- Audit log for data access
+
+## Monitoring
+
+### 1. Data Quality
+- Monitor data consistency
+- Alert for corrupted data
+- Regular data validation
+
+### 2. Performance
+- Track API response times
+- Monitor error rates
+- Measure cache hit rates
+
+---
+
+**📚 For complete information, see**: `docs/database-schema.md`
+
+**🔧 For API implementation, see**: `.cursor/rules/api-integration.md`
+
+**💡 For component patterns, see**: `.cursor/rules/component-patterns.md`

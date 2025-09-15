@@ -1,0 +1,606 @@
+---
+description: "Component patterns, UI/UX guidelines, and React best practices for Better Planner"
+globs: ["**/components/**/*", "**/*.tsx", "**/*.jsx", "**/app/**/*.tsx"]
+alwaysApply: true
+---
+
+# Component Patterns & Best Practices
+
+## Component Architecture
+
+### Component Structure
+
+```tsx
+// components/ComponentName/index.tsx
+import React from "react";
+
+interface ComponentNameProps {
+    // Props interface
+}
+
+const ComponentName: React.FC<ComponentNameProps> = ({ ...props }) => {
+    // Component logic
+    return (
+        // JSX
+    );
+};
+
+export default ComponentName;
+```
+
+## Better Planner Specific Components
+
+### Button Component Pattern
+
+```tsx
+// components/Button/index.tsx
+interface ButtonProps {
+    color?: string;
+    className?: string;
+    onClick?: () => void;
+    children: React.ReactNode;
+}
+
+const Button: React.FC<ButtonProps> = ({
+    color = "bg-primary",
+    className = "",
+    onClick,
+    children,
+}) => {
+    return (
+        <button
+            className={`btn ${color} text-white font-semibold rounded-lg ${className}`}
+            onClick={onClick}
+        >
+            {children}
+        </button>
+    );
+};
+```
+
+### Modal Component Pattern
+
+```tsx
+// Modal with Tailwind CSS v4
+<dialog
+    className="modal backdrop-blur-xl backdrop-brightness-150"
+    ref={modalRef}
+>
+    <div className="h-full w-full max-w-md px-7 col-start-1 row-start-1 transform rounded-lg px-3.5 mt-5">
+        <form method="dialog" className="flex justify-end">
+            <button className="btn btn-md btn-circle btn-ghost">
+                <RiCloseLine size={24} color="gray" />
+            </button>
+        </form>
+        {/* Modal content */}
+    </div>
+</dialog>
+```
+
+### Form Input Pattern
+
+```tsx
+// Input with Better Planner styling
+<input
+    type="text"
+    name="fieldName"
+    onChange={handleChange}
+    value={form.fieldName}
+    className="border-2 border-primary text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full py-3 px-4 mb-3"
+    placeholder="Placeholder text"
+    required
+/>
+```
+
+### Drag and Drop Component Pattern
+
+```tsx
+// Drag and drop with @dnd-kit
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+
+const DragDropList = ({ items, onReorder }: { items: any[], onReorder: (items: any[]) => void }) => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (active.id !== over?.id) {
+      const oldIndex = items.findIndex(item => item.id === active.id);
+      const newIndex = items.findIndex(item => item.id === over?.id);
+      
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      onReorder(newItems);
+    }
+  };
+
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {items.map(item => (
+          <SortableItem key={item.id} item={item} />
+        ))}
+      </SortableContext>
+    </DndContext>
+  );
+};
+```
+
+### Quarter Selector Pattern
+
+```tsx
+// Quarter selector component
+interface QuarterSelectorProps {
+  selectedQuarter: string;
+  onQuarterChange: (quarter: string) => void;
+}
+
+const QuarterSelector: React.FC<QuarterSelectorProps> = ({ selectedQuarter, onQuarterChange }) => {
+  const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+  
+  return (
+    <div className="flex space-x-2">
+      {quarters.map((quarter) => (
+        <button
+          key={quarter}
+          onClick={() => onQuarterChange(quarter)}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            selectedQuarter === quarter
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          {quarter}
+        </button>
+      ))}
+    </div>
+  );
+};
+```
+
+### Loading Spinner Pattern
+
+```tsx
+// Loading state with spinner
+{isLoading ? (
+    <div className="flex justify-center">
+        <Spinner className="h-10 w-10 mt-56" />
+    </div>
+) : (
+    // Content
+)}
+```
+
+### Toast Notification Pattern
+
+```tsx
+// Toast notification with Sonner
+import { toast } from 'sonner';
+
+const handleSuccess = () => {
+  toast.success('Task created successfully!');
+};
+
+const handleError = () => {
+  toast.error('Failed to create task. Please try again.');
+};
+
+const handleInfo = () => {
+  toast.info('Task updated with new information');
+};
+```
+
+## Layout Patterns
+
+### Page Layout Structure
+
+```tsx
+// Standard page layout with Better Planner structure
+<main className="min-h-screen bg-gray-50">
+  <div className="flex">
+    {/* Sidebar */}
+    <Sidebar />
+    
+    {/* Main content */}
+    <div className="flex-1 p-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">
+        Page Title with <span className="text-primary">Highlighted Text</span>
+      </h1>
+
+      {/* Page content */}
+      <div className="space-y-6">
+        {/* Content goes here */}
+      </div>
+    </div>
+  </div>
+</main>
+```
+
+### Centered Content
+
+```tsx
+// Centered content with flex
+<div className="flex justify-center my-10">{/* Content */}</div>
+```
+
+### Full Width Button
+
+```tsx
+// Full width button
+<Button color="bg-primary" className="w-full py-3.5" onClick={handleClick}>
+    Button Text
+</Button>
+```
+
+## State Management Patterns
+
+### Form State Management
+
+```tsx
+const [form, setForm] = useState<{
+    field1: string;
+    field2: string;
+}>({
+    field1: "",
+    field2: "",
+});
+
+const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+```
+
+### SWR Data Fetching (Supabase Optimized)
+
+```tsx
+// Using SWR for data fetching with Supabase optimization
+import { useProjects } from "@/hooks/useProjects";
+
+const { projects, isLoading, error, createProject, updateProject, deleteProject } =
+    useProjects();
+
+// Handle loading state
+if (isLoading) {
+    return <Spinner />;
+}
+
+// Handle error state
+if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+}
+```
+
+### Supabase Data Handling
+
+```tsx
+// Supabase data transformation and handling
+const processSupabaseData = (rawData: any[]) => {
+    return rawData.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description || "",
+        status: row.status,
+        priority: row.priority || "medium",
+        color: row.color || "#1496F6",
+        userId: row.user_id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    }));
+};
+
+// Error handling for Supabase operations
+const handleSupabaseError = (error: any) => {
+    console.error("Supabase operation error:", error);
+    toast.error("Failed to load data. Please try again.");
+    return [];
+};
+```
+
+### Zustand State Management
+
+```tsx
+// Using Zustand for global state management
+import { useActivityStore } from '@/stores/activityStore';
+
+const MyComponent = () => {
+  const { activities, addActivity, updateActivity, deleteActivity } = useActivityStore();
+  
+  const handleAddActivity = (activity: Activity) => {
+    addActivity(activity);
+    toast.success('Activity added successfully!');
+  };
+  
+  return (
+    <div>
+      {activities.map(activity => (
+        <ActivityCard key={activity.id} activity={activity} />
+      ))}
+    </div>
+  );
+};
+```
+
+## Icon Usage Patterns
+
+### React Icons
+
+```tsx
+import { 
+  RiCloseLine, 
+  RiAddLine, 
+  RiEditLine, 
+  RiDeleteBinLine,
+  RiCalendarLine,
+  RiTimeLine,
+  RiCheckLine
+} from "react-icons/ri";
+
+// Usage examples
+<RiCloseLine size={24} className="text-gray-500" />
+<RiAddLine size={20} className="text-primary" />
+<RiEditLine size={18} className="text-blue-500" />
+<RiDeleteBinLine size={18} className="text-red-500" />
+<RiCalendarLine size={20} className="text-green-500" />
+<RiTimeLine size={20} className="text-orange-500" />
+<RiCheckLine size={20} className="text-green-500" />
+```
+
+## Responsive Design Patterns
+
+### Mobile-First Approach
+
+```tsx
+// Mobile first with responsive classes
+<div className="text-2xl md:text-4xl font-semibold">
+    Responsive Text
+</div>
+
+<div className="px-4 md:px-7 lg:px-12">
+    Responsive Padding
+</div>
+```
+
+### Grid Layouts
+
+```tsx
+// Responsive grid
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {/* Grid items */}
+</div>
+```
+
+## Accessibility Patterns
+
+### ARIA Labels
+
+```tsx
+<button aria-label="Close modal" title="Close">
+    <FontAwesomeIcon icon={faXmark} />
+</button>
+```
+
+### Focus Management
+
+```tsx
+// Focus on modal open
+const openModal = () => {
+    if (modalRef.current) {
+        modalRef.current.showModal();
+        // Focus management can be added here
+    }
+};
+```
+
+## Animation Patterns
+
+### AOS Integration
+
+```tsx
+// AOS animation attributes
+<div data-aos="fade-up" data-aos-duration="1000">
+    Animated content
+</div>
+```
+
+### Hover Effects
+
+```tsx
+// Hover effects with Tailwind
+<button className="hover:bg-primary/90 transition-colors duration-200">
+    Hover Button
+</button>
+```
+
+## Error Handling Patterns
+
+### Error States
+
+```tsx
+// Error display
+{
+    error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error.message}
+        </div>
+    );
+}
+```
+
+### Loading States
+
+```tsx
+// Loading state
+{isLoading ? (
+    <div className="flex justify-center items-center h-64">
+        <Spinner className="h-8 w-8" />
+    </div>
+) : (
+    // Content
+)}
+```
+
+## TypeScript Patterns
+
+### Interface Definitions
+
+```tsx
+interface User {
+    id: string;
+    email: string;
+    name: string;
+}
+
+interface FormData {
+    email: string;
+    password: string;
+}
+```
+
+### Event Handlers
+
+```tsx
+const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Handle form submission
+};
+
+const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+};
+```
+
+## SWR Patterns
+
+### SWR Provider Setup
+
+```tsx
+// app/layout.tsx
+import SWRProvider from "@/components/common/SWRProvider";
+import PreloadProvider from "@/components/common/PreloadProvider";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { SidebarProvider } from "@/context/SidebarContext";
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <body>
+                <SWRProvider>
+                    <PreloadProvider>
+                        <ThemeProvider>
+                            <SidebarProvider>
+                                {children}
+                            </SidebarProvider>
+                        </ThemeProvider>
+                    </PreloadProvider>
+                </SWRProvider>
+            </body>
+        </html>
+    );
+}
+```
+
+### SWR with Optimistic Updates
+
+```tsx
+// Component with optimistic updates
+const ProjectList = () => {
+    const { projects, createProject, updateProject, deleteProject } = useProjects();
+
+    const handleCreateProject = async (
+        projectData: Omit<Project, "id" | "createdAt" | "updatedAt">
+    ) => {
+        try {
+            await createProject(projectData);
+            toast.success('Project created successfully!');
+            // SWR automatically updates the cache
+        } catch (error) {
+            toast.error('Failed to create project');
+            console.error("Failed to create project:", error);
+        }
+    };
+
+    return (
+        <div>
+            {projects.map((project) => (
+                <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onUpdate={updateProject}
+                    onDelete={deleteProject}
+                />
+            ))}
+        </div>
+    );
+};
+```
+
+### SWR with Conditional Fetching
+
+```tsx
+// Conditional data fetching
+const TaskList = ({ projectId }: { projectId: string }) => {
+    const { tasks, isLoading, error } = useTasks(projectId);
+
+    if (!projectId) {
+        return <div>No project selected</div>;
+    }
+
+    if (isLoading) {
+        return <Spinner />;
+    }
+
+    if (error) {
+        return <div className="text-red-500">Error: {error}</div>;
+    }
+
+    return (
+        <div>
+            {tasks.map((task) => (
+                <TaskCard key={task.id} task={task} />
+            ))}
+        </div>
+    );
+};
+```
+
+### SWR with Manual Revalidation
+
+```tsx
+// Manual revalidation
+const RefreshButton = () => {
+    const { mutate } = useProjects();
+
+    const handleRefresh = () => {
+        mutate(); // Revalidate all SWR data
+        toast.info('Data refreshed');
+    };
+
+    return (
+        <button onClick={handleRefresh} className="btn btn-primary">
+            Refresh Data
+        </button>
+    );
+};
+```
+
+## Best Practices
+
+1. **Component Composition**: Break down complex components into smaller, reusable pieces
+2. **Props Interface**: Always define TypeScript interfaces for component props
+3. **Default Props**: Use default parameters for optional props
+4. **Event Handlers**: Use proper TypeScript event types
+5. **Conditional Rendering**: Use ternary operators for simple conditions, functions for complex logic
+6. **Key Props**: Always provide unique keys for list items
+7. **Accessibility**: Include proper ARIA labels and semantic HTML
+8. **Performance**: Use React.memo for expensive components
+9. **Error Boundaries**: Implement error boundaries for better error handling
+10. **SWR Patterns**: Use SWR for all server state management with proper error handling
+11. **Optimistic Updates**: Implement optimistic updates for better UX
+12. **Conditional Fetching**: Only fetch data when conditions are met
+13. **Supabase Optimization**: Use Supabase client for efficient data fetching and real-time updates
+14. **Data Transformation**: Always transform Supabase data to proper TypeScript interfaces
+15. **Error Fallbacks**: Implement fallback mechanisms for Supabase operation errors
+16. **Drag & Drop**: Use @dnd-kit for intuitive drag-and-drop interactions
+17. **Toast Notifications**: Use Sonner for user feedback and notifications
+18. **Testing**: Write tests for component behavior and user interactions

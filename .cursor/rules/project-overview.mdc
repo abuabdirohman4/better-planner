@@ -1,0 +1,151 @@
+---
+description: "Better Habit project overview and technical specifications"
+globs: ["**/*.tsx", "**/*.ts", "**/*.js", "**/*.jsx", "**/package.json", "**/next.config.*"]
+alwaysApply: true
+---
+
+# Better Planner - Project Overview
+
+## Project Description
+
+Better Planner is a comprehensive web application built with Next.js 15 for project planning, task management, and productivity tracking. The app provides advanced planning tools, drag-and-drop functionality, real-time collaboration, and intelligent analytics with Supabase integration.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS v4 with custom design system
+- **Authentication**: Supabase Auth
+- **Database**: Supabase (PostgreSQL)
+- **State Management**: Zustand for global state, SWR for server state, React Hooks for local state
+- **Caching**: SWR with built-in caching and revalidation
+- **Icons**: React Icons
+- **Drag & Drop**: @dnd-kit for advanced interactions
+- **Notifications**: Sonner for toast notifications
+- **Build Tool**: Next.js built-in with TypeScript
+- **Development**: ESLint, Prettier, PostCSS, Jest for testing
+
+## Project Structure
+
+```
+Better Planner/
+├── src/
+│   ├── app/                     # Next.js App Router pages
+│   │   ├── (admin)/             # Admin dashboard pages
+│   │   ├── (full-width-pages)/  # Full-width layout pages
+│   │   ├── globals.css          # Global styles with Tailwind v4
+│   │   ├── layout.tsx           # Root layout with providers
+│   │   └── page.tsx             # Home page
+│   ├── components/              # Reusable UI components
+│   │   ├── auth/                # Authentication components
+│   │   ├── common/              # Common components (SWRProvider, PreloadProvider)
+│   │   ├── form/                # Form components
+│   │   ├── ui/                  # Basic UI components
+│   │   └── tables/              # Table components
+│   ├── context/                 # React context providers
+│   │   ├── SidebarContext.tsx   # Sidebar state management
+│   │   ├── ThemeContext.tsx     # Theme management
+│   │   └── TimerContext.tsx     # Timer functionality
+│   ├── hooks/                   # Custom React hooks
+│   │   ├── common/              # Common hooks
+│   │   ├── dashboard/           # Dashboard-specific hooks
+│   │   ├── execution/           # Execution-related hooks
+│   │   └── planning/            # Planning hooks
+│   ├── lib/                     # Utility libraries
+│   │   ├── supabase/            # Supabase client and utilities
+│   │   ├── dateUtils.ts         # Date manipulation utilities
+│   │   ├── errorUtils.ts        # Error handling utilities
+│   │   ├── performanceUtils.ts  # Performance monitoring
+│   │   ├── quarterUtils.ts      # Quarter-related utilities
+│   │   └── swr.ts               # SWR configuration
+│   ├── stores/                  # Zustand stores
+│   │   └── activityStore.ts     # Activity state management
+│   └── icons/                   # SVG icons
+├── public/                      # Static assets
+│   └── images/                  # Images and illustrations
+└── .cursor/rules/               # Cursor IDE rules
+```
+
+## Key Features
+
+### Core Features
+
+- **Project Planning**: Advanced project planning with drag-and-drop interface
+- **Task Management**: Comprehensive task management with priorities and deadlines
+- **Quarter Planning**: Strategic quarterly planning and goal setting
+- **User Authentication**: Secure login with Supabase Auth
+- **Responsive Design**: Mobile-first design with Tailwind CSS v4
+
+### Advanced Features
+
+- **Drag & Drop**: Intuitive drag-and-drop functionality using @dnd-kit
+- **Real-time Collaboration**: Live updates and team collaboration
+- **Analytics Dashboard**: Comprehensive analytics and reporting
+- **Timer Integration**: Built-in timer for productivity tracking
+- **Theme Management**: Dark/light theme switching
+
+### Technical Features
+
+- **TypeScript**: Full type safety throughout the application
+- **Supabase Integration**: Real-time database and authentication
+- **SWR Caching**: Intelligent caching with automatic revalidation
+- **Zustand State Management**: Efficient global state management
+- **Performance Monitoring**: Built-in performance tracking and optimization
+
+## Customization Guide
+
+### Required Replacements
+
+1. **[PROJECT_NAME]** → Better Planner
+2. **[PROJECT_TYPE]** → Web application
+3. **[MAIN_FRAMEWORK]** → Next.js
+4. **[VERSION]** → 15
+5. **[PROJECT_PURPOSE]** → Project planning and task management
+6. **[KEY_FEATURES]** → Project planning, task management, quarter planning, analytics
+7. **[INTEGRATION_TYPE]** → Supabase database and authentication
+
+### Optional Customizations
+
+- Update project structure to match your framework
+- Add/remove features based on your needs
+- Customize tech stack for your requirements
+- Update file names and directories
+
+### Example Customization
+
+```markdown
+# Task Management App - Project Overview
+
+## Project Description
+
+Task Management App is a web application built with Next.js 15 for team collaboration and project management. The app provides kanban boards, team chat, file sharing, and time tracking with Slack integration.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS v4 with custom design system
+- **State Management**: Zustand for global state, SWR for server state
+- **Data Integration**: Supabase, PostgreSQL, Slack API
+```
+
+## Template Variables
+
+| Variable                  | Description         | Example                          |
+| ------------------------- | ------------------- | -------------------------------- |
+| `[PROJECT_NAME]`          | Your project name   | "Better Planner"                 |
+| `[PROJECT_TYPE]`          | Type of application | "web application"                |
+| `[MAIN_FRAMEWORK]`        | Primary framework   | "Next.js"                        |
+| `[VERSION]`               | Framework version   | "15"                             |
+| `[PROJECT_PURPOSE]`       | What the app does   | "project planning and task management" |
+| `[KEY_FEATURES]`          | Main features       | "project planning, task management, quarter planning" |
+| `[INTEGRATION_TYPE]`      | Data integration    | "Supabase database and authentication" |
+| `[CSS_FRAMEWORK]`         | CSS framework       | "Tailwind CSS v4"                |
+| `[DESIGN_SYSTEM]`         | Design system       | "custom design system"           |
+| `[STATE_MANAGEMENT]`      | State management    | "Zustand + SWR"                  |
+| `[LOCAL_STATE]`           | Local state         | "React Hooks"                    |
+| `[DATA_SOURCE]`           | Data source         | "Supabase (PostgreSQL)"          |
+| `[API_CLIENT]`            | API client          | "Supabase Client"                |
+| `[BUILD_TOOL]`            | Build tool          | "Next.js built-in"               |
+| `[OPTIMIZATION_FEATURES]` | Optimization        | "Performance monitoring, SWR caching" |
+| `[LINTER]`                | Linter              | "ESLint"                         |
+| `[FORMATTER]`             | Formatter           | "Prettier"                       |
+| `[CSS_PROCESSOR]`         | CSS processor       | "PostCSS"                        |

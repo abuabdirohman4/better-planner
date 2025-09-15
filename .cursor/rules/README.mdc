@@ -1,0 +1,304 @@
+---
+title: "Better Habit - Cursor Rules"
+description: "Comprehensive Cursor IDE rules for Better Habit project covering versioning, release management, Git workflow, and changelog management"
+category: "Documentation"
+tags: ["cursor", "rules", "versioning", "workflow", "documentation"]
+---
+
+# Better Habit - Cursor Rules
+
+## Overview
+
+This directory contains Cursor IDE rules specifically designed for the Better Habit project. These rules provide guidance for versioning, release management, Git workflow, and changelog management.
+
+## Rules Structure
+
+### 📋 Core Rules
+- **versioning.mdc** - Semantic versioning and release management
+- **release-automation.mdc** - Automated release processes and CI/CD
+- **changelog-management.mdc** - Changelog writing and maintenance
+- **git-workflow.mdc** - Git workflow and commit standards
+
+### 🎯 Purpose
+These rules ensure:
+- Consistent versioning across the project
+- Professional release management
+- Clear documentation of changes
+- Structured Git workflow
+- Automated CI/CD processes
+
+## Quick Start
+
+### 1. Versioning
+```bash
+# Patch release (bug fixes)
+./scripts/version.sh patch
+
+# Minor release (new features)
+./scripts/version.sh minor
+
+# Major release (breaking changes)
+./scripts/version.sh major
+
+# Pre-release (alpha/beta)
+./scripts/version.sh prerelease
+```
+
+### 2. Git Workflow
+```bash
+# Create feature branch
+git checkout -b feature/habit-streak-tracking
+
+# Make changes and commit
+git add .
+git commit -m "feat: add habit streak tracking with visual indicators"
+
+# Push and create PR
+git push origin feature/habit-streak-tracking
+```
+
+### 3. Changelog Management
+- Update `CHANGELOG.md` for every release
+- Use clear, user-friendly descriptions
+- Categorize changes properly (Added, Changed, Fixed, etc.)
+- Follow Keep a Changelog format
+
+## Rule Categories
+
+### 🔄 Versioning Rules
+- Semantic versioning (SemVer) compliance
+- Version bumping strategies
+- Release type guidelines
+- Pre-release management
+
+### 🤖 Automation Rules
+- Automated release scripts
+- GitHub Actions integration
+- CI/CD pipeline management
+- Error handling and recovery
+
+### 📝 Documentation Rules
+- Changelog writing standards
+- Version history tracking
+- Release note guidelines
+- Documentation maintenance
+
+### 🌿 Git Workflow Rules
+- Branch naming conventions
+- Commit message standards
+- Merge and rebase strategies
+- Tag management
+
+## Better Habit Specific Guidelines
+
+### Feature Development
+1. **Create Feature Branch**: `feature/feature-name`
+2. **Develop Feature**: Follow coding standards
+3. **Commit Changes**: Use conventional commits
+4. **Create PR**: Include detailed description
+5. **Review & Merge**: After code review
+6. **Release**: Use versioning script
+
+### Bug Fixes
+1. **Create Bugfix Branch**: `bugfix/bug-description`
+2. **Fix Bug**: Implement solution
+3. **Test Fix**: Verify resolution
+4. **Commit Fix**: Use fix: prefix
+5. **Create PR**: Include bug details
+6. **Release**: Use patch version
+
+### Release Process
+1. **Update Changelog**: Document all changes
+2. **Run Version Script**: Choose appropriate type
+3. **Review Changes**: Verify everything
+4. **Push to GitHub**: Commits and tags
+5. **Create Release**: Use GitHub interface
+6. **Monitor**: Watch for issues
+
+## File Dependencies
+
+### Required Files
+- `package.json` - Version tracking
+- `CHANGELOG.md` - Change documentation
+- `VERSION.md` - Version history
+- `scripts/version.sh` - Automation script
+- `.github/workflows/release.yml` - CI/CD
+
+### Generated Files
+- Git tags (v1.0.0, v1.1.0, etc.)
+- GitHub releases
+- Build artifacts
+- Release notes
+
+## Best Practices
+
+### Do's
+- ✅ Follow semantic versioning
+- ✅ Update changelog for every release
+- ✅ Use conventional commit messages
+- ✅ Test before releasing
+- ✅ Use automated scripts
+- ✅ Keep documentation updated
+- ✅ Review code before merging
+- ✅ Monitor post-release
+
+### Don'ts
+- ❌ Skip version updates
+- ❌ Release without testing
+- ❌ Use inconsistent versioning
+- ❌ Forget to update documentation
+- ❌ Merge without review
+- ❌ Ignore release guidelines
+- ❌ Skip changelog updates
+- ❌ Release with uncommitted changes
+
+## Troubleshooting
+
+### Common Issues
+- **Uncommitted Changes**: Stash or commit before versioning
+- **Build Failures**: Fix linting errors before release
+- **Tag Conflicts**: Delete and recreate tags
+- **Merge Conflicts**: Resolve conflicts before merging
+
+### Recovery Procedures
+- **Rollback**: Revert to previous version
+- **Hotfix**: Create patch release for critical bugs
+- **Recovery**: Use git reset and recreate release
+
+## Integration with Better Habit
+
+### Project Structure
+```
+better-habit/
+├── .cursor/rules/          # Cursor rules
+├── scripts/                # Versioning scripts
+├── .github/workflows/      # CI/CD workflows
+├── CHANGELOG.md            # Change documentation
+├── VERSION.md              # Version history
+└── package.json            # Version tracking
+```
+
+### Technology Stack
+- **Next.js 14** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **SWR** - Data fetching
+- **Google Sheets** - Database
+- **NextAuth.js** - Authentication
+- **PWA** - Progressive web app
+
+### Versioning Integration
+- **Semantic Versioning** - Professional versioning
+- **Automated Scripts** - Streamlined releases
+- **GitHub Actions** - CI/CD automation
+- **Changelog Management** - Change tracking
+- **Git Workflow** - Structured development
+
+## Support
+
+### Documentation
+- **CHANGELOG.md** - Change history
+- **VERSION.md** - Version roadmap
+- **RELEASING.md** - Release guide
+- **README.md** - Project overview
+
+### Scripts
+- **scripts/version.sh** - Version management
+- **package.json** - NPM scripts
+- **GitHub Actions** - Automated releases
+
+### Guidelines
+- **Keep a Changelog** - Changelog format
+- **Semantic Versioning** - Version numbering
+- **Conventional Commits** - Commit messages
+- **Git Flow** - Branch strategy
+
+## Quick Reference
+
+### Version Commands
+```bash
+# Check current version
+npm version
+
+# See all tags
+git show-ref --tags
+
+# Check script help
+./scripts/version.sh --help
+
+# Make script executable
+chmod +x scripts/version.sh
+```
+
+### Release Commands
+```bash
+# Quick patch release
+./scripts/version.sh patch && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+
+# Quick minor release
+./scripts/version.sh minor && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+
+# Quick major release
+./scripts/version.sh major && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+```
+
+### Git Commands
+```bash
+# Check status
+git status
+
+# Add changes
+git add .
+
+# Commit changes
+git commit -m "type: description"
+
+# Push changes
+git push origin branch-name
+
+# Create branch
+git checkout -b branch-name
+
+# Switch branch
+git checkout branch-name
+```
+
+## Rule Files Overview
+
+### versioning.mdc
+- Semantic versioning guidelines
+- Release type definitions
+- Version bumping strategies
+- Pre-release management
+- Testing requirements
+- Best practices
+
+### release-automation.mdc
+- Automated release scripts
+- GitHub Actions workflow
+- CI/CD pipeline management
+- Error handling procedures
+- Monitoring and validation
+- Recovery procedures
+
+### changelog-management.mdc
+- Changelog structure and format
+- Writing guidelines and style
+- Categorization rules
+- Maintenance procedures
+- Quality assurance
+- Templates and examples
+
+### git-workflow.mdc
+- Branch strategy and naming
+- Commit message standards
+- Workflow processes
+- Tag management
+- Conflict resolution
+- Best practices
+
+---
+
+**📚 For detailed information, see individual rule files**
+**🔧 For quick reference, see the Quick Start section**
+**📋 For best practices, see the Best Practices section**

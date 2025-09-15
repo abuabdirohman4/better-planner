@@ -1,0 +1,491 @@
+---
+description: "Deployment guidelines, production setup, and infrastructure best practices"
+globs: ["**/vercel.json", "**/Dockerfile", "**/docker-compose.yml", "**/next.config.*", "**/.env*", "**/package.json"]
+alwaysApply: true
+---
+
+# Deployment Guidelines
+
+## Production Environment Setup
+
+### Environment Variables
+
+```bash
+# Production environment variables
+NEXTAUTH_URL="https://your-domain.com"
+NEXTAUTH_SECRET="your-production-secret-key"
+GOOGLE_CLIENT_ID="your-production-google-client-id"
+GOOGLE_CLIENT_SECRET="your-production-google-client-secret"
+GOOGLE_SHEET_ID="your-production-google-sheet-id"
+GOOGLE_SERVICE_ACCOUNT_EMAIL="your-service-account@project.iam.gserviceaccount.com"
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----"
+NODE_ENV="production"
+```
+
+### Google Sheets Setup
+
+```bash
+# No database setup required - using Google Sheets
+# Ensure Google Sheets API is enabled
+# Verify service account has access to the spreadsheet
+# Test API connection with your credentials
+```
+
+## Vercel Deployment
+
+### Vercel Configuration
+
+```json
+// vercel.json
+{
+    "framework": "nextjs",
+    "buildCommand": "npm run build",
+    "devCommand": "npm run dev",
+    "installCommand": "npm install",
+    "env": {
+        "NEXTAUTH_URL": "@nextauth_url",
+        "NEXTAUTH_SECRET": "@nextauth_secret",
+        "GOOGLE_CLIENT_ID": "@google_client_id",
+        "GOOGLE_CLIENT_SECRET": "@google_client_secret",
+        "GOOGLE_SHEET_ID": "@google_sheet_id",
+        "GOOGLE_SERVICE_ACCOUNT_EMAIL": "@google_service_account_email",
+        "GOOGLE_PRIVATE_KEY": "@google_private_key"
+    },
+    "functions": {
+        "app/api/**/*.ts": {
+            "maxDuration": 30
+        }
+    }
+}
+```
+
+### Deployment Steps
+
+1. **Connect Repository**
+
+    ```bash
+    # Install Vercel CLI
+    npm i -g vercel
+
+    # Login to Vercel
+    vercel login
+
+    # Deploy to Vercel
+    vercel
+    ```
+
+2. **Configure Environment Variables**
+    - Go to Vercel Dashboard
+    - Navigate to Project Settings
+    - Add all required environment variables
+
+3. **Google Sheets Setup**
+    - Ensure Google Sheets API is enabled
+    - Verify service account has access to the spreadsheet
+    - Test API connection with your credentials
+
+## Docker Deployment
+
+### Dockerfile
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
+```
+
+### Docker Compose
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+
+services:
+    app:
+        build: .
+        ports:
+            - "3000:3000"
+        environment:
+            - DATABASE_URL=postgresql://postgres:password@db:5432/better_habit
+            - NEXTAUTH_URL=http://localhost:3000
+            - NEXTAUTH_SECRET=your-secret-key
+            - GOOGLE_CLIENT_ID=your-google-client-id
+            - GOOGLE_CLIENT_SECRET=your-google-client-secret
+        depends_on:
+            - db
+        restart: unless-stopped
+
+    db:
+        image: postgres:15-alpine
+        environment:
+            - POSTGRES_DB=better_habit
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=password
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        restart: unless-stopped
+
+volumes:
+    postgres_data:
+```
+
+## Build Optimization
+
+### Next.js Configuration
+
+```javascript
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    output: "standalone",
+    experimental: {
+        serverComponentsExternalPackages: ["@prisma/client"],
+    },
+    images: {
+        domains: ["your-domain.com"],
+        formats: ["image/webp", "image/avif"],
+    },
+    compress: true,
+    poweredByHeader: false,
+    generateEtags: false,
+    httpAgentOptions: {
+        keepAlive: true,
+    },
+};
+
+export default nextConfig;
+```
+
+### Build Scripts
+
+```json
+// package.json
+{
+    "scripts": {
+        "build": "next build",
+        "start": "next start",
+        "build:analyze": "ANALYZE=true next build",
+        "build:production": "NODE_ENV=production next build",
+        "postbuild": "prisma generate"
+    }
+}
+```
+
+## Performance Optimization
+
+### Bundle Analysis
+
+```bash
+# Install bundle analyzer
+npm install --save-dev @next/bundle-analyzer
+
+# Analyze bundle size
+npm run build:analyze
+```
+
+### Image Optimization
+
+```typescript
+// Use Next.js Image component for optimization
+import Image from 'next/image';
+
+<Image
+    src="/illustration/get-started.svg"
+    width={400}
+    height={500}
+    alt="get started"
+    priority={true}
+    placeholder="blur"
+    blurDataURL="data:image/jpeg;base64,..."
+/>
+```
+
+### Caching Strategy
+
+```typescript
+// API route with caching
+export async function GET() {
+    const data = await fetchData();
+
+    return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: {
+            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+            "Content-Type": "application/json",
+        },
+    });
+}
+```
+
+## Security Best Practices
+
+### Security Headers
+
+```javascript
+// next.config.mjs
+const securityHeaders = [
+    {
+        key: "X-DNS-Prefetch-Control",
+        value: "on",
+    },
+    {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+    },
+    {
+        key: "X-XSS-Protection",
+        value: "1; mode=block",
+    },
+    {
+        key: "X-Frame-Options",
+        value: "SAMEORIGIN",
+    },
+    {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+    },
+    {
+        key: "Referrer-Policy",
+        value: "origin-when-cross-origin",
+    },
+];
+
+const nextConfig = {
+    async headers() {
+        return [
+            {
+                source: "/(.*)",
+                headers: securityHeaders,
+            },
+        ];
+    },
+};
+```
+
+### Environment Security
+
+```bash
+# Use strong secrets
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
+
+# Rotate secrets regularly
+# Use different secrets for different environments
+```
+
+## Monitoring & Logging
+
+### Error Tracking
+
+```typescript
+// lib/error-tracking.ts
+export const logError = (error: Error, context?: Record<string, any>) => {
+    console.error("Error:", error.message, context);
+
+    // Send to error tracking service (Sentry, LogRocket, etc.)
+    if (process.env.NODE_ENV === "production") {
+        // Sentry.captureException(error, { extra: context });
+    }
+};
+```
+
+### Performance Monitoring
+
+```typescript
+// lib/analytics.ts
+export const trackPageView = (url: string) => {
+    if (process.env.NODE_ENV === "production") {
+        // Google Analytics, Mixpanel, etc.
+        gtag("config", "GA_MEASUREMENT_ID", {
+            page_path: url,
+        });
+    }
+};
+```
+
+## Database Management
+
+### Migration Strategy
+
+```bash
+# Create migration
+npx prisma migrate dev --name add_habit_table
+
+# Deploy migrations to production
+npx prisma migrate deploy
+
+# Reset database (development only)
+npx prisma migrate reset
+```
+
+### Backup Strategy
+
+```bash
+# Database backup
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restore from backup
+psql $DATABASE_URL < backup_file.sql
+```
+
+## Health Checks
+
+### API Health Check
+
+```typescript
+// app/api/health/route.ts
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET() {
+    try {
+        // Check database connection
+        await prisma.$queryRaw`SELECT 1`;
+
+        return NextResponse.json({
+            status: "healthy",
+            timestamp: new Date().toISOString(),
+            database: "connected",
+        });
+    } catch (error) {
+        return NextResponse.json(
+            {
+                status: "unhealthy",
+                timestamp: new Date().toISOString(),
+                database: "disconnected",
+                error: error instanceof Error ? error.message : "Unknown error",
+            },
+            { status: 500 }
+        );
+    }
+}
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run tests
+              run: npm test
+
+            - name: Build application
+              run: npm run build
+
+            - name: Deploy to Vercel
+              uses: amondnet/vercel-action@v20
+              with:
+                  vercel-token: ${{ secrets.VERCEL_TOKEN }}
+                  vercel-org-id: ${{ secrets.ORG_ID }}
+                  vercel-project-id: ${{ secrets.PROJECT_ID }}
+                  vercel-args: "--prod"
+```
+
+## Rollback Strategy
+
+### Database Rollback
+
+```bash
+# Rollback to previous migration
+npx prisma migrate resolve --rolled-back <migration_name>
+
+# Or reset to specific migration
+npx prisma migrate reset --to <migration_name>
+```
+
+### Application Rollback
+
+```bash
+# Vercel rollback
+vercel rollback <deployment-url>
+
+# Docker rollback
+docker-compose down
+docker-compose up -d --scale app=0
+docker-compose up -d
+```
+
+## Best Practices
+
+1. **Environment Separation**: Use different environments for dev, staging, and production
+2. **Secret Management**: Never commit secrets to version control
+3. **Database Migrations**: Always test migrations in staging first
+4. **Health Monitoring**: Implement health checks and monitoring
+5. **Backup Strategy**: Regular database backups and disaster recovery plan
+6. **Security**: Keep dependencies updated and use security headers
+7. **Performance**: Monitor bundle size and optimize images
+8. **Error Tracking**: Implement proper error tracking and logging
+9. **Testing**: Run tests before deployment
+10. **Documentation**: Keep deployment documentation updated

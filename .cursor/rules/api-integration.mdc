@@ -1,0 +1,1055 @@
+---
+description: "API integration patterns, Supabase setup, and data management guidelines"
+globs: ["**/api/**/*.ts", "**/lib/**/*.ts", "**/hooks/**/*.ts", "**/utils/**/*.ts"]
+alwaysApply: true
+---
+
+# API Integration & Data Management
+
+## SWR Configuration
+
+### SWR Setup
+
+```typescript
+// lib/swr-config.ts
+import { SWRConfiguration } from "swr";
+
+export const swrConfig: SWRConfiguration = {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 5000,
+    errorRetryCount: 2,
+    refreshInterval: 15000,
+    fetcher: (url: string) => fetch(url).then((res) => res.json()),
+};
+```
+
+### SWR Provider Setup
+
+```typescript
+// components/SWRProvider/index.tsx
+"use client";
+
+import { SWRConfig } from "swr";
+import { swrConfig } from "@/lib/swr-config";
+
+interface Props {
+    children: React.ReactNode;
+}
+
+export default function SWRProvider({ children }: Props) {
+    return <SWRConfig value={swrConfig}>{children}</SWRConfig>;
+}
+```
+
+## Supabase Integration
+
+### Supabase Client Setup
+
+```typescript
+// lib/supabase/client.ts
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+
+// Client-side Supabase client
+export const createClient = () => createClientComponentClient()
+
+// Server-side Supabase client
+export const createServerClient = () => createServerComponentClient({ cookies })
+
+// Database operations
+export const supabase = {
+    async getProjects(): Promise<Project[]> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            throw new Error(`Failed to fetch projects: ${error.message}`)
+        }
+
+        return data || []
+    },
+
+    async createProject(projectData: CreateProjectData): Promise<Project> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .insert([projectData])
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to create project: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to update project: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async deleteProject(id: string): Promise<void> {
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            throw new Error(`Failed to delete project: ${error.message}`)
+        }
+    },
+
+    // Real-time subscriptions
+    subscribeToProjects(callback: (projects: Project[]) => void) {
+        const supabase = createClient()
+        return supabase
+            .channel('projects')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'projects' },
+                () => {
+                    // Refetch projects when changes occur
+                    this.getProjects().then(callback)
+                }
+            )
+            .subscribe()
+    }
+};
+```
+
+### Type Definitions
+
+```typescript
+// lib/types.ts
+export interface Project {
+    id: string;
+    title: string;
+    description: string;
+    status: "planning" | "active" | "completed" | "on-hold";
+    priority: "low" | "medium" | "high" | "urgent";
+    color: string;
+    userId: string;
+    quarter: string; // Q1, Q2, Q3, Q4
+    startDate: string;
+    endDate: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Task {
+    id: string;
+    projectId: string;
+    title: string;
+    description: string;
+    status: "todo" | "in-progress" | "completed";
+    priority: "low" | "medium" | "high" | "urgent";
+    dueDate?: string;
+    completedAt?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface SupabaseResponse<T> {
+    data: T | null;
+    error: Error | null;
+}
+
+// Helper types for form data
+export interface CreateProjectData {
+    title: string;
+    description: string;
+    status: "planning" | "active" | "completed" | "on-hold";
+    priority: "low" | "medium" | "high" | "urgent";
+    color: string;
+    quarter: string;
+    startDate: string;
+    endDate: string;
+}
+
+export interface CreateTaskData {
+    projectId: string;
+    title: string;
+    description: string;
+    status: "todo" | "in-progress" | "completed";
+    priority: "low" | "medium" | "high" | "urgent";
+    dueDate?: string;
+}
+```
+
+## Supabase Auth Integration
+
+### Authentication Setup
+
+```typescript
+// lib/supabase/client.ts
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+
+// Client-side Supabase client
+export const createClient = () => createClientComponentClient()
+
+// Server-side Supabase client
+export const createServerClient = () => createServerComponentClient({ cookies })
+```
+
+### Session Management
+
+```typescript
+// hooks/useAuth.ts
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
+
+export const useAuth = () => {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+    }
+
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  return { user, loading }
+}
+```
+
+### Session Usage in Components
+
+```typescript
+// Using auth in components
+import { useAuth } from '@/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
+
+const { user, loading } = useAuth()
+const supabase = createClient()
+
+if (loading) {
+    return <Spinner />;
+}
+
+if (!user) {
+    return <LoginButton onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} />;
+}
+
+return <UserDashboard user={user} />;
+```
+
+## Supabase Database Structure
+
+### Database Schema
+
+```sql
+-- Projects table
+CREATE TABLE projects (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT CHECK (status IN ('planning', 'active', 'completed', 'on-hold')) DEFAULT 'planning',
+    priority TEXT CHECK (priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
+    color TEXT DEFAULT '#1496F6',
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    quarter TEXT CHECK (quarter IN ('Q1', 'Q2', 'Q3', 'Q4')) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tasks table
+CREATE TABLE tasks (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT CHECK (status IN ('todo', 'in-progress', 'completed')) DEFAULT 'todo',
+    priority TEXT CHECK (priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
+    due_date DATE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view their own projects" ON projects
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own projects" ON projects
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own projects" ON projects
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own projects" ON projects
+    FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view tasks for their projects" ON tasks
+    FOR SELECT USING (
+        project_id IN (
+            SELECT id FROM projects WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can insert tasks for their projects" ON tasks
+    FOR INSERT WITH CHECK (
+        project_id IN (
+            SELECT id FROM projects WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can update tasks for their projects" ON tasks
+    FOR UPDATE USING (
+        project_id IN (
+            SELECT id FROM projects WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can delete tasks for their projects" ON tasks
+    FOR DELETE USING (
+        project_id IN (
+            SELECT id FROM projects WHERE user_id = auth.uid()
+        )
+    );
+```
+
+### Supabase Helper Functions
+
+```typescript
+// lib/supabase/projects.ts
+import { createClient } from './client'
+import { Project, Task, CreateProjectData, CreateTaskData } from '@/lib/types'
+
+export const projectsApi = {
+    async getAll(): Promise<Project[]> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            throw new Error(`Failed to fetch projects: ${error.message}`)
+        }
+
+        return data || []
+    },
+
+    async getById(id: string): Promise<Project | null> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('id', id)
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to fetch project: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async create(projectData: CreateProjectData): Promise<Project> {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            throw new Error('User not authenticated')
+        }
+
+        const { data, error } = await supabase
+            .from('projects')
+            .insert({
+                ...projectData,
+                user_id: user.id
+            })
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to create project: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async update(id: string, updates: Partial<Project>): Promise<Project> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('projects')
+            .update({ ...updates, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to update project: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async delete(id: string): Promise<void> {
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            throw new Error(`Failed to delete project: ${error.message}`)
+        }
+    }
+}
+
+export const tasksApi = {
+    async getByProjectId(projectId: string): Promise<Task[]> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            throw new Error(`Failed to fetch tasks: ${error.message}`)
+        }
+
+        return data || []
+    },
+
+    async create(taskData: CreateTaskData): Promise<Task> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('tasks')
+            .insert(taskData)
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to create task: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async update(id: string, updates: Partial<Task>): Promise<Task> {
+        const supabase = createClient()
+        const { data, error } = await supabase
+            .from('tasks')
+            .update({ ...updates, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to update task: ${error.message}`)
+        }
+
+        return data
+    },
+
+    async delete(id: string): Promise<void> {
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            throw new Error(`Failed to delete task: ${error.message}`)
+        }
+    },
+
+    async toggleStatus(id: string): Promise<Task> {
+        const supabase = createClient()
+        
+        // Get current task
+        const { data: currentTask, error: fetchError } = await supabase
+            .from('tasks')
+            .select('status')
+            .eq('id', id)
+            .single()
+
+        if (fetchError) {
+            throw new Error(`Failed to fetch task: ${fetchError.message}`)
+        }
+
+        const newStatus = currentTask.status === 'completed' ? 'todo' : 'completed'
+        const updates: Partial<Task> = {
+            status: newStatus,
+            completed_at: newStatus === 'completed' ? new Date().toISOString() : undefined
+        }
+
+        return this.update(id, updates)
+    }
+}
+```
+
+### API Routes with Supabase
+
+```typescript
+// API route for projects
+// app/api/projects/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase/client";
+import { projectsApi } from "@/lib/supabase/projects";
+import { CreateProjectData } from "@/lib/types";
+
+export async function GET() {
+    try {
+        const supabase = createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const projects = await projectsApi.getAll();
+        return NextResponse.json({ data: projects });
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to fetch projects" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const supabase = createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const body = await request.json();
+        const projectData: CreateProjectData = {
+            title: body.title,
+            description: body.description,
+            status: body.status,
+            priority: body.priority,
+            color: body.color,
+            quarter: body.quarter,
+            startDate: body.startDate,
+            endDate: body.endDate,
+        };
+
+        const project = await projectsApi.create(projectData);
+        return NextResponse.json({ data: project });
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to create project" },
+            { status: 500 }
+        );
+    }
+}
+```
+
+### API route for tasks
+
+```typescript
+// app/api/projects/[id]/tasks/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase/client";
+import { tasksApi } from "@/lib/supabase/projects";
+import { CreateTaskData } from "@/lib/types";
+
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const supabase = createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const projectId = params.id;
+        const tasks = await tasksApi.getByProjectId(projectId);
+        return NextResponse.json({ data: tasks });
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to fetch tasks" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(
+    request: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const supabase = createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const projectId = params.id;
+        const body = await request.json();
+        const taskData: CreateTaskData = {
+            projectId,
+            title: body.title,
+            description: body.description,
+            status: body.status,
+            priority: body.priority,
+            dueDate: body.dueDate,
+        };
+
+        const task = await tasksApi.create(taskData);
+        return NextResponse.json({ data: task });
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to create task" },
+            { status: 500 }
+        );
+    }
+}
+```
+
+## Custom Hooks with SWR
+
+### useProjects Hook
+
+```typescript
+// hooks/useProjects.ts
+import useSWR from "swr";
+import { useAuth } from "@/hooks/useAuth";
+import { Project, CreateProjectData } from "@/lib/types";
+
+export const useProjects = () => {
+    const { user } = useAuth();
+
+    const { data, error, isLoading, mutate } = useSWR(
+        user ? "/api/projects" : null,
+        (url: string) => fetch(url).then((res) => res.json())
+    );
+
+    const createProject = async (projectData: CreateProjectData) => {
+        try {
+            const response = await fetch("/api/projects", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(projectData),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create project");
+            }
+
+            const { data: newProject } = await response.json();
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: [...(currentData?.data || []), newProject],
+                }),
+                false
+            );
+
+            return newProject;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const updateProject = async (id: string, updates: Partial<Project>) => {
+        try {
+            const response = await fetch(`/api/projects/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(updates),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update project");
+            }
+
+            const { data: updatedProject } = await response.json();
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: currentData?.data?.map((project: Project) =>
+                        project.id === id ? updatedProject : project
+                    ),
+                }),
+                false
+            );
+
+            return updatedProject;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const deleteProject = async (id: string) => {
+        try {
+            const response = await fetch(`/api/projects/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete project");
+            }
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: currentData?.data?.filter(
+                        (project: Project) => project.id !== id
+                    ),
+                }),
+                false
+            );
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    return {
+        projects: data?.data || [],
+        isLoading,
+        error: error?.message,
+        createProject,
+        updateProject,
+        deleteProject,
+        mutate,
+    };
+};
+```
+
+### useTasks Hook
+
+```typescript
+// hooks/useTasks.ts
+import useSWR from "swr";
+import { Task, CreateTaskData } from "@/lib/types";
+
+export const useTasks = (projectId: string) => {
+    const { data, error, isLoading, mutate } = useSWR(
+        projectId ? `/api/projects/${projectId}/tasks` : null,
+        (url: string) => fetch(url).then((res) => res.json())
+    );
+
+    const createTask = async (taskData: CreateTaskData) => {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/tasks`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(taskData),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to create task");
+            }
+
+            const { data: newTask } = await response.json();
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: [...(currentData?.data || []), newTask],
+                }),
+                false
+            );
+
+            return newTask;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const updateTask = async (taskId: string, updates: Partial<Task>) => {
+        try {
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(updates),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update task");
+            }
+
+            const { data: updatedTask } = await response.json();
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: currentData?.data?.map((task: Task) =>
+                        task.id === taskId ? updatedTask : task
+                    ),
+                }),
+                false
+            );
+
+            return updatedTask;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const deleteTask = async (taskId: string) => {
+        try {
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete task");
+            }
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: currentData?.data?.filter(
+                        (task: Task) => task.id !== taskId
+                    ),
+                }),
+                false
+            );
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    const toggleTaskStatus = async (taskId: string) => {
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/toggle`, {
+                method: "POST",
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to toggle task status");
+            }
+
+            const { data: updatedTask } = await response.json();
+
+            // Optimistic update
+            mutate(
+                (currentData) => ({
+                    ...currentData,
+                    data: currentData?.data?.map((task: Task) =>
+                        task.id === taskId ? updatedTask : task
+                    ),
+                }),
+                false
+            );
+
+            return updatedTask;
+        } catch (err) {
+            throw err;
+        }
+    };
+
+    return {
+        tasks: data?.data || [],
+        isLoading,
+        error: error?.message,
+        createTask,
+        updateTask,
+        deleteTask,
+        toggleTaskStatus,
+        mutate,
+    };
+};
+```
+
+## Error Handling Patterns
+
+### API Error Response
+
+```typescript
+// utils/api.ts
+export interface ApiResponse<T> {
+    data?: T;
+    error?: string;
+    message?: string;
+}
+
+export const handleApiError = (error: unknown): string => {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return "An unexpected error occurred";
+};
+
+export const createApiResponse = <T>(
+    data?: T,
+    error?: string,
+    message?: string
+): ApiResponse<T> => ({
+    data,
+    error,
+    message,
+});
+```
+
+### Error Boundary Component
+
+```typescript
+// components/ErrorBoundary/index.tsx
+"use client";
+
+import React, { Component, ReactNode } from "react";
+
+interface Props {
+    children: ReactNode;
+    fallback?: ReactNode;
+}
+
+interface State {
+    hasError: boolean;
+    error?: Error;
+}
+
+class ErrorBoundary extends Component<Props, State> {
+    constructor(props: Props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error: Error): State {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error("Error caught by boundary:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return this.props.fallback || (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <h2 className="font-bold">Something went wrong</h2>
+                    <p>{this.state.error?.message}</p>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
+export default ErrorBoundary;
+```
+
+## Environment Variables
+
+### Environment Setup
+
+```bash
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+```
+
+### Dependencies Installation
+
+```bash
+# Install required packages
+npm install @supabase/supabase-js @supabase/ssr swr zustand
+npm install --save-dev @types/supabase
+```
+
+### Type-safe Environment Variables
+
+```typescript
+// lib/env.ts
+export const env = {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL!,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+} as const;
+```
+
+## Best Practices
+
+1. **Type Safety**: Always use TypeScript interfaces for API responses
+2. **Error Handling**: Implement proper error boundaries and error states
+3. **Loading States**: Show loading indicators during API calls
+4. **Optimistic Updates**: Update UI immediately, then sync with server
+5. **Caching**: Use SWR for client-side caching and revalidation
+6. **Authentication**: Always check authentication status before API calls
+7. **Validation**: Validate data on both client and server side
+8. **Rate Limiting**: Implement rate limiting for API endpoints
+9. **Logging**: Log errors and important events for debugging
+10. **Testing**: Write tests for API routes and custom hooks
+11. **Supabase Optimization**: Use proper indexing and RLS policies
+12. **Real-time Updates**: Leverage Supabase real-time subscriptions
+13. **Data Transformation**: Always transform Supabase data to proper interfaces
+14. **Error Fallbacks**: Implement fallback mechanisms for Supabase errors

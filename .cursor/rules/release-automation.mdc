@@ -1,0 +1,430 @@
+---
+title: "Release Automation & CI/CD"
+description: "Automated release processes with GitHub Actions, versioning scripts, and CI/CD pipelines for Better Habit"
+category: "DevOps"
+tags: ["automation", "ci-cd", "github-actions", "releases"]
+---
+
+# Release Automation & CI/CD
+
+## Overview
+
+Better Habit uses automated release processes with GitHub Actions, versioning scripts, and CI/CD pipelines to ensure consistent and reliable releases.
+
+## Automated Release Scripts
+
+### Version Management Scripts
+
+#### scripts/version.sh
+```bash
+# Usage: ./scripts/version.sh [patch|minor|major|prerelease]
+
+# Patch release (bug fixes)
+./scripts/version.sh patch
+
+# Minor release (new features)
+./scripts/version.sh minor
+
+# Major release (breaking changes)
+./scripts/version.sh major
+
+# Pre-release (alpha/beta)
+./scripts/version.sh prerelease
+```
+
+#### NPM Scripts in package.json
+```json
+{
+  "scripts": {
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "version:prerelease": "npm version prerelease",
+    "release": "npm run build && npm run version:patch && git push && git push --tags",
+    "release:minor": "npm run build && npm run version:minor && git push && git push --tags",
+    "release:major": "npm run build && npm run version:major && git push && git push --tags"
+  }
+}
+```
+
+## GitHub Actions Workflow
+
+### .github/workflows/release.yml
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm run lint
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## What's Changed
+            
+            See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+            
+            ## Installation
+            
+            ```bash
+            npm install
+            npm run build
+            npm start
+            ```
+            
+            ## Features
+            
+            - Habit tracking and management
+            - PWA support for mobile installation
+            - Google Sheets integration
+            - Responsive design with Tailwind CSS
+            - User authentication with NextAuth.js
+            - Calendar and weekly progress views
+            - Habit performance analytics
+            
+            ## Technical Stack
+            
+            - Next.js 14 with App Router
+            - TypeScript for type safety
+            - SWR for data fetching and caching
+            - Google Sheets API integration
+            - NextAuth.js for authentication
+            - Tailwind CSS + DaisyUI for styling
+            - PWA with next-pwa
+          draft: false
+          prerelease: false
+```
+
+## Release Process Automation
+
+### 1. Pre-Release Validation
+
+#### Automated Checks
+- [ ] Code linting (`npm run lint`)
+- [ ] TypeScript compilation
+- [ ] Build process (`npm run build`)
+- [ ] No uncommitted changes
+- [ ] Git repository validation
+- [ ] Version number validation
+
+#### Manual Checks
+- [ ] Feature functionality testing
+- [ ] PWA installation testing
+- [ ] Mobile responsiveness
+- [ ] Google Sheets integration
+- [ ] Authentication flows
+- [ ] Offline functionality
+
+### 2. Version Bumping
+
+#### Automatic Updates
+- `package.json` version field
+- `CHANGELOG.md` with new version section
+- `VERSION.md` with current version info
+- Git commit with version bump
+- Git tag creation
+
+#### File Updates
+```bash
+# package.json
+"version": "1.1.0"
+
+# CHANGELOG.md
+## [1.1.0] - 2024-12-22
+
+### Added
+- New habit tracking features
+- Enhanced analytics dashboard
+
+# VERSION.md
+## Current Version: 1.1.0
+
+### Version 1.1.0 (2024-12-22)
+- **Type**: minor Release
+- **Status**: Stable
+- **Changes**: See CHANGELOG.md for detailed changes
+```
+
+### 3. Git Operations
+
+#### Automatic Git Commands
+```bash
+# Add modified files
+git add package.json VERSION.md CHANGELOG.md
+
+# Commit version bump
+git commit -m "chore: bump version to X.X.X"
+
+# Create annotated tag
+git tag -a "vX.X.X" -m "Release version X.X.X"
+```
+
+#### Manual Git Commands
+```bash
+# Push commits
+git push origin main
+
+# Push tags
+git push origin vX.X.X
+
+# Verify tags
+git show-ref --tags
+```
+
+## CI/CD Pipeline
+
+### Build Process
+1. **Checkout**: Get latest code
+2. **Setup**: Install Node.js and dependencies
+3. **Test**: Run linting and tests
+4. **Build**: Create production build
+5. **Release**: Create GitHub release
+
+### Deployment Triggers
+- **Tag Push**: Automatic release creation
+- **Manual**: Manual release trigger
+- **Scheduled**: Nightly builds (optional)
+
+### Artifacts
+- **Build Output**: `.next` directory
+- **Source Maps**: For debugging
+- **Documentation**: Updated docs
+- **Release Notes**: Changelog highlights
+
+## Release Types & Automation
+
+### Patch Release (1.0.1)
+```bash
+# Automated process
+./scripts/version.sh patch
+
+# What happens:
+# 1. Updates package.json to 1.0.1
+# 2. Updates CHANGELOG.md
+# 3. Updates VERSION.md
+# 4. Commits changes
+# 5. Creates tag v1.0.1
+# 6. Ready for push
+```
+
+### Minor Release (1.1.0)
+```bash
+# Automated process
+./scripts/version.sh minor
+
+# What happens:
+# 1. Updates package.json to 1.1.0
+# 2. Updates CHANGELOG.md
+# 3. Updates VERSION.md
+# 4. Commits changes
+# 5. Creates tag v1.1.0
+# 6. Ready for push
+```
+
+### Major Release (2.0.0)
+```bash
+# Automated process
+./scripts/version.sh major
+
+# What happens:
+# 1. Updates package.json to 2.0.0
+# 2. Updates CHANGELOG.md
+# 3. Updates VERSION.md
+# 4. Commits changes
+# 5. Creates tag v2.0.0
+# 6. Ready for push
+```
+
+### Pre-release (1.1.0-alpha.1)
+```bash
+# Automated process
+./scripts/version.sh prerelease
+
+# What happens:
+# 1. Updates package.json to 1.1.0-alpha.1
+# 2. Updates CHANGELOG.md
+# 3. Updates VERSION.md
+# 4. Commits changes
+# 5. Creates tag v1.1.0-alpha.1
+# 6. Ready for push
+```
+
+## GitHub Integration
+
+### Release Creation
+1. **Trigger**: Push tag to repository
+2. **Action**: GitHub Actions workflow runs
+3. **Build**: Application builds successfully
+4. **Release**: GitHub release created automatically
+5. **Notification**: Team notified of new release
+
+### Release Management
+- **Draft Releases**: For manual review
+- **Pre-releases**: For alpha/beta versions
+- **Release Notes**: Auto-generated from CHANGELOG.md
+- **Assets**: Build artifacts attached
+- **Notifications**: Team and user notifications
+
+## Monitoring & Validation
+
+### Release Validation
+- [ ] Build success
+- [ ] Tests passing
+- [ ] No linting errors
+- [ ] Version consistency
+- [ ] Tag creation
+- [ ] GitHub release creation
+
+### Post-Release Monitoring
+- [ ] Deployment success
+- [ ] Functionality verification
+- [ ] Performance monitoring
+- [ ] Error tracking
+- [ ] User feedback
+
+## Error Handling
+
+### Common Issues
+
+#### Build Failures
+```bash
+# Check linting errors
+npm run lint
+
+# Fix errors and retry
+npm run build
+
+# Re-run version script
+./scripts/version.sh patch
+```
+
+#### Git Issues
+```bash
+# Check uncommitted changes
+git status
+
+# Stash changes
+git stash
+
+# Apply after versioning
+git stash pop
+```
+
+#### Tag Conflicts
+```bash
+# Delete local tag
+git tag -d v1.0.1
+
+# Delete remote tag
+git push origin :refs/tags/v1.0.1
+
+# Recreate tag
+git tag -a v1.0.1 -m "Release version 1.0.1"
+```
+
+### Recovery Procedures
+- **Rollback**: Revert to previous version
+- **Hotfix**: Create patch release
+- **Recovery**: Recreate release from backup
+
+## Best Practices
+
+### Automation Best Practices
+- ✅ Always test scripts before use
+- ✅ Keep scripts up to date
+- ✅ Document all automation processes
+- ✅ Use consistent naming conventions
+- ✅ Implement proper error handling
+- ✅ Monitor automation success
+
+### Release Best Practices
+- ✅ Test thoroughly before release
+- ✅ Update documentation
+- ✅ Use semantic versioning
+- ✅ Keep release notes clear
+- ✅ Monitor post-release
+- ✅ Plan rollback procedures
+
+## Quick Commands
+
+### Version Management
+```bash
+# Check current version
+npm version
+
+# See all tags
+git show-ref --tags
+
+# Check script help
+./scripts/version.sh --help
+
+# Make script executable
+chmod +x scripts/version.sh
+```
+
+### Release Commands
+```bash
+# Quick patch release
+./scripts/version.sh patch && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+
+# Quick minor release
+./scripts/version.sh minor && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+
+# Quick major release
+./scripts/version.sh major && git push origin main && git push origin v$(npm version --json | jq -r '.better-habit')
+```
+
+### Troubleshooting
+```bash
+# Check git status
+git status
+
+# Check uncommitted changes
+git diff --name-only
+
+# Check last commit
+git log -1 --oneline
+
+# Check tags
+git tag -l
+
+# Check remote tags
+git ls-remote --tags origin
+```
+
+---
+
+**📚 Related Files**: `scripts/version.sh`, `.github/workflows/release.yml`, `package.json`
+**🔧 Scripts**: `./scripts/version.sh [patch|minor|major|prerelease]`
+**📋 Workflow**: GitHub Actions → Build → Test → Release
