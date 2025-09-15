@@ -181,10 +181,11 @@ function Submenu({
   subMenuRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   isActive: (path: string) => boolean;
 }) {
-  if (!nav.subItems || !(isExpanded || isHovered || isMobileOpen)) return null;
-
   const isOpen = openSubmenu?.type === menuType && openSubmenu?.index === index;
   const height = isOpen ? `${subMenuHeight[`${menuType}-${index}`] ?? 0}px` : "0px";
+
+  // Return null AFTER all variable declarations
+  if (!nav.subItems || !(isExpanded || isHovered || isMobileOpen)) return null;
 
   return (
     <div

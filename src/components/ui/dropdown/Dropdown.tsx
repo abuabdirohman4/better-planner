@@ -34,7 +34,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 }, [onClose]);
 
-
+  // Return early AFTER all hooks
   if (!isOpen) return null;
 
   return (

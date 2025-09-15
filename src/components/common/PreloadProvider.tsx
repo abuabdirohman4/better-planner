@@ -46,7 +46,7 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
     preloadData();
   }, []);
 
-  // Show loading state if preloading is still in progress
+  // Show loading state if preloading is still in progress - AFTER all hooks
   if (isPreloading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
@@ -57,7 +57,7 @@ export default function PreloadProvider({ children }: PreloadProviderProps) {
     );
   }
 
-  // Show error state if preloading failed
+  // Show error state if preloading failed - AFTER all hooks
   if (preloadError) {
     console.warn('⚠️ Preloading failed, continuing without prefetched data:', preloadError);
     // Continue with the app even if preloading failed

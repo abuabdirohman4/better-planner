@@ -48,6 +48,7 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
+  // Return early AFTER all hooks
   if (!isOpen) return null;
 
   const contentClasses = isFullscreen

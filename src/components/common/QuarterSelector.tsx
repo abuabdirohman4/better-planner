@@ -39,7 +39,7 @@ const QuarterSelector: React.FC = () => {
   // Check if component should be hidden based on current pathname
   const isHidden = shouldHideQuarterSelector(pathname);
 
-  // If component should be hidden, return null
+  // If component should be hidden, return null AFTER all hooks
   if (isHidden) {
     return null;
   }

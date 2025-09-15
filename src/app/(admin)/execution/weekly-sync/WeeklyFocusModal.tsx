@@ -553,6 +553,7 @@ export default function WeeklyFocusModal({
     }
   };
 
+  // Return early AFTER all hooks
   if (!isOpen) return null;
 
   return (
