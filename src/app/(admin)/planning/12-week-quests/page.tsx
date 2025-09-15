@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import PerformanceWrapper from '@/components/common/PerformanceWrapper';
+import SmartLoader from '@/components/common/SmartLoader';
 
 import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
@@ -13,14 +14,16 @@ export const metadata = {
 export default function Page() {
   return  (
     <PerformanceWrapper pageName="12 Week Quests" autoSave={true} autoSend={false}>
-      <Suspense fallback={null}>
-        <TwelveWeekGoalsRedirector />
-      </Suspense>
-      <div className="max-w-none w-full">
-        <Suspense fallback={<div className="p-8 text-center">Loading 12 Week Quests...</div>}>
-          <TwelveWeekGoalsLoader />
+      <SmartLoader pageName="12 Week Quests">
+        <Suspense fallback={null}>
+          <TwelveWeekGoalsRedirector />
         </Suspense>
-      </div>
+        <div className="max-w-none w-full">
+          <Suspense fallback={<div className="p-8 text-center">Loading 12 Week Quests...</div>}>
+            <TwelveWeekGoalsLoader />
+          </Suspense>
+        </div>
+      </SmartLoader>
     </PerformanceWrapper>
   );
 } 

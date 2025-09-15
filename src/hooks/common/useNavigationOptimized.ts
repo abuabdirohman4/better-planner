@@ -1,6 +1,6 @@
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { usePathname } from 'next/navigation';
 
 /**
  * Hook for navigation-optimized data fetching
