@@ -15,8 +15,11 @@ export default function MainQuestsClient() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Spinner size={64} />
+        <div className="mt-4 text-lg font-semibold text-gray-600">
+          Loading Main Quests...
+        </div>
       </div>
     );
   }

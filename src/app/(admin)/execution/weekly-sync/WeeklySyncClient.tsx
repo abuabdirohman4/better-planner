@@ -404,7 +404,7 @@ export default function WeeklySyncClient() {
     setSelectedWeekInQuarter(undefined);
   };
 
-  if (loading || toDontListLoading) {
+  if (loading || toDontListLoading || goalsLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[600px]">
         <Spinner size={164} />
