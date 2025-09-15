@@ -105,20 +105,6 @@ function useTaskData(year: number, quarter: number, currentWeek: Date) {
   };
 }
 
-// Custom hook for weekly goals
-function useWeeklyGoals(year: number, displayWeek: number, refreshFlag: number) {
-  const { goals, goalProgress, mutate } = useWeeklyGoalsWithProgress(year, displayWeek);
-  
-  // Trigger refresh when refreshFlag changes
-  useEffect(() => {
-    if (refreshFlag > 0) {
-      mutate();
-    }
-  }, [refreshFlag, mutate]);
-
-  return { goals, goalProgress };
-}
-
 // Custom hook for to-dont list
 function useToDontList(year: number, displayWeek: number, refreshFlag: number) {
   const { rules: toDontList, isLoading: toDontListLoading, mutate } = useWeeklyRules(year, displayWeek);
@@ -351,7 +337,9 @@ export default function WeeklySyncClient() {
   const { year, quarter } = useWeek();
   const weekCalculations = useWeekCalculations(currentWeek, year, quarter, selectedWeekInQuarter);
   const { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates } = useTaskData(year, quarter, currentWeek);
-  const { goals, goalProgress } = useWeeklyGoals(year, weekCalculations.displayWeek, refreshFlag);
+  const { goals, goalProgress, isLoading: goalsLoading } = useWeeklyGoalsWithProgress(year, weekCalculations.displayWeek);
+  
+  
   const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
 
   const { displayWeek, totalWeeks } = weekCalculations;
@@ -359,7 +347,7 @@ export default function WeeklySyncClient() {
   // Timer untuk tracking waktu loading halaman (global, akurat)
   const [loadingTime, setLoadingTime] = useState<number | null>(null);
   useEffect(() => {
-    if (!loading && !toDontListLoading && loadingTime === null) {
+    if (!loading && !toDontListLoading && !goalsLoading && loadingTime === null) {
       const start = typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ ? window.__WEEKLY_SYNC_START__ : performance.now();
       const elapsed = (performance.now() - start) / 1000;
       setLoadingTime(Math.round(elapsed * 10) / 10);
@@ -368,7 +356,7 @@ export default function WeeklySyncClient() {
         window.__WEEKLY_SYNC_START__ = performance.now();
       }
     }
-  }, [loading, toDontListLoading, loadingTime]);
+  }, [loading, toDontListLoading, goalsLoading, loadingTime]);
 
   // Handler untuk refresh data dari child
   const handleRefreshGoals = () => setRefreshFlag(f => f + 1);

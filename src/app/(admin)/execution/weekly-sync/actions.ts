@@ -206,6 +206,48 @@ export async function getWeeklyGoals(year: number, weekNumber: number) {
   return data || [];
 }
 
+// ULTRA OPTIMIZED: Get both goals and progress in single call
+export async function getWeeklyGoalsWithProgress(year: number, weekNumber: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { goals: [], progress: {} };
+  }
+
+  try {
+    // ✅ ULTRA OPTIMIZED: Parallel RPC calls instead of sequential
+    const [goalsResult, progressResult] = await Promise.all([
+      supabase.rpc('get_weekly_sync_data', {
+        p_user_id: user.id,
+        p_year: year,
+        p_week_number: weekNumber
+      }),
+      supabase.rpc('calculate_weekly_goals_progress', {
+        p_user_id: user.id,
+        p_year: year,
+        p_week_number: weekNumber
+      })
+    ]);
+
+    if (goalsResult.error) {
+      console.error("Error calling get_weekly_sync_data:", goalsResult.error);
+    }
+    
+    if (progressResult.error) {
+      console.error("Error calling calculate_weekly_goals_progress:", progressResult.error);
+    }
+
+    return {
+      goals: goalsResult.data || [],
+      progress: progressResult.data || {}
+    };
+  } catch (error) {
+    console.error("Error in getWeeklyGoalsWithProgress:", error);
+    return { goals: [], progress: {} };
+  }
+}
+
 // Set weekly goal items for a specific slot
 export async function setWeeklyGoalItems(data: {
   year: number;

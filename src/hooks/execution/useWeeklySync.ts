@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getWeeklyGoals, getWeeklyRules, calculateWeeklyGoalsProgress } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
@@ -112,37 +112,34 @@ export function useWeeklyGoals(year: number, weekNumber: number) {
 }
 
 /**
- * Custom hook for fetching weekly goals with progress - OPTIMIZED VERSION
- * Uses single RPC call instead of multiple queries for much better performance
+ * Custom hook for fetching weekly goals with progress - ULTRA OPTIMIZED VERSION
+ * Uses single optimized function call for both goals and progress data
  */
 export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
-  const { goals, error, isLoading, mutate } = useWeeklyGoals(year, weekNumber);
-  
   const { 
-    data: goalProgress = {}, 
-    error: progressError, 
-    isLoading: progressLoading 
+    data: goalsData = { goals: [], progress: {} }, 
+    error, 
+    isLoading,
+    mutate 
   } = useSWR(
-    ['weekly-goals-progress-optimized', year, weekNumber],
-    async () => {
-      // ✅ OPTIMIZED: Single RPC call instead of multiple queries
-      return await calculateWeeklyGoalsProgress(year, weekNumber);
-    },
+    ['weekly-goals-with-progress-ultra-optimized', year, weekNumber],
+    () => getWeeklyGoalsWithProgress(year, weekNumber),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased for better caching
-      errorRetryCount: 2, // reduced from 3
-      errorRetryInterval: 1000, // 1 second
-      focusThrottleInterval: 5000, // 5 seconds
+      dedupingInterval: 5 * 60 * 1000, // 5 minutes - reduced for better debugging
+      errorRetryCount: 2,
+      errorRetryInterval: 1000,
+      focusThrottleInterval: 5000,
     }
   );
 
+
   return {
-    goals,
-    goalProgress,
-    error: error || progressError,
-    isLoading: isLoading || progressLoading,
+    goals: goalsData.goals,
+    goalProgress: goalsData.progress,
+    error,
+    isLoading,
     mutate,
   };
 }

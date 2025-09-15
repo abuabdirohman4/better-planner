@@ -130,6 +130,7 @@ const HorizontalGoalDisplay: React.FC<{ items: GoalItem[]; onClick: () => void; 
     return result;
   };
 
+
   const groupedItems = groupItemsByQuest(items);
   const sortedQuestIds = Object.keys(groupedItems).sort((a, b) => {
     const aPriority = items.find(item => (item.parent_quest_id || item.item_id) === a)?.parent_quest_priority_score ?? 0;
