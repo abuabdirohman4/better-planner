@@ -62,16 +62,13 @@ export default function ColdStartLoader({
           <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
             {loadingMessage}
           </p>
-          {isFirstVisit && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          {isFirstVisit ? <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               First time setup - this will only happen once
-            </p>
-          )}
+            </p> : null}
         </div>
 
         {/* Progress Bar */}
-        {showProgress && (
-          <div className="mb-4">
+        {showProgress ? <div className="mb-4">
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
               <div 
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
@@ -82,12 +79,10 @@ export default function ColdStartLoader({
               <span>{loadingProgress}%</span>
               <span>{estimatedTime}</span>
             </div>
-          </div>
-        )}
+          </div> : null}
 
         {/* First Visit Benefits */}
-        {isFirstVisit && (
-          <div className="text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+        {isFirstVisit ? <div className="text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
               🚀 What&apos;s happening:
             </h3>
@@ -97,8 +92,7 @@ export default function ColdStartLoader({
               <li>• Optimizing performance</li>
               <li>• Next visits will be instant!</li>
             </ul>
-          </div>
-        )}
+          </div> : null}
 
         {/* Cached Visit Message */}
         {!isFirstVisit && (

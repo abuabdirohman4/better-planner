@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 
 import Spinner from '@/components/ui/spinner/Spinner';
+
 import ColdStartLoader, { QuickLoader } from './ColdStartLoader';
 
 interface SmartLoaderProps {
