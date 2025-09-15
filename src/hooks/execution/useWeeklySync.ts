@@ -125,12 +125,12 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
     ['weekly-goals-with-progress-ultra-optimized', year, weekNumber],
     () => getWeeklyGoalsWithProgress(year, weekNumber),
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes - reduced for better debugging
+      revalidateOnFocus: true, // FIXED: Enable revalidation on focus
+      revalidateOnReconnect: true, // FIXED: Enable revalidation on reconnect
+      dedupingInterval: 30 * 1000, // FIXED: Reduced to 30 seconds for real-time updates
       errorRetryCount: 2,
       errorRetryInterval: 1000,
-      focusThrottleInterval: 5000,
+      focusThrottleInterval: 2000, // FIXED: Reduced to 2 seconds
     }
   );
 
@@ -157,12 +157,12 @@ export function useWeeklyRules(year: number, weekNumber: number) {
     weeklySyncKeys.weeklyRules(year, weekNumber),
     () => getWeeklyRules(year, weekNumber),
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased from 5
-      errorRetryCount: 2, // reduced from 3
-      errorRetryInterval: 1000, // 1 second
-      focusThrottleInterval: 5000, // 5 seconds
+      revalidateOnFocus: true, // FIXED: Enable revalidation on focus
+      revalidateOnReconnect: true, // FIXED: Enable revalidation on reconnect
+      dedupingInterval: 30 * 1000, // FIXED: Reduced to 30 seconds for real-time updates
+      errorRetryCount: 2,
+      errorRetryInterval: 1000,
+      focusThrottleInterval: 2000, // FIXED: Reduced to 2 seconds
     }
   );
 

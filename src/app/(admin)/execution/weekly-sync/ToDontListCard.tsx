@@ -60,6 +60,7 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
     const res = await addWeeklyRule(formData);
     if (res.success) {
       setNewRule("");
+      // FIXED: Always refresh after successful operation
       onRefresh();
     } else {
       CustomToast.error("Gagal", res.message);
@@ -81,6 +82,7 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
       await addWeeklyRule(formData);
     }
     setNewRule("");
+    // FIXED: Always refresh after bulk operations
     onRefresh();
     setNewRuleLoading(false);
   };
@@ -94,9 +96,8 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
     formData.append("week_number", String(weekNumber));
     formData.append("display_order", String(newOrder));
     const res = await addWeeklyRule(formData);
-    if (res.success && res.id) {
-      onRefresh();
-    } else if (res.success) {
+    if (res.success) {
+      // FIXED: Always refresh after successful operation
       onRefresh();
     } else {
       CustomToast.error("Gagal menambah aturan", res.message);
@@ -127,6 +128,7 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
     }
     const res = await updateWeeklyRule(id, editingText.trim());
     if (res.success) {
+      // FIXED: Always refresh after successful update
       onRefresh();
     } else {
       CustomToast.error("Gagal", res.message);
@@ -137,10 +139,12 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
 
   const handleDelete = async (id: string) => {
     const res = await deleteWeeklyRule(id);
-    if (!res.success) {
-      CustomToast.error("Gagal", res.message);
+    if (res.success) {
+      // FIXED: Always refresh after successful deletion
       onRefresh();
     } else {
+      CustomToast.error("Gagal", res.message);
+      // Still refresh even on error to ensure UI consistency
       onRefresh();
     }
   };
@@ -153,10 +157,14 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
     if (oldIndex === -1 || newIndex === -1) return;
     const newRules = arrayMove(rules, oldIndex, newIndex).map((r, idx) => ({ ...r, display_order: idx + 1 }));
     const res = await updateWeeklyRuleOrder(newRules.map(r => ({ id: r.id, display_order: r.display_order })));
-    if (!res.success) {
+    if (res.success) {
+      // FIXED: Always refresh after successful reorder
+      onRefresh();
+    } else {
       CustomToast.error("Gagal update urutan", res.message);
+      // Still refresh even on error to ensure UI consistency
+      onRefresh();
     }
-    onRefresh();
   };
 
   return {

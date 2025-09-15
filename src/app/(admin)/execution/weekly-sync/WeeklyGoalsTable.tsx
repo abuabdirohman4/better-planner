@@ -208,7 +208,11 @@ export default function WeeklyGoalsTable({ goals = [], goalProgress = {}, onRefr
         });
         CustomToast.success('Goal mingguan berhasil disimpan!');
       }
-      if (onRefreshGoals) onRefreshGoals();
+      
+      // FIXED: Always refresh goals after any operation
+      if (onRefreshGoals) {
+        onRefreshGoals();
+      }
     } catch (error) {
       console.error('Error saving weekly goal:', error);
       CustomToast.error('Gagal menyimpan goal mingguan');

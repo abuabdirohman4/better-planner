@@ -543,7 +543,7 @@ export default function WeeklyFocusModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      onSave(selectedItems);
+      await onSave(selectedItems);
       onClose();
     } catch (error) {
       console.error('Error saving weekly focus:', error);

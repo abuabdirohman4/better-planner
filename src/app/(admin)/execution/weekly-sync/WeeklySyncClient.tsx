@@ -116,7 +116,7 @@ function useToDontList(year: number, displayWeek: number, refreshFlag: number) {
     }
   }, [refreshFlag, mutate]);
 
-  return { toDontList, toDontListLoading };
+  return { toDontList, toDontListLoading, mutate };
 }
 
 // Component for task item
@@ -337,10 +337,10 @@ export default function WeeklySyncClient() {
   const { year, quarter } = useWeek();
   const weekCalculations = useWeekCalculations(currentWeek, year, quarter, selectedWeekInQuarter);
   const { taskPool, setTaskPool, weekTasks, setWeekTasks, loading, weekDates } = useTaskData(year, quarter, currentWeek);
-  const { goals, goalProgress, isLoading: goalsLoading } = useWeeklyGoalsWithProgress(year, weekCalculations.displayWeek);
+  const { goals, goalProgress, isLoading: goalsLoading, mutate: mutateGoals } = useWeeklyGoalsWithProgress(year, weekCalculations.displayWeek);
   
   
-  const { toDontList, toDontListLoading } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
+  const { toDontList, toDontListLoading, mutate: mutateToDontList } = useToDontList(year, weekCalculations.displayWeek, refreshFlag);
 
   const { displayWeek, totalWeeks } = weekCalculations;
 
@@ -358,9 +358,16 @@ export default function WeeklySyncClient() {
     }
   }, [loading, toDontListLoading, goalsLoading, loadingTime]);
 
-  // Handler untuk refresh data dari child
-  const handleRefreshGoals = () => setRefreshFlag(f => f + 1);
-  const handleRefreshToDontList = () => setRefreshFlag(f => f + 1);
+  // Handler untuk refresh data dari child - FIXED: Invalidate all relevant caches
+  const handleRefreshGoals = () => {
+    mutateGoals(); // Invalidate goals cache immediately
+    setRefreshFlag(f => f + 1); // Also trigger refresh flag for other components
+  };
+  
+  const handleRefreshToDontList = () => {
+    mutateToDontList(); // Invalidate to-dont list cache immediately
+    setRefreshFlag(f => f + 1); // Also trigger refresh flag for other components
+  };
 
   const handleDragEnd = useDragEndHandler(taskPool, setTaskPool, weekTasks, setWeekTasks);
 
