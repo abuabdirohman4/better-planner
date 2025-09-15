@@ -250,11 +250,14 @@ When providing code solutions:
 - `@/lib/typeGuards` - Type validation utilities
 - `@/lib/performanceUtils` - Performance monitoring
 - `@/lib/quarterUtils` - Quarter-related utilities
+- `@/lib/supabase` - Supabase client and utilities
 
 ### **Key Components to Follow:**
 - `QuarterSelector.tsx` - Example of clean component
 - `Button.tsx` - Example of reusable UI component
 - `ThemeContext.tsx` - Example of context usage
+- `SWRProvider.tsx` - Example of data fetching setup
+- `SidebarContext.tsx` - Example of context usage
 
 ---
 

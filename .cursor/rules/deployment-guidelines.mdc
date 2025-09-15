@@ -12,23 +12,22 @@ alwaysApply: true
 
 ```bash
 # Production environment variables
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 NEXTAUTH_URL="https://your-domain.com"
 NEXTAUTH_SECRET="your-production-secret-key"
-GOOGLE_CLIENT_ID="your-production-google-client-id"
-GOOGLE_CLIENT_SECRET="your-production-google-client-secret"
-GOOGLE_SHEET_ID="your-production-google-sheet-id"
-GOOGLE_SERVICE_ACCOUNT_EMAIL="your-service-account@project.iam.gserviceaccount.com"
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----"
 NODE_ENV="production"
 ```
 
-### Google Sheets Setup
+### Supabase Setup
 
 ```bash
-# No database setup required - using Google Sheets
-# Ensure Google Sheets API is enabled
-# Verify service account has access to the spreadsheet
+# Database setup with Supabase
+# Ensure Supabase project is created
+# Verify RLS policies are enabled
 # Test API connection with your credentials
+# Set up authentication providers
 ```
 
 ## Vercel Deployment
@@ -43,13 +42,11 @@ NODE_ENV="production"
     "devCommand": "npm run dev",
     "installCommand": "npm install",
     "env": {
+        "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+        "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
         "NEXTAUTH_URL": "@nextauth_url",
-        "NEXTAUTH_SECRET": "@nextauth_secret",
-        "GOOGLE_CLIENT_ID": "@google_client_id",
-        "GOOGLE_CLIENT_SECRET": "@google_client_secret",
-        "GOOGLE_SHEET_ID": "@google_sheet_id",
-        "GOOGLE_SERVICE_ACCOUNT_EMAIL": "@google_service_account_email",
-        "GOOGLE_PRIVATE_KEY": "@google_private_key"
+        "NEXTAUTH_SECRET": "@nextauth_secret"
     },
     "functions": {
         "app/api/**/*.ts": {
@@ -79,10 +76,11 @@ NODE_ENV="production"
     - Navigate to Project Settings
     - Add all required environment variables
 
-3. **Google Sheets Setup**
-    - Ensure Google Sheets API is enabled
-    - Verify service account has access to the spreadsheet
+3. **Supabase Setup**
+    - Ensure Supabase project is created
+    - Verify RLS policies are enabled
     - Test API connection with your credentials
+    - Set up authentication providers
 
 ## Docker Deployment
 
@@ -154,29 +152,17 @@ services:
         ports:
             - "3000:3000"
         environment:
-            - DATABASE_URL=postgresql://postgres:password@db:5432/better_habit
+            - NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+            - NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+            - SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
             - NEXTAUTH_URL=http://localhost:3000
             - NEXTAUTH_SECRET=your-secret-key
-            - GOOGLE_CLIENT_ID=your-google-client-id
-            - GOOGLE_CLIENT_SECRET=your-google-client-secret
         depends_on:
             - db
         restart: unless-stopped
 
-    db:
-        image: postgres:15-alpine
-        environment:
-            - POSTGRES_DB=better_habit
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=password
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        ports:
-            - "5432:5432"
-        restart: unless-stopped
-
-volumes:
-    postgres_data:
+    # Note: Using Supabase instead of local PostgreSQL
+    # Remove db service if using Supabase cloud
 ```
 
 ## Build Optimization
@@ -189,7 +175,7 @@ volumes:
 const nextConfig = {
     output: "standalone",
     experimental: {
-        serverComponentsExternalPackages: ["@prisma/client"],
+        serverComponentsExternalPackages: ["@supabase/supabase-js"],
     },
     images: {
         domains: ["your-domain.com"],
@@ -216,7 +202,7 @@ export default nextConfig;
         "start": "next start",
         "build:analyze": "ANALYZE=true next build",
         "build:production": "NODE_ENV=production next build",
-        "postbuild": "prisma generate"
+        "postbuild": "echo 'Build completed'"
     }
 }
 ```
@@ -357,24 +343,24 @@ export const trackPageView = (url: string) => {
 ### Migration Strategy
 
 ```bash
-# Create migration
-npx prisma migrate dev --name add_habit_table
+# Create migration using Supabase CLI
+supabase migration new add_projects_table
 
 # Deploy migrations to production
-npx prisma migrate deploy
+supabase db push
 
 # Reset database (development only)
-npx prisma migrate reset
+supabase db reset
 ```
 
 ### Backup Strategy
 
 ```bash
-# Database backup
-pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+# Database backup using Supabase CLI
+supabase db dump --file backup_$(date +%Y%m%d_%H%M%S).sql
 
 # Restore from backup
-psql $DATABASE_URL < backup_file.sql
+supabase db reset --file backup_file.sql
 ```
 
 ## Health Checks
@@ -384,12 +370,17 @@ psql $DATABASE_URL < backup_file.sql
 ```typescript
 // app/api/health/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createServerClient } from "@/lib/supabase/client";
 
 export async function GET() {
     try {
-        // Check database connection
-        await prisma.$queryRaw`SELECT 1`;
+        // Check Supabase connection
+        const supabase = createServerClient();
+        const { data, error } = await supabase.from('projects').select('count').limit(1);
+
+        if (error) {
+            throw error;
+        }
 
         return NextResponse.json({
             status: "healthy",
@@ -459,10 +450,10 @@ jobs:
 
 ```bash
 # Rollback to previous migration
-npx prisma migrate resolve --rolled-back <migration_name>
+supabase migration repair <migration_name>
 
 # Or reset to specific migration
-npx prisma migrate reset --to <migration_name>
+supabase db reset --to <migration_name>
 ```
 
 ### Application Rollback

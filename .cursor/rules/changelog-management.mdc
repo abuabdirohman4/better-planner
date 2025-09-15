@@ -1,6 +1,6 @@
 ---
 title: "Changelog Management"
-description: "Structured changelog management to track all changes, improvements, and fixes across versions for Better Habit"
+description: "Structured changelog management to track all changes, improvements, and fixes across versions for Better Planner"
 category: "Documentation"
 tags: ["changelog", "documentation", "releases", "tracking"]
 ---
@@ -9,7 +9,7 @@ tags: ["changelog", "documentation", "releases", "tracking"]
 
 ## Overview
 
-Better Habit uses structured changelog management to track all changes, improvements, and fixes across versions. This ensures transparency and helps users understand what's new in each release.
+Better Planner uses structured changelog management to track all changes, improvements, and fixes across versions. This ensures transparency and helps users understand what's new in each release.
 
 ## Changelog Structure
 
@@ -67,13 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 New features, components, or functionality:
-- New habit tracking features
+- New project planning features
+- New task management capabilities
 - New UI components
 - New integrations
 - New PWA features
 - New analytics capabilities
 - New authentication methods
-- New habit categories
+- New project categories
 - New settings options
 
 ### Changed
@@ -109,7 +110,7 @@ Bug fixes and issue resolutions:
 - Authentication problems
 - PWA functionality fixes
 - Mobile responsiveness fixes
-- Google Sheets integration fixes
+- Supabase integration fixes
 - Calendar display issues
 - Progress tracking bugs
 
@@ -121,29 +122,29 @@ Security-related changes:
 - Vulnerability fixes
 - Access control updates
 
-## Better Habit Specific Examples
+## Better Planner Specific Examples
 
 ### Added Examples
 ```markdown
 ### Added
-- Habit streak tracking with visual indicators
-- New habit categories: "Spiritual", "Health", "Mind", "To Dont List"
-- Calendar view for habit tracking
+- Project planning dashboard with drag-and-drop interface
+- New project categories: "Work", "Personal", "Learning", "Health"
+- Calendar view for project deadlines
 - Weekly progress visualization
 - PWA installation prompts
-- Offline habit completion queuing
-- Habit performance analytics dashboard
-- Export functionality for habit data
-- Push notifications for habit reminders
-- Social sharing of habit progress
+- Offline project data queuing
+- Project performance analytics dashboard
+- Export functionality for project data
+- Push notifications for project deadlines
+- Social sharing of project progress
 ```
 
 ### Changed Examples
 ```markdown
 ### Changed
-- Improved habit card design with better visual hierarchy
-- Enhanced mobile responsiveness for habit creation form
-- Optimized Google Sheets API calls for better performance
+- Improved project card design with better visual hierarchy
+- Enhanced mobile responsiveness for project creation form
+- Optimized Supabase API calls for better performance
 - Updated PWA manifest for better mobile installation
 - Improved calendar view with better date navigation
 - Enhanced progress tracking with more detailed analytics
@@ -154,23 +155,23 @@ Security-related changes:
 ### Fixed Examples
 ```markdown
 ### Fixed
-- Fixed calendar not displaying habit completions correctly
+- Fixed calendar not displaying project deadlines correctly
 - Resolved PWA installation issues on iOS Safari
-- Fixed habit completion not syncing with Google Sheets
-- Corrected progress calculation for weekly habits
+- Fixed project data not syncing with Supabase
+- Corrected progress calculation for weekly projects
 - Fixed mobile navigation bar overlapping content
 - Resolved authentication token expiration issues
 - Fixed offline mode not working properly
-- Corrected habit streak calculation logic
+- Corrected project progress calculation logic
 ```
 
 ### Security Examples
 ```markdown
 ### Security
-- Updated NextAuth.js to latest version for security patches
-- Enhanced Google Sheets API authentication
+- Updated Supabase Auth to latest version for security patches
+- Enhanced Supabase API authentication
 - Improved session management security
-- Added input validation for habit data
+- Added input validation for project data
 - Updated dependencies to fix security vulnerabilities
 - Enhanced PWA security headers
 ```
@@ -195,15 +196,15 @@ Security-related changes:
 ### Good Examples
 ```markdown
 ### Added
-- Habit streak tracking with fire emoji indicators
-- New "Spiritual" category for meditation and prayer habits
-- Calendar view showing habit completion history
+- Project progress tracking with visual indicators
+- New "Work" category for professional projects
+- Calendar view showing project deadlines
 - Weekly progress charts with trend analysis
 - PWA installation prompts for mobile users
 - Offline mode with automatic sync when online
-- Export habit data to CSV format
-- Push notifications for habit reminders
-- Social sharing buttons for habit achievements
+- Export project data to CSV format
+- Push notifications for project deadlines
+- Social sharing buttons for project achievements
 - Dark mode toggle in settings
 ```
 

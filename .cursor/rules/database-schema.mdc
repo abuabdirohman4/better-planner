@@ -1,6 +1,6 @@
 ---
-description: "Database schema reference, data validation, and Google Sheets integration patterns"
-globs: ["**/lib/**/*.ts", "**/api/**/*.ts", "**/hooks/**/*.ts", "**/types.ts", "**/google-sheets.ts"]
+description: "Database schema reference, data validation, and Supabase integration patterns"
+globs: ["**/lib/**/*.ts", "**/api/**/*.ts", "**/hooks/**/*.ts", "**/types.ts", "**/supabase/**/*.ts"]
 alwaysApply: true
 ---
 
@@ -8,199 +8,231 @@ alwaysApply: true
 
 ## Overview
 
-Better Habit uses Google Sheets as the primary database. This file contains comprehensive reference for database structure, data validation, and API integration patterns.
+Better Planner uses Supabase (PostgreSQL) as the primary database. This file contains comprehensive reference for database structure, data validation, and API integration patterns.
 
 ## Database Documentation
 
 **📋 Main Reference**: `docs/database-schema.md`
 
 This file contains complete documentation about:
-- Habits and HabitLog table structure
+- Projects and Tasks table structure
 - Data formats and validation
-- API integration patterns
+- Supabase integration patterns
 - Business rules and constraints
 - Performance considerations
 
 ## Quick Reference
 
-### Habits Table Structure
+### Projects Table Structure
 
 ```typescript
-interface Habit {
-    id: number;                    // Primary key
-    displayName: string;           // Habit name
-    description: string;           // Habit description/goal
-    iconName: string;              // Icon name
-    category: "Spiritual" | "Health" | "Mind" | "To Dont List";
-    timeOfDay: "Morning" | "Afternoon" | "Evening" | "All Day";
-    frequencyType: "daily" | "weekly" | "custom";
-    frequencyDays?: string;        // Days of the week (1-7)
-    reminderTime?: string;         // Reminder time (HH:MM)
-    isReminderOn: boolean;         // Reminder status
-    isActive: boolean;             // Active status
+interface Project {
+    id: string;                    // Primary key (UUID)
+    title: string;                 // Project name
+    description: string;           // Project description
+    status: "planning" | "active" | "completed" | "on-hold";
+    priority: "low" | "medium" | "high" | "urgent";
+    color: string;                 // Project color
+    userId: string;                // Foreign key to auth.users
+    quarter: string;               // Q1, Q2, Q3, Q4
+    startDate: string;             // Start date (YYYY-MM-DD)
+    endDate: string;               // End date (YYYY-MM-DD)
     createdAt: string;             // Creation timestamp
+    updatedAt: string;             // Last update timestamp
 }
 ```
 
-### HabitLog Table Structure
+### Tasks Table Structure
 
 ```typescript
-interface HabitLog {
-    id: number;                    // Primary key
-    habitId: number;               // Foreign key to Habits
-    date: string;                  // Date (YYYY-MM-DD)
-    completedValue?: number;       // Achieved value
-    completedAt: string;           // Completion timestamp
+interface Task {
+    id: string;                    // Primary key (UUID)
+    projectId: string;             // Foreign key to Projects
+    title: string;                 // Task name
+    description: string;           // Task description
+    status: "todo" | "in-progress" | "completed";
+    priority: "low" | "medium" | "high" | "urgent";
+    dueDate?: string;              // Due date (YYYY-MM-DD)
+    completedAt?: string;          // Completion timestamp
+    createdAt: string;             // Creation timestamp
+    updatedAt: string;             // Last update timestamp
 }
 ```
 
 ## Data Validation Rules
 
-### Boolean Values
-- **Database**: `1` (true) or `0` (false)
-- **API**: `true` or `false`
-- **Conversion**: `row.isActive === "1" || row.isActive === true`
+### UUID Format
+- **Database**: UUID v4 format
+- **API**: String format
+- **Validation**: Must be valid UUID format
+- **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
 
 ### Date Formats
-- **Database**: `YYYY-MM-DD` for date
-- **DateTime**: `YYYY-MM-DD HH:MM:SS`
+- **Database**: `YYYY-MM-DD` for date fields
+- **DateTime**: `YYYY-MM-DDTHH:MM:SS.sssZ` (ISO 8601)
 - **API**: ISO 8601 format
+- **Timezone**: UTC for all timestamps
 
-### Frequency Days
-- **Format**: Comma-separated string `"1,2,3,4,5"`
-- **Mapping**: 1=Monday, 2=Tuesday, ..., 7=Sunday
-- **Validation**: Only numbers 1-7, comma-separated
+### Status Values
+- **Project Status**: `"planning" | "active" | "completed" | "on-hold"`
+- **Task Status**: `"todo" | "in-progress" | "completed"`
+- **Priority**: `"low" | "medium" | "high" | "urgent"`
+- **Quarter**: `"Q1" | "Q2" | "Q3" | "Q4"`
 
-### Time Format
-- **Format**: `HH:MM` (24-hour)
-- **Example**: `"07:00"`, `"19:30"`
-- **Regex**: `^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$`
+### Color Format
+- **Format**: Hex color code
+- **Example**: `"#1496F6"`, `"#10B981"`
+- **Validation**: Must be valid hex color
+- **Default**: `"#1496F6"` (primary blue)
 
 ## API Integration Patterns
 
-### Google Sheets CSV Processing
+### Supabase Data Processing
 
 ```typescript
-// Headers transformation
-const transformHeaders = (header: string) => {
-    return header
-        .toLowerCase()
-        .replace(/\s+/g, "_")
-        .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-};
-
-// Data type conversion
-const processHabitData = (row: any): Habit => ({
-    id: parseInt(row.id),
-    displayName: row.displayName,
+// Data transformation from Supabase
+const transformSupabaseData = (row: any): Project => ({
+    id: row.id,
+    title: row.title,
     description: row.description || "",
-    iconName: row.iconName,
-    type: row.type as "do" | "dont",
-    frequencyType: row.frequencyType as "daily" | "weekly" | "custom",
-    frequencyDays: row.frequencyDays || undefined,
-    reminderTime: row.reminderTime || undefined,
-    isReminderOn: row.isReminderOn === "1" || row.isReminderOn === true,
-    isActive: row.isActive === "1" || row.isActive === true,
-    createdAt: row.createdAt,
+    status: row.status as "planning" | "active" | "completed" | "on-hold",
+    priority: row.priority as "low" | "medium" | "high" | "urgent",
+    color: row.color || "#1496F6",
+    userId: row.user_id,
+    quarter: row.quarter,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+});
+
+// Task data transformation
+const transformTaskData = (row: any): Task => ({
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    description: row.description || "",
+    status: row.status as "todo" | "in-progress" | "completed",
+    priority: row.priority as "low" | "medium" | "high" | "urgent",
+    dueDate: row.due_date || undefined,
+    completedAt: row.completed_at || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
 });
 ```
 
 ### Error Handling
 
 ```typescript
-// CSV parsing error handling
-const handleCSVError = (error: any) => {
-    console.error("CSV parsing error:", error);
-    // Fallback ke authenticated method
-    return googleSheets.getCSVWithAuth(spreadsheetId, sheetName);
+// Supabase error handling
+const handleSupabaseError = (error: any) => {
+    console.error("Supabase operation error:", error);
+    // Return user-friendly error message
+    return {
+        message: "Failed to process data. Please try again.",
+        code: error.code,
+        details: error.details
+    };
 };
 
 // Data validation
-const validateHabitData = (data: CreateHabitData) => {
-    if (!data.displayName || data.displayName.length > 100) {
-        throw new Error("Display name must be 1-100 characters");
+const validateProjectData = (data: CreateProjectData) => {
+    if (!data.title || data.title.length > 100) {
+        throw new Error("Title must be 1-100 characters");
     }
-    if (!["do", "dont"].includes(data.type)) {
-        throw new Error("Type must be 'do' or 'dont'");
+    if (!["planning", "active", "completed", "on-hold"].includes(data.status)) {
+        throw new Error("Status must be 'planning', 'active', 'completed', or 'on-hold'");
     }
-    if (!["daily", "weekly", "custom"].includes(data.frequencyType)) {
-        throw new Error("Frequency type must be 'daily', 'weekly', or 'custom'");
+    if (!["Q1", "Q2", "Q3", "Q4"].includes(data.quarter)) {
+        throw new Error("Quarter must be 'Q1', 'Q2', 'Q3', or 'Q4'");
     }
-    // Description is optional, no validation needed
+    if (!data.startDate || !data.endDate) {
+        throw new Error("Start date and end date are required");
+    }
 };
 ```
 
 ## Business Rules
 
-### 1. Habit Creation
-- `id` must be unique and auto-increment
-- `display_name` cannot be empty (1-100 characters)
+### 1. Project Creation
+- `id` must be unique UUID
+- `title` cannot be empty (1-100 characters)
 - `description` is optional and can be empty
-- `type` only "do" or "dont"
-- `frequency_type` only "daily", "weekly", or "custom"
+- `status` only "planning", "active", "completed", "on-hold"
+- `priority` only "low", "medium", "high", "urgent"
+- `quarter` only "Q1", "Q2", "Q3", "Q4"
+- `start_date` and `end_date` are required
+- `user_id` must reference existing auth.users
 
-### 2. Habit Logging
-- `habit_id` must reference existing Habits
-- `date` cannot be in the future
-- `completed_value` optional, if present must be positive
-- One habit can only have one log per day
+### 2. Task Management
+- `project_id` must reference existing Projects
+- `title` cannot be empty (1-100 characters)
+- `description` is optional and can be empty
+- `status` only "todo", "in-progress", "completed"
+- `priority` only "low", "medium", "high", "urgent"
+- `due_date` is optional but cannot be in the past
+- `completed_at` is set when status changes to "completed"
 
 ### 3. Data Integrity
-- Cannot delete habit that has logs
-- Update habit must maintain reference in HabitLog
-- Soft delete using `is_active` flag
+- Cannot delete project that has tasks
+- Update project must maintain reference in Tasks
+- RLS policies ensure users can only access their own data
+- Cascade delete: deleting project deletes all its tasks
 
 ## Performance Guidelines
 
-### 1. CSV Optimization
-- Use CSV format for better performance
-- Implement caching with SWR
+### 1. Supabase Optimization
+- Use proper indexing on frequently queried columns
+- Implement RLS policies for efficient data filtering
+- Use SWR for client-side caching and revalidation
 - Batch operations for multiple updates
 
 ### 2. Data Filtering
-- Filter `is_active = 1` at API level
-- Implement pagination for large data
-- Cache frequently accessed data
+- Filter by `user_id` at database level using RLS
+- Implement pagination for large datasets
+- Cache frequently accessed data with SWR
+- Use proper WHERE clauses for efficient queries
 
 ### 3. Error Recovery
-- Fallback to authenticated API if CSV fails
-- Retry mechanism for network errors
-- Graceful degradation for corrupted data
+- Implement retry mechanism for network errors
+- Use Supabase real-time subscriptions for live updates
+- Graceful degradation for connection issues
+- Proper error boundaries for UI error handling
 
 ## Common Patterns
 
-### 1. Fetching Habits
+### 1. Fetching Projects
 ```typescript
-const { habits, isLoading, error } = useHabits();
+const { projects, isLoading, error } = useProjects();
 
-// Filter active habits
-const activeHabits = habits.filter(habit => habit.isActive);
+// Filter active projects
+const activeProjects = projects.filter(project => project.status === 'active');
 ```
 
-### 2. Toggle Habit Completion
+### 2. Toggle Task Completion
 ```typescript
-const { toggleCompletion } = useHabitLogs(habitId);
+const { toggleTaskStatus } = useTasks(projectId);
 
-const handleToggle = async (date: string) => {
+const handleToggle = async (taskId: string) => {
     try {
-        await toggleCompletion(date);
+        await toggleTaskStatus(taskId);
         // UI will update automatically via SWR
     } catch (error) {
-        console.error("Failed to toggle completion:", error);
+        console.error("Failed to toggle task status:", error);
     }
 };
 ```
 
-### 3. Creating New Habit
+### 3. Creating New Project
 ```typescript
-const { createHabit } = useHabits();
+const { createProject } = useProjects();
 
-const handleCreateHabit = async (habitData: CreateHabitData) => {
+const handleCreateProject = async (projectData: CreateProjectData) => {
     try {
-        const newHabit = await createHabit(habitData);
+        const newProject = await createProject(projectData);
         // Navigate or update UI
     } catch (error) {
-        console.error("Failed to create habit:", error);
+        console.error("Failed to create project:", error);
     }
 };
 ```
@@ -216,11 +248,13 @@ const handleCreateHabit = async (habitData: CreateHabitData) => {
 - Implement proper error boundaries
 - Return user-friendly error messages
 - Log errors for debugging
+- Handle Supabase-specific errors
 
 ### 3. Testing
 - Test data transformation functions
-- Mock Google Sheets API responses
+- Mock Supabase API responses
 - Test error scenarios
+- Test RLS policies
 
 ## Migration & Updates
 
@@ -242,7 +276,8 @@ const handleCreateHabit = async (habitData: CreateHabitData) => {
 - Implement rate limiting
 
 ### 2. Access Control
-- Use service account for API access
+- Use RLS policies for data access control
+- Implement proper authentication with Supabase Auth
 - Do not expose sensitive data
 - Audit log for data access
 
@@ -262,6 +297,6 @@ const handleCreateHabit = async (habitData: CreateHabitData) => {
 
 **📚 For complete information, see**: `docs/database-schema.md`
 
-**🔧 For API implementation, see**: `.cursor/rules/api-integration.md`
+**🔧 For API implementation, see**: `.cursor/rules/api-integration.mdc`
 
-**💡 For component patterns, see**: `.cursor/rules/component-patterns.md`
+**💡 For component patterns, see**: `.cursor/rules/component-patterns.mdc`
