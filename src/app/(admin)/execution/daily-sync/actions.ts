@@ -112,6 +112,52 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
 }
 
 // Get daily plan for a specific date
+// ULTRA OPTIMIZED: Get all daily sync data in single call
+export async function getDailySyncCompleteData(year: number, weekNumber: number, selectedDate: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return {
+      dailyPlan: null,
+      weeklyTasks: [],
+      completedSessions: {}
+    };
+  }
+
+  try {
+    // OPTIMIZED: Single comprehensive RPC call for all data
+    const { data, error } = await supabase.rpc('get_daily_sync_complete_data', {
+      p_user_id: user.id,
+      p_year: year,
+      p_week_number: weekNumber,
+      p_selected_date: selectedDate
+    });
+
+    if (error) {
+      console.error("Error calling get_daily_sync_complete_data:", error);
+      return {
+        dailyPlan: null,
+        weeklyTasks: [],
+        completedSessions: {}
+      };
+    }
+
+    return data || {
+      dailyPlan: null,
+      weeklyTasks: [],
+      completedSessions: {}
+    };
+  } catch (error) {
+    console.error("Error in getDailySyncCompleteData:", error);
+    return {
+      dailyPlan: null,
+      weeklyTasks: [],
+      completedSessions: {}
+    };
+  }
+}
+
 export async function getDailyPlan(date: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

@@ -44,8 +44,8 @@ export function useMainQuests(year: number, quarter: number) {
     () => getQuests(year, quarter, true), // isCommitted = true
     {
       revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
+      dedupingInterval: 10 * 60 * 1000, // OPTIMIZED: 10 minutes instead of 5
+      errorRetryCount: 2, // OPTIMIZED: Reduced retry count
       keepPreviousData: true,
     }
   );

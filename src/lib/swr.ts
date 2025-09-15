@@ -102,6 +102,9 @@ export const weeklySyncKeys = {
   unscheduledTasks: (year: number, quarter: number) => [...weeklySyncKeys.all, 'unscheduled-tasks', year, quarter] as const,
   scheduledTasks: (startDate: string, endDate: string) => [...weeklySyncKeys.all, 'scheduled-tasks', startDate, endDate] as const,
   weeklyRules: (year: number, weekNumber: number) => [...weeklySyncKeys.all, 'weekly-rules', year, weekNumber] as const,
+  // OPTIMIZED: Batched keys
+  weeklySyncBatched: (year: number, weekNumber: number) => [...weeklySyncKeys.all, 'batched', year, weekNumber] as const,
+  weeklySyncConditional: (year: number, weekNumber: number) => [...weeklySyncKeys.all, 'conditional', year, weekNumber] as const,
 };
 
 /**
@@ -111,6 +114,9 @@ export const dailySyncKeys = {
   all: ['daily-sync'] as const,
   completedSessions: (taskId: string, date: string) => [...dailySyncKeys.all, 'completed-sessions', taskId, date] as const,
   tasksForWeek: (year: number, weekNumber: number) => [...dailySyncKeys.all, 'tasks-for-week', year, weekNumber] as const,
+  // OPTIMIZED: Batched keys
+  dailySyncBatched: (year: number, weekNumber: number, selectedDate: string) => [...dailySyncKeys.all, 'batched', year, weekNumber, selectedDate] as const,
+  dailySyncConditional: (year: number, weekNumber: number, selectedDate: string) => [...dailySyncKeys.all, 'conditional', year, weekNumber, selectedDate] as const,
 };
 
 /**

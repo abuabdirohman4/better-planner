@@ -446,6 +446,65 @@ export async function calculateWeeklyGoalsProgress(year: number, weekNumber: num
   }
 }
 
+// ===== OPTIMIZED BATCHED DATA ACTIONS =====
+
+// ULTRA OPTIMIZED: Get all weekly sync data in single call
+export async function getWeeklySyncCompleteData(year: number, weekNumber: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      toDontList: []
+    };
+  }
+
+  try {
+    // OPTIMIZED: Single comprehensive RPC call for all data
+    const { data, error } = await supabase.rpc('get_weekly_sync_complete_data', {
+      p_user_id: user.id,
+      p_year: year,
+      p_week_number: weekNumber
+    });
+
+    if (error) {
+      console.error("Error calling get_weekly_sync_complete_data:", error);
+      return {
+        goals: [],
+        progress: {},
+        rules: [],
+        unscheduledTasks: [],
+        scheduledTasks: [],
+        toDontList: []
+      };
+    }
+
+    return data || {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      toDontList: []
+    };
+  } catch (error) {
+    console.error("Error in getWeeklySyncCompleteData:", error);
+    return {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      toDontList: []
+    };
+  }
+}
+
 // ===== NEW HIERARCHICAL WEEKLY FOCUS ACTIONS =====
 
 // Get weekly focus for a specific week - OPTIMIZED VERSION
