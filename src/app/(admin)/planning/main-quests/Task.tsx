@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-import { getTasksForMilestone, addTask } from '../quests/actions';
-
-import TaskItem from './TaskItem';
+import { getTasksForMilestone, addTask, updateTask } from '../quests/actions';
 
 interface Task {
   id: string;
@@ -12,14 +10,143 @@ interface Task {
   display_order?: number;
 }
 
-interface MilestoneItemProps {
+interface TaskProps {
   milestone: { id: string; title: string };
   milestoneNumber: number;
   onOpenSubtask?: (task: Task) => void;
   activeSubTask: Task | null;
 }
 
-export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtask, activeSubTask }: MilestoneItemProps) {
+interface TaskItemInlineProps {
+  task: Task;
+  onOpenSubtask?: () => void;
+  orderNumber?: number;
+  active?: boolean;
+  onNavigateUp?: () => void;
+  onNavigateDown?: () => void;
+  canNavigateUp?: boolean;
+  canNavigateDown?: boolean;
+  onEdit: (taskId: string, newTitle: string) => void;
+}
+
+// Inline TaskItem component - simplified version
+function TaskItemInline({ 
+  task, 
+  onOpenSubtask, 
+  orderNumber, 
+  active, 
+  onNavigateUp, 
+  onNavigateDown, 
+  canNavigateUp = true, 
+  canNavigateDown = true,
+  onEdit
+}: TaskItemInlineProps) {
+  const [editValue, setEditValue] = useState(task.title);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setEditValue(newValue);
+    setHasChanges(newValue.trim() !== task.title);
+  };
+
+  const handleSave = async () => {
+    if (editValue.trim() === task.title) {
+      setHasChanges(false);
+      return; // No changes
+    }
+    
+    setIsSaving(true);
+    try {
+      await onEdit(task.id, editValue.trim());
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Failed to save task:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div 
+      className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
+      onClick={() => onOpenSubtask?.()}
+    >
+      <div className='flex gap-2 w-full items-center'>
+        {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
+        <input
+          className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none transition-all"
+          value={editValue}
+          onChange={handleEditChange}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSave();
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              if (canNavigateUp && onNavigateUp) {
+                onNavigateUp();
+              }
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              if (canNavigateDown && onNavigateDown) {
+                onNavigateDown();
+              }
+            }
+          }}
+          onBlur={() => {
+            if (hasChanges) {
+              handleSave();
+            }
+          }}
+          onClick={e => {
+            e.stopPropagation();
+            onOpenSubtask?.();
+          }}
+          onFocus={() => {
+            onOpenSubtask?.();
+          }}
+          ref={editInputRef}
+          data-task-idx={orderNumber ? orderNumber - 1 : 0}
+          placeholder=""
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSave();
+          }}
+          disabled={!hasChanges || isSaving}
+          className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
+          title="Klik untuk menyimpan atau tekan Enter"
+        >
+          {isSaving ? (
+            <>
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              Editing...
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Task({ milestone, milestoneNumber, onOpenSubtask, activeSubTask }: TaskProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [newTaskInputs, setNewTaskInputs] = useState(['', '', '']);
@@ -88,18 +215,27 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
     }
   };
 
+  // Task editing functions
+  const handleTaskEdit = async (taskId: string, newTitle: string) => {
+    try {
+      await updateTask(taskId, newTitle.trim());
+      // Update local state
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, title: newTitle.trim() } : t));
+    } catch (error) {
+      console.error('Failed to update task:', error);
+    }
+  };
+
   return (
     <div className="rounded-lg mb-2">
         <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
         <div className="space-y-2 mb-2">
-          {loadingTasks ? (
-            <p className="text-gray-400 text-sm">Memuat tugas utama...</p>
-          ) : (
+          {!loadingTasks && (
             Array.from({ length: 3 }).map((_, idx) => {
               const task = tasks.find(t => t.display_order === idx + 1);
               if (task) {
                 return (
-                  <TaskItem
+                  <TaskItemInline
                     key={task.id}
                     task={task}
                     onOpenSubtask={onOpenSubtask ? () => onOpenSubtask(task) : undefined}
@@ -109,6 +245,7 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                     onNavigateDown={() => handleNavigateDown(idx)}
                     canNavigateUp={idx > 0}
                     canNavigateDown={idx < 2}
+                    onEdit={handleTaskEdit}
                   />
                 );
               } else {

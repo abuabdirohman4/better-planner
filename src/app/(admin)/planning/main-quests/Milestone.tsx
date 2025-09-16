@@ -1,12 +1,8 @@
-import debounce from 'lodash/debounce';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
-import ComponentCard from '@/components/common/ComponentCard';
+import { updateMilestone, getMilestonesForQuest, addMilestone } from '../quests/actions';
 
-import { updateQuestMotivation, updateMilestone, getMilestonesForQuest, addMilestone } from '../quests/actions';
-
-import MilestoneItem from './MilestoneItem';
-import TaskDetailCard from './TaskDetailCard';
+import Task from './Task';
 
 interface Milestone {
   id: string;
@@ -20,98 +16,10 @@ interface Task {
   status: 'TODO' | 'DONE';
 }
 
-// Custom hook for milestone state and logic
-function useMilestoneState(questId: string) {
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [originalMilestones, setOriginalMilestones] = useState<Milestone[]>([]);
-  const [loadingMilestones, setLoadingMilestones] = useState(true);
-  const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
-  const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
-  const [milestoneLoading, setMilestoneLoading] = useState<Record<string, boolean>>({});
-  const [milestoneChanges, setMilestoneChanges] = useState<Record<string, boolean>>({});
-
-  const fetchMilestones = useCallback(async () => {
-    setLoadingMilestones(true);
-    try {
-      const data = await getMilestonesForQuest(questId);
-      // Sort by display_order to ensure correct positioning
-      const sortedData = data?.sort((a, b) => a.display_order - b.display_order) || [];
-      setMilestones(sortedData);
-      setOriginalMilestones(sortedData); // Simpan data original
-    } finally {
-      setLoadingMilestones(false);
-    }
-  }, [questId]);
-
-  // Function to save new milestone
-  const handleSaveNewMilestone = async (idx: number) => {
-    const val = newMilestoneInputs[idx];
-    if (!val.trim()) return;
-
-    setNewMilestoneLoading(l => l.map((v, i) => i === idx ? true : v));
-    try {
-      const formData = new FormData();
-      formData.append('quest_id', questId);
-      formData.append('title', val.trim());
-      formData.append('display_order', String(idx + 1)); // Kirim posisi yang sesuai (1-based)
-      await addMilestone(formData);
-      fetchMilestones();
-      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
-    } catch (error) {
-      console.error('Failed to save milestone:', error);
-    } finally {
-      setNewMilestoneLoading(l => l.map((v, i) => i === idx ? false : v));
-    }
-  };
-
-  // Function to save existing milestone
-  const handleSaveMilestone = async (id: string, val: string) => {
-    setMilestoneLoading(prev => ({ ...prev, [id]: true }));
-    try {
-      await updateMilestone(id, val);
-      // Clear change tracking after successful save
-      setMilestoneChanges(prev => ({ ...prev, [id]: false }));
-      // Refresh data setelah update untuk memastikan sync
-      fetchMilestones();
-    } catch (error) {
-      console.error('Failed to save milestone:', error);
-    } finally {
-      setMilestoneLoading(prev => ({ ...prev, [id]: false }));
-    }
-  };
-
-  // Function to handle milestone title change
-  const handleMilestoneChange = (id: string, newTitle: string) => {
-    setMilestones(ms => ms.map(m => m.id === id ? { ...m, title: newTitle } : m));
-    // Find original milestone to compare (dari originalMilestones yang tidak berubah)
-    const originalMilestone = originalMilestones.find(m => m.id === id);
-    // Mark as changed only if different from original and not empty
-    setMilestoneChanges(prev => ({ 
-      ...prev, 
-      [id]: newTitle.trim() !== originalMilestone?.title && newTitle.trim() !== '' 
-    }));
-  };
-
-  useEffect(() => {
-    fetchMilestones();
-  }, [questId, fetchMilestones]);
-
-  return {
-    milestones,
-    setMilestones,
-    originalMilestones,
-    loadingMilestones,
-    newMilestoneInputs,
-    setNewMilestoneInputs,
-    newMilestoneLoading,
-    setNewMilestoneLoading,
-    milestoneLoading,
-    milestoneChanges,
-    handleSaveNewMilestone,
-    handleSaveMilestone,
-    handleMilestoneChange,
-    fetchMilestones
-  };
+interface MilestoneProps {
+  questId: string;
+  activeSubTask: Task | null;
+  onOpenSubtask: (task: Task) => void;
 }
 
 // MilestoneBar component
@@ -293,91 +201,117 @@ function MilestoneBar({
   );
 }
 
-export default function QuestWorkspace({ quest }: { quest: { id: string; title: string; motivation?: string } }) {
-  const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
+export default function Milestone({ questId, activeSubTask, onOpenSubtask }: MilestoneProps) {
+  // Milestone state
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [originalMilestones, setOriginalMilestones] = useState<Milestone[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(true);
+  const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
+  const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
+  const [milestoneLoading, setMilestoneLoading] = useState<Record<string, boolean>>({});
+  const [milestoneChanges, setMilestoneChanges] = useState<Record<string, boolean>>({});
   const [activeMilestoneIdx, setActiveMilestoneIdx] = useState(0);
-  const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
 
-  const {
-    milestones,
-    loadingMilestones,
-    newMilestoneInputs,
-    setNewMilestoneInputs,
-    newMilestoneLoading,
-    milestoneLoading,
-    milestoneChanges,
-    handleSaveNewMilestone,
-    handleSaveMilestone,
-    handleMilestoneChange
-  } = useMilestoneState(quest.id);
+  // Fetch milestones
+  const fetchMilestones = useCallback(async () => {
+    setLoadingMilestones(true);
+    try {
+      const data = await getMilestonesForQuest(questId);
+      const sortedData = data?.sort((a, b) => a.display_order - b.display_order) || [];
+      setMilestones(sortedData);
+      setOriginalMilestones(sortedData);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  }, [questId]);
 
-  const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMotivationValue(e.target.value);
-    debouncedSaveMotivation(e.target.value);
+  // Save new milestone
+  const handleSaveNewMilestone = async (idx: number) => {
+    const val = newMilestoneInputs[idx];
+    if (!val.trim()) return;
+
+    setNewMilestoneLoading(l => l.map((v, i) => i === idx ? true : v));
+    try {
+      const formData = new FormData();
+      formData.append('quest_id', questId);
+      formData.append('title', val.trim());
+      formData.append('display_order', String(idx + 1));
+      await addMilestone(formData);
+      fetchMilestones();
+      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
+    } catch (error) {
+      console.error('Failed to save milestone:', error);
+    } finally {
+      setNewMilestoneLoading(l => l.map((v, i) => i === idx ? false : v));
+    }
   };
 
-  // Debounced auto-save
-  const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
+  // Save existing milestone
+  const handleSaveMilestone = async (id: string, val: string) => {
+    setMilestoneLoading(prev => ({ ...prev, [id]: true }));
     try {
-      await updateQuestMotivation(quest.id, val);
-    } catch {}
-  }, 1500), [quest.id]);
+      await updateMilestone(id, val);
+      setMilestoneChanges(prev => ({ ...prev, [id]: false }));
+      fetchMilestones();
+    } catch (error) {
+      console.error('Failed to save milestone:', error);
+    } finally {
+      setMilestoneLoading(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  // Handle milestone title change
+  const handleMilestoneChange = (id: string, newTitle: string) => {
+    setMilestones(ms => ms.map(m => m.id === id ? { ...m, title: newTitle } : m));
+    const originalMilestone = originalMilestones.find(m => m.id === id);
+    setMilestoneChanges(prev => ({ 
+      ...prev, 
+      [id]: newTitle.trim() !== originalMilestone?.title && newTitle.trim() !== '' 
+    }));
+  };
+
+  useEffect(() => {
+    fetchMilestones();
+  }, [fetchMilestones]);
 
   return (
-    <div className="flex gap-8">
-      <div className="flex-1 max-w-2xl mx-auto">
-        <ComponentCard title={quest.title} className='' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
-          <label className='block mb-2 font-semibold'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
-          <textarea
-            className="border rounded mb-4 px-2 py-1 text-sm w-full"
-            value={motivationValue}
-            onChange={handleMotivationChange}
-            rows={3}
-          />
-          <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
-          <MilestoneBar
-            milestones={milestones}
-            newMilestoneInputs={newMilestoneInputs}
-            setNewMilestoneInputs={setNewMilestoneInputs}
-            newMilestoneLoading={newMilestoneLoading}
-            milestoneLoading={milestoneLoading}
-            milestoneChanges={milestoneChanges}
-            activeMilestoneIdx={activeMilestoneIdx}
-            setActiveMilestoneIdx={setActiveMilestoneIdx}
-            handleSaveNewMilestone={handleSaveNewMilestone}
-            handleSaveMilestone={handleSaveMilestone}
-            handleMilestoneChange={handleMilestoneChange}
-          />
-          <div className="space-y-4 mb-4">
-            {loadingMilestones ? (
-              <p className="text-gray-400">Memuat milestone...</p>
-            ) : (
-              (() => {
-                // Find milestone with display_order matching activeMilestoneIdx + 1
-                const activeMilestone = milestones.find(m => m.display_order === activeMilestoneIdx + 1);
-                return activeMilestone ? (
-                  <MilestoneItem
-                    key={activeMilestone.id}
-                    milestone={activeMilestone}
-                    milestoneNumber={activeMilestoneIdx + 1}
-                    onOpenSubtask={setActiveSubTask}
-                    activeSubTask={activeSubTask}
-                  />
-                ) : (
-                  <p className="text-gray-400">Belum ada milestone untuk quest ini.</p>
-                );
-              })()
-            )}
+    <>
+      <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
+      <MilestoneBar
+        milestones={milestones}
+        newMilestoneInputs={newMilestoneInputs}
+        setNewMilestoneInputs={setNewMilestoneInputs}
+        newMilestoneLoading={newMilestoneLoading}
+        milestoneLoading={milestoneLoading}
+        milestoneChanges={milestoneChanges}
+        activeMilestoneIdx={activeMilestoneIdx}
+        setActiveMilestoneIdx={setActiveMilestoneIdx}
+        handleSaveNewMilestone={handleSaveNewMilestone}
+        handleSaveMilestone={handleSaveMilestone}
+        handleMilestoneChange={handleMilestoneChange}
+      />
+      <div className="space-y-4 mb-4">
+        {loadingMilestones ? (
+          <div className="flex items-center">
+            <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+            <p className="text-gray-400">Loading...</p>
           </div>
-        </ComponentCard>
+        ) : (
+          (() => {
+            // Find milestone with display_order matching activeMilestoneIdx + 1
+            const activeMilestone = milestones.find(m => m.display_order === activeMilestoneIdx + 1);
+            return activeMilestone && (
+              <Task
+                key={activeMilestone.id}
+                milestone={activeMilestone}
+                milestoneNumber={activeMilestoneIdx + 1}
+                onOpenSubtask={onOpenSubtask}
+                activeSubTask={activeSubTask}
+              />
+            )
+          })()
+        )}
       </div>
-      {activeSubTask ? <div className="flex-1 max-w-2xl">
-          <TaskDetailCard
-            task={activeSubTask}
-            onBack={() => setActiveSubTask(null)}
-            milestoneId={milestones.find(m => m.display_order === activeMilestoneIdx + 1)?.id || ''}
-          />
-        </div> : null}
-    </div>
+    </>
   );
-} 
+}

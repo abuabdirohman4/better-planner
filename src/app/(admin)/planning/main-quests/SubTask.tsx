@@ -582,7 +582,7 @@ function SubtaskList({
   );
 }
 
-export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; }) {
+export default function SubTask({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; }) {
   const { subtasks, setSubtasks, loadingSubtasks, fetchSubtasks } = useSubtaskManagement(task.id);
   const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
   const { handleSubtaskEnter, handleCheck } = useSubtaskCRUD(task.id, milestoneId, subtasks, setSubtasks);

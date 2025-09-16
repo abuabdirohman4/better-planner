@@ -6,7 +6,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { useQuarter } from '@/hooks/common/useQuarter';
 import { useMainQuests } from '@/hooks/planning/useQuests';
 
-import QuestWorkspace from './QuestWorkspace';
+import Quest from './Quest';
 
 export default function MainQuestsClient() {
   const { year, quarter } = useQuarter();
@@ -15,11 +15,8 @@ export default function MainQuestsClient() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Spinner size={64} />
-        <div className="mt-4 text-lg font-semibold text-gray-600">
-          Loading Main Quests...
-        </div>
+      <div className="flex justify-center items-center min-h-[800px]">
+        <Spinner size={164} />
       </div>
     );
   }
@@ -57,7 +54,7 @@ export default function MainQuestsClient() {
         <div className="mt-6">
           {quests.map((quest, idx) => (
             <div key={quest.id} style={{ display: activeTab === idx ? 'block' : 'none' }}>
-              <QuestWorkspace quest={quest} />
+              <Quest quest={quest} />
             </div>
           ))}
         </div>
