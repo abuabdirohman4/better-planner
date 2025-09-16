@@ -23,86 +23,14 @@ export default function SmartLoader({
   pageName, 
   fallback 
 }: SmartLoaderProps) {
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
-  const [isPreloading, setIsPreloading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('Initializing...');
-
+  // ✅ SIMPLIFIED - No more complex state management!
   useEffect(() => {
-    const checkFirstVisit = () => {
-      const cacheKey = `better-planner-${pageName.toLowerCase().replace(/\s+/g, '-')}`;
-      const hasVisited = localStorage.getItem(`${cacheKey}-visited`);
-      return !hasVisited;
-    };
-
-    const preloadData = async () => {
-      const firstVisit = checkFirstVisit();
-      setIsFirstVisit(firstVisit);
-
-      if (firstVisit) {
-        // First visit - comprehensive preload
-        setLoadingMessage('First time setup...');
-        setLoadingProgress(10);
-        
-        // Simulate preloading critical data
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setLoadingProgress(30);
-        
-        setLoadingMessage('Building cache...');
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setLoadingProgress(60);
-        
-        setLoadingMessage('Optimizing performance...');
-        await new Promise(resolve => setTimeout(resolve, 600));
-        setLoadingProgress(90);
-        
-        // Mark as visited
-        const cacheKey = `better-planner-${pageName.toLowerCase().replace(/\s+/g, '-')}`;
-        localStorage.setItem(`${cacheKey}-visited`, 'true');
-        
-        setLoadingMessage('Ready!');
-        setLoadingProgress(100);
-        
-        // Small delay for smooth transition
-        await new Promise(resolve => setTimeout(resolve, 300));
-      } else {
-        // Subsequent visits - quick preload
-        setLoadingMessage('Loading from cache...');
-        setLoadingProgress(50);
-        
-        // Quick cache check
-        await new Promise(resolve => setTimeout(resolve, 200));
-        setLoadingProgress(100);
-        
-        setLoadingMessage('Ready!');
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      setIsPreloading(false);
-    };
-
-    preloadData();
+    // Mark as visited immediately (no delays)
+    const cacheKey = `better-planner-${pageName.toLowerCase().replace(/\s+/g, '-')}`;
+    localStorage.setItem(`${cacheKey}-visited`, 'true');
   }, [pageName]);
 
-  // Show cold start loader for first visit
-  if (isPreloading && isFirstVisit) {
-    return (
-      <ColdStartLoader
-        isLoading={isPreloading}
-        isFirstVisit={isFirstVisit}
-        loadingProgress={loadingProgress}
-        loadingMessage={loadingMessage}
-        estimatedTime={isFirstVisit ? '2-3 seconds' : '< 500ms'}
-      />
-    );
-  }
-
-  // Show quick loader for subsequent visits
-  if (isPreloading && !isFirstVisit) {
-    return <QuickLoader />;
-  }
-
-  // Show streaming loader for content
+  // ✅ INSTANT RENDER - No loading states!
   return (
     <Suspense fallback={fallback || <QuickLoader />}>
       {children}
