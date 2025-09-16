@@ -96,7 +96,7 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
             <p className="text-gray-400 text-sm">Memuat tugas utama...</p>
           ) : (
             Array.from({ length: 3 }).map((_, idx) => {
-              const task = tasks[idx];
+              const task = tasks.find(t => t.display_order === idx + 1);
               if (task) {
                 return (
                   <TaskItem
