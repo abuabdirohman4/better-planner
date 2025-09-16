@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { logPerformanceDebug } from '@/lib/performanceDebug';
-import { getCurrentPerformanceMetrics, getPageLoadMetrics, savePerformanceMetrics, sendPerformanceMetrics, type PerformanceMetrics, type PageLoadMetrics } from '@/lib/performanceUtils';
+import { getCurrentPerformanceMetrics, getPageLoadMetrics, savePerformanceMetrics, sendPerformanceMetrics, isPerformanceMonitoringEnabled, type PerformanceMetrics, type PageLoadMetrics } from '@/lib/performanceUtils';
 
 interface PerformanceMonitorProps {
   pageName: string;
@@ -28,6 +28,13 @@ export default function PerformanceMonitor({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check if monitoring is enabled
+    if (!isPerformanceMonitoringEnabled()) {
+      console.warn('Performance monitoring is disabled for', pageName);
+      setIsLoading(false);
+      return;
+    }
+
     // Set start time immediately when component mounts
     const startTime = performance.now();
     

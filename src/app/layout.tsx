@@ -3,7 +3,6 @@ import { Toaster } from 'sonner';
 
 import './globals.css';
 
-import PerformanceToggle from '@/components/common/PerformanceToggle';
 import PreloadProvider from '@/components/common/PreloadProvider';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
@@ -36,7 +35,6 @@ export default function RootLayout({
                      position="top-right"
                      richColors
                    />
-                   <PerformanceToggle />
                  </PreloadProvider>
                </SWRProvider>
       </body>

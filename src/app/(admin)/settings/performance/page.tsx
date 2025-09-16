@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { getPerformanceMetrics, getPerformanceSummary, exportPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performanceUtils';
+import { getPerformanceMetrics, getPerformanceSummary, exportPerformanceMetrics, clearPerformanceMetrics, setPerformanceMonitoringEnabled, isPerformanceMonitoringEnabled } from '@/lib/performanceUtils';
 import type { PerformanceMetrics } from '@/lib/performanceUtils';
 
 /**
@@ -16,6 +16,7 @@ export default function PerformanceDashboard() {
   const [selectedEnvironment, setSelectedEnvironment] = useState<'all' | 'development' | 'production'>('all');
   const [selectedPage, setSelectedPage] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all');
+  const [isMonitoringEnabled, setIsMonitoringEnabled] = useState(isPerformanceMonitoringEnabled());
 
   const loadMetrics = useCallback(async () => {
     setIsLoading(true);
@@ -48,6 +49,19 @@ export default function PerformanceDashboard() {
   useEffect(() => {
     loadMetrics();
   }, [loadMetrics]);
+
+  const handleToggleMonitoring = () => {
+    const newState = !isMonitoringEnabled;
+    setIsMonitoringEnabled(newState);
+    setPerformanceMonitoringEnabled(newState);
+    
+    // Show feedback to user via console (for now)
+    if (newState) {
+      console.warn('Performance monitoring enabled! Data will be collected from now on.');
+    } else {
+      console.warn('Performance monitoring disabled! No new data will be collected.');
+    }
+  };
 
   const filterByTimeRange = (data: PerformanceMetrics[], range: string) => {
     const now = new Date();
@@ -122,12 +136,35 @@ export default function PerformanceDashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Performance Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Monitor and analyze Better Planner performance metrics
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Performance Dashboard
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Monitor and analyze Better Planner performance metrics
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <span className={`text-sm font-medium ${isMonitoringEnabled ? 'text-green-600' : 'text-red-600'}`}>
+                  {isMonitoringEnabled ? 'Monitoring ON' : 'Monitoring OFF'}
+                </span>
+                <button
+                  onClick={handleToggleMonitoring}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isMonitoringEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isMonitoringEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Summary Cards */}

@@ -325,3 +325,56 @@ export function usePerformanceMonitor(pageName: string) {
     sendMetrics: (metrics: PerformanceMetrics) => sendPerformanceMetrics(metrics),
   };
 }
+
+/**
+ * Performance Monitoring Control Functions
+ * Allow users to enable/disable performance monitoring
+ */
+
+const MONITORING_KEY = 'better-planner-performance-monitoring-enabled';
+
+/**
+ * Check if performance monitoring is enabled
+ */
+export function isPerformanceMonitoringEnabled(): boolean {
+  if (typeof window === 'undefined') return false; // Default to disabled on server
+  
+  try {
+    const stored = localStorage.getItem(MONITORING_KEY);
+    return stored === 'true'; // Default to false if not set
+  } catch (error) {
+    console.warn('Failed to check monitoring status:', error);
+    return false; // Default to disabled on error
+  }
+}
+
+/**
+ * Set performance monitoring enabled/disabled
+ */
+export function setPerformanceMonitoringEnabled(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(MONITORING_KEY, enabled.toString());
+    
+    // Update global monitoring state
+    if (typeof window !== 'undefined') {
+      (window as { __PERFORMANCE_MONITORING_ENABLED__?: boolean }).__PERFORMANCE_MONITORING_ENABLED__ = enabled;
+    }
+  } catch (error) {
+    console.warn('Failed to set monitoring status:', error);
+  }
+}
+
+/**
+ * Get monitoring status with fallback
+ */
+export function getPerformanceMonitoringStatus(): {
+  enabled: boolean;
+  canToggle: boolean;
+} {
+  return {
+    enabled: isPerformanceMonitoringEnabled(),
+    canToggle: typeof window !== 'undefined' && 'localStorage' in window,
+  };
+}

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { isPerformanceMonitoringEnabled, setPerformanceMonitoringEnabled } from '@/lib/performanceUtils';
+
 /**
  * Performance Toggle Component
  * Allows users to enable/disable performance monitoring globally
@@ -11,8 +13,8 @@ export default function PerformanceToggle() {
   const [showMetrics, setShowMetrics] = useState(false);
 
   useEffect(() => {
-    // Load settings from localStorage
-    const enabled = localStorage.getItem('better-planner-performance-enabled') === 'true';
+    // Load settings using centralized functions
+    const enabled = isPerformanceMonitoringEnabled();
     const show = localStorage.getItem('better-planner-performance-show') === 'true';
     setIsEnabled(enabled);
     setShowMetrics(show);
@@ -21,7 +23,7 @@ export default function PerformanceToggle() {
   const toggleEnabled = () => {
     const newEnabled = !isEnabled;
     setIsEnabled(newEnabled);
-    localStorage.setItem('better-planner-performance-enabled', newEnabled.toString());
+    setPerformanceMonitoringEnabled(newEnabled);
     
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('performance-toggle', { 
