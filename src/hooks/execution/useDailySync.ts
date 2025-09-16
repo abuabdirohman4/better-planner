@@ -32,6 +32,7 @@ export function useDailyPlan(date: string) {
 
 /**
  * Custom hook for fetching completed sessions count
+ * ✅ OPTIMIZED: Single hook for all completed sessions
  */
 export function useCompletedSessions(taskId: string, date: string) {
   const { 
@@ -44,13 +45,56 @@ export function useCompletedSessions(taskId: string, date: string) {
     () => countCompletedSessions(taskId, date),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 1 * 60 * 1000, // 1 minute
-      errorRetryCount: 3,
+      dedupingInterval: 5 * 60 * 1000, // ✅ 5 minutes - longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
     }
   );
 
   return {
     completedCount,
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+/**
+ * ✅ NEW: Batch hook for all completed sessions
+ * Much more efficient than multiple individual hooks
+ */
+export function useAllCompletedSessions(taskIds: string[], date: string) {
+  const { 
+    data = {}, 
+    error, 
+    isLoading,
+    mutate 
+  } = useSWR(
+    taskIds.length > 0 && date ? dailySyncKeys.allCompletedSessions(taskIds, date) : null,
+    async () => {
+      // ✅ BATCH API CALL - Get all completed sessions at once
+      const results: Record<string, number> = {};
+      await Promise.all(
+        taskIds.map(async (taskId) => {
+          try {
+            const count = await countCompletedSessions(taskId, date);
+            results[taskId] = count;
+          } catch (error) {
+            console.error(`Failed to get completed sessions for task ${taskId}:`, error);
+            results[taskId] = 0;
+          }
+        })
+      );
+      return results;
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5 * 60 * 1000, // 5 minutes
+      errorRetryCount: 1,
+    }
+  );
+
+  return {
+    completedSessions: data,
     error,
     isLoading,
     mutate,
