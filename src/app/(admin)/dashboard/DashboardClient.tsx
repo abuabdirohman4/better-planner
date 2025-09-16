@@ -1,6 +1,5 @@
 'use client';
 
-import QuarterUsageExample from "@/components/examples/QuarterUsageExample";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from '@/hooks/dashboard/useDashboard';
 
@@ -95,9 +94,6 @@ export default function DashboardClient({ userEmail }: DashboardClientProps) {
         </div>
       </div>
 
-      <div className="col-span-12">
-        <QuarterUsageExample/>
-      </div>
     </div>
   );
 } 

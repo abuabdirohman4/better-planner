@@ -98,7 +98,7 @@ function calculateCacheHitRate(): number {
     let totalAge = 0;
     
     cacheData.forEach((entry: unknown) => {
-      const entryTime = (entry as any[])[2] || now; // timestamp
+      const entryTime = (entry as [string, unknown, number])[2] || now; // timestamp
       const age = now - entryTime;
       totalAge += age;
       

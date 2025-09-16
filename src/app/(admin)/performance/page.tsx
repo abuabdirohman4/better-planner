@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { getPerformanceMetrics, getPerformanceSummary, exportPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performanceUtils';
 import type { PerformanceMetrics } from '@/lib/performanceUtils';
@@ -17,11 +17,7 @@ export default function PerformanceDashboard() {
   const [selectedPage, setSelectedPage] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all');
 
-  useEffect(() => {
-    loadMetrics();
-  }, [selectedEnvironment, selectedPage, timeRange]);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     setIsLoading(true);
     try {
       // Load from localStorage first
@@ -47,7 +43,11 @@ export default function PerformanceDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedEnvironment, selectedPage, timeRange]);
+
+  useEffect(() => {
+    loadMetrics();
+  }, [loadMetrics]);
 
   const filterByTimeRange = (data: PerformanceMetrics[], range: string) => {
     const now = new Date();
@@ -205,7 +205,7 @@ export default function PerformanceDashboard() {
               </label>
               <select
                 value={selectedEnvironment}
-                onChange={(e) => setSelectedEnvironment(e.target.value as any)}
+                onChange={(e) => setSelectedEnvironment(e.target.value as 'all' | 'development' | 'production')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value="all">All Environments</option>
@@ -236,7 +236,7 @@ export default function PerformanceDashboard() {
               </label>
               <select
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
+                onChange={(e) => setTimeRange(e.target.value as 'all' | 'today' | 'week' | 'month')}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
                 <option value="all">All Time</option>
@@ -309,7 +309,7 @@ export default function PerformanceDashboard() {
                 {metrics.map((metric, index) => {
                   const grade = getPerformanceGrade(metric.loadTime);
                   return (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={`metric-${metric.pageName}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         {metric.pageName}
                       </td>

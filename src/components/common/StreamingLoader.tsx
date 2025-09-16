@@ -41,7 +41,7 @@ export function ImmediateUI({
     return fallback || <Spinner size={64} />;
   }
   
-  return <>{children}</>;
+  return children;
 }
 
 /**
