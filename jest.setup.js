@@ -85,7 +85,10 @@ const localStorageMock = {
   removeItem: jest.fn(),
   clear: jest.fn(),
 }
-global.localStorage = localStorageMock
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+})
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -94,7 +97,10 @@ const sessionStorageMock = {
   removeItem: jest.fn(),
   clear: jest.fn(),
 }
-global.sessionStorage = sessionStorageMock
+Object.defineProperty(global, 'sessionStorage', {
+  value: sessionStorageMock,
+  writable: true,
+})
 
 // Mock ResizeObserver
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
