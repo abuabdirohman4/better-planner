@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-import PerformanceDebugPanel from './PerformanceDebugPanel';
 import PerformanceMonitor from './PerformanceMonitor';
 
 interface PerformanceWrapperProps {
@@ -43,9 +42,6 @@ export default function PerformanceWrapper({
         autoSave={autoSave}
         autoSend={autoSend}
       />
-      {process.env.NODE_ENV === 'development' && (
-        <PerformanceDebugPanel pageName={pageName} />
-      )}
     </>
   );
 }
