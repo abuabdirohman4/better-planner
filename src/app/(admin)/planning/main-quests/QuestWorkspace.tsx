@@ -66,6 +66,8 @@ function useMilestoneState(questId: string) {
     setMilestoneLoading(prev => ({ ...prev, [id]: true }));
     try {
       await updateMilestone(id, val);
+      // Refresh data setelah update untuk memastikan sync
+      fetchMilestones();
     } catch (error) {
       console.error('Failed to save milestone:', error);
     } finally {
@@ -124,14 +126,14 @@ function MilestoneBar({
         return (
           <div
             key={milestone ? milestone.id : `empty-${idx}`}
-            className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center gap-2 ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700'}`}
+            className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center gap-2 group hover:shadow-md ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
             onClick={() => setActiveMilestoneIdx(idx)}
           >
             <span className="font-bold text-lg w-6 text-center select-none">{idx + 1}.</span>
             {milestone ? (
               <div className="flex gap-2 w-full">
                 <input
-                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-0"
+                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
                   value={milestone.title}
                   onChange={e => {
                     const newTitle = e.target.value;
@@ -140,6 +142,7 @@ function MilestoneBar({
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
+                      e.stopPropagation();
                       handleSaveMilestone(milestone.id, milestone.title);
                     } else if (e.key === 'ArrowUp') {
                       e.preventDefault();
@@ -166,13 +169,30 @@ function MilestoneBar({
                   onClick={e => e.stopPropagation()}
                   onFocus={() => setActiveMilestoneIdx(idx)}
                   data-milestone-idx={idx}
+                  placeholder=""
                 />
                 <button
                   onClick={() => handleSaveMilestone(milestone.id, milestone.title)}
                   disabled={milestoneLoading[milestone.id]}
-                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
+                  title="Klik untuk menyimpan atau tekan Enter"
                 >
-                  {milestoneLoading[milestone.id] ? 'Saving...' : 'Save'}
+                  {milestoneLoading[milestone.id] ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Editing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
@@ -188,6 +208,7 @@ function MilestoneBar({
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
+                      e.stopPropagation();
                       handleSaveNewMilestone(idx);
                     } else if (e.key === 'ArrowUp') {
                       e.preventDefault();
@@ -219,9 +240,24 @@ function MilestoneBar({
                 <button
                   onClick={() => handleSaveNewMilestone(idx)}
                   disabled={!newMilestoneInputs[idx].trim() || newMilestoneLoading[idx]}
-                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
                 >
-                  {newMilestoneLoading[idx] ? 'Saving...' : 'Save'}
+                  {newMilestoneLoading[idx] ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save
+                    </>
+                  )}
                 </button>
               </div>
             )}
