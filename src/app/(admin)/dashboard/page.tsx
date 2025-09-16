@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import PerformanceWrapper from '@/components/common/PerformanceWrapper';
 import SmartLoader from '@/components/common/SmartLoader';
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,10 +15,8 @@ export default async function Dashboard() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <PerformanceWrapper pageName="Dashboard" autoSave={true} autoSend={false}>
-      <SmartLoader pageName="Dashboard">
-        <DashboardClient userEmail={user?.email} />
-      </SmartLoader>
-    </PerformanceWrapper>
+    <SmartLoader pageName="Dashboard">
+      <DashboardClient userEmail={user?.email} />
+    </SmartLoader>
   );
 }

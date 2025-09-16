@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useMemo, useTransition, useEffect, useCallback } from "react";
 
-import PerformanceWrapper from '@/components/common/PerformanceWrapper';
 import SmartLoader from '@/components/common/SmartLoader';
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -394,10 +393,8 @@ function DailySyncContent() {
 
 export default function DailySyncPage() {
   return (
-    <PerformanceWrapper pageName="Daily Sync" autoSave={true} autoSend={false}>
-      <SmartLoader pageName="Daily Sync">
-        <DailySyncContent />
-      </SmartLoader>
-    </PerformanceWrapper>
+    <SmartLoader pageName="Daily Sync">
+      <DailySyncContent />
+    </SmartLoader>
   );
 }

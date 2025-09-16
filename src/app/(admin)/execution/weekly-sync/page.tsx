@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 
-import PerformanceWrapper from '@/components/common/PerformanceWrapper';
 import SmartLoader from '@/components/common/SmartLoader';
 
 import WeeklySyncClient from "./WeeklySyncClient";
@@ -20,10 +19,8 @@ export const metadata: Metadata = {
 
 export default function WeeklySyncPage() {
   return (
-    <PerformanceWrapper pageName="Weekly Sync" autoSave={true} autoSend={false}>
-      <SmartLoader pageName="Weekly Sync">
-        <WeeklySyncClient />
-      </SmartLoader>
-    </PerformanceWrapper>
+    <SmartLoader pageName="Weekly Sync">
+      <WeeklySyncClient />
+    </SmartLoader>
   );
 } 
