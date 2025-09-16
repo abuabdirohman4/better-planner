@@ -94,11 +94,6 @@ const trackingNav: NavItem[] = [
 
 const settingsNav: NavItem[] = [
   {
-    icon: <PieChartIcon />,
-    name: "Performance",
-    path: "/settings/performance",
-  },
-  {
     icon: <PlugInIcon />,
     name: "Settings",
     path: "/profile",
