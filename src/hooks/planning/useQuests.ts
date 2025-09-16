@@ -5,6 +5,7 @@ import { questKeys, pairwiseKeys } from '@/lib/swr';
 
 /**
  * Custom hook for fetching quests for a specific quarter
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useQuests(year: number, quarter: number) {
   const { 
@@ -16,9 +17,10 @@ export function useQuests(year: number, quarter: number) {
     questKeys.list(year, quarter),
     () => getAllQuestsForQuarter(year, quarter),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
     }
   );
 
@@ -60,6 +62,7 @@ export function useMainQuests(year: number, quarter: number) {
 
 /**
  * Custom hook for fetching pairwise results
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function usePairwiseResults(year: number, quarter: number) {
   const { 
@@ -71,9 +74,10 @@ export function usePairwiseResults(year: number, quarter: number) {
     pairwiseKeys.list(year, quarter),
     () => getPairwiseResults(year, quarter),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 3,
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
       keepPreviousData: true, // Keep previous data while revalidating
     }
   );
@@ -88,19 +92,39 @@ export function usePairwiseResults(year: number, quarter: number) {
 
 /**
  * Custom hook for fetching both quests and pairwise results
+ * ✅ OPTIMIZED: Single SWR hook for both data types
  */
 export function useQuestsAndPairwise(year: number, quarter: number) {
-  const questsHook = useQuests(year, quarter);
-  const pairwiseHook = usePairwiseResults(year, quarter);
+  const { 
+    data = { quests: [], pairwiseResults: {} }, 
+    error, 
+    isLoading,
+    mutate 
+  } = useSWR(
+    ['quests-and-pairwise-optimized', year, quarter],
+    async () => {
+      // ✅ BATCH API CALLS - Get both data types in parallel
+      const [quests, pairwiseResults] = await Promise.all([
+        getAllQuestsForQuarter(year, quarter),
+        getPairwiseResults(year, quarter)
+      ]);
+      
+      return { quests, pairwiseResults };
+    },
+    {
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
+      keepPreviousData: true, // Keep previous data while revalidating
+    }
+  );
 
   return {
-    quests: questsHook.quests,
-    pairwiseResults: pairwiseHook.pairwiseResults,
-    error: questsHook.error || pairwiseHook.error,
-    isLoading: questsHook.isLoading || pairwiseHook.isLoading,
-    mutate: {
-      quests: questsHook.mutate,
-      pairwise: pairwiseHook.mutate,
-    },
+    quests: data.quests,
+    pairwiseResults: data.pairwiseResults,
+    error,
+    isLoading,
+    mutate,
   };
 } 

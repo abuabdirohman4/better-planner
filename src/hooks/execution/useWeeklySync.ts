@@ -29,6 +29,7 @@ export interface WeeklyGoal {
 
 /**
  * Custom hook for fetching unscheduled tasks
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useUnscheduledTasks(year: number, quarter: number) {
   const { 
@@ -40,9 +41,10 @@ export function useUnscheduledTasks(year: number, quarter: number) {
     weeklySyncKeys.unscheduledTasks(year, quarter),
     () => getUnscheduledTasks(year, quarter),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 3 * 60 * 1000, // 3 minutes
-      errorRetryCount: 3,
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
     }
   );
 
@@ -56,6 +58,7 @@ export function useUnscheduledTasks(year: number, quarter: number) {
 
 /**
  * Custom hook for fetching scheduled tasks for a week
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useScheduledTasksForWeek(startDate: string, endDate: string) {
   const { 
@@ -67,9 +70,10 @@ export function useScheduledTasksForWeek(startDate: string, endDate: string) {
     startDate && endDate ? weeklySyncKeys.scheduledTasks(startDate, endDate) : null,
     () => getScheduledTasksForWeek(startDate, endDate),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
-      errorRetryCount: 3,
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
     }
   );
 
@@ -114,6 +118,7 @@ export function useWeeklyGoals(year: number, weekNumber: number) {
 /**
  * Custom hook for fetching weekly goals with progress - ULTRA OPTIMIZED VERSION
  * Uses single optimized function call for both goals and progress data
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
   const { 
@@ -125,16 +130,16 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
     ['weekly-goals-with-progress-ultra-optimized', year, weekNumber],
     () => getWeeklyGoalsWithProgress(year, weekNumber),
     {
-      revalidateOnFocus: true, // ✅ Enable for fresh data on navigation
-      revalidateOnReconnect: true,
-      dedupingInterval: 1 * 60 * 1000, // ✅ 1 minute for faster navigation
-      errorRetryCount: 2,
-      errorRetryInterval: 1000, // ✅ Faster retry
-      focusThrottleInterval: 2000, // ✅ 2 seconds for responsive navigation
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      revalidateOnReconnect: false, // ✅ Disabled reconnect revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
+      errorRetryInterval: 2000, // ✅ Slower retry interval
+      focusThrottleInterval: 10000, // ✅ 10 seconds - much longer throttle
       keepPreviousData: true, // Keep previous data while revalidating
     }
   );
-
 
   return {
     goals: goalsData.goals,
@@ -147,6 +152,7 @@ export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
 
 /**
  * Custom hook for fetching weekly rules (to-dont list)
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useWeeklyRules(year: number, weekNumber: number) {
   const { 
@@ -158,12 +164,13 @@ export function useWeeklyRules(year: number, weekNumber: number) {
     weeklySyncKeys.weeklyRules(year, weekNumber),
     () => getWeeklyRules(year, weekNumber),
     {
-      revalidateOnFocus: true, // ✅ Enable for fresh data on navigation
-      revalidateOnReconnect: true,
-      dedupingInterval: 1 * 60 * 1000, // ✅ 1 minute for faster navigation
-      errorRetryCount: 2,
-      errorRetryInterval: 1000, // ✅ Faster retry
-      focusThrottleInterval: 2000, // ✅ 2 seconds for responsive navigation
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      revalidateOnReconnect: false, // ✅ Disabled reconnect revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
+      errorRetryCount: 1, // ✅ Reduced retry count
+      errorRetryInterval: 2000, // ✅ Slower retry interval
+      focusThrottleInterval: 10000, // ✅ 10 seconds - much longer throttle
       keepPreviousData: true, // Keep previous data while revalidating
     }
   );

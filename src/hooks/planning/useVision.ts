@@ -11,6 +11,7 @@ export interface Vision {
 
 /**
  * Custom hook for fetching visions
+ * ✅ OPTIMIZED: Conservative settings for better performance
  */
 export function useVisions() {
   const { 
@@ -22,9 +23,10 @@ export function useVisions() {
     visionKeys.list(),
     () => getVisions(),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 10 * 60 * 1000, // 10 minutes
-      errorRetryCount: 3,
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - already optimized
+      errorRetryCount: 1, // ✅ Reduced retry count
     }
   );
 
