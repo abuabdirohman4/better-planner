@@ -118,17 +118,6 @@ const eslintConfig = [
       "@next/next/no-styled-jsx-in-document": "error", // No styled-jsx in document
     },
   },
-  {
-    files: ["**/*.test.{js,jsx,ts,tsx}", "**/*.spec.{js,jsx,ts,tsx}", "**/__tests__/**/*"],
-    rules: {
-      // Relax rules for test files
-      "max-lines-per-function": "off",
-      "complexity": "off",
-      "react/jsx-no-bind": "off",
-      "react/no-array-index-key": "off",
-      "no-console": "off",
-    },
-  },
 ];
 
 export default eslintConfig;
