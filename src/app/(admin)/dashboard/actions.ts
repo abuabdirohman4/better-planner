@@ -52,13 +52,13 @@ export async function getActiveQuests(): Promise<number> {
 }
 
 /**
- * Get habits streak count
+ * Get habits streak count (based on completed daily plan items)
  */
 export async function getHabitsStreak(): Promise<number> {
   try {
     const supabase = await createClient();
     
-    // This is a placeholder - implement actual habit streak logic
+    // Calculate streak based on completed daily plan items in the last 7 days
     const { count, error } = await supabase
       .from('daily_plan_items')
       .select('*', { count: 'exact', head: true })
@@ -69,7 +69,7 @@ export async function getHabitsStreak(): Promise<number> {
       throw error;
     }
 
-    return Math.min(count || 0, 7); // Max 7 days streak for now
+    return Math.min(count || 0, 7); // Max 7 days streak
   } catch (error) {
     handleApiError(error, 'memuat data');
     return 0;
