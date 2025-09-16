@@ -35,16 +35,24 @@ export default function MainQuestsClient() {
   return (
     <div className="max-w-7xl mx-auto px-2 md:px-0">
       <div className="mb-6">
-        <div className="flex justify-evenly border-b border-gray-200 dark:border-gray-700 mx-36">
-          {quests.map((quest, idx) => (
-            <button
-              key={quest.id}
-              className={`px-4 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
-              onClick={() => setActiveTab(idx)}
-            >
-              HIGH FOCUS GOAL #{idx + 1}
-            </button>
-          ))}
+        {/* Mobile: Horizontal scroll, Desktop: Centered */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex justify-evenly">
+            <div className="flex min-w-max">
+              {quests.map((quest, idx) => (
+                <button
+                  key={quest.id}
+                  className={`px-3 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none whitespace-nowrap text-sm md:text-base md:px-4 ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 
+                    'border-transparent text-gray-500 dark:text-gray-400'}`}
+                  onClick={() => setActiveTab(idx)}
+                >
+                  <span className="hidden sm:inline">HIGH FOCUS GOAL</span>
+                  <span className="sm:hidden">HFG</span>
+                  <span className="ml-1">#{idx + 1}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="mt-6">
           {quests.map((quest, idx) => (

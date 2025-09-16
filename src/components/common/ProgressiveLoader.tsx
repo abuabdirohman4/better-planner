@@ -68,9 +68,9 @@ export function SkeletonLoader({
 }) {
   return (
     <div className={`animate-pulse ${className}`}>
-      {Array.from({ length: lines }).map((_, i) => (
+      {Array.from({ length: lines }, (_, i) => (
         <div
-          key={`skeleton-line-${i}-${lines}`}
+          key={`skeleton-${lines}-line-${i}`}
           className={`h-4 bg-gray-200 rounded mb-2 ${
             i === lines - 1 ? 'w-3/4' : 'w-full'
           }`}

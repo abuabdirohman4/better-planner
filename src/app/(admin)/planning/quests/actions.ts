@@ -172,19 +172,86 @@ export async function getQuests(year: number, quarter: number, isCommitted: bool
     .eq('is_committed', isCommitted)
     .order('priority_score', { ascending: false })
     .limit(3);
-  if (error) return [];
+  
+  console.warn('🔍 getQuests query params:', { year, quarter, isCommitted, user_id: user.id });
+  console.warn('📊 getQuests response:', { data, error });
+  
+  if (error) {
+    console.error('❌ Error fetching quests:', error);
+    return [];
+  }
+  
+  console.warn('✅ Quests found:', data?.length || 0);
+  if (data && data.length > 0) {
+    data.forEach((quest, index) => {
+      console.warn(`📌 Quest ${index + 1}:`, {
+        id: quest.id,
+        title: quest.title,
+        motivation: quest.motivation
+      });
+    });
+  }
+  
+  // Also check if the specific quest ID exists
+  if (data && data.length > 0) {
+    const targetQuestId = '3d3ed8be-c383-4b8f-ba1e-dba1526367a7';
+    const foundQuest = data.find(q => q.id === targetQuestId);
+    if (foundQuest) {
+      console.warn('🎯 Target quest found in results:', foundQuest);
+    } else {
+      console.warn('❌ Target quest NOT found in results. Available quests:', data.map(q => q.id));
+    }
+  }
+  
   return data;
 }
 
 // Ambil semua milestones untuk quest tertentu
 export async function getMilestonesForQuest(questId: string) {
   const supabase = await createClient();
+  console.warn('🔍 Fetching milestones for quest ID:', questId);
+  
+  // First check if quest exists
+  const { data: quest, error: questError } = await supabase
+    .from('quests')
+    .select('id, title')
+    .eq('id', questId)
+    .single();
+  
+  if (questError) {
+    console.error('❌ Quest not found:', questError);
+    return [];
+  }
+  
+  console.warn('✅ Quest found:', quest);
+  
   const { data, error } = await supabase
     .from('milestones')
     .select('id, title, display_order')
     .eq('quest_id', questId)
     .order('display_order', { ascending: true });
-  if (error) return [];
+  
+  console.warn('📊 Supabase response:', { data, error });
+  
+  if (error) {
+    console.error('❌ Error fetching milestones:', error);
+    return [];
+  }
+  
+  console.warn('✅ Milestones found:', data?.length || 0);
+  console.warn('📋 Raw milestones data:', data);
+  
+  // Log each milestone individually
+  if (data && data.length > 0) {
+    data.forEach((milestone, index) => {
+      console.warn(`📌 Milestone ${index + 1}:`, {
+        id: milestone.id,
+        title: milestone.title,
+        display_order: milestone.display_order
+      });
+    });
+  }
+  
   return data;
 }
 

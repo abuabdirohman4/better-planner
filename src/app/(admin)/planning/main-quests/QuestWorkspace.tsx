@@ -40,7 +40,9 @@ function useMilestoneState(questId: string) {
     setLoadingMilestones(true);
     try {
       const data = await getMilestonesForQuest(questId);
-      setMilestones(data || []);
+      // Sort by display_order to ensure correct positioning
+      const sortedData = data?.sort((a, b) => a.display_order - b.display_order) || [];
+      setMilestones(sortedData);
     } finally {
       setLoadingMilestones(false);
     }
@@ -152,10 +154,11 @@ function MilestoneBar({
   return (
     <div className="flex flex-col gap-4 justify-center mb-6">
       {Array.from({ length: 3 }).map((_, idx) => {
-        const milestone = milestones[idx];
+        // Find milestone with display_order matching this position (1-based)
+        const milestone = milestones.find(m => m.display_order === idx + 1);
         return (
           <div
-            key={milestone ? milestone.id : idx}
+            key={milestone ? milestone.id : `empty-${idx}`}
             className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center gap-2 ${activeMilestoneIdx === idx ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700'}`}
             onClick={() => setActiveMilestoneIdx(idx)}
           >
@@ -166,7 +169,7 @@ function MilestoneBar({
                 value={milestone.title}
                 onChange={e => {
                   const newTitle = e.target.value;
-                  setMilestones(ms => ms.map((m, i) => i === idx ? { ...m, title: newTitle } : m));
+                  setMilestones(ms => ms.map(m => m.id === milestone.id ? { ...m, title: newTitle } : m));
                   debouncedSaveMilestone(milestone.id, newTitle);
                 }}
                 onClick={e => e.stopPropagation()}
@@ -246,17 +249,21 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
             {loadingMilestones ? (
               <p className="text-gray-400">Memuat milestone...</p>
             ) : (
-              milestones[activeMilestoneIdx] ? (
-                <MilestoneItem
-                  key={milestones[activeMilestoneIdx].id}
-                  milestone={milestones[activeMilestoneIdx]}
-                  milestoneNumber={activeMilestoneIdx + 1}
-                  onOpenSubtask={setActiveSubTask}
-                  activeSubTask={activeSubTask}
-                />
-              ) : (
-                <p className="text-gray-400">Belum ada milestone untuk quest ini.</p>
-              )
+              (() => {
+                // Find milestone with display_order matching activeMilestoneIdx + 1
+                const activeMilestone = milestones.find(m => m.display_order === activeMilestoneIdx + 1);
+                return activeMilestone ? (
+                  <MilestoneItem
+                    key={activeMilestone.id}
+                    milestone={activeMilestone}
+                    milestoneNumber={activeMilestoneIdx + 1}
+                    onOpenSubtask={setActiveSubTask}
+                    activeSubTask={activeSubTask}
+                  />
+                ) : (
+                  <p className="text-gray-400">Belum ada milestone untuk quest ini.</p>
+                );
+              })()
             )}
           </div>
         </ComponentCard>
@@ -265,7 +272,7 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           <TaskDetailCard
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
-            milestoneId={milestones[activeMilestoneIdx]?.id || ''}
+            milestoneId={milestones.find(m => m.display_order === activeMilestoneIdx + 1)?.id || ''}
           />
         </div> : null}
     </div>

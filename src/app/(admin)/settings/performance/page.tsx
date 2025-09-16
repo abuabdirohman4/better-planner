@@ -5,6 +5,68 @@ import { useState, useEffect, useCallback } from 'react';
 import { getPerformanceMetrics, getPerformanceSummary, exportPerformanceMetrics, clearPerformanceMetrics, setPerformanceMonitoringEnabled, isPerformanceMonitoringEnabled } from '@/lib/performanceUtils';
 import type { PerformanceMetrics } from '@/lib/performanceUtils';
 
+
+// Performance Summary Component
+function PerformanceSummary({ summary }: { summary: any }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Page Views</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.totalPageViews}</p>
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Load Time</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.averageLoadTime.toFixed(2)}ms</p>
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Cache Hit Rate</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.averageCacheHitRate.toFixed(1)}%</p>
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Memory Usage</h3>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{summary.averageMemoryUsage.toFixed(1)}MB</p>
+      </div>
+    </div>
+  );
+}
+
+// Performance Metrics Table Component
+function PerformanceMetricsTable({ metrics }: { metrics: PerformanceMetrics[] }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Performance Metrics</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Page</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Environment</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Load Time</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cache Hit Rate</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Memory Usage</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {metrics.map((metric) => (
+              <tr key={`${metric.pageName}-${metric.timestamp}-${metric.loadTime}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{metric.pageName}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{metric.environment}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{metric.loadTime.toFixed(2)}ms</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{metric.cacheHitRate.toFixed(1)}%</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{metric.memoryUsage.toFixed(1)}MB</td>
+                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{new Date(metric.timestamp).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Performance Dashboard Page
  * Displays performance metrics and analytics for Better Planner
@@ -116,12 +178,6 @@ export default function PerformanceDashboard() {
   //   return envs.sort();
   // };
 
-  const getPerformanceGrade = (loadTime: number) => {
-    if (loadTime < 1000) return { grade: 'A', color: 'text-green-600', bg: 'bg-green-100' };
-    if (loadTime < 2000) return { grade: 'B', color: 'text-yellow-600', bg: 'bg-yellow-100' };
-    if (loadTime < 3000) return { grade: 'C', color: 'text-orange-600', bg: 'bg-orange-100' };
-    return { grade: 'D', color: 'text-red-600', bg: 'bg-red-100' };
-  };
 
   if (isLoading) {
     return (
@@ -168,69 +224,7 @@ export default function PerformanceDashboard() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pages</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{summary.totalPages}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Load Time</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {summary.averageLoadTime.toFixed(0)}ms
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Cache Hit Rate</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {(summary.averageCacheHitRate * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Network Requests</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {summary.averageNetworkRequests.toFixed(0)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PerformanceSummary summary={summary} />
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
@@ -311,80 +305,7 @@ export default function PerformanceDashboard() {
         </div>
 
         {/* Performance Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Performance Metrics ({metrics.length} entries)
-            </h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Page
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Load Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Cache Hit Rate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Network Requests
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Environment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Timestamp
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {metrics.map((metric, index) => {
-                  const grade = getPerformanceGrade(metric.loadTime);
-                  return (
-                    <tr key={`metric-${metric.pageName}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {metric.pageName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${grade.bg} ${grade.color}`}>
-                            {grade.grade}
-                          </span>
-                          <span className="ml-2 text-sm text-gray-900 dark:text-white">
-                            {metric.loadTime.toFixed(0)}ms
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {(metric.cacheHitRate * 100).toFixed(1)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {metric.networkRequests}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          metric.environment === 'production' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        }`}>
-                          {metric.environment}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(metric.timestamp).toLocaleString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <PerformanceMetricsTable metrics={metrics} />
       </div>
     </div>
   );
