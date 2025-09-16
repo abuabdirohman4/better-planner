@@ -19,7 +19,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Checkbox from '@/components/form/input/Checkbox';
 import InputField from '@/components/form/input/InputField';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { CloseLineIcon } from '@/icons';
+import ComponentCard from '@/components/common/ComponentCard';
 
 import { updateTask, addTask, updateTaskStatus, deleteTask, updateTaskDisplayOrder, getSubtasksForTask } from '../quests/actions';
 
@@ -496,23 +496,6 @@ function SubtaskInput({ subtask, idx, setEditSubtaskId, setFocusSubtaskId, handl
   );
 }
 
-// Component for task header
-function TaskHeader({ task, onBack }: { task: { title: string }; onBack: () => void }) {
-  return (
-    <div className="relative flex items-center mb-4 min-h-[40px]">
-      <button
-        onClick={onBack}
-        className="absolute right-0 p-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-        aria-label="Tutup"
-      >
-        <CloseLineIcon className="w-4 h-4 text-gray-500" />
-      </button>
-      <div className="flex-1 flex justify-center">
-        <div className="font-bold text-lg text-center">{task.title}</div>
-      </div>
-    </div>
-  );
-}
 
 // Component for subtask list
 function SubtaskList({ 
@@ -628,24 +611,31 @@ export default function TaskDetailCard({ task, onBack, milestoneId }: { task: { 
 
   return (
     <div className="flex-1 max-w-2xl mx-auto">
-      <TaskHeader task={task} onBack={onBack} />
-      <SubtaskList
-        subtasks={subtasks}
-        loadingSubtasks={loadingSubtasks}
-        newSubtaskTitle={newSubtaskTitle}
-        setNewSubtaskTitle={setNewSubtaskTitle}
-        newSubtaskLoading={newSubtaskLoading}
-        handleBulkPasteEmpty={handleBulkPasteEmptyWrapper}
-        handleSubtaskEnter={handleSubtaskEnter}
-        handleSubtaskEnterWithOverride={handleSubtaskEnterWithOverride}
-        handleCheck={handleCheck}
-        focusSubtaskId={focusSubtaskId}
-        setFocusSubtaskId={setFocusSubtaskId}
-        draftTitles={draftTitles}
-        handleDraftTitleChange={handleDraftTitleChange}
-        handleDeleteSubtask={handleDeleteSubtaskWithFocus}
-        handleDragEnd={handleDragEnd}
-      />
+      <ComponentCard 
+        title={task.title} 
+        className='' 
+        classNameTitle='text-center text-xl !font-extrabold' 
+        classNameHeader="pb-0"
+        onClose={onBack}
+      >
+        <SubtaskList
+          subtasks={subtasks}
+          loadingSubtasks={loadingSubtasks}
+          newSubtaskTitle={newSubtaskTitle}
+          setNewSubtaskTitle={setNewSubtaskTitle}
+          newSubtaskLoading={newSubtaskLoading}
+          handleBulkPasteEmpty={handleBulkPasteEmptyWrapper}
+          handleSubtaskEnter={handleSubtaskEnter}
+          handleSubtaskEnterWithOverride={handleSubtaskEnterWithOverride}
+          handleCheck={handleCheck}
+          focusSubtaskId={focusSubtaskId}
+          setFocusSubtaskId={setFocusSubtaskId}
+          draftTitles={draftTitles}
+          handleDraftTitleChange={handleDraftTitleChange}
+          handleDeleteSubtask={handleDeleteSubtaskWithFocus}
+          handleDragEnd={handleDragEnd}
+        />
+      </ComponentCard>
     </div>
   );
 } 

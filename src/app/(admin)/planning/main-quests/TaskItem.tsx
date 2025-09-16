@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 // import Checkbox from '@/components/form/input/Checkbox';
 import { updateTask } from '../quests/actions';
@@ -13,6 +13,7 @@ interface TaskItemProps {
   onNavigateDown?: () => void;
   canNavigateUp?: boolean;
   canNavigateDown?: boolean;
+  onSelect?: () => void;
 }
 
 export default function TaskItem({ 
@@ -23,9 +24,9 @@ export default function TaskItem({
   onNavigateUp, 
   onNavigateDown, 
   canNavigateUp = true, 
-  canNavigateDown = true 
+  canNavigateDown = true,
+  onSelect
 }: TaskItemProps) {
-  const [subtasks, setSubtasks] = useState<{ id: string; title: string; status: 'TODO' | 'DONE' }[]>([]);
   const [editValue, setEditValue] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -47,7 +48,6 @@ export default function TaskItem({
     try {
       await updateTask(task.id, editValue.trim());
       setHasChanges(false);
-      fetchSubtasks();
     } catch (error) {
       console.error('Failed to save task:', error);
     } finally {
@@ -55,22 +55,12 @@ export default function TaskItem({
     }
   };
 
-  const fetchSubtasks = () => {
-    (async () => {
-      try {
-        setSubtasks([]);
-      } catch {
-        setSubtasks([]);
-      }
-    })();
-  };
-
-  useEffect(() => {
-    fetchSubtasks();
-  }, [task.id]);
 
   return (
-    <div className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md ${active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>
+    <div 
+      className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
+      onClick={() => onSelect?.()}
+    >
       <div className='flex gap-2 w-full items-center'>
         {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
         <input
@@ -99,6 +89,14 @@ export default function TaskItem({
               handleSave();
             }
           }}
+          onClick={e => {
+            e.stopPropagation();
+            onOpenSubtask?.();
+          }}
+          onFocus={() => {
+            onSelect?.();
+            onOpenSubtask?.();
+          }}
           ref={editInputRef}
           data-task-idx={orderNumber ? orderNumber - 1 : 0}
           placeholder=""
@@ -106,7 +104,10 @@ export default function TaskItem({
       </div>
       <div className="flex items-center gap-2">
         <button
-          onClick={handleSave}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSave();
+          }}
           disabled={!hasChanges || isSaving}
           className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
           title="Klik untuk menyimpan atau tekan Enter"
@@ -127,9 +128,6 @@ export default function TaskItem({
               Edit
             </>
           )}
-        </button>
-        <button onClick={onOpenSubtask} className="text-xs border px-2 py-1.5 ml-3 rounded-lg whitespace-nowrap min-w-[90px] bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300">
-          {subtasks.length > 0 ? 'See Details' : 'Add Detail'}
         </button>
       </div>
     </div>

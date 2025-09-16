@@ -1,5 +1,7 @@
 import React from "react";
 
+import { CloseLineIcon } from "@/icons";
+
 interface ComponentCardProps {
   title: string;
   children: React.ReactNode;
@@ -7,6 +9,7 @@ interface ComponentCardProps {
   classNameTitle?: string; // Additional custom classes for styling
   classNameHeader?: string; // Additional custom classes for styling
   desc?: string; // Description text
+  onClose?: () => void; // Close button handler
 }
 
 const ComponentCard: React.FC<ComponentCardProps> = ({
@@ -16,13 +19,23 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   classNameTitle = "",
   classNameHeader = "",
   desc = "",
+  onClose,
 }) => {
   return (
     <div
       className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
     >
       {/* Card Header */}
-      <div className={`px-6 py-5 ${classNameHeader}`}>
+      <div className={`px-6 py-5 relative ${classNameHeader}`}>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            aria-label="Tutup"
+          >
+            <CloseLineIcon className="w-4 h-4 text-gray-500" />
+          </button>
+        )}
         <h3 className={`text-base font-medium text-gray-800 dark:text-white/90 ${classNameTitle}`}>
           {title}
         </h3>
