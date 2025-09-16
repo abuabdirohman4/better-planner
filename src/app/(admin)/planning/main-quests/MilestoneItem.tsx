@@ -9,6 +9,7 @@ interface Task {
   title: string;
   status: 'TODO' | 'DONE';
   parent_task_id?: string | null;
+  display_order?: number;
 }
 
 interface MilestoneItemProps {
@@ -23,82 +24,41 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [newTaskInputs, setNewTaskInputs] = useState(['', '', '']);
   const [newTaskLoading, setNewTaskLoading] = useState([false, false, false]);
-  const [lastSubmittedTask, setLastSubmittedTask] = useState(['', '', '']);
   const [activeTaskIdx, setActiveTaskIdx] = useState(0);
 
   const fetchTasks = async () => {
     setLoadingTasks(true);
     try {
       const data = await getTasksForMilestone(milestone.id);
-      setTasks((data || []).filter((t: Task) => !t.parent_task_id)); // hanya tugas utama
+      // Filter dan urutkan berdasarkan display_order
+      const filteredTasks = (data || []).filter((t: Task) => !t.parent_task_id);
+      const sortedTasks = filteredTasks.sort((a: Task, b: Task) => (a.display_order || 0) - (b.display_order || 0));
+      setTasks(sortedTasks);
     } finally {
       setLoadingTasks(false);
     }
   };
 
-  // Debounce submit task utama berbasis useEffect per slot (3 useEffect terpisah)
-  useEffect(() => {
-    const val = newTaskInputs[0];
-    if (!val || val === lastSubmittedTask[0]) return;
-    const handler = setTimeout(async () => {
-      setNewTaskLoading(l => l.map((v, i) => i === 0 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('milestone_id', milestone.id);
-        formData.append('title', val);
-        await addTask(formData);
-        fetchTasks();
-        setNewTaskInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
-        setLastSubmittedTask(vals => vals.map((v, i) => i === 0 ? val : v));
-      } finally {
-        setNewTaskLoading(l => l.map((v, i) => i === 0 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newTaskInputs[0], milestone.id]);
+  // Function to save new task
+  const handleSaveTask = async (idx: number) => {
+    const val = newTaskInputs[idx];
+    if (!val.trim()) return;
 
-  useEffect(() => {
-    const val = newTaskInputs[1];
-    if (!val || val === lastSubmittedTask[1]) return;
-    const handler = setTimeout(async () => {
-      setNewTaskLoading(l => l.map((v, i) => i === 1 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('milestone_id', milestone.id);
-        formData.append('title', val);
-        await addTask(formData);
-        fetchTasks();
-        setNewTaskInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
-        setLastSubmittedTask(vals => vals.map((v, i) => i === 1 ? val : v));
-      } finally {
-        setNewTaskLoading(l => l.map((v, i) => i === 1 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newTaskInputs[1], milestone.id]);
-
-  useEffect(() => {
-    const val = newTaskInputs[2];
-    if (!val || val === lastSubmittedTask[2]) return;
-    const handler = setTimeout(async () => {
-      setNewTaskLoading(l => l.map((v, i) => i === 2 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('milestone_id', milestone.id);
-        formData.append('title', val);
-        await addTask(formData);
-        fetchTasks();
-        setNewTaskInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
-        setLastSubmittedTask(vals => vals.map((v, i) => i === 2 ? val : v));
-      } finally {
-        setNewTaskLoading(l => l.map((v, i) => i === 2 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newTaskInputs[2], milestone.id]);
+    setNewTaskLoading(l => l.map((v, i) => i === idx ? true : v));
+    try {
+      const formData = new FormData();
+      formData.append('milestone_id', milestone.id);
+      formData.append('title', val.trim());
+      formData.append('display_order', String(idx + 1)); // Kirim posisi yang sesuai (1-based)
+      await addTask(formData);
+      fetchTasks();
+      setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
+    } catch (error) {
+      console.error('Failed to save task:', error);
+    } finally {
+      setNewTaskLoading(l => l.map((v, i) => i === idx ? false : v));
+    }
+  };
 
   useEffect(() => {
     fetchTasks();
@@ -167,7 +127,10 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                           setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
                         }}
                         onKeyDown={e => {
-                          if (e.key === 'ArrowUp') {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveTask(idx);
+                          } else if (e.key === 'ArrowUp') {
                             e.preventDefault();
                             if (idx > 0) {
                               setActiveTaskIdx(idx - 1);
@@ -190,6 +153,15 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                         disabled={newTaskLoading[idx]}
                         data-task-idx={idx}
                         />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSaveTask(idx)}
+                        disabled={!newTaskInputs[idx].trim() || newTaskLoading[idx]}
+                        className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {newTaskLoading[idx] ? 'Saving...' : 'Save'}
+                      </button>
                     </div>
                   </div>
                 );

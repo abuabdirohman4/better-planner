@@ -260,11 +260,33 @@ export async function getTasksForMilestone(milestoneId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, title, status')
+    .select('id, title, status, display_order')
     .eq('milestone_id', milestoneId)
     .is('parent_task_id', null)
     .order('display_order', { ascending: true });
   if (error) return [];
+  
+  // Jika ada task tanpa display_order, perbaiki otomatis
+  const tasksToUpdate = data?.filter(task => !task.display_order || task.display_order === 0);
+  if (tasksToUpdate && tasksToUpdate.length > 0) {
+    for (let i = 0; i < tasksToUpdate.length; i++) {
+      const task = tasksToUpdate[i];
+      const newOrder = i + 1;
+      await supabase
+        .from('tasks')
+        .update({ display_order: newOrder })
+        .eq('id', task.id);
+    }
+    // Fetch ulang data setelah update
+    const { data: updatedData } = await supabase
+      .from('tasks')
+      .select('id, title, status, display_order')
+      .eq('milestone_id', milestoneId)
+      .is('parent_task_id', null)
+      .order('display_order', { ascending: true });
+    return updatedData || [];
+  }
+  
   return data;
 }
 
@@ -273,19 +295,29 @@ export async function addMilestone(formData: FormData) {
   const supabase = await createClient();
   const quest_id = formData.get('quest_id');
   const title = formData.get('title');
+  const display_order = formData.get('display_order');
+  
   if (!quest_id || !title) throw new Error('quest_id dan title wajib diisi');
-  // Hitung display_order terakhir
-  const { data: last } = await supabase
-    .from('milestones')
-    .select('display_order')
-    .eq('quest_id', quest_id)
-    .order('display_order', { ascending: false })
-    .limit(1)
-    .single();
-  const nextOrder = last && last.display_order ? last.display_order + 1 : 1;
+  
+  // Gunakan display_order yang dikirim dari frontend, atau hitung otomatis jika tidak ada
+  let order = 1;
+  if (display_order) {
+    order = parseInt(display_order.toString());
+  } else {
+    // Fallback: hitung display_order terakhir
+    const { data: last } = await supabase
+      .from('milestones')
+      .select('display_order')
+      .eq('quest_id', quest_id)
+      .order('display_order', { ascending: false })
+      .limit(1)
+      .single();
+    order = last && last.display_order ? last.display_order + 1 : 1;
+  }
+  
   const { error } = await supabase
     .from('milestones')
-    .insert({ quest_id, title, display_order: nextOrder });
+    .insert({ quest_id, title, display_order: order });
   if (error) throw new Error('Gagal menambah milestone: ' + (error.message || ''));
   revalidatePath('/planning/main-quests');
   return { message: 'Milestone berhasil ditambahkan!' };
@@ -341,6 +373,21 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
     }
   } else {
     insertData.type = 'MAIN_QUEST';
+    // Hitung display_order untuk task utama berdasarkan posisi input
+    if (display_order !== undefined && display_order !== null) {
+      insertData.display_order = Number(display_order);
+    } else {
+      // Fallback: hitung display_order terakhir untuk milestone ini
+      const { data: lastTask } = await supabase
+        .from('tasks')
+        .select('display_order')
+        .eq('milestone_id', milestone_id)
+        .is('parent_task_id', null)
+        .order('display_order', { ascending: false })
+        .limit(1)
+        .single();
+      insertData.display_order = lastTask && lastTask.display_order ? lastTask.display_order + 1 : 1;
+    }
   }
   const { data, error } = await supabase
     .from('tasks')

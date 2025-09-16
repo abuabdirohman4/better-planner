@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 
-import { updateQuestMotivation, updateMilestone, getMilestonesForQuest } from '../quests/actions';
+import { updateQuestMotivation, updateMilestone, getMilestonesForQuest, addMilestone } from '../quests/actions';
 
 import MilestoneItem from './MilestoneItem';
 import TaskDetailCard from './TaskDetailCard';
@@ -26,15 +26,7 @@ function useMilestoneState(questId: string) {
   const [loadingMilestones, setLoadingMilestones] = useState(true);
   const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
   const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
-  const [lastSubmittedMilestone, setLastSubmittedMilestone] = useState(['', '', '']);
-
-  const debouncedSaveMilestone = useMemo(() => 
-    debounce(async (id: string, val: string) => {
-      try {
-        await updateMilestone(id, val);
-      } catch {}
-    }, 1500)
-  , []);
+  const [milestoneLoading, setMilestoneLoading] = useState<Record<string, boolean>>({});
 
   const fetchMilestones = useCallback(async () => {
     setLoadingMilestones(true);
@@ -48,69 +40,38 @@ function useMilestoneState(questId: string) {
     }
   }, [questId]);
 
-  // Debounce submit milestone berbasis useEffect per slot (3 useEffect terpisah)
-  useEffect(() => {
-    const val = newMilestoneInputs[0];
-    const lastVal = lastSubmittedMilestone[0];
-    if (!val || val === lastVal) return;
-    const handler = setTimeout(async () => {
-      setNewMilestoneLoading(l => l.map((v, i) => i === 0 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('quest_id', questId);
-        formData.append('title', val);
-        fetchMilestones();
-        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 0 ? '' : v));
-        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 0 ? val : v));
-      } finally {
-        setNewMilestoneLoading(l => l.map((v, i) => i === 0 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[0], lastSubmittedMilestone[0], questId, fetchMilestones]);
+  // Function to save new milestone
+  const handleSaveNewMilestone = async (idx: number) => {
+    const val = newMilestoneInputs[idx];
+    if (!val.trim()) return;
 
-  useEffect(() => {
-    const val = newMilestoneInputs[1];
-    const lastVal = lastSubmittedMilestone[1];
-    if (!val || val === lastVal) return;
-    const handler = setTimeout(async () => {
-      setNewMilestoneLoading(l => l.map((v, i) => i === 1 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('quest_id', questId);
-        formData.append('title', val);
-        fetchMilestones();
-        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 1 ? '' : v));
-        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 1 ? val : v));
-      } finally {
-        setNewMilestoneLoading(l => l.map((v, i) => i === 1 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[1], lastSubmittedMilestone[1], questId, fetchMilestones]);
+    setNewMilestoneLoading(l => l.map((v, i) => i === idx ? true : v));
+    try {
+      const formData = new FormData();
+      formData.append('quest_id', questId);
+      formData.append('title', val.trim());
+      formData.append('display_order', String(idx + 1)); // Kirim posisi yang sesuai (1-based)
+      await addMilestone(formData);
+      fetchMilestones();
+      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
+    } catch (error) {
+      console.error('Failed to save milestone:', error);
+    } finally {
+      setNewMilestoneLoading(l => l.map((v, i) => i === idx ? false : v));
+    }
+  };
 
-  useEffect(() => {
-    const val = newMilestoneInputs[2];
-    const lastVal = lastSubmittedMilestone[2];
-    if (!val || val === lastVal) return;
-    const handler = setTimeout(async () => {
-      setNewMilestoneLoading(l => l.map((v, i) => i === 2 ? true : v));
-      try {
-        const formData = new FormData();
-        formData.append('quest_id', questId);
-        formData.append('title', val);
-        fetchMilestones();
-        setNewMilestoneInputs(inputs => inputs.map((v, i) => i === 2 ? '' : v));
-        setLastSubmittedMilestone(vals => vals.map((v, i) => i === 2 ? val : v));
-      } finally {
-        setNewMilestoneLoading(l => l.map((v, i) => i === 2 ? false : v));
-      }
-    }, 1500);
-    return () => clearTimeout(handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newMilestoneInputs[2], lastSubmittedMilestone[2], questId, fetchMilestones]);
+  // Function to save existing milestone
+  const handleSaveMilestone = async (id: string, val: string) => {
+    setMilestoneLoading(prev => ({ ...prev, [id]: true }));
+    try {
+      await updateMilestone(id, val);
+    } catch (error) {
+      console.error('Failed to save milestone:', error);
+    } finally {
+      setMilestoneLoading(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   useEffect(() => {
     fetchMilestones();
@@ -124,9 +85,9 @@ function useMilestoneState(questId: string) {
     setNewMilestoneInputs,
     newMilestoneLoading,
     setNewMilestoneLoading,
-    lastSubmittedMilestone,
-    setLastSubmittedMilestone,
-    debouncedSaveMilestone,
+    milestoneLoading,
+    handleSaveNewMilestone,
+    handleSaveMilestone,
     fetchMilestones
   };
 }
@@ -138,18 +99,22 @@ function MilestoneBar({
   newMilestoneInputs,
   setNewMilestoneInputs,
   newMilestoneLoading,
+  milestoneLoading,
   activeMilestoneIdx,
   setActiveMilestoneIdx,
-  debouncedSaveMilestone
+  handleSaveNewMilestone,
+  handleSaveMilestone
 }: {
   milestones: Milestone[];
   setMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>;
   newMilestoneInputs: string[];
   setNewMilestoneInputs: React.Dispatch<React.SetStateAction<string[]>>;
   newMilestoneLoading: boolean[];
+  milestoneLoading: Record<string, boolean>;
   activeMilestoneIdx: number;
   setActiveMilestoneIdx: (idx: number) => void;
-  debouncedSaveMilestone: (id: string, val: string) => void;
+  handleSaveNewMilestone: (idx: number) => void;
+  handleSaveMilestone: (id: string, val: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 justify-center mb-6">
@@ -164,78 +129,101 @@ function MilestoneBar({
           >
             <span className="font-bold text-lg w-6 text-center select-none">{idx + 1}.</span>
             {milestone ? (
-              <input
-                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-0"
-                value={milestone.title}
-                onChange={e => {
-                  const newTitle = e.target.value;
-                  setMilestones(ms => ms.map(m => m.id === milestone.id ? { ...m, title: newTitle } : m));
-                  debouncedSaveMilestone(milestone.id, newTitle);
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (idx > 0) {
-                      setActiveMilestoneIdx(idx - 1);
-                      // Focus the input in the previous milestone
-                      setTimeout(() => {
-                        const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
-                        prevInput?.focus();
-                      }, 0);
+              <div className="flex gap-2 w-full">
+                <input
+                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-0"
+                  value={milestone.title}
+                  onChange={e => {
+                    const newTitle = e.target.value;
+                    setMilestones(ms => ms.map(m => m.id === milestone.id ? { ...m, title: newTitle } : m));
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveMilestone(milestone.id, milestone.title);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      if (idx > 0) {
+                        setActiveMilestoneIdx(idx - 1);
+                        // Focus the input in the previous milestone
+                        setTimeout(() => {
+                          const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
+                          prevInput?.focus();
+                        }, 0);
+                      }
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      if (idx < 2) {
+                        setActiveMilestoneIdx(idx + 1);
+                        // Focus the input in the next milestone
+                        setTimeout(() => {
+                          const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
+                          nextInput?.focus();
+                        }, 0);
+                      }
                     }
-                  } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (idx < 2) {
-                      setActiveMilestoneIdx(idx + 1);
-                      // Focus the input in the next milestone
-                      setTimeout(() => {
-                        const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                      }, 0);
-                    }
-                  }
-                }}
-                onClick={e => e.stopPropagation()}
-                onFocus={() => setActiveMilestoneIdx(idx)}
-                data-milestone-idx={idx}
-              />
+                  }}
+                  onClick={e => e.stopPropagation()}
+                  onFocus={() => setActiveMilestoneIdx(idx)}
+                  data-milestone-idx={idx}
+                />
+                <button
+                  onClick={() => handleSaveMilestone(milestone.id, milestone.title)}
+                  disabled={milestoneLoading[milestone.id]}
+                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {milestoneLoading[milestone.id] ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             ) : (
-              <input
-                className="border rounded px-2 py-2 text-sm w-full bg-white dark:bg-gray-900 focus:outline-none focus:ring-0"
-                placeholder={`Tambah milestone ${idx + 1}...`}
-                value={newMilestoneInputs[idx]}
-                onChange={e => {
-                  const val = e.target.value;
-                  setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (idx > 0) {
-                      setActiveMilestoneIdx(idx - 1);
-                      // Focus the input in the previous milestone
-                      setTimeout(() => {
-                        const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
-                        prevInput?.focus();
-                      }, 0);
+              <div className="flex gap-2 w-full">
+                <input
+                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 focus:outline-none focus:ring-0"
+                  placeholder={`Tambah milestone ${idx + 1}...`}
+                  value={newMilestoneInputs[idx]}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveNewMilestone(idx);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      if (idx > 0) {
+                        setActiveMilestoneIdx(idx - 1);
+                        // Focus the input in the previous milestone
+                        setTimeout(() => {
+                          const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
+                          prevInput?.focus();
+                        }, 0);
+                      }
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      if (idx < 2) {
+                        setActiveMilestoneIdx(idx + 1);
+                        // Focus the input in the next milestone
+                        setTimeout(() => {
+                          const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
+                          nextInput?.focus();
+                        }, 0);
+                      }
                     }
-                  } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (idx < 2) {
-                      setActiveMilestoneIdx(idx + 1);
-                      // Focus the input in the next milestone
-                      setTimeout(() => {
-                        const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
-                        nextInput?.focus();
-                      }, 0);
-                    }
-                  }
-                }}
-                disabled={newMilestoneLoading[idx]}
-                onClick={e => e.stopPropagation()}
-                onFocus={() => setActiveMilestoneIdx(idx)}
-                data-milestone-idx={idx}
-              />
+                  }}
+                  disabled={newMilestoneLoading[idx]}
+                  onClick={e => e.stopPropagation()}
+                  onFocus={() => setActiveMilestoneIdx(idx)}
+                  data-milestone-idx={idx}
+                />
+                <button
+                  onClick={() => handleSaveNewMilestone(idx)}
+                  disabled={!newMilestoneInputs[idx].trim() || newMilestoneLoading[idx]}
+                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {newMilestoneLoading[idx] ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             )}
           </div>
         );
@@ -256,7 +244,9 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
     newMilestoneInputs,
     setNewMilestoneInputs,
     newMilestoneLoading,
-    debouncedSaveMilestone
+    milestoneLoading,
+    handleSaveNewMilestone,
+    handleSaveMilestone
   } = useMilestoneState(quest.id);
 
   const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -289,9 +279,11 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
             newMilestoneInputs={newMilestoneInputs}
             setNewMilestoneInputs={setNewMilestoneInputs}
             newMilestoneLoading={newMilestoneLoading}
+            milestoneLoading={milestoneLoading}
             activeMilestoneIdx={activeMilestoneIdx}
             setActiveMilestoneIdx={setActiveMilestoneIdx}
-            debouncedSaveMilestone={debouncedSaveMilestone}
+            handleSaveNewMilestone={handleSaveNewMilestone}
+            handleSaveMilestone={handleSaveMilestone}
           />
           <div className="space-y-4 mb-4">
             {loadingMilestones ? (

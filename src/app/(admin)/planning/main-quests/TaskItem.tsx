@@ -1,6 +1,5 @@
 "use client";
-import debounce from 'lodash/debounce';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // import Checkbox from '@/components/form/input/Checkbox';
 import { updateTask } from '../quests/actions';
@@ -28,23 +27,25 @@ export default function TaskItem({
 }: TaskItemProps) {
   const [subtasks, setSubtasks] = useState<{ id: string; title: string; status: 'TODO' | 'DONE' }[]>([]);
   const [editValue, setEditValue] = useState(task.title);
+  const [isSaving, setIsSaving] = useState(false);
   const editInputRef = useRef<HTMLInputElement | null>(null);
-
-  const debouncedSaveTask = useMemo(() =>
-    debounce(async (val: string) => {
-      try {
-        await updateTask(task.id, val);
-        fetchSubtasks();
-      } catch {}
-      if (editInputRef.current) {
-        editInputRef.current.focus();
-      }
-    }, 1500)
-  , [task.id]);
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditValue(e.target.value);
-    debouncedSaveTask(e.target.value);
+  };
+
+  const handleSave = async () => {
+    if (editValue.trim() === task.title) return; // No changes
+    
+    setIsSaving(true);
+    try {
+      await updateTask(task.id, editValue.trim());
+      fetchSubtasks();
+    } catch (error) {
+      console.error('Failed to save task:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const fetchSubtasks = () => {
@@ -77,7 +78,10 @@ export default function TaskItem({
           value={editValue}
           onChange={handleEditChange}
           onKeyDown={e => {
-            if (e.key === 'ArrowUp') {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleSave();
+            } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               if (canNavigateUp && onNavigateUp) {
                 onNavigateUp();
@@ -94,6 +98,13 @@ export default function TaskItem({
         />
       </div>
       <div className="flex items-center gap-2">
+        <button
+          onClick={handleSave}
+          disabled={editValue.trim() === task.title || isSaving}
+          className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        >
+          {isSaving ? 'Saving...' : 'Save'}
+        </button>
         <button onClick={onOpenSubtask} className="text-xs border px-2 py-1.5 ml-3 rounded-lg whitespace-nowrap min-w-[90px] bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300">
           {subtasks.length > 0 ? 'See Details' : 'Add Detail'}
         </button>

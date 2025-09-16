@@ -11,4 +11,4 @@
 - [ ] PWA install for mobile
 - [ ] Mobile responsive with bottom navigation
 - [ ] Daily Sync : add what have done & what next
-
+- [ ] Main Quest : Add button for milestone & task item
