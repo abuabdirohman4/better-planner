@@ -23,10 +23,12 @@ interface Task {
 // Custom hook for milestone state and logic
 function useMilestoneState(questId: string) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [originalMilestones, setOriginalMilestones] = useState<Milestone[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(true);
   const [newMilestoneInputs, setNewMilestoneInputs] = useState(['', '', '']);
   const [newMilestoneLoading, setNewMilestoneLoading] = useState([false, false, false]);
   const [milestoneLoading, setMilestoneLoading] = useState<Record<string, boolean>>({});
+  const [milestoneChanges, setMilestoneChanges] = useState<Record<string, boolean>>({});
 
   const fetchMilestones = useCallback(async () => {
     setLoadingMilestones(true);
@@ -35,6 +37,7 @@ function useMilestoneState(questId: string) {
       // Sort by display_order to ensure correct positioning
       const sortedData = data?.sort((a, b) => a.display_order - b.display_order) || [];
       setMilestones(sortedData);
+      setOriginalMilestones(sortedData); // Simpan data original
     } finally {
       setLoadingMilestones(false);
     }
@@ -66,6 +69,8 @@ function useMilestoneState(questId: string) {
     setMilestoneLoading(prev => ({ ...prev, [id]: true }));
     try {
       await updateMilestone(id, val);
+      // Clear change tracking after successful save
+      setMilestoneChanges(prev => ({ ...prev, [id]: false }));
       // Refresh data setelah update untuk memastikan sync
       fetchMilestones();
     } catch (error) {
@@ -75,6 +80,18 @@ function useMilestoneState(questId: string) {
     }
   };
 
+  // Function to handle milestone title change
+  const handleMilestoneChange = (id: string, newTitle: string) => {
+    setMilestones(ms => ms.map(m => m.id === id ? { ...m, title: newTitle } : m));
+    // Find original milestone to compare (dari originalMilestones yang tidak berubah)
+    const originalMilestone = originalMilestones.find(m => m.id === id);
+    // Mark as changed only if different from original and not empty
+    setMilestoneChanges(prev => ({ 
+      ...prev, 
+      [id]: newTitle.trim() !== originalMilestone?.title && newTitle.trim() !== '' 
+    }));
+  };
+
   useEffect(() => {
     fetchMilestones();
   }, [questId, fetchMilestones]);
@@ -82,14 +99,17 @@ function useMilestoneState(questId: string) {
   return {
     milestones,
     setMilestones,
+    originalMilestones,
     loadingMilestones,
     newMilestoneInputs,
     setNewMilestoneInputs,
     newMilestoneLoading,
     setNewMilestoneLoading,
     milestoneLoading,
+    milestoneChanges,
     handleSaveNewMilestone,
     handleSaveMilestone,
+    handleMilestoneChange,
     fetchMilestones
   };
 }
@@ -97,26 +117,28 @@ function useMilestoneState(questId: string) {
 // MilestoneBar component
 function MilestoneBar({
   milestones,
-  setMilestones,
   newMilestoneInputs,
   setNewMilestoneInputs,
   newMilestoneLoading,
   milestoneLoading,
+  milestoneChanges,
   activeMilestoneIdx,
   setActiveMilestoneIdx,
   handleSaveNewMilestone,
-  handleSaveMilestone
+  handleSaveMilestone,
+  handleMilestoneChange
 }: {
   milestones: Milestone[];
-  setMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>;
   newMilestoneInputs: string[];
   setNewMilestoneInputs: React.Dispatch<React.SetStateAction<string[]>>;
   newMilestoneLoading: boolean[];
   milestoneLoading: Record<string, boolean>;
+  milestoneChanges: Record<string, boolean>;
   activeMilestoneIdx: number;
   setActiveMilestoneIdx: (idx: number) => void;
   handleSaveNewMilestone: (idx: number) => void;
   handleSaveMilestone: (id: string, val: string) => void;
+  handleMilestoneChange: (id: string, newTitle: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 justify-center mb-6">
@@ -133,17 +155,20 @@ function MilestoneBar({
             {milestone ? (
               <div className="flex gap-2 w-full">
                 <input
-                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+                  className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none transition-all"
                   value={milestone.title}
-                  onChange={e => {
-                    const newTitle = e.target.value;
-                    setMilestones(ms => ms.map(m => m.id === milestone.id ? { ...m, title: newTitle } : m));
-                  }}
+                   onChange={e => {
+                     const newTitle = e.target.value;
+                     handleMilestoneChange(milestone.id, newTitle);
+                   }}
                   onKeyDown={e => {
+                    // Prevent Enter key if button is disabled
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleSaveMilestone(milestone.id, milestone.title);
+                      if (milestoneChanges[milestone.id] && !milestoneLoading[milestone.id]) {
+                        handleSaveMilestone(milestone.id, milestone.title);
+                      }
                     } else if (e.key === 'ArrowUp') {
                       e.preventDefault();
                       if (idx > 0) {
@@ -171,12 +196,12 @@ function MilestoneBar({
                   data-milestone-idx={idx}
                   placeholder=""
                 />
-                <button
-                  onClick={() => handleSaveMilestone(milestone.id, milestone.title)}
-                  disabled={milestoneLoading[milestone.id]}
-                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
-                  title="Klik untuk menyimpan atau tekan Enter"
-                >
+                 <button
+                   onClick={() => handleSaveMilestone(milestone.id, milestone.title)}
+                   disabled={!milestoneChanges[milestone.id] || milestoneLoading[milestone.id]}
+                   className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
+                   title="Klik untuk menyimpan atau tekan Enter"
+                 >
                   {milestoneLoading[milestone.id] ? (
                     <>
                       <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -275,14 +300,15 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
 
   const {
     milestones,
-    setMilestones,
     loadingMilestones,
     newMilestoneInputs,
     setNewMilestoneInputs,
     newMilestoneLoading,
     milestoneLoading,
+    milestoneChanges,
     handleSaveNewMilestone,
-    handleSaveMilestone
+    handleSaveMilestone,
+    handleMilestoneChange
   } = useMilestoneState(quest.id);
 
   const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -311,15 +337,16 @@ export default function QuestWorkspace({ quest }: { quest: { id: string; title: 
           <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
           <MilestoneBar
             milestones={milestones}
-            setMilestones={setMilestones}
             newMilestoneInputs={newMilestoneInputs}
             setNewMilestoneInputs={setNewMilestoneInputs}
             newMilestoneLoading={newMilestoneLoading}
             milestoneLoading={milestoneLoading}
+            milestoneChanges={milestoneChanges}
             activeMilestoneIdx={activeMilestoneIdx}
             setActiveMilestoneIdx={setActiveMilestoneIdx}
             handleSaveNewMilestone={handleSaveNewMilestone}
             handleSaveMilestone={handleSaveMilestone}
+            handleMilestoneChange={handleMilestoneChange}
           />
           <div className="space-y-4 mb-4">
             {loadingMilestones ? (

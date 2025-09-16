@@ -64,7 +64,7 @@ export default function TaskItem({
       <div className='flex gap-2 w-full items-center'>
         {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
         <input
-          className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+          className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none transition-all"
           value={editValue}
           onChange={handleEditChange}
           onKeyDown={e => {
