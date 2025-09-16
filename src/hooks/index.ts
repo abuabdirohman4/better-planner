@@ -9,7 +9,7 @@ export { useUnscheduledTasks, useScheduledTasksForWeek, useWeeklyGoals, useWeekl
 export { useDailyPlan, useCompletedSessions, useTasksForWeek } from './execution/useDailySync';
 
 // Dashboard Hooks
-export { useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from './dashboard/useDashboard';
+export { useDashboardMetrics, useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from './dashboard/useDashboard';
 
 // Common Hooks
 export { useQuarter } from './common/useQuarter';

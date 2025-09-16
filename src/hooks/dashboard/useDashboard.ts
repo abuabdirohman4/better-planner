@@ -3,6 +3,12 @@ import useSWR from 'swr';
 import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { dashboardKeys } from '@/lib/swr';
 
+// ✅ SHARED STATE: Single SWR instance for all dashboard metrics
+let sharedDashboardData: any = null;
+let sharedDashboardError: any = null;
+let sharedDashboardLoading = true;
+let sharedDashboardMutate: any = null;
+
 /**
  * ✅ OPTIMIZED: Single hook for all dashboard metrics
  * Much faster than 4 separate hooks!
@@ -19,9 +25,15 @@ export function useDashboardMetrics() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 5 * 60 * 1000, // 5 minutes - longer cache
-      errorRetryCount: 2, // Reduced retry count
+      errorRetryCount: 1, // Reduced retry count
     }
   );
+
+  // ✅ SHARED STATE: Update shared variables
+  sharedDashboardData = data;
+  sharedDashboardError = error;
+  sharedDashboardLoading = isLoading;
+  sharedDashboardMutate = mutate;
 
   return {
     todayTasks: data.todayTasks,
@@ -34,23 +46,43 @@ export function useDashboardMetrics() {
   };
 }
 
-// ✅ KEEP INDIVIDUAL HOOKS for backward compatibility
+// ✅ OPTIMIZED: Individual hooks now use shared state (NO API CALLS!)
 export function useTodayTasks() {
-  const { todayTasks, error, isLoading, mutate } = useDashboardMetrics();
-  return { todayTasks, error, isLoading, mutate };
+  console.warn('⚠️ useTodayTasks is deprecated. Use useDashboardMetrics() instead.');
+  return { 
+    todayTasks: sharedDashboardData?.todayTasks || 0, 
+    error: sharedDashboardError, 
+    isLoading: sharedDashboardLoading, 
+    mutate: sharedDashboardMutate 
+  };
 }
 
 export function useActiveQuests() {
-  const { activeQuests, error, isLoading, mutate } = useDashboardMetrics();
-  return { activeQuests, error, isLoading, mutate };
+  console.warn('⚠️ useActiveQuests is deprecated. Use useDashboardMetrics() instead.');
+  return { 
+    activeQuests: sharedDashboardData?.activeQuests || 0, 
+    error: sharedDashboardError, 
+    isLoading: sharedDashboardLoading, 
+    mutate: sharedDashboardMutate 
+  };
 }
 
 export function useHabitsStreak() {
-  const { habitsStreak, error, isLoading, mutate } = useDashboardMetrics();
-  return { habitsStreak, error, isLoading, mutate };
+  console.warn('⚠️ useHabitsStreak is deprecated. Use useDashboardMetrics() instead.');
+  return { 
+    habitsStreak: sharedDashboardData?.habitsStreak || 0, 
+    error: sharedDashboardError, 
+    isLoading: sharedDashboardLoading, 
+    mutate: sharedDashboardMutate 
+  };
 }
 
 export function useWeeklyProgress() {
-  const { weeklyProgress, error, isLoading, mutate } = useDashboardMetrics();
-  return { weeklyProgress, error, isLoading, mutate };
+  console.warn('⚠️ useWeeklyProgress is deprecated. Use useDashboardMetrics() instead.');
+  return { 
+    weeklyProgress: sharedDashboardData?.weeklyProgress || 0, 
+    error: sharedDashboardError, 
+    isLoading: sharedDashboardLoading, 
+    mutate: sharedDashboardMutate 
+  };
 } 

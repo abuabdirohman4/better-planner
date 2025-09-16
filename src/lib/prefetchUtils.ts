@@ -1,4 +1,4 @@
-import { getTodayTasks, getActiveQuests, getHabitsStreak, getWeeklyProgress } from '@/app/(admin)/dashboard/actions';
+import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getAllQuestsForQuarter, getQuests, getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
@@ -48,17 +48,15 @@ export async function prefetchCriticalData() {
 
 /**
  * Prefetch only essential dashboard metrics (optimized)
+ * ✅ SINGLE API CALL - Much faster than multiple calls
  */
 async function prefetchDashboardMetrics() {
   try {
-    const [todayTasks, activeQuests] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-    ]);
+    // ✅ SINGLE API CALL - Get all metrics at once
+    const metrics = await getDashboardMetrics();
 
     return {
-      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
+      [toSWRKey(['dashboard-metrics'])]: metrics,
     };
   } catch (error) {
     console.error('❌ Failed to prefetch dashboard metrics:', error);
@@ -103,21 +101,15 @@ async function prefetchVisions() {
 
 /**
  * Prefetch dashboard data
+ * ✅ SINGLE API CALL - Much faster than multiple calls
  */
 async function prefetchDashboardData() {
   try {
-    const [todayTasks, activeQuests, habitsStreak, weeklyProgress] = await Promise.all([
-      getTodayTasks(),
-      getActiveQuests(),
-      getHabitsStreak(),
-      getWeeklyProgress(),
-    ]);
+    // ✅ SINGLE API CALL - Get all metrics at once
+    const metrics = await getDashboardMetrics();
 
     return {
-      [toSWRKey(dashboardKeys.todayTasks())]: todayTasks,
-      [toSWRKey(dashboardKeys.activeQuests())]: activeQuests,
-      [toSWRKey(dashboardKeys.habitsStreak())]: habitsStreak,
-      [toSWRKey(dashboardKeys.weeklyProgress())]: weeklyProgress,
+      [toSWRKey(['dashboard-metrics'])]: metrics,
     };
   } catch (error) {
     console.error('❌ Failed to prefetch dashboard data:', error);
