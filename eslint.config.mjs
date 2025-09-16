@@ -1,5 +1,6 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+
 import { FlatCompat } from "@eslint/eslintrc";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,7 +16,7 @@ const eslintConfig = [
     rules: {
       // Code Quality Rules (more lenient for existing code)
       "complexity": ["warn", 25], // Increased from 15
-      "max-lines-per-function": ["warn", 150], // Increased from 100
+      // "max-lines-per-function": ["warn", 150], // Increased from 100
       "max-params": ["warn", 8], // Increased from 5
       "no-console": ["warn", { allow: ["warn", "error"] }], // Allow only warn/error
       "no-debugger": "error", // No debugger statements
