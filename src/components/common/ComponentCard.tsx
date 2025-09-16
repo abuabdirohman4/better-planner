@@ -27,15 +27,13 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
     >
       {/* Card Header */}
       <div className={`px-6 py-5 relative ${classNameHeader}`}>
-        {onClose && (
-          <button
+        {onClose ? <button
             onClick={onClose}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             aria-label="Tutup"
           >
             <CloseLineIcon className="w-4 h-4 text-gray-500" />
-          </button>
-        )}
+          </button> : null}
         <h3 className={`text-base font-medium text-gray-800 dark:text-white/90 ${classNameTitle}`}>
           {title}
         </h3>
