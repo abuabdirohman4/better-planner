@@ -172,8 +172,32 @@ function MilestoneBar({
                   setMilestones(ms => ms.map(m => m.id === milestone.id ? { ...m, title: newTitle } : m));
                   debouncedSaveMilestone(milestone.id, newTitle);
                 }}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (idx > 0) {
+                      setActiveMilestoneIdx(idx - 1);
+                      // Focus the input in the previous milestone
+                      setTimeout(() => {
+                        const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
+                        prevInput?.focus();
+                      }, 0);
+                    }
+                  } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (idx < 2) {
+                      setActiveMilestoneIdx(idx + 1);
+                      // Focus the input in the next milestone
+                      setTimeout(() => {
+                        const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                      }, 0);
+                    }
+                  }
+                }}
                 onClick={e => e.stopPropagation()}
                 onFocus={() => setActiveMilestoneIdx(idx)}
+                data-milestone-idx={idx}
               />
             ) : (
               <input
@@ -184,9 +208,33 @@ function MilestoneBar({
                   const val = e.target.value;
                   setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
                 }}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (idx > 0) {
+                      setActiveMilestoneIdx(idx - 1);
+                      // Focus the input in the previous milestone
+                      setTimeout(() => {
+                        const prevInput = document.querySelector(`input[data-milestone-idx="${idx - 1}"]`) as HTMLInputElement;
+                        prevInput?.focus();
+                      }, 0);
+                    }
+                  } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (idx < 2) {
+                      setActiveMilestoneIdx(idx + 1);
+                      // Focus the input in the next milestone
+                      setTimeout(() => {
+                        const nextInput = document.querySelector(`input[data-milestone-idx="${idx + 1}"]`) as HTMLInputElement;
+                        nextInput?.focus();
+                      }, 0);
+                    }
+                  }
+                }}
                 disabled={newMilestoneLoading[idx]}
                 onClick={e => e.stopPropagation()}
                 onFocus={() => setActiveMilestoneIdx(idx)}
+                data-milestone-idx={idx}
               />
             )}
           </div>

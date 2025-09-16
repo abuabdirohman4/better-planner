@@ -10,9 +10,22 @@ interface TaskItemProps {
   onOpenSubtask?: () => void;
   orderNumber?: number;
   active?: boolean;
+  onNavigateUp?: () => void;
+  onNavigateDown?: () => void;
+  canNavigateUp?: boolean;
+  canNavigateDown?: boolean;
 }
 
-export default function TaskItem({ task, onOpenSubtask, orderNumber, active }: TaskItemProps) {
+export default function TaskItem({ 
+  task, 
+  onOpenSubtask, 
+  orderNumber, 
+  active, 
+  onNavigateUp, 
+  onNavigateDown, 
+  canNavigateUp = true, 
+  canNavigateDown = true 
+}: TaskItemProps) {
   const [subtasks, setSubtasks] = useState<{ id: string; title: string; status: 'TODO' | 'DONE' }[]>([]);
   const [editValue, setEditValue] = useState(task.title);
   const editInputRef = useRef<HTMLInputElement | null>(null);
@@ -63,7 +76,21 @@ export default function TaskItem({ task, onOpenSubtask, orderNumber, active }: T
           className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none focus:ring-0"
           value={editValue}
           onChange={handleEditChange}
+          onKeyDown={e => {
+            if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              if (canNavigateUp && onNavigateUp) {
+                onNavigateUp();
+              }
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              if (canNavigateDown && onNavigateDown) {
+                onNavigateDown();
+              }
+            }
+          }}
           ref={editInputRef}
+          data-task-idx={orderNumber ? orderNumber - 1 : 0}
         />
       </div>
       <div className="flex items-center gap-2">

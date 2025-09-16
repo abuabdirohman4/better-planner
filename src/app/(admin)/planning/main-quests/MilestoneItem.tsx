@@ -24,6 +24,7 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
   const [newTaskInputs, setNewTaskInputs] = useState(['', '', '']);
   const [newTaskLoading, setNewTaskLoading] = useState([false, false, false]);
   const [lastSubmittedTask, setLastSubmittedTask] = useState(['', '', '']);
+  const [activeTaskIdx, setActiveTaskIdx] = useState(0);
 
   const fetchTasks = async () => {
     setLoadingTasks(true);
@@ -104,6 +105,29 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [milestone.id]);
 
+  // Navigation functions for keyboard support
+  const handleNavigateUp = (currentIdx: number) => {
+    if (currentIdx > 0) {
+      setActiveTaskIdx(currentIdx - 1);
+      // Focus the input in the previous task
+      setTimeout(() => {
+        const prevInput = document.querySelector(`input[data-task-idx="${currentIdx - 1}"]`) as HTMLInputElement;
+        prevInput?.focus();
+      }, 0);
+    }
+  };
+
+  const handleNavigateDown = (currentIdx: number) => {
+    if (currentIdx < 2) {
+      setActiveTaskIdx(currentIdx + 1);
+      // Focus the input in the next task
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[data-task-idx="${currentIdx + 1}"]`) as HTMLInputElement;
+        nextInput?.focus();
+      }, 0);
+    }
+  };
+
   return (
     <div className="rounded-lg mb-2">
         <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
@@ -119,8 +143,12 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                     key={task.id}
                     task={task}
                     onOpenSubtask={onOpenSubtask ? () => onOpenSubtask(task) : undefined}
-                    active={activeSubTask?.id === task.id}
+                    active={activeSubTask?.id === task.id || activeTaskIdx === idx}
                     orderNumber={idx + 1}
+                    onNavigateUp={() => handleNavigateUp(idx)}
+                    onNavigateDown={() => handleNavigateDown(idx)}
+                    canNavigateUp={idx > 0}
+                    canNavigateDown={idx < 2}
                   />
                 );
               } else {
@@ -138,7 +166,29 @@ export default function MilestoneItem({ milestone, milestoneNumber, onOpenSubtas
                           const val = e.target.value;
                           setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
                         }}
+                        onKeyDown={e => {
+                          if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            if (idx > 0) {
+                              setActiveTaskIdx(idx - 1);
+                              setTimeout(() => {
+                                const prevInput = document.querySelector(`input[data-task-idx="${idx - 1}"]`) as HTMLInputElement;
+                                prevInput?.focus();
+                              }, 0);
+                            }
+                          } else if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (idx < 2) {
+                              setActiveTaskIdx(idx + 1);
+                              setTimeout(() => {
+                                const nextInput = document.querySelector(`input[data-task-idx="${idx + 1}"]`) as HTMLInputElement;
+                                nextInput?.focus();
+                              }, 0);
+                            }
+                          }
+                        }}
                         disabled={newTaskLoading[idx]}
+                        data-task-idx={idx}
                         />
                     </div>
                   </div>
