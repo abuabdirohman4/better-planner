@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 import SmartLoader from '@/components/common/SmartLoader';
 
-import WeeklySyncClient from "./WeeklySyncClient";
+import WeeklySyncClient from "./Client";
 
 export const metadata: Metadata = {
   title: "Weekly Sync | Better Planner",
