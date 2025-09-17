@@ -9,20 +9,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import CustomToast from "@/components/ui/toast/CustomToast";
 
 import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "./actions";
-
-interface ToDontListCardProps {
-  year: number;
-  weekNumber: number;
-  rules: Rule[];
-  loading: boolean;
-  onRefresh: () => void;
-}
-
-export type Rule = {
-  id: string;
-  rule_text: string;
-  display_order: number;
-};
+import type { ToDontListCardProps, Rule } from "./types";
 
 // Custom hook for rule editing management
 function useRuleEditing() {

@@ -26,17 +26,17 @@ export default function RootLayout({
             __html: `if (typeof window !== 'undefined' && window.__WEEKLY_SYNC_START__ === undefined) { window.__WEEKLY_SYNC_START__ = performance.now(); }`,
           }}
         />
-               <SWRProvider>
-                 <PreloadProvider>
-                   <ThemeProvider>
-                     <SidebarProvider>{children}</SidebarProvider>
-                   </ThemeProvider>
-                   <Toaster
-                     position="top-right"
-                     richColors
-                   />
-                 </PreloadProvider>
-               </SWRProvider>
+          <SWRProvider>
+            <PreloadProvider>
+              <ThemeProvider>
+                <SidebarProvider>{children}</SidebarProvider>
+              </ThemeProvider>
+              <Toaster
+                position="top-right"
+                richColors
+              />
+            </PreloadProvider>
+          </SWRProvider>
       </body>
     </html>
   );

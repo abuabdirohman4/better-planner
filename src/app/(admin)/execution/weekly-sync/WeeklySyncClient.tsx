@@ -16,15 +16,7 @@ import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quart
 
 import ToDontListCard from "./ToDontListCard";
 import WeeklyGoalsTable from "./WeeklyGoalsTable";
-
-type Task = {
-  id: string;
-  title: string;
-  status: string;
-  scheduled_date: string | null;
-  milestone_id: string;
-  parent_task_id: string | null;
-};
+import type { Task } from "./types";
 
 // Import missing functions
 const scheduleTask = async (taskId: string, newScheduledDate: string | null) =>
