@@ -6,7 +6,6 @@ import { usePerformanceMonitor } from "@/lib/performanceUtils";
 
 // Custom hooks
 import { useWeeklySyncData } from "./Client/useWeeklySyncData";
-import { useWeekNavigation } from "./Client/useWeekNavigation";
 import { useErrorHandling } from "./Client/useErrorHandling";
 import { useLoadingTime } from "./Client/useLoadingTime";
 import { useWeekCalculations } from "./Client/useWeekCalculations";
@@ -57,7 +56,7 @@ export default function WeeklySyncClient() {
     monday.setHours(0, 0, 0, 0);
     setCurrentWeek(monday);
     setSelectedWeekInQuarter(weekIdx);
-  }, [weekCalculations]);
+  }, [weekCalculations.startWeek]);
 
   const goPrevWeek = useCallback(() => {
     if (weekCalculations.displayWeek <= 1) return;
@@ -65,7 +64,7 @@ export default function WeeklySyncClient() {
     prev.setDate(currentWeek.getDate() - 7);
     setCurrentWeek(prev);
     setSelectedWeekInQuarter(undefined);
-  }, [weekCalculations.displayWeek, currentWeek]);
+  }, [weekCalculations.displayWeek, currentWeek.getTime()]);
   
   const goNextWeek = useCallback(() => {
     if (weekCalculations.displayWeek >= weekCalculations.totalWeeks) return;
@@ -73,7 +72,7 @@ export default function WeeklySyncClient() {
     next.setDate(currentWeek.getDate() + 7);
     setCurrentWeek(next);
     setSelectedWeekInQuarter(undefined);
-  }, [weekCalculations.displayWeek, weekCalculations.totalWeeks, currentWeek]);
+  }, [weekCalculations.displayWeek, weekCalculations.totalWeeks, currentWeek.getTime()]);
 
   // 🚀 OPTIMIZED: Data fetching with progressive loading
   const {
@@ -84,7 +83,8 @@ export default function WeeklySyncClient() {
     ultraFastError,
     handleRefreshGoals,
     handleRefreshToDontList,
-    mutateUltraFast
+    mutateUltraFast,
+    dataSource
   } = useWeeklySyncData(currentWeek, year, quarter, weekCalculations);
   
   // Error handling
@@ -115,23 +115,24 @@ export default function WeeklySyncClient() {
   }
 
   // Main content
-  return (
-    <MainContent
-      displayWeek={weekCalculations.displayWeek}
-      totalWeeks={weekCalculations.totalWeeks}
-      isWeekDropdownOpen={isWeekDropdownOpen}
-      setIsWeekDropdownOpen={setIsWeekDropdownOpen}
-      handleSelectWeek={handleSelectWeek}
-      goPrevWeek={goPrevWeek}
-      goNextWeek={goNextWeek}
-      year={year}
-      mobileOptimizedGoals={mobileOptimizedGoals}
-      processedProgress={processedProgress}
-      processedRules={processedRules}
-      toDontListLoading={ultraFastLoading}
-      handleRefreshGoals={enhancedHandleRefreshGoals}
-      handleRefreshToDontList={enhancedHandleRefreshToDontList}
-      loadingTime={loadingTime}
-    />
-  );
+        return (
+          <MainContent
+            displayWeek={weekCalculations.displayWeek}
+            totalWeeks={weekCalculations.totalWeeks}
+            isWeekDropdownOpen={isWeekDropdownOpen}
+            setIsWeekDropdownOpen={setIsWeekDropdownOpen}
+            handleSelectWeek={handleSelectWeek}
+            goPrevWeek={goPrevWeek}
+            goNextWeek={goNextWeek}
+            year={year}
+            mobileOptimizedGoals={mobileOptimizedGoals}
+            processedProgress={processedProgress}
+            processedRules={processedRules}
+            toDontListLoading={ultraFastLoading}
+            handleRefreshGoals={enhancedHandleRefreshGoals}
+            handleRefreshToDontList={enhancedHandleRefreshToDontList}
+            loadingTime={loadingTime}
+            dataSource={dataSource}
+          />
+        );
 }

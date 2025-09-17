@@ -30,5 +30,5 @@ export function useWeekCalculations(
       weekEndDate,
       weekRangeLabel
     };
-  }, [currentWeek, year, quarter, selectedWeekInQuarter]);
+  }, [currentWeek.getTime(), year, quarter, selectedWeekInQuarter]); // Use getTime() for stable comparison
 }

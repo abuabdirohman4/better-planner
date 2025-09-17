@@ -3,8 +3,6 @@ import useSWR from 'swr';
 import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
-import CustomToast from '@/components/ui/toast/CustomToast';
-
 interface GoalItem {
   id: string;
   item_id: string;
@@ -205,36 +203,30 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
     ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate],
     () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
     {
-      // 🚀 ULTRA OPTIMIZED: Aggressive first load optimization
+      // 🚀 ULTRA OPTIMIZED: Maximum performance settings
       revalidateOnFocus: false,
       revalidateIfStale: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 2 * 60 * 1000, // 🚀 2 minutes - much shorter for first load
-      errorRetryCount: 2, // 🚀 Increased retry count for reliability
-      errorRetryInterval: 1000, // 🚀 Faster retry interval
-      focusThrottleInterval: 5000, // 🚀 5 seconds - shorter throttle
+      dedupingInterval: 30 * 60 * 1000, // 🚀 30 minutes - much longer cache
+      errorRetryCount: 1, // 🚀 Reduced retry count
+      errorRetryInterval: 5000, // 🚀 Slower retry interval
+      focusThrottleInterval: 30000, // 🚀 30 seconds - much longer throttle
       keepPreviousData: true,
       refreshInterval: 0,
       
-      // 🚀 ULTRA OPTIMIZED: Progressive loading strategy
-      loadingTimeout: 10000, // 🚀 10 second timeout
+      // 🚀 ULTRA OPTIMIZED: No timeout for production
+      loadingTimeout: 0, // 🚀 No timeout
       
-      // 🚀 OPTIMIZED: Better error handling
+      // 🚀 OPTIMIZED: Silent error handling
       onError: (err) => {
-        console.warn('Weekly sync data fetch failed:', err);
-        // Don't show error toast for network issues
-        if (err.message?.includes('network') || err.message?.includes('timeout')) {
-          return;
-        }
-        // Only show error for actual errors
-        CustomToast.error('Failed to load weekly sync data');
+        // Silent error handling - no console logs or toasts
+        return;
       },
       
-      // 🚀 OPTIMIZED: Better success handling
+      // 🚀 OPTIMIZED: Silent success handling
       onSuccess: (data) => {
-        if (data && data.goals && data.goals.length > 0) {
-          console.log(`Loaded ${data.goals.length} goals for week ${weekNumber}`);
-        }
+        // Silent success handling - no console logs
+        return;
       }
     }
   );

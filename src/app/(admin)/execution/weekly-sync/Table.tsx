@@ -17,6 +17,18 @@ export default function WeeklyGoalsTable({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // 🚀 DEBUG: Log goals data in Table
+  console.log('🚀 DEBUG Table Goals:', {
+    goals,
+    goalsLength: goals?.length,
+    firstGoal: goals?.[0],
+    goalSlot: goals?.[0]?.goal_slot,
+    items: goals?.[0]?.items,
+    itemsLength: goals?.[0]?.items?.length,
+    goalProgress,
+    props
+  });
+
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);

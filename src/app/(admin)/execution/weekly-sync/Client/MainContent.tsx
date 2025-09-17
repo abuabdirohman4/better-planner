@@ -33,6 +33,9 @@ interface MainContentProps {
   
   // Loading time
   loadingTime: number | null;
+  
+  // Data source indicator
+  dataSource?: string;
 }
 
 export function MainContent({
@@ -50,16 +53,30 @@ export function MainContent({
   toDontListLoading,
   handleRefreshGoals,
   handleRefreshToDontList,
-  loadingTime
+  loadingTime,
+  dataSource
 }: MainContentProps) {
 
   return (
     <div className="container mx-auto py-8 pt-0">
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">
-          Weekly Sync{loadingTime !== null ? ` (${loadingTime}s)` : ''}
-        </h2>
+        <div>
+          <h2 className="text-xl font-bold">
+            Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''}
+          </h2>
+          {dataSource && (
+            <div className={`text-xs font-medium mt-1 ${
+              dataSource === 'ULTRA FAST RPC' 
+                ? 'text-green-600 dark:text-green-400' 
+                : 'text-orange-600 dark:text-orange-400'
+            }`}>
+              📊 Data Source: {dataSource}
+              {dataSource === 'ULTRA FAST RPC' && ' ⚡ (Optimized)'}
+              {dataSource === 'WORKING FUNCTIONS' && ' 🔄 (Fallback)'}
+            </div>
+          )}
+        </div>
         <MemoizedWeekSelector
           displayWeek={displayWeek}
           totalWeeks={totalWeeks}
