@@ -13,9 +13,6 @@ export async function getDashboardMetrics(): Promise<{
   habitsStreak: number;
   weeklyProgress: number;
 }> {
-  // ✅ DEBUG: Log when this function is called
-  console.log('🔍 getDashboardMetrics called at:', new Date().toISOString());
-  
   try {
     const supabase = await createClient();
     const today = new Date().toISOString().split('T')[0];

@@ -508,7 +508,6 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
 
 // 🚀 ULTRA FAST: Use existing optimized functions for maximum performance
 export async function getWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
-  console.log('ini getWeeklySyncUltraFast')
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   

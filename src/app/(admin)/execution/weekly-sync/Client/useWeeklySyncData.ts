@@ -41,16 +41,6 @@ export function useWeeklySyncData(
     mutate: mutateUltraFast
   } = useWeeklySyncUltraFast(year, quarter, weekCalculations.displayWeek, startDate, endDate);
 
-  console.log('🚀 DEBUG RPC Parameters:', {
-    year,
-    quarter,
-    weekNumber: weekCalculations.displayWeek,
-    startDate,
-    endDate,
-    currentWeek: currentWeek.toISOString()
-  });
-  
-
   // 🚀 FALLBACK: Use working functions as backup
   const {
     goals: workingGoals,

@@ -19,18 +19,6 @@ interface GoalRowProps {
 
 export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: GoalRowProps) {
   const isCompleted = progress.percentage === 100;
-
-  // 🚀 DEBUG: Log GoalRow data
-  console.log(`🚀 DEBUG GoalRow ${slotNumber}:`, {
-    slotNumber,
-    goal,
-    goalExists: !!goal,
-    goalItems: goal?.items,
-    goalItemsLength: goal?.items?.length,
-    progress,
-    isCompleted
-  });
-
   return (
     <tr className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
       {/* Column 1 - Auto Checkbox */}
