@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
+import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 
 // Get selectable items (Main Quests and their Milestones) for the current quarter
 export async function getSelectableItems(year: number, quarter: number) {
@@ -501,6 +502,66 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
       unscheduledTasks: [],
       scheduledTasks: [],
       toDontList: []
+    };
+  }
+}
+
+// 🚀 ULTRA FAST: Use existing optimized functions for maximum performance
+export async function getWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      weekDates: []
+    };
+  }
+
+  try {
+    // 🚀 ULTRA FAST: Single RPC call for all data
+    const { data, error } = await supabase.rpc('get_weekly_sync_ultra_fast', {
+      p_user_id: user.id,
+      p_year: year,
+      p_quarter: quarter,
+      p_week_number: weekNumber,
+      p_start_date: startDate,
+      p_end_date: endDate
+    });
+
+    if (error) {
+      console.error("Error calling get_weekly_sync_ultra_fast:", error);
+      return {
+        goals: [],
+        progress: {},
+        rules: [],
+        unscheduledTasks: [],
+        scheduledTasks: [],
+        weekDates: []
+      };
+    }
+
+    return data || {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      weekDates: []
+    };
+  } catch (error) {
+    console.error("Error in getWeeklySyncUltraFast:", error);
+    return {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      weekDates: []
     };
   }
 }

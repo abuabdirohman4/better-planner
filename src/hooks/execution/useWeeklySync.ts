@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
@@ -178,6 +178,62 @@ export function useWeeklyRules(year: number, weekNumber: number) {
     rules,
     error,
     isLoading,
+    mutate,
+  };
+}
+
+/**
+ * 🚀 ULTRA FAST: Single hook that fetches ALL weekly sync data in one query
+ * Replaces multiple separate hooks for maximum performance
+ * ✅ OPTIMIZED: Single RPC call instead of 8+ separate queries
+ */
+export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+  const { 
+    data = {
+      goals: [],
+      progress: {},
+      rules: [],
+      unscheduledTasks: [],
+      scheduledTasks: [],
+      weekDates: []
+    }, 
+    error, 
+    isLoading,
+    mutate 
+  } = useSWR(
+    ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate],
+    () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
+    {
+      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
+      revalidateIfStale: false, // ✅ Disabled stale revalidation
+      revalidateOnReconnect: false, // ✅ Disabled reconnect revalidation
+      dedupingInterval: 15 * 60 * 1000, // ✅ 15 minutes - longer cache for mobile
+      errorRetryCount: 1, // ✅ Reduced retry count for mobile
+      errorRetryInterval: 3000, // ✅ Slower retry interval for mobile
+      focusThrottleInterval: 15000, // ✅ 15 seconds - much longer throttle for mobile
+      keepPreviousData: true, // Keep previous data while revalidating
+      refreshInterval: 0, // No automatic refresh
+    }
+  );
+
+  return {
+    // Goals data
+    goals: data.goals,
+    goalProgress: data.progress,
+    
+    // Tasks data
+    unscheduledTasks: data.unscheduledTasks,
+    scheduledTasks: data.scheduledTasks,
+    
+    // Rules data
+    rules: data.rules,
+    
+    // Week dates
+    weekDates: data.weekDates,
+    
+    // Loading states
+    isLoading,
+    error,
     mutate,
   };
 } 
