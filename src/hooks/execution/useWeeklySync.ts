@@ -187,6 +187,8 @@ export function useWeeklyRules(year: number, weekNumber: number) {
  * ✅ OPTIMIZED: Single RPC call instead of 8+ separate queries
  */
 export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+  const swrKey = ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate];
+
   const { 
     data = {
       goals: [],
@@ -200,36 +202,38 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
     isLoading,
     mutate 
   } = useSWR(
-    ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate],
+    swrKey,
     () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
     {
-      // 🚀 ULTRA OPTIMIZED: Maximum performance settings
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 30 * 60 * 1000, // 🚀 30 minutes - much longer cache
-      errorRetryCount: 1, // 🚀 Reduced retry count
-      errorRetryInterval: 5000, // 🚀 Slower retry interval
-      focusThrottleInterval: 30000, // 🚀 30 seconds - much longer throttle
-      keepPreviousData: true,
-      refreshInterval: 0,
+      // 🚀 PRODUCTION: Balanced settings for optimal performance
+      revalidateOnFocus: true,           // ✅ Revalidate on focus for fresh data
+      revalidateIfStale: true,           // ✅ Revalidate if data is stale
+      revalidateOnReconnect: true,       // ✅ Revalidate on reconnect
+      dedupingInterval: 2 * 60 * 1000,   // ✅ 2 minutes - reasonable cache time
+      errorRetryCount: 2,                // ✅ Reduced retry count
+      errorRetryInterval: 2000,          // ✅ 2 seconds retry interval
+      focusThrottleInterval: 5000,       // ✅ 5 seconds throttle
+      keepPreviousData: true,            // ✅ Keep previous data for smooth UX
+      refreshInterval: 0,                // ✅ No auto refresh
       
-      // 🚀 ULTRA OPTIMIZED: No timeout for production
-      loadingTimeout: 0, // 🚀 No timeout
-      
-      // 🚀 OPTIMIZED: Silent error handling
+      // 🚀 PRODUCTION: Silent error handling
       onError: (err) => {
-        // Silent error handling - no console logs or toasts
+        console.warn('SWR Error (silent):', err);
         return;
       },
       
-      // 🚀 OPTIMIZED: Silent success handling
+      // 🚀 PRODUCTION: Silent success handling
       onSuccess: (data) => {
-        // Silent success handling - no console logs
+        console.log('🚀 ULTRA FAST RPC Success:', data?.goals?.length || 0, 'goals loaded');
         return;
       }
     }
   );
+
+  // 🚀 PRODUCTION: Minimal logging for performance monitoring
+  if (data?.goals?.length > 0) {
+    console.log('🚀 ULTRA FAST RPC loaded:', data.goals.length, 'goals');
+  }
 
   return {
     // Goals data

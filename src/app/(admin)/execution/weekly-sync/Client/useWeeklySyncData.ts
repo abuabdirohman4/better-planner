@@ -41,6 +41,16 @@ export function useWeeklySyncData(
     mutate: mutateUltraFast
   } = useWeeklySyncUltraFast(year, quarter, weekCalculations.displayWeek, startDate, endDate);
 
+  console.log('🚀 DEBUG RPC Parameters:', {
+    year,
+    quarter,
+    weekNumber: weekCalculations.displayWeek,
+    startDate,
+    endDate,
+    currentWeek: currentWeek.toISOString()
+  });
+  
+
   // 🚀 FALLBACK: Use working functions as backup
   const {
     goals: workingGoals,
@@ -64,19 +74,8 @@ export function useWeeklySyncData(
   const hasWorkingData = workingGoals && workingGoals.length > 0 && 
     workingGoals.some((goal: any) => goal.items && goal.items.length > 0);
 
-  console.log('🚀 DEBUG Fallback Check:', {
-    hasUltraFastData,
-    hasWorkingData,
-    ultraFastGoalsLength: ultraFastGoals?.length || 0,
-    workingGoalsLength: workingGoals?.length || 0,
-    ultraFastHasItems: ultraFastGoals?.some((g: any) => g.items?.length > 0),
-    workingHasItems: workingGoals?.some((g: any) => g.items?.length > 0)
-  });
-
   // 🚀 CLEAR DATA SOURCE INDICATOR
   const dataSource = hasUltraFastData ? 'ULTRA FAST RPC' : 'WORKING FUNCTIONS';
-  console.log(`🚀 DATA SOURCE: ${dataSource}`);
-  console.log(`🚀 PERFORMANCE: ${dataSource === 'ULTRA FAST RPC' ? 'OPTIMIZED (Single RPC Call)' : 'FALLBACK (Multiple SWR Calls)'}`);
 
   const goals = hasUltraFastData ? ultraFastGoals : workingGoals;
   const goalProgress = ultraFastProgress && Object.keys(ultraFastProgress).length > 0 ? ultraFastProgress : workingProgress;
@@ -92,71 +91,15 @@ export function useWeeklySyncData(
   // 🚀 FIXED: Use real data from working functions
   const goalsWithItems = goals;
 
-  // 🚀 DEBUG: Log data for debugging
-  console.log('🚀 DEBUG useWeeklySyncData:', {
-    ultraFastGoals: ultraFastGoals?.length || 0,
-    workingGoals: workingGoals?.length || 0,
-    finalGoals: goals?.length || 0,
-    ultraFastProgress: Object.keys(ultraFastProgress || {}).length,
-    workingProgress: Object.keys(workingProgress || {}).length,
-    finalProgress: Object.keys(goalProgress || {}).length,
-    ultraFastRules: ultraFastRules?.length || 0,
-    workingRules: workingRules?.length || 0,
-    finalRules: toDontList?.length || 0,
-    isLoading,
-    error: error?.message
-  });
-
-  // 🚀 DEBUG: Log detailed goals structure
-  console.log('🚀 DEBUG Goals Structure:', {
-    goals: goals,
-    goalsLength: goals?.length,
-    firstGoal: goals?.[0],
-    goalSlot: goals?.[0]?.goal_slot,
-    items: goals?.[0]?.items,
-    itemsLength: goals?.[0]?.items?.length,
-    ultraFastGoals: ultraFastGoals,
-    workingGoals: workingGoals,
-    ultraFastFirstGoal: ultraFastGoals?.[0],
-    workingFirstGoal: workingGoals?.[0]
-  });
-
-  // 🚀 DEBUG: Check if items exist in original data
-  console.log('🚀 DEBUG Items Check:', {
-    ultraFastFirstGoalItems: ultraFastGoals?.[0]?.items,
-    ultraFastFirstGoalItemsLength: ultraFastGoals?.[0]?.items?.length,
-    workingFirstGoalItems: workingGoals?.[0]?.items,
-    workingFirstGoalItemsLength: workingGoals?.[0]?.items?.length,
-    finalFirstGoalItems: goals?.[0]?.items,
-    finalFirstGoalItemsLength: goals?.[0]?.items?.length
-  });
-
-
   // 🚀 OPTIMIZED: Process all goals but with lazy item processing
   const processedGoals = useMemo(() => {
     if (!goalsWithItems || goalsWithItems.length === 0) return [];
     
     const processed = goalsWithItems.map((goal: any) => {
-      // 🚀 DEBUG: Log each goal processing
-      console.log(`🚀 DEBUG Processing Goal ${goal.goal_slot}:`, {
-        originalItems: goal.items,
-        originalItemsLength: goal.items?.length,
-        isMobile,
-        processedItems: processGoalItems(goal.items, isMobile)
-      });
-      
       return {
         ...goal,
         items: processGoalItems(goal.items, isMobile)
       };
-    });
-    
-    // 🚀 DEBUG: Log processed goals
-    console.log('🚀 DEBUG Processed Goals:', {
-      originalGoals: goalsWithItems,
-      processedGoals: processed,
-      firstProcessedGoal: processed[0],
-      firstProcessedItems: processed[0]?.items
     });
     
     return processed;
@@ -179,16 +122,6 @@ export function useWeeklySyncData(
       ...goal,
       items: goal.items.slice(0, maxItemsToShow) // Only limit items per goal, not goals themselves
     }));
-    
-    // 🚀 DEBUG: Log mobile optimized goals
-    console.log('🚀 DEBUG Mobile Optimized Goals:', {
-      processedGoals: processedGoals,
-      mobileOptimizedGoals: optimized,
-      firstOptimizedGoal: optimized[0],
-      firstOptimizedItems: optimized[0]?.items,
-      maxItemsToShow,
-      isMobile
-    });
     
     return optimized;
   }, [processedGoals, maxItemsToShow, isMobile]); // Add isMobile dependency

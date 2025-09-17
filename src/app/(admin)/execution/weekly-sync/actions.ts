@@ -239,33 +239,6 @@ export async function getWeeklyGoalsWithProgress(year: number, weekNumber: numbe
       console.error("Error calling calculate_weekly_goals_progress:", progressResult.error);
     }
 
-    // 🚀 DEBUG: Log goals data from database
-           console.log('🚀 DEBUG getWeeklyGoalsWithProgress:', {
-             goalsData: goalsResult.data,
-             goalsLength: goalsResult.data?.length,
-             firstGoal: goalsResult.data?.[0],
-             firstGoalItems: goalsResult.data?.[0]?.items,
-             firstGoalItemsLength: goalsResult.data?.[0]?.items?.length,
-             progressData: progressResult.data,
-             goalsError: goalsResult.error,
-             progressError: progressResult.error
-           });
-
-           // 🚀 DETAILED DEBUG: Log each goal structure
-           if (goalsResult.data && goalsResult.data.length > 0) {
-             goalsResult.data.forEach((goal: any, index: number) => {
-               console.log(`🚀 DEBUG Goal ${index + 1} Structure:`, {
-                 id: goal.id,
-                 goal_slot: goal.goal_slot,
-                 items: goal.items,
-                 itemsLength: goal.items?.length,
-                 itemsType: typeof goal.items,
-                 itemsIsArray: Array.isArray(goal.items),
-                 goalKeys: Object.keys(goal)
-               });
-             });
-           }
-
     return {
       goals: goalsResult.data || [],
       progress: progressResult.data || {}
@@ -535,6 +508,7 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
 
 // 🚀 ULTRA FAST: Use existing optimized functions for maximum performance
 export async function getWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+  console.log('ini getWeeklySyncUltraFast')
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -550,16 +524,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
   }
 
   try {
-    // 🚀 ULTRA FAST: Single RPC call for all data
-    console.log('🚀 DEBUG Calling RPC get_weekly_sync_ultra_fast with params:', {
-      p_user_id: user.id,
-      p_year: year,
-      p_quarter: quarter,
-      p_week_number: weekNumber,
-      p_start_date: startDate,
-      p_end_date: endDate
-    });
-
     const { data, error } = await supabase.rpc('get_weekly_sync_ultra_fast', {
       p_user_id: user.id,
       p_year: year,
@@ -567,14 +531,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       p_week_number: weekNumber,
       p_start_date: startDate,
       p_end_date: endDate
-    });
-
-    console.log('🚀 DEBUG RPC Response:', {
-      data: data,
-      error: error,
-      dataType: typeof data,
-      dataIsNull: data === null,
-      dataIsUndefined: data === undefined
     });
 
     if (error) {
@@ -587,32 +543,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
         scheduledTasks: [],
         weekDates: []
       };
-    }
-
-    // 🚀 DEBUG: Log ultra fast data from database
-    console.log('🚀 DEBUG getWeeklySyncUltraFast:', {
-      data: data,
-      goalsData: data?.goals,
-      goalsLength: data?.goals?.length,
-      firstGoal: data?.goals?.[0],
-      firstGoalItems: data?.goals?.[0]?.items,
-      firstGoalItemsLength: data?.goals?.[0]?.items?.length,
-      error: error
-    });
-
-    // 🚀 DETAILED DEBUG: Log each goal structure from ultra fast
-    if (data?.goals && data.goals.length > 0) {
-      data.goals.forEach((goal: any, index: number) => {
-        console.log(`🚀 DEBUG UltraFast Goal ${index + 1} Structure:`, {
-          id: goal.id,
-          goal_slot: goal.goal_slot,
-          items: goal.items,
-          itemsLength: goal.items?.length,
-          itemsType: typeof goal.items,
-          itemsIsArray: Array.isArray(goal.items),
-          goalKeys: Object.keys(goal)
-        });
-      });
     }
 
     return data || {
