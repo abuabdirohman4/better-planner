@@ -205,26 +205,27 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
     swrKey,
     () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
     {
-      // 🚀 PRODUCTION: Balanced settings for optimal performance
-      revalidateOnFocus: true,           // ✅ Revalidate on focus for fresh data
-      revalidateIfStale: true,           // ✅ Revalidate if data is stale
-      revalidateOnReconnect: true,       // ✅ Revalidate on reconnect
-      dedupingInterval: 2 * 60 * 1000,   // ✅ 2 minutes - reasonable cache time
-      errorRetryCount: 2,                // ✅ Reduced retry count
-      errorRetryInterval: 2000,          // ✅ 2 seconds retry interval
-      focusThrottleInterval: 5000,       // ✅ 5 seconds throttle
+      // 🚀 ULTRA OPTIMIZED: Maximum performance settings
+      revalidateOnFocus: false,          // ❌ No revalidate on focus for speed
+      revalidateIfStale: false,          // ❌ No revalidate if stale for speed
+      revalidateOnReconnect: false,      // ❌ No revalidate on reconnect for speed
+      dedupingInterval: 5 * 60 * 1000,   // ✅ 5 minutes - longer cache for speed
+      errorRetryCount: 1,                // ✅ Minimal retry for speed
+      errorRetryInterval: 1000,          // ✅ 1 second retry for speed
+      focusThrottleInterval: 10000,      // ✅ 10 seconds throttle for speed
       keepPreviousData: true,            // ✅ Keep previous data for smooth UX
       refreshInterval: 0,                // ✅ No auto refresh
+      loadingTimeout: 30000,             // ✅ 30 second timeout
       
-      // 🚀 PRODUCTION: Silent error handling
+      // 🚀 ULTRA OPTIMIZED: Minimal error handling for speed
       onError: (err) => {
-        console.warn('SWR Error (silent):', err);
+        console.warn('SWR Error:', err.message);
         return;
       },
       
-      // 🚀 PRODUCTION: Silent success handling
+      // 🚀 ULTRA OPTIMIZED: Minimal success handling for speed
       onSuccess: (data) => {
-        console.log('🚀 ULTRA FAST RPC Success:', data?.goals?.length || 0, 'goals loaded');
+        console.log('🚀 ULTRA FAST RPC:', data?.goals?.length || 0, 'goals');
         return;
       }
     }

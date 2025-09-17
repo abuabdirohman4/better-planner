@@ -12,6 +12,7 @@
 ## LIST IDEA
 - [ ] PWA install for mobile
 - [ ] Mobile responsive with bottom navigation
+- [ ] Add visible password in sign in
 
 ## PAGES
 ### MAIN QUEST

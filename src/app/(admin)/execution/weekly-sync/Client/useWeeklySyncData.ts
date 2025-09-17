@@ -31,7 +31,7 @@ export function useWeeklySyncData(
   const startDate = weekDates[0].toISOString().slice(0, 10);
   const endDate = weekDates[6].toISOString().slice(0, 10);
   
-  // 🚀 FALLBACK: Use working functions if ultra fast fails
+  // 🚀 ULTRA OPTIMIZED: ONLY use ultra fast RPC - no fallback for maximum speed
   const {
     goals: ultraFastGoals,
     goalProgress: ultraFastProgress,
@@ -41,80 +41,43 @@ export function useWeeklySyncData(
     mutate: mutateUltraFast
   } = useWeeklySyncUltraFast(year, quarter, weekCalculations.displayWeek, startDate, endDate);
 
-  // 🚀 FALLBACK: Use working functions as backup
-  const {
-    goals: workingGoals,
-    goalProgress: workingProgress,
-    isLoading: workingGoalsLoading,
-    error: workingGoalsError,
-    mutate: mutateWorkingGoals
-  } = useWeeklyGoalsWithProgress(year, weekCalculations.displayWeek);
-
-  const {
-    rules: workingRules,
-    isLoading: workingRulesLoading,
-    error: workingRulesError,
-    mutate: mutateWorkingRules
-  } = useWeeklyRules(year, weekCalculations.displayWeek);
-
-  // 🚀 FALLBACK: Use working data if ultra fast data is empty or has no items
-  const hasUltraFastData = ultraFastGoals && ultraFastGoals.length > 0 && 
-    ultraFastGoals.some((goal: any) => goal.items && goal.items.length > 0);
-  
-  const hasWorkingData = workingGoals && workingGoals.length > 0 && 
-    workingGoals.some((goal: any) => goal.items && goal.items.length > 0);
-
-  // 🚀 CLEAR DATA SOURCE INDICATOR
-  const dataSource = hasUltraFastData ? 'ULTRA FAST RPC' : 'WORKING FUNCTIONS';
-
-  const goals = hasUltraFastData ? ultraFastGoals : workingGoals;
-  const goalProgress = ultraFastProgress && Object.keys(ultraFastProgress).length > 0 ? ultraFastProgress : workingProgress;
-  const toDontList = ultraFastRules && ultraFastRules.length > 0 ? ultraFastRules : workingRules;
-  const isLoading = ultraFastLoading || workingGoalsLoading || workingRulesLoading;
-  const error = ultraFastError || workingGoalsError || workingRulesError;
+  // 🚀 ULTRA OPTIMIZED: Direct data usage - no fallback overhead
+  const goals = ultraFastGoals || [];
+  const goalProgress = ultraFastProgress || {};
+  const toDontList = ultraFastRules || [];
+  const isLoading = ultraFastLoading;
+  const error = ultraFastError;
   const mutate = useCallback(() => {
     mutateUltraFast();
-    mutateWorkingGoals();
-    mutateWorkingRules();
-  }, [mutateUltraFast, mutateWorkingGoals, mutateWorkingRules]);
+  }, [mutateUltraFast]);
+
+  // 🚀 ULTRA OPTIMIZED: Always ULTRA FAST RPC
+  const dataSource = 'ULTRA FAST RPC';
 
   // 🚀 FIXED: Use real data from working functions
   const goalsWithItems = goals;
 
-  // 🚀 OPTIMIZED: Process all goals but with lazy item processing
+  // 🚀 ULTRA OPTIMIZED: Minimal processing for maximum speed
   const processedGoals = useMemo(() => {
     if (!goalsWithItems || goalsWithItems.length === 0) return [];
     
-    const processed = goalsWithItems.map((goal: any) => {
-      return {
-        ...goal,
-        items: processGoalItems(goal.items, isMobile)
-      };
-    });
-    
-    return processed;
-  }, [goalsWithItems, isMobile]);
+    // 🚀 ULTRA FAST: Minimal processing - just return data as-is
+    return goalsWithItems.map((goal: any) => ({
+      ...goal,
+      items: goal.items || [] // Ensure items array exists
+    }));
+  }, [goalsWithItems]);
 
   const processedProgress = useMemo(() => {
-    return processProgressData(goalProgress);
+    return goalProgress || {}; // Minimal processing
   }, [goalProgress]);
 
   const processedRules = useMemo(() => {
-    return processRulesData(toDontList);
+    return toDontList || []; // Minimal processing
   }, [toDontList]);
 
-  // 🚀 OPTIMIZED: Mobile optimization with lazy item loading
-  const maxItemsToShow = isMobile ? 3 : 5; // 🚀 Reduced initial load
-  const mobileOptimizedGoals = useMemo(() => {
-    if (!processedGoals || processedGoals.length === 0) return [];
-    
-    const optimized = processedGoals.map((goal: any) => ({
-      ...goal,
-      items: goal.items.slice(0, maxItemsToShow) // Only limit items per goal, not goals themselves
-    }));
-    
-    return optimized;
-  }, [processedGoals, maxItemsToShow, isMobile]); // Add isMobile dependency
+  // 🚀 ULTRA OPTIMIZED: Direct usage - no mobile optimization overhead
+  const mobileOptimizedGoals = processedGoals;
 
 
   // Memoized refresh handlers
