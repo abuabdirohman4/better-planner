@@ -15,7 +15,7 @@ import { formatDateIndo, daysOfWeek, getWeekDates } from "@/lib/dateUtils";
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from "@/lib/quarterUtils";
 
 import ToDontListCard from "./ToDontListCard";
-import WeeklyGoalsTable from "./WeeklyGoalsTable";
+import WeeklyGoalsTable from "./Table";
 import type { Task } from "./types";
 
 // Import missing functions

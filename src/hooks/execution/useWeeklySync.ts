@@ -4,7 +4,6 @@ import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress } from '@/ap
 import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 
-// Import types from WeeklyGoalsTable component
 interface GoalItem {
   id: string;
   item_id: string;
