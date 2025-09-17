@@ -17,6 +17,7 @@ export default function WeeklyGoalsTable({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
     setIsModalOpen(true);

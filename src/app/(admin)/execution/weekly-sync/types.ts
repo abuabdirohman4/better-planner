@@ -77,11 +77,3 @@ export interface Rule {
   display_order: number;
 }
 
-export interface Task {
-  id: string;
-  title: string;
-  status: string;
-  scheduled_date: string | null;
-  milestone_id: string;
-  parent_task_id: string | null;
-}
