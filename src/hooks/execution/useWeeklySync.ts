@@ -187,53 +187,73 @@ export function useWeeklyRules(year: number, weekNumber: number) {
  * ✅ OPTIMIZED: Single RPC call instead of 8+ separate queries
  */
 export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+  console.log('🚀 DEBUG: useWeeklySyncUltraFast hook called with:', { year, quarter, weekNumber, startDate, endDate });
+  
   const swrKey = ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate];
+  console.log('🚀 DEBUG: SWR Key:', swrKey);
+
+  // 🚀 MOBILE DETECTION: Check if mobile for different settings
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  console.log('🚀 DEBUG: isMobile:', isMobile);
 
   const { 
     data = {
       goals: [],
       progress: {},
-      rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
-      weekDates: []
+      rules: []
+      // 🚀 OPTIMIZED: Removed unused data (unscheduledTasks, scheduledTasks, weekDates)
     }, 
     error, 
     isLoading,
-    mutate 
+    mutate,
+    isValidating
   } = useSWR(
     swrKey,
-    () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
+    () => {
+      console.log('🚀 DEBUG: SWR Fetcher called!');
+      return getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate);
+    },
     {
-      // 🚀 ULTRA OPTIMIZED: Maximum performance settings
-      revalidateOnFocus: false,          // ❌ No revalidate on focus for speed
-      revalidateIfStale: false,          // ❌ No revalidate if stale for speed
-      revalidateOnReconnect: false,      // ❌ No revalidate on reconnect for speed
-      dedupingInterval: 5 * 60 * 1000,   // ✅ 5 minutes - longer cache for speed
-      errorRetryCount: 1,                // ✅ Minimal retry for speed
-      errorRetryInterval: 1000,          // ✅ 1 second retry for speed
-      focusThrottleInterval: 10000,      // ✅ 10 seconds throttle for speed
-      keepPreviousData: true,            // ✅ Keep previous data for smooth UX
-      refreshInterval: 0,                // ✅ No auto refresh
-      loadingTimeout: 30000,             // ✅ 30 second timeout
+      // 🚀 MOBILE-OPTIMIZED: Different settings for mobile vs desktop
+      revalidateOnFocus: !isMobile,        // ✅ Desktop: revalidate, Mobile: no revalidate
+      revalidateIfStale: !isMobile,        // ✅ Desktop: revalidate, Mobile: no revalidate
+      revalidateOnReconnect: !isMobile,    // ✅ Desktop: revalidate, Mobile: no revalidate
+      dedupingInterval: isMobile ? 10 * 60 * 1000 : 5 * 60 * 1000, // ✅ Mobile: 10min, Desktop: 5min
+      errorRetryCount: isMobile ? 0 : 1,   // ✅ Mobile: no retry, Desktop: 1 retry
+      errorRetryInterval: 2000,            // ✅ 2 seconds retry interval
+      focusThrottleInterval: isMobile ? 30000 : 10000, // ✅ Mobile: 30s, Desktop: 10s
+      keepPreviousData: true,              // ✅ Keep previous data for smooth UX
+      refreshInterval: 0,                  // ✅ No auto refresh
+      loadingTimeout: isMobile ? 60000 : 30000, // ✅ Mobile: 60s, Desktop: 30s
       
-      // 🚀 ULTRA OPTIMIZED: Minimal error handling for speed
+      // 🚀 MOBILE-OPTIMIZED: Minimal error handling for speed
       onError: (err) => {
         console.warn('SWR Error:', err.message);
         return;
       },
       
-      // 🚀 ULTRA OPTIMIZED: Minimal success handling for speed
+      // 🚀 MOBILE-OPTIMIZED: Minimal success handling for speed
       onSuccess: (data) => {
-        console.log('🚀 ULTRA FAST RPC:', data?.goals?.length || 0, 'goals');
+        console.log(`🚀 ULTRA FAST RPC (${isMobile ? 'MOBILE' : 'DESKTOP'}):`, data?.goals?.length || 0, 'goals');
         return;
       }
     }
   );
+  console.log('🚀 DEBUG: SWR Data received:', {
+    data,
+    isLoading,
+    isValidating,
+    error,
+    goalsLength: data?.goals?.length || 0,
+    progressKeys: Object.keys(data?.progress || {}).length,
+    rulesLength: data?.rules?.length || 0,
+    isFromCache: !isLoading && !isValidating && data?.goals?.length > 0
+  });
 
-  // 🚀 PRODUCTION: Minimal logging for performance monitoring
+  // 🚀 DEBUG: Log detailed data structure
   if (data?.goals?.length > 0) {
-    console.log('🚀 ULTRA FAST RPC loaded:', data.goals.length, 'goals');
+    console.log('🚀 DEBUG: First Goal Data:', data.goals[0]);
+    console.log('🚀 DEBUG: Goal Items:', data.goals[0]?.items?.length || 0, 'items');
   }
 
   return {
@@ -241,15 +261,8 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
     goals: data.goals,
     goalProgress: data.progress,
     
-    // Tasks data
-    unscheduledTasks: data.unscheduledTasks,
-    scheduledTasks: data.scheduledTasks,
-    
     // Rules data
     rules: data.rules,
-    
-    // Week dates
-    weekDates: data.weekDates,
     
     // Loading states
     isLoading,

@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { useWeeklySyncUltraFast, useWeeklyGoalsWithProgress, useWeeklyRules } from '@/hooks/execution/useWeeklySync';
+import { useWeeklySyncUltraFast } from '@/hooks/execution/useWeeklySync';
 import { getWeekDates } from '@/lib/dateUtils';
 import { 
   useIsMobile, 
@@ -7,16 +7,6 @@ import {
   processProgressData, 
   processRulesData 
 } from '@/lib/performanceUtils';
-
-// Helper: pastikan date adalah hari Senin
-function ensureMonday(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 export function useWeeklySyncData(
   currentWeek: Date,
@@ -31,7 +21,7 @@ export function useWeeklySyncData(
   const startDate = weekDates[0].toISOString().slice(0, 10);
   const endDate = weekDates[6].toISOString().slice(0, 10);
   
-  // 🚀 ULTRA OPTIMIZED: ONLY use ultra fast RPC - no fallback for maximum speed
+  // 🚀 MOBILE OPTIMIZED: Use ultra fast RPC with mobile-specific settings
   const {
     goals: ultraFastGoals,
     goalProgress: ultraFastProgress,
@@ -57,27 +47,55 @@ export function useWeeklySyncData(
   // 🚀 FIXED: Use real data from working functions
   const goalsWithItems = goals;
 
-  // 🚀 ULTRA OPTIMIZED: Minimal processing for maximum speed
+  // 🚀 MOBILE-OPTIMIZED: Different processing for mobile vs desktop
   const processedGoals = useMemo(() => {
     if (!goalsWithItems || goalsWithItems.length === 0) return [];
     
-    // 🚀 ULTRA FAST: Minimal processing - just return data as-is
-    return goalsWithItems.map((goal: any) => ({
-      ...goal,
-      items: goal.items || [] // Ensure items array exists
-    }));
-  }, [goalsWithItems]);
+    if (isMobile) {
+      // 🚀 MOBILE: Ultra minimal processing - just return data as-is
+      return goalsWithItems.map((goal: any) => ({
+        ...goal,
+        items: goal.items || [] // Ensure items array exists
+      }));
+    } else {
+      // 🚀 DESKTOP: Slightly more processing for better UX
+      return goalsWithItems.map((goal: any) => ({
+        ...goal,
+        items: processGoalItems(goal.items || [], isMobile)
+      }));
+    }
+  }, [goalsWithItems, isMobile]);
 
   const processedProgress = useMemo(() => {
-    return goalProgress || {}; // Minimal processing
-  }, [goalProgress]);
+    if (isMobile) {
+      return goalProgress || {}; // Minimal processing for mobile
+    } else {
+      return processProgressData(goalProgress); // Full processing for desktop
+    }
+  }, [goalProgress, isMobile]);
 
   const processedRules = useMemo(() => {
-    return toDontList || []; // Minimal processing
-  }, [toDontList]);
+    if (isMobile) {
+      return toDontList || []; // Minimal processing for mobile
+    } else {
+      return processRulesData(toDontList); // Full processing for desktop
+    }
+  }, [toDontList, isMobile]);
 
-  // 🚀 ULTRA OPTIMIZED: Direct usage - no mobile optimization overhead
-  const mobileOptimizedGoals = processedGoals;
+  // 🚀 MOBILE-OPTIMIZED: Different optimization for mobile vs desktop
+  const mobileOptimizedGoals = useMemo(() => {
+    if (isMobile) {
+      // 🚀 MOBILE: Limit items per goal for faster rendering
+      const maxItemsPerGoal = 2; // Very limited for mobile
+      return processedGoals.map((goal: any) => ({
+        ...goal,
+        items: goal.items.slice(0, maxItemsPerGoal)
+      }));
+    } else {
+      // 🚀 DESKTOP: Show more items
+      return processedGoals;
+    }
+  }, [processedGoals, isMobile]);
 
 
   // Memoized refresh handlers
@@ -111,6 +129,9 @@ export function useWeeklySyncData(
     mutateUltraFast: mutate,
     
     // Data source indicator
-    dataSource
+    dataSource,
+    
+    // Mobile detection
+    isMobile
   };
 }
