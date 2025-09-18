@@ -15,7 +15,6 @@ export { useDashboardMetrics, useTodayTasks, useActiveQuests, useHabitsStreak, u
 export { useQuarter } from './common/useQuarter';
 export { useWeek } from './common/useWeek';
 export { useProgressiveLoading, usePrefetchOnDemand } from './common/useProgressiveLoading';
-export { useOfflineSync } from './common/useOfflineSync';
 
 // PWA Hooks
 export { usePWA } from './usePWA';

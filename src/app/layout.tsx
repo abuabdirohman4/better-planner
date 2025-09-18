@@ -11,7 +11,6 @@ import LoadingHandler from '@/components/PWA/LoadingHandler';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import PWAHead from './pwa-head';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -58,9 +57,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
-      <head>
-        <PWAHead />
-      </head>
       <body>
         {/* Inject global timer for Weekly Sync loading measurement */}
         <script

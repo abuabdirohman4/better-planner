@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 const http = require('http');
+const fs = require('fs');
 
-console.log('🚀 Testing Improved PWA Implementation');
-console.log('=====================================');
+console.log('🧹 Testing Clean PWA Implementation');
+console.log('==================================');
 
 // Test server
 const testServer = () => {
@@ -26,31 +27,54 @@ const testServer = () => {
 };
 
 // Test PWA components
-const testPWAComponents = () => {
-  console.log('\n📱 PWA Components Status:');
-  console.log('========================');
+const testPWAFiles = () => {
+  console.log('\n📱 PWA Files Status:');
+  console.log('===================');
   
-  const components = [
+  const requiredFiles = [
     'src/components/PWA/index.tsx',
     'src/components/PWA/SplashScreen.tsx', 
     'src/components/PWA/LoadingHandler.tsx',
     'src/hooks/usePWA.ts',
-    'src/hooks/useGlobalLoading.ts'
+    'src/hooks/useGlobalLoading.ts',
+    'public/manifest.json',
+    'public/sw.js'
   ];
   
-  const fs = require('fs');
-  let allExist = true;
+  const removedFiles = [
+    'src/components/common/PWAComponents.tsx',
+    'src/components/common/PWADebug.tsx',
+    'src/components/common/DevelopmentPWAManager.tsx',
+    'src/lib/pwa-config.ts',
+    'src/lib/offlineUtils.ts',
+    'scripts/debug-pwa-mobile.js',
+    'scripts/test-pwa-improved.js'
+  ];
   
-  components.forEach(component => {
-    if (fs.existsSync(component)) {
-      console.log(`✅ ${component}`);
+  let allRequired = true;
+  let allRemoved = true;
+  
+  console.log('✅ Required Files:');
+  requiredFiles.forEach(file => {
+    if (fs.existsSync(file)) {
+      console.log(`   ✅ ${file}`);
     } else {
-      console.log(`❌ ${component} - MISSING`);
-      allExist = false;
+      console.log(`   ❌ ${file} - MISSING`);
+      allRequired = false;
     }
   });
   
-  return allExist;
+  console.log('\n🗑️ Removed Files:');
+  removedFiles.forEach(file => {
+    if (!fs.existsSync(file)) {
+      console.log(`   ✅ ${file} - REMOVED`);
+    } else {
+      console.log(`   ❌ ${file} - STILL EXISTS`);
+      allRemoved = false;
+    }
+  });
+  
+  return allRequired && allRemoved;
 };
 
 // Test manifest
@@ -59,7 +83,6 @@ const testManifest = () => {
   console.log('==================');
   
   try {
-    const fs = require('fs');
     const manifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf8'));
     
     console.log(`✅ Manifest exists`);
@@ -75,47 +98,26 @@ const testManifest = () => {
   }
 };
 
-// Test service worker
-const testServiceWorker = () => {
-  console.log('\n⚙️ Service Worker Status:');
-  console.log('========================');
-  
-  const fs = require('fs');
-  
-  if (fs.existsSync('public/sw.js')) {
-    console.log('✅ Service worker exists');
-    
-    const workboxFiles = fs.readdirSync('public').filter(f => f.startsWith('workbox-') && f.endsWith('.js'));
-    console.log(`✅ Workbox files: ${workboxFiles.length} found`);
-    
-    return true;
-  } else {
-    console.log('❌ Service worker not found');
-    return false;
-  }
-};
-
 // Main test
 const runTest = async () => {
-  console.log('🧪 Running PWA Tests...\n');
+  console.log('🧪 Running Clean PWA Tests...\n');
   
   const serverOk = await testServer();
-  const componentsOk = testPWAComponents();
+  const filesOk = testPWAFiles();
   const manifestOk = testManifest();
-  const swOk = testServiceWorker();
   
   console.log('\n📊 Test Results:');
   console.log('================');
   console.log(`✅ Server: ${serverOk ? 'Running' : 'Not Running'}`);
-  console.log(`✅ PWA Components: ${componentsOk ? 'All Present' : 'Missing'}`);
+  console.log(`✅ PWA Files: ${filesOk ? 'Clean' : 'Issues Found'}`);
   console.log(`✅ Manifest: ${manifestOk ? 'Valid' : 'Invalid'}`);
-  console.log(`✅ Service Worker: ${swOk ? 'Ready' : 'Not Ready'}`);
   
-  const allGood = serverOk && componentsOk && manifestOk && swOk;
+  const allGood = serverOk && filesOk && manifestOk;
   
   if (allGood) {
-    console.log('\n🎉 PWA Implementation Improved!');
-    console.log('📱 Now includes:');
+    console.log('\n🎉 PWA Cleanup Successful!');
+    console.log('📱 Clean PWA includes:');
+    console.log('   - Essential PWA components only');
     console.log('   - Custom install prompt');
     console.log('   - Splash screen');
     console.log('   - Loading handler');
@@ -123,20 +125,19 @@ const runTest = async () => {
     console.log('   - Offline indicator');
     console.log('   - Update notifications');
     
-    console.log('\n🧪 Next Steps:');
-    console.log('1. Open http://localhost:3000 in mobile browser');
-    console.log('2. Look for install prompt (appears after 3 seconds)');
-    console.log('3. Test install functionality');
-    console.log('4. Check offline/online indicators');
+    console.log('\n🗑️ Removed unnecessary files:');
+    console.log('   - Debug components');
+    console.log('   - Development scripts');
+    console.log('   - Old PWA components');
+    console.log('   - Unused utilities');
+    
+    console.log('\n🧪 Ready for Production!');
+    console.log('1. PWA can be installed on desktop and mobile');
+    console.log('2. Clean codebase with only essential files');
+    console.log('3. No unnecessary debug components');
   } else {
     console.log('\n⚠️ Some issues found - check the details above');
   }
-  
-  console.log('\n🔧 Debug Commands:');
-  console.log('- Check PWA status: node scripts/debug-pwa-mobile.js');
-  console.log('- Test production: npm run pwa:build && npm run pwa:prod');
-  console.log('- Lighthouse audit: npx lighthouse http://localhost:3000 --view');
 };
 
 runTest().catch(console.error);
-
