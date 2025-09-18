@@ -173,23 +173,9 @@ export async function getQuests(year: number, quarter: number, isCommitted: bool
     .order('priority_score', { ascending: false })
     .limit(3);
   
-  console.warn('🔍 getQuests query params:', { year, quarter, isCommitted, user_id: user.id });
-  console.warn('📊 getQuests response:', { data, error });
-  
   if (error) {
     console.error('❌ Error fetching quests:', error);
     return [];
-  }
-  
-  console.warn('✅ Quests found:', data?.length || 0);
-  if (data && data.length > 0) {
-    data.forEach((quest, index) => {
-      console.warn(`📌 Quest ${index + 1}:`, {
-        id: quest.id,
-        title: quest.title,
-        motivation: quest.motivation
-      });
-    });
   }
   
   // Also check if the specific quest ID exists
@@ -209,7 +195,6 @@ export async function getQuests(year: number, quarter: number, isCommitted: bool
 // Ambil semua milestones untuk quest tertentu
 export async function getMilestonesForQuest(questId: string) {
   const supabase = await createClient();
-  console.warn('🔍 Fetching milestones for quest ID:', questId);
   
   // First check if quest exists
   const { data: quest, error: questError } = await supabase
