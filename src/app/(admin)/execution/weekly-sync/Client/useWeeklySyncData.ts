@@ -47,55 +47,29 @@ export function useWeeklySyncData(
   // 🚀 FIXED: Use real data from working functions
   const goalsWithItems = goals;
 
-  // 🚀 MOBILE-OPTIMIZED: Different processing for mobile vs desktop
+  // 🚀 ULTRA OPTIMIZED: Minimal processing for all devices
   const processedGoals = useMemo(() => {
     if (!goalsWithItems || goalsWithItems.length === 0) return [];
     
-    if (isMobile) {
-      // 🚀 MOBILE: Ultra minimal processing - just return data as-is
-      return goalsWithItems.map((goal: any) => ({
-        ...goal,
-        items: goal.items || [] // Ensure items array exists
-      }));
-    } else {
-      // 🚀 DESKTOP: Slightly more processing for better UX
-      return goalsWithItems.map((goal: any) => ({
-        ...goal,
-        items: processGoalItems(goal.items || [], isMobile)
-      }));
-    }
-  }, [goalsWithItems, isMobile]);
+    // 🚀 ULTRA FAST: Minimal processing for speed
+    return goalsWithItems.map((goal: any) => ({
+      ...goal,
+      items: goal.items || [] // Ensure items array exists
+    }));
+  }, [goalsWithItems]);
 
   const processedProgress = useMemo(() => {
-    if (isMobile) {
-      return goalProgress || {}; // Minimal processing for mobile
-    } else {
-      return processProgressData(goalProgress); // Full processing for desktop
-    }
-  }, [goalProgress, isMobile]);
+    return goalProgress || {}; // Minimal processing for speed
+  }, [goalProgress]);
 
   const processedRules = useMemo(() => {
-    if (isMobile) {
-      return toDontList || []; // Minimal processing for mobile
-    } else {
-      return processRulesData(toDontList); // Full processing for desktop
-    }
-  }, [toDontList, isMobile]);
+    return toDontList || []; // Minimal processing for speed
+  }, [toDontList]);
 
-  // 🚀 MOBILE-OPTIMIZED: Different optimization for mobile vs desktop
+  // 🚀 ULTRA OPTIMIZED: Simple goal optimization
   const mobileOptimizedGoals = useMemo(() => {
-    if (isMobile) {
-      // 🚀 MOBILE: Limit items per goal for faster rendering
-      const maxItemsPerGoal = 2; // Very limited for mobile
-      return processedGoals.map((goal: any) => ({
-        ...goal,
-        items: goal.items.slice(0, maxItemsPerGoal)
-      }));
-    } else {
-      // 🚀 DESKTOP: Show more items
-      return processedGoals;
-    }
-  }, [processedGoals, isMobile]);
+    return processedGoals; // No additional processing for speed
+  }, [processedGoals]);
 
 
   // Memoized refresh handlers

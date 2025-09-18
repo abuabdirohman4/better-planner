@@ -133,10 +133,7 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
   const swrKey = ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate];
   console.log('🚀 DEBUG: SWR Key:', swrKey);
 
-  // 🚀 MOBILE DETECTION: Check if mobile for different settings
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  console.log('🚀 DEBUG: isMobile:', isMobile);
-
+  // 🚀 ULTRA OPTIMIZED: Simple, fast SWR config for all devices
   const { 
     data = {
       goals: [],
@@ -155,27 +152,27 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
       return getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate);
     },
     {
-      // 🚀 MOBILE-OPTIMIZED: Different settings for mobile vs desktop
-      revalidateOnFocus: !isMobile,        // ✅ Desktop: revalidate, Mobile: no revalidate
-      revalidateIfStale: !isMobile,        // ✅ Desktop: revalidate, Mobile: no revalidate
-      revalidateOnReconnect: !isMobile,    // ✅ Desktop: revalidate, Mobile: no revalidate
-      dedupingInterval: isMobile ? 10 * 60 * 1000 : 5 * 60 * 1000, // ✅ Mobile: 10min, Desktop: 5min
-      errorRetryCount: isMobile ? 0 : 1,   // ✅ Mobile: no retry, Desktop: 1 retry
-      errorRetryInterval: 2000,            // ✅ 2 seconds retry interval
-      focusThrottleInterval: isMobile ? 30000 : 10000, // ✅ Mobile: 30s, Desktop: 10s
+      // 🚀 ULTRA FAST: Optimized for speed on all devices
+      revalidateOnFocus: false,            // ✅ No revalidation on focus
+      revalidateIfStale: false,            // ✅ No revalidation if stale
+      revalidateOnReconnect: false,        // ✅ No revalidation on reconnect
+      dedupingInterval: 30 * 1000,         // ✅ 30 seconds - short but reasonable
+      errorRetryCount: 1,                  // ✅ 1 retry only
+      errorRetryInterval: 1000,            // ✅ 1 second retry interval
+      focusThrottleInterval: 5000,         // ✅ 5 seconds throttle
       keepPreviousData: true,              // ✅ Keep previous data for smooth UX
       refreshInterval: 0,                  // ✅ No auto refresh
-      loadingTimeout: isMobile ? 60000 : 30000, // ✅ Mobile: 60s, Desktop: 30s
+      loadingTimeout: 10000,               // ✅ 10 seconds max - much faster!
       
-      // 🚀 MOBILE-OPTIMIZED: Minimal error handling for speed
+      // 🚀 ULTRA FAST: Minimal error handling
       onError: (err) => {
         console.warn('SWR Error:', err.message);
         return;
       },
       
-      // 🚀 MOBILE-OPTIMIZED: Minimal success handling for speed
+      // 🚀 ULTRA FAST: Minimal success handling
       onSuccess: (data) => {
-        console.log(`🚀 ULTRA FAST RPC (${isMobile ? 'MOBILE' : 'DESKTOP'}):`, data?.goals?.length || 0, 'goals');
+        console.log('🚀 ULTRA FAST RPC:', data?.goals?.length || 0, 'goals');
         return;
       }
     }

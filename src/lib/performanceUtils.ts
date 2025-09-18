@@ -74,11 +74,13 @@ export const useMemoryMonitor = () => {
   }, []);
 };
 
-// 🚀 OPTIMIZED: Mobile detection
+// 🚀 OPTIMIZED: Mobile detection - Server-side safe
 export const useIsMobile = () => {
   const [isMobile, setIsMobile] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setMounted(true);
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -88,7 +90,8 @@ export const useIsMobile = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  return isMobile;
+  // Return false during SSR to prevent hydration mismatch
+  return mounted ? isMobile : false;
 };
 
 // 🚀 OPTIMIZED: Data processing utilities
