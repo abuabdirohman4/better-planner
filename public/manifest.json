@@ -1,0 +1,91 @@
+{
+  "name": "Better Planner",
+  "short_name": "Better Planner",
+  "description": "A comprehensive project planning and task management app to help you achieve your goals",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1496F6",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "business", "lifestyle"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/images/logo/logo-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo/logo-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your projects and tasks",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Planning",
+      "short_name": "Planning",
+      "description": "Plan your projects and goals",
+      "url": "/planning",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Execution",
+      "short_name": "Execution",
+      "description": "Execute your tasks and track progress",
+      "url": "/execution",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}

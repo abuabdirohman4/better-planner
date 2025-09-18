@@ -14,4 +14,5 @@ export { useDashboardMetrics, useTodayTasks, useActiveQuests, useHabitsStreak, u
 // Common Hooks
 export { useQuarter } from './common/useQuarter';
 export { useWeek } from './common/useWeek';
-export { useProgressiveLoading, usePrefetchOnDemand } from './common/useProgressiveLoading'; 
+export { useProgressiveLoading, usePrefetchOnDemand } from './common/useProgressiveLoading';
+export { useOfflineSync } from './common/useOfflineSync'; 

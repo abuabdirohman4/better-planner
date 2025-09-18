@@ -3,6 +3,7 @@ import React, { useState ,useEffect, Suspense} from "react";
 
 import QuarterSelector from "@/components/common/QuarterSelector";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+import OfflineSyncIndicator from "@/components/common/OfflineSyncIndicator";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
@@ -62,6 +63,7 @@ function ApplicationMenu({
     >
       <div className="flex items-center gap-2 2xsm:gap-3">
         <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} />
+        <OfflineSyncIndicator />
         <ThemeToggleButton />
         <NotificationDropdown />
       </div>
