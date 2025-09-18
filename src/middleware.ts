@@ -4,10 +4,22 @@ import { createClient } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   try {
+    const { pathname } = request.nextUrl
+
+    // Skip middleware for PWA files and static assets
+    if (
+      pathname === '/manifest.json' ||
+      pathname === '/sw.js' ||
+      pathname === '/sw-dev.js' ||
+      pathname.startsWith('/_next/') ||
+      pathname.startsWith('/images/') ||
+      pathname === '/favicon.ico'
+    ) {
+      return NextResponse.next()
+    }
+
     const { supabase, response } = createClient(request)
     const { data: { session } } = await supabase.auth.getSession()
-
-    const { pathname } = request.nextUrl
 
     // Jika user tidak login dan tidak berada di halaman auth, redirect ke signin
     if (!session && pathname !== '/signin' && pathname !== '/signup') {
@@ -37,7 +49,11 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - images (public images)
+     * - manifest.json (PWA manifest)
+     * - sw.js (service worker)
+     * - sw-dev.js (development service worker)
+     * - workbox-*.js (workbox files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|images/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images/|manifest\.json|sw\.js|sw-dev\.js|workbox-).*)',
   ],
 } 

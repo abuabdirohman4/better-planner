@@ -5,12 +5,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 import PreloadProvider from '@/components/common/PreloadProvider';
-import PWAComponents from '@/components/common/PWAComponents';
-import PWADebug from '@/components/common/PWADebug';
-import PWADevelopmentMode from '@/components/common/PWADevelopmentMode';
-import MobilePWADebug from '@/components/common/MobilePWADebug';
-import DevelopmentPWAManager from '@/components/common/DevelopmentPWAManager';
-import SplashScreen from '@/components/common/SplashScreen';
+import PWAComponents from '@/components/PWA';
+import SplashScreen from '@/components/PWA/SplashScreen';
+import LoadingHandler from '@/components/PWA/LoadingHandler';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -50,7 +47,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#1496F6",
+  themeColor: "#ffffff",
   colorScheme: "light dark",
 };
 
@@ -75,15 +72,15 @@ export default function RootLayout({
         {/* PWA Components */}
         <PWAComponents />
         <SplashScreen />
-        <PWADebug />
-        <PWADevelopmentMode />
-        <MobilePWADebug />
-        <DevelopmentPWAManager />
         
         <SWRProvider>
           <PreloadProvider>
             <ThemeProvider>
-              <SidebarProvider>{children}</SidebarProvider>
+              <SidebarProvider>
+                <LoadingHandler>
+                  {children}
+                </LoadingHandler>
+              </SidebarProvider>
             </ThemeProvider>
             <Toaster
               position="top-right"
