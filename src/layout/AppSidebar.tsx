@@ -373,7 +373,7 @@ function SidebarContent({
 }) {
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 transform
         ${
           isExpanded || isMobileOpen
             ? "w-[290px]"
@@ -386,40 +386,32 @@ function SidebarContent({
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`py-8 ml-2 flex  ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
-      >
-        <Link href="/">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={200}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={200}
-                height={40}
-              />
-            </>
-          ) : (
-            <>
-              <Image
-                src="/images/logo/logo-icon.svg"
-                alt="Logo"
-                width={32}
-                height={32}
-              />
-            </>
-          )}
-        </Link>
+        <div className="py-8 ml-4 flex justify-start">
+            <Link href="/" className="relative block">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Image
+                    src="/images/logo/logo-icon.svg"
+                    alt="Logo"
+                    width={34}
+                    height={34}
+                    priority
+                  />
+                </div>
+                
+                <div
+                  className={`transition-all duration-300 ease-in-out transform ${
+                    isExpanded || isHovered || isMobileOpen
+                      ? "opacity-100 translate-x-0 ml-3 w-auto"
+                      : "opacity-0 -translate-x-4 absolute pointer-events-none ml-0 w-0 overflow-hidden"
+                  }`}
+                >
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                    Better Planner
+                  </span>
+                </div>
+              </div>
+            </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="flex flex-col gap-6">
