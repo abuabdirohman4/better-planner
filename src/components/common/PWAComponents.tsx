@@ -38,6 +38,37 @@ export default function PWAComponents() {
       }, pwaConfig.installPrompt.delay);
     };
 
+    // Check PWA installability
+    const checkPWAInstallability = async () => {
+      console.log('🔍 Checking PWA installability...');
+      
+      // Check if service worker is registered
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        console.log('🔍 Service Worker registered:', !!registration);
+        
+        if (registration) {
+          console.log('🔍 Service Worker scope:', registration.scope);
+          console.log('🔍 Service Worker state:', registration.active?.state);
+        }
+      }
+      
+      // Check if manifest is loaded
+      const manifestLink = document.querySelector('link[rel="manifest"]');
+      console.log('🔍 Manifest link found:', !!manifestLink);
+      
+      // Check if running in standalone mode
+      const isStandalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+      console.log('🔍 Already in standalone mode:', isStandalone);
+      
+      // Check if HTTPS
+      const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+      console.log('🔍 HTTPS/Localhost:', isHTTPS);
+    };
+
+    // Run PWA check
+    checkPWAInstallability();
+
     // Offline/Online handlers
     const handleOnline = () => {
       setIsOnline(true);
