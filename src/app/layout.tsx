@@ -7,7 +7,6 @@ import './globals.css';
 import PreloadProvider from '@/components/common/PreloadProvider';
 import PWAComponents from '@/components/PWA';
 import SplashScreen from '@/components/PWA/SplashScreen';
-import LoadingHandler from '@/components/PWA/LoadingHandler';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -66,15 +65,14 @@ export default function RootLayout({
         
         {/* PWA Components */}
         <PWAComponents />
-        <SplashScreen />
         
         <SWRProvider>
           <PreloadProvider>
             <ThemeProvider>
               <SidebarProvider>
-                <LoadingHandler>
+                <SplashScreen>
                   {children}
-                </LoadingHandler>
+                </SplashScreen>
               </SidebarProvider>
             </ThemeProvider>
             <Toaster

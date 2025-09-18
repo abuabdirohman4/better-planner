@@ -7,7 +7,7 @@
 - [ ] Function logout in dropdown profile
 - [ ] Logo sidebar bigger when open close
 - [ ] In Login, when false auth the messag was "NEXT REDIRECT"
-- [ ] Klick sign out like bug, because no loading and not directly out
+- [ ] Click sign out like bug, because no loading and not directly out
 
 ## LIST IDEA
 - [ ] PWA install for mobile
@@ -33,3 +33,7 @@
 ### 12 WEEK QUESTS
 
 ### VISION
+
+### PWA & Mobile View
+- [ ] In mobile view, sign out have not bg color
+- [ ] Update logo in splash screen
