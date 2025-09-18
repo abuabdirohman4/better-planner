@@ -8,6 +8,8 @@ import PreloadProvider from '@/components/common/PreloadProvider';
 import PWAComponents from '@/components/common/PWAComponents';
 import PWADebug from '@/components/common/PWADebug';
 import PWADevelopmentMode from '@/components/common/PWADevelopmentMode';
+import MobilePWADebug from '@/components/common/MobilePWADebug';
+import DevelopmentPWAManager from '@/components/common/DevelopmentPWAManager';
 import SplashScreen from '@/components/common/SplashScreen';
 import SWRProvider from '@/components/common/SWRProvider';
 import { SidebarProvider } from '@/context/SidebarContext';
@@ -75,6 +77,8 @@ export default function RootLayout({
         <SplashScreen />
         <PWADebug />
         <PWADevelopmentMode />
+        <MobilePWADebug />
+        <DevelopmentPWAManager />
         
         <SWRProvider>
           <PreloadProvider>

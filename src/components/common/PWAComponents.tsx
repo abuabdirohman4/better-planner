@@ -17,9 +17,17 @@ export default function PWAComponents() {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
   useEffect(() => {
+    // Check if we're in development mode with manual service worker
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const hasManualSW = isDevelopment && 'serviceWorker' in navigator;
+    
     // Install prompt handler
     const handleBeforeInstallPrompt = (e: Event) => {
       console.log('🔔 Install prompt event triggered!');
+      console.log('🔔 Event details:', e);
+      console.log('🔔 Development mode:', isDevelopment);
+      console.log('🔔 Manual SW:', hasManualSW);
+      
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
@@ -85,11 +93,21 @@ export default function PWAComponents() {
   }, [deferredPrompt, showInstallPrompt]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    console.log('🔔 Install button clicked!');
+    console.log('🔔 Deferred prompt:', deferredPrompt);
+    
+    if (!deferredPrompt) {
+      console.log('❌ No deferred prompt available');
+      toast.error("Install prompt not available. Please try refreshing the page.");
+      return;
+    }
 
     try {
+      console.log('🔔 Calling deferredPrompt.prompt()...');
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
+      
+      console.log('🔔 User choice:', outcome);
       
       if (outcome === "accepted") {
         toast.success("Better Planner installed successfully!");
@@ -100,8 +118,8 @@ export default function PWAComponents() {
       setDeferredPrompt(null);
       setShowInstallPrompt(false);
     } catch (error) {
-      console.error("Error during installation:", error);
-      toast.error("Failed to install app");
+      console.error("❌ Error during installation:", error);
+      toast.error("Failed to install app: " + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 

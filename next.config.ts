@@ -32,8 +32,8 @@ const pwaConfig = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
-  // disable: false, // Enable PWA in development for testing
   disable: process.env.NODE_ENV === "development", // Disable in development to avoid warnings
+  // disable: false, // Enable PWA in development for testing
   buildExcludes: [/middleware-manifest\.json$/],
   runtimeCaching: [
     // Static assets caching
