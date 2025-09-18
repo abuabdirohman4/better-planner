@@ -2,9 +2,9 @@
 import React, { useState, useTransition } from "react";
 
 import Spinner from '@/components/ui/spinner/Spinner';
-import { useCompletedSessions, useTasksForWeek } from "@/hooks/execution/useDailySync";
+import { useDailySyncUltraFast, useTasksForWeek } from "@/hooks/execution/useDailySync";
 
-import { getDailyPlan, addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
+import { addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
 
 
 interface WeeklyTaskItem {
@@ -46,20 +46,19 @@ interface DailySyncClientProps {
   forceRefreshTaskId?: string | null;
 }
 
-// Custom hook for task session management
-function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: number, forceRefreshTaskId?: string | null) {
+// Custom hook for task session management - OPTIMIZED
+function useTaskSession(
+  item: DailyPlanItem, 
+  selectedDate: string, 
+  completedSessions: Record<string, number>,
+  refreshKey?: number, 
+  forceRefreshTaskId?: string | null
+) {
   const [target, setTarget] = React.useState(item.daily_session_target ?? 1);
   const [savingTarget, setSavingTarget] = React.useState(false);
 
-  // SWR hook for completed sessions
-  const { completedCount, isLoading, mutate } = useCompletedSessions(item.id, selectedDate || '');
-
-  // Trigger refresh when refreshKey or forceRefreshTaskId changes
-  React.useEffect(() => {
-    if (refreshKey || forceRefreshTaskId) {
-      mutate();
-    }
-  }, [refreshKey, forceRefreshTaskId, mutate]);
+  // Get completed sessions from optimized data (no additional API call)
+  const completedCount = completedSessions[item.id] || 0;
 
   // Update target when item changes
   React.useEffect(() => {
@@ -80,24 +79,25 @@ function useTaskSession(item: DailyPlanItem, selectedDate: string, refreshKey?: 
 
   return {
     completed: completedCount,
-    loading: isLoading,
+    loading: false, // No loading state needed - data comes from optimized hook
     target,
     savingTarget,
     handleTargetChange
   };
 }
 
-// Component for task card
+// Component for task card - OPTIMIZED
 const TaskCard: React.FC<{
   item: DailyPlanItem;
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
   onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
+  completedSessions: Record<string, number>;
   refreshKey?: number;
   forceRefreshTaskId?: string | null;
-}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, refreshKey, forceRefreshTaskId }) => {
-  const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(item, selectedDate || '', refreshKey, forceRefreshTaskId);
+}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, completedSessions, refreshKey, forceRefreshTaskId }) => {
+  const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(item, selectedDate || '', completedSessions, refreshKey, forceRefreshTaskId);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
@@ -213,7 +213,7 @@ function SideQuestForm({ onSubmit, onCancel }: { onSubmit: (title: string) => vo
   );
 }
 
-// Component for task column
+// Component for task column - OPTIMIZED
 const TaskColumn: React.FC<{
   title: string;
   items: DailyPlanItem[];
@@ -223,10 +223,11 @@ const TaskColumn: React.FC<{
   onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
+  completedSessions: Record<string, number>;
   refreshSessionKey?: Record<string, number>;
   forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, completedSessions, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddSideQuest = (title: string) => {
@@ -266,6 +267,7 @@ const TaskColumn: React.FC<{
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={onTargetChange}
+            completedSessions={completedSessions}
             refreshKey={refreshSessionKey?.[item.id]}
             forceRefreshTaskId={forceRefreshTaskId}
           />
@@ -413,22 +415,21 @@ const TaskSelectionModal: React.FC<{
   );
 };
 
-// Custom hook for daily plan management
+// Custom hook for daily plan management - OPTIMIZED
 function useDailyPlanManagement(
   year: number,
   weekNumber: number,
   selectedDate: string,
   dailyPlan: DailyPlan | null,
   setDailyPlanState: (plan: DailyPlan | null) => void,
-  setDailyPlanAction?: typeof setDailyPlan
+  setDailyPlanAction?: typeof setDailyPlan,
+  weeklyTasks: any[] = [],
+  mutate?: () => void
 ) {
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [, startTransition] = useTransition();
-
-  // SWR hook for weekly tasks
-  const { tasks: weeklyTasks, mutate } = useTasksForWeek(year, weekNumber);
 
   const getCurrentDailyPlanSelections = () => {
     if (!dailyPlan?.daily_plan_items) return {};
@@ -445,8 +446,10 @@ function useDailyPlanManagement(
     const currentSelections = getCurrentDailyPlanSelections();
     setSelectedTasks(currentSelections);
     try {
-      // Refresh tasks data
-      await mutate();
+      // Refresh tasks data if mutate function is available
+      if (mutate) {
+        await mutate();
+      }
     } catch (err) {
       console.error('Error loading weekly tasks:', err);
     } finally {
@@ -477,8 +480,10 @@ function useDailyPlanManagement(
         if (setDailyPlanAction) {
           await setDailyPlanAction(selectedDate, selectedItems);
         }
-        const plan = await getDailyPlan(selectedDate);
-        setDailyPlanState(plan);
+        // Trigger refresh of optimized data instead of individual API call
+        if (mutate) {
+          await mutate();
+        }
         setShowModal(false);
       } catch (err) {
         console.error('Error saving daily plan:', err);
@@ -511,8 +516,10 @@ function useDailyPlanManagement(
         formData.append('title', title);
         formData.append('date', selectedDate);
         await addSideQuest(formData);
-        const plan = await getDailyPlan(selectedDate);
-        setDailyPlanState(plan);
+        // Trigger refresh of optimized data instead of individual API call
+        if (mutate) {
+          await mutate();
+        }
       } catch (err) {
         console.error('Error adding side quest:', err);
       }
@@ -575,8 +582,25 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   refreshSessionKey, 
   forceRefreshTaskId 
 }) => {
+  // 🚀 ULTRA-FAST: Use single optimized hook for all data
   const {
-    weeklyTasks,
+    dailyPlan: optimizedDailyPlan,
+    weeklyTasks: optimizedWeeklyTasks,
+    completedSessions,
+    isLoading: ultraFastLoading,
+    mutate
+  } = useDailySyncUltraFast(year, weekNumber, selectedDate);
+
+  // Fallback: Use individual hook if optimized data is empty
+  const { tasks: fallbackWeeklyTasks } = useTasksForWeek(year, weekNumber);
+
+  // Use optimized data if available, fallback to individual hooks
+  const effectiveDailyPlan = optimizedDailyPlan || dailyPlan;
+  const effectiveWeeklyTasks = (optimizedWeeklyTasks && optimizedWeeklyTasks.length > 0) ? optimizedWeeklyTasks : fallbackWeeklyTasks;
+  const effectiveLoading = ultraFastLoading || loading;
+
+
+  const {
     selectedTasks,
     showModal,
     setShowModal,
@@ -587,9 +611,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleStatusChange,
     handleAddSideQuest,
     handleTargetChange
-  } = useDailyPlanManagement(year, weekNumber, selectedDate, dailyPlan, setDailyPlanState, setDailyPlanAction);
+  } = useDailyPlanManagement(year, weekNumber, selectedDate, effectiveDailyPlan, setDailyPlanState, setDailyPlanAction, effectiveWeeklyTasks, mutate);
 
-  if (loading) {
+  if (effectiveLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
         <Spinner size={164} />
@@ -597,7 +621,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     );
   }
 
-  const groupedItems = groupItemsByType(dailyPlan?.daily_plan_items);
+  const groupedItems = groupItemsByType(effectiveDailyPlan?.daily_plan_items);
 
   return (
     <div className="mx-auto relative">
@@ -611,6 +635,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
+            completedSessions={completedSessions}
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}
             showAddQuestButton={true}
@@ -625,6 +650,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
+            completedSessions={completedSessions}
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}
           />
@@ -634,7 +660,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
       <TaskSelectionModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        tasks={weeklyTasks}
+        tasks={effectiveWeeklyTasks}
         selectedTasks={selectedTasks}
         onTaskToggle={handleTaskToggle}
         onSave={handleSaveSelection}

@@ -8,7 +8,7 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTimer } from '@/context/TimerContext';
 import { useWeek } from '@/hooks/common/useWeek';
-import { useDailyPlan } from '@/hooks/execution/useDailySync';
+import { useDailySyncUltraFast, useTasksForWeek } from '@/hooks/execution/useDailySync';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
@@ -110,9 +110,9 @@ function useWeekManagement() {
   };
 }
 
-// Custom hook for daily plan management
-function useDailyPlanManagement(selectedDateStr: string) {
-  const { dailyPlan, isLoading, mutate } = useDailyPlan(selectedDateStr);
+// Custom hook for daily plan management - OPTIMIZED
+function useDailyPlanManagement(year: number, weekNumber: number, selectedDateStr: string) {
+  const { dailyPlan, isLoading, mutate } = useDailySyncUltraFast(year, weekNumber, selectedDateStr);
 
   return {
     loading: isLoading,
@@ -307,7 +307,7 @@ function DailySyncContent() {
 
   const { displayWeek, totalWeeks } = weekCalculations;
 
-  const { loading, initialLoading, dailyPlan, setDailyPlanState } = useDailyPlanManagement(selectedDateStr);
+  const { loading, initialLoading, dailyPlan, setDailyPlanState } = useDailyPlanManagement(year, displayWeek, selectedDateStr);
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
 
@@ -372,6 +372,8 @@ function DailySyncContent() {
                     setDailyPlanState={setDailyPlanState}
                     setDailyPlanAction={setDailyPlan}
                     loading={loading}
+                    refreshSessionKey={{}}
+                    forceRefreshTaskId={null}
                   />
                 </div>
                 <div className="flex flex-col gap-4 mt-4">

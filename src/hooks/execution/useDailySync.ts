@@ -1,108 +1,60 @@
 import useSWR from 'swr';
 
-import { getDailyPlan, countCompletedSessions, getTasksForWeek } from '@/app/(admin)/execution/daily-sync/actions';
-import { dailyPlanKeys, dailySyncKeys } from '@/lib/swr';
+import { getDailySyncCompleteData, getTasksForWeek } from '@/app/(admin)/execution/daily-sync/actions';
+import { dailySyncKeys } from '@/lib/swr';
 
 /**
- * Custom hook for fetching daily plan
+ * 🚀 ULTRA-FAST DAILY SYNC HOOK
+ * Uses single RPC call to get all data at once
+ * Replaces multiple separate hooks for maximum performance
  */
-export function useDailyPlan(date: string) {
+export function useDailySyncUltraFast(year: number, weekNumber: number, selectedDate: string) {
   const { 
-    data: dailyPlan = null, 
+    data = {
+      dailyPlan: null,
+      weeklyTasks: [],
+      completedSessions: {}
+    }, 
     error, 
     isLoading,
     mutate 
   } = useSWR(
-    date ? dailyPlanKeys.list(date) : null,
-    () => getDailyPlan(date),
+    year && weekNumber && selectedDate ? dailySyncKeys.dailySyncBatched(year, weekNumber, selectedDate) : null,
+    () => getDailySyncCompleteData(year, weekNumber, selectedDate),
     {
       revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
-      errorRetryCount: 3,
+      dedupingInterval: 2 * 60 * 1000, // 2 minutes - shorter cache for real-time data
+      errorRetryCount: 1, // Reduced retry for faster failure
+      keepPreviousData: true, // Show previous data while revalidating
     }
   );
 
-  return {
-    dailyPlan,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching completed sessions count
- * ✅ OPTIMIZED: Single hook for all completed sessions
- */
-export function useCompletedSessions(taskId: string, date: string) {
-  const { 
-    data: completedCount = 0, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    taskId && date ? dailySyncKeys.completedSessions(taskId, date) : null,
-    () => countCompletedSessions(taskId, date),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // ✅ 5 minutes - longer cache
-      errorRetryCount: 1, // ✅ Reduced retry count
-    }
-  );
 
   return {
-    completedCount,
+    // Daily plan data
+    dailyPlan: data.dailyPlan,
+    
+    // Weekly tasks for selection modal
+    weeklyTasks: data.weeklyTasks,
+    
+    // Completed sessions for all tasks (pre-calculated)
+    completedSessions: data.completedSessions,
+    
+    // Loading and error states
+    isLoading,
     error,
-    isLoading,
+    
+    // Mutate function for manual refresh
     mutate,
-  };
-}
-
-/**
- * ✅ NEW: Batch hook for all completed sessions
- * Much more efficient than multiple individual hooks
- */
-export function useAllCompletedSessions(taskIds: string[], date: string) {
-  const { 
-    data = {}, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    taskIds.length > 0 && date ? dailySyncKeys.allCompletedSessions(taskIds, date) : null,
-    async () => {
-      // ✅ BATCH API CALL - Get all completed sessions at once
-      const results: Record<string, number> = {};
-      await Promise.all(
-        taskIds.map(async (taskId) => {
-          try {
-            const count = await countCompletedSessions(taskId, date);
-            results[taskId] = count;
-          } catch (error) {
-            console.error(`Failed to get completed sessions for task ${taskId}:`, error);
-            results[taskId] = 0;
-          }
-        })
-      );
-      return results;
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
-      errorRetryCount: 1,
-    }
-  );
-
-  return {
-    completedSessions: data,
-    error,
-    isLoading,
-    mutate,
+    
+    // Helper function to get completed sessions for specific task
+    getCompletedSessions: (taskId: string) => data.completedSessions[taskId] || 0,
   };
 }
 
 /**
  * Custom hook for fetching tasks for week selection
+ * Fallback for when ultra-fast hook doesn't work
  */
 export function useTasksForWeek(year: number, weekNumber: number) {
   const { 

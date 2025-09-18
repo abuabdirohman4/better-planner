@@ -410,12 +410,14 @@ function SidebarContent({
               />
             </>
           ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <>
+              <Image
+                src="/images/logo/logo-icon.svg"
+                alt="Logo"
+                width={32}
+                height={32}
+              />
+            </>
           )}
         </Link>
       </div>
@@ -470,9 +472,9 @@ function SidebarContent({
             />
           </div> */}
           {/* Divider */}
-          <div className="flex-1" />
+          {/* <div className="flex-1" /> */}
           {/* SETTINGS */}
-          <div className="mb-2">
+          {/* <div className="mb-2">
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Settings</div>
             <MenuItems 
               navItems={settingsNav} 
@@ -486,7 +488,7 @@ function SidebarContent({
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
             />
-          </div>
+          </div> */}
         </nav>
       </div>
     </aside>

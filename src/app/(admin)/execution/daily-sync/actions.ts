@@ -126,27 +126,37 @@ export async function getDailySyncCompleteData(year: number, weekNumber: number,
   }
 
   try {
-    // OPTIMIZED: Single comprehensive RPC call for all data
-    const { data, error } = await supabase.rpc('get_daily_sync_complete_data', {
-      p_user_id: user.id,
-      p_year: year,
-      p_week_number: weekNumber,
-      p_selected_date: selectedDate
-    });
+    // FALLBACK: Use existing functions but in parallel for better performance
+    const [dailyPlan, weeklyTasks] = await Promise.all([
+      getDailyPlan(selectedDate),
+      getTasksForWeek(year, weekNumber)
+    ]);
 
-    if (error) {
-      console.error("Error calling get_daily_sync_complete_data:", error);
-      return {
-        dailyPlan: null,
-        weeklyTasks: [],
-        completedSessions: {}
-      };
+    // Get completed sessions for all tasks in parallel
+    const completedSessions: Record<string, number> = {};
+    
+    if (dailyPlan?.daily_plan_items) {
+      const sessionPromises = dailyPlan.daily_plan_items.map(async (item: any) => {
+        try {
+          const count = await countCompletedSessions(item.id, selectedDate);
+          return { itemId: item.id, count };
+        } catch (error) {
+          console.error(`Error getting completed sessions for item ${item.id}:`, error);
+          return { itemId: item.id, count: 0 };
+        }
+      });
+
+      const sessionResults = await Promise.all(sessionPromises);
+      sessionResults.forEach(({ itemId, count }) => {
+        completedSessions[itemId] = count;
+      });
     }
 
-    return data || {
-      dailyPlan: null,
-      weeklyTasks: [],
-      completedSessions: {}
+
+    return {
+      dailyPlan,
+      weeklyTasks,
+      completedSessions
     };
   } catch (error) {
     console.error("Error in getDailySyncCompleteData:", error);
