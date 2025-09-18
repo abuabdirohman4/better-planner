@@ -1,11 +1,11 @@
 import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
-import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyRules, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
 import { getAllQuestsForQuarter, getQuests } from '@/app/(admin)/planning/quests/actions';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
-import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
-import { questKeys, visionKeys, dashboardKeys, weeklyGoalKeys, weeklySyncKeys, dailyPlanKeys } from '@/lib/swr';
+import { getWeekDates } from '@/lib/dateUtils';
+import { questKeys, visionKeys, weeklySyncKeys, dailyPlanKeys } from '@/lib/swr';
 
 /**
  * Convert array key to SWR-compatible string key
@@ -118,36 +118,25 @@ async function prefetchDashboardData() {
 }
 
 /**
- * Prefetch weekly data for current week
+ * Prefetch weekly data for current week - ULTRA OPTIMIZED VERSION
  */
 async function prefetchWeeklyData(year: number, weekNumber: number) {
   try {
-    // OPTIMIZATION: Prefetch all weekly data in parallel with aggressive caching
-    const [weeklyGoals, weeklyRules] = await Promise.all([
-      getWeeklyGoals(year, weekNumber),
+    // 🚀 ULTRA OPTIMIZED: Use single RPC call instead of multiple queries
+    const currentDate = new Date();
+    const currentQuarter = Math.ceil((currentDate.getMonth() + 1) / 3);
+    const weekDates = getWeekDates(currentDate);
+    const startDate = weekDates[0].toISOString().slice(0, 10);
+    const endDate = weekDates[6].toISOString().slice(0, 10);
+
+    const [ultraFastData, weeklyRules] = await Promise.all([
+      getWeeklySyncUltraFast(year, currentQuarter, weekNumber, startDate, endDate),
       getWeeklyRules(year, weekNumber)
-      // 🚀 OPTIMIZED: Removed unused task scheduling prefetch
     ]);
 
-          // OPTIMIZATION: Prefetch progress data for weekly goals to avoid N+1 queries
-      const progressData: { [key: number]: { completed: number; total: number; percentage: number } } = {};
-      await Promise.all(
-        weeklyGoals.map(async (goal: WeeklyGoal) => {
-          if (goal.items.length > 0) {
-            const progress = await calculateGoalProgress(goal.items);
-            progressData[goal.goal_slot as number] = progress;
-          } else {
-            progressData[goal.goal_slot as number] = { completed: 0, total: 0, percentage: 0 };
-          }
-        })
-      );
-
     return {
-      [toSWRKey(weeklyGoalKeys.list(year, weekNumber))]: weeklyGoals,
+      [toSWRKey(['weekly-sync-ultra-fast', year, currentQuarter, weekNumber, startDate, endDate])]: ultraFastData,
       [toSWRKey(weeklySyncKeys.weeklyRules(year, weekNumber))]: weeklyRules,
-      // 🚀 OPTIMIZED: Removed unused task scheduling prefetch
-      // Prefetch progress data with the same key format as useWeeklyGoalsWithProgress
-      [toSWRKey(['weekly-goals-progress', year, weekNumber, weeklyGoals])]: progressData,
     };
   } catch (error) {
     console.error('❌ Failed to prefetch weekly data:', error);

@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 
-import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
-import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
+import { getWeeklyRules, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
+import { weeklySyncKeys } from '@/lib/swr';
 interface GoalItem {
   id: string;
   item_id: string;
@@ -22,71 +22,6 @@ export interface WeeklyGoal {
   id: string;
   goal_slot: number;
   items: GoalItem[];
-}
-
-/**
- * Custom hook for fetching weekly goals
- */
-export function useWeeklyGoals(year: number, weekNumber: number) {
-  const { 
-    data: goals = [] as WeeklyGoal[], 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    weeklyGoalKeys.list(year, weekNumber),
-    () => getWeeklyGoals(year, weekNumber),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 10 * 60 * 1000, // 10 minutes - increased from 4
-      errorRetryCount: 2, // reduced from 3
-      errorRetryInterval: 1000, // 1 second
-      focusThrottleInterval: 5000, // 5 seconds
-    }
-  );
-
-  return {
-    goals,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching weekly goals with progress - ULTRA OPTIMIZED VERSION
- * Uses single optimized function call for both goals and progress data
- * ✅ OPTIMIZED: Conservative settings for better performance
- */
-export function useWeeklyGoalsWithProgress(year: number, weekNumber: number) {
-  const { 
-    data: goalsData = { goals: [], progress: {} }, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    ['weekly-goals-with-progress-ultra-optimized', year, weekNumber],
-    () => getWeeklyGoalsWithProgress(year, weekNumber),
-    {
-      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
-      revalidateIfStale: false, // ✅ Disabled stale revalidation
-      revalidateOnReconnect: false, // ✅ Disabled reconnect revalidation
-      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
-      errorRetryCount: 1, // ✅ Reduced retry count
-      errorRetryInterval: 2000, // ✅ Slower retry interval
-      focusThrottleInterval: 10000, // ✅ 10 seconds - much longer throttle
-      keepPreviousData: true, // Keep previous data while revalidating
-    }
-  );
-
-  return {
-    goals: goalsData.goals,
-    goalProgress: goalsData.progress,
-    error,
-    isLoading,
-    mutate,
-  };
 }
 
 /**

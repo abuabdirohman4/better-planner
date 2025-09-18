@@ -5,7 +5,7 @@ export { useTasks } from './planning/useTasks';
 export { useVisions } from './planning/useVision';
 
 // Execution Hooks
-export { useWeeklyGoals, useWeeklyGoalsWithProgress, useWeeklyRules } from './execution/useWeeklySync';
+export { useWeeklyRules, useWeeklySyncUltraFast } from './execution/useWeeklySync';
 export { useDailyPlan, useCompletedSessions, useAllCompletedSessions, useTasksForWeek } from './execution/useDailySync';
 
 // Dashboard Hooks
