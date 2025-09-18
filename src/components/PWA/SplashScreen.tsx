@@ -21,22 +21,28 @@ export default function SplashScreen({ children }: SplashScreenProps) {
   // Show splash screen
   if (showSplash) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-gradient-to-br from-brand-800 to-brand-950 flex items-center justify-center z-50">
         <div className="text-center text-white">
           {/* App Logo */}
-          <div className="w-20 h-20 mx-auto mb-6 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-            <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div className="mx-auto mb-3 rounded-2xl flex items-center justify-center shadow-lg">
+            <img 
+              src="/images/logo/logo-icon.svg" 
+              alt="Better Planner Logo" 
+              className="w-32 h-32"
+            />
           </div>
           
           {/* App Name */}
           <h1 className="text-2xl font-bold mb-2">Better Planner</h1>
-          <p className="text-blue-100 text-sm">Your productivity companion</p>
-          
-          {/* Loading Animation */}
-          <div className="mt-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <p className="text-gray-400 text-lg">Your productivity companion</p>
+
+          {/* Loading indicator */}
+          <div className="mt-6 transition-all duration-1000 delay-700">
+            <div className="flex justify-center space-x-2">
+              <div className="w-3 h-3 bg-white/90 rounded-full animate-bounce"/>
+              <div className="w-3 h-3 bg-white/90 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}/>
+              <div className="w-3 h-3 bg-white/90 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}/>
+            </div>
           </div>
         </div>
       </div>
