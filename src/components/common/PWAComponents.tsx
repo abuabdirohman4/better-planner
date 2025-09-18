@@ -73,6 +73,13 @@ export default function PWAComponents() {
     const fallbackTimer = setTimeout(() => {
       if (!deferredPrompt && !showInstallPrompt) {
         console.log('🔔 Fallback: Showing install prompt...');
+        
+        // Check if already installed
+        if ((window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches) {
+          console.log('🔔 App already installed, not showing prompt');
+          return;
+        }
+        
         setShowInstallPrompt(true);
       }
     }, pwaConfig.installPrompt.fallbackDelay);
@@ -95,9 +102,28 @@ export default function PWAComponents() {
   const handleInstallClick = async () => {
     console.log('🔔 Install button clicked!');
     console.log('🔔 Deferred prompt:', deferredPrompt);
+    console.log('🔔 User agent:', navigator.userAgent);
+    console.log('🔔 Standalone mode:', window.matchMedia('(display-mode: standalone)').matches);
+    console.log('🔔 Already installed:', (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches);
     
     if (!deferredPrompt) {
       console.log('❌ No deferred prompt available');
+      
+      // Check if already installed
+      if ((window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches) {
+        toast.info("App is already installed!");
+        setShowInstallPrompt(false);
+        return;
+      }
+      
+      // Check if on mobile and provide manual install instructions
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        toast.info("Tap the share button in your browser and select 'Add to Home Screen'");
+        setShowInstallPrompt(false);
+        return;
+      }
+      
       toast.error("Install prompt not available. Please try refreshing the page.");
       return;
     }
