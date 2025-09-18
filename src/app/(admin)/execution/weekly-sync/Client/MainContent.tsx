@@ -75,10 +75,7 @@ export function MainContent({
               {dataSource === 'ULTRA FAST RPC' && ' ⚡ (Optimized)'}
               {dataSource === 'WORKING FUNCTIONS' && ' 🔄 (Fallback)'}
               <button 
-                onClick={() => {
-                  console.log('🚀 DEBUG: Force refresh cache!');
-                  window.location.reload();
-                }}
+                onClick={() => window.location.reload()}
                 className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
               >
                 🔄 Force Refresh

@@ -63,10 +63,7 @@ export function useWeeklyRules(year: number, weekNumber: number) {
  * ✅ OPTIMIZED: Single RPC call instead of 8+ separate queries
  */
 export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
-  console.log('🚀 DEBUG: useWeeklySyncUltraFast hook called with:', { year, quarter, weekNumber, startDate, endDate });
-  
   const swrKey = ['weekly-sync-ultra-fast', year, quarter, weekNumber, startDate, endDate];
-  console.log('🚀 DEBUG: SWR Key:', swrKey);
 
   // 🚀 ULTRA OPTIMIZED: Simple, fast SWR config for all devices
   const { 
@@ -82,10 +79,7 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
     isValidating
   } = useSWR(
     swrKey,
-    () => {
-      console.log('🚀 DEBUG: SWR Fetcher called!');
-      return getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate);
-    },
+    () => getWeeklySyncUltraFast(year, quarter, weekNumber, startDate, endDate),
     {
       // 🚀 ULTRA FAST: Optimized for speed on all devices
       revalidateOnFocus: false,            // ✅ No revalidation on focus
@@ -107,27 +101,10 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
       
       // 🚀 ULTRA FAST: Minimal success handling
       onSuccess: (data) => {
-        console.log('🚀 ULTRA FAST RPC:', data?.goals?.length || 0, 'goals');
         return;
       }
     }
   );
-  console.log('🚀 DEBUG: SWR Data received:', {
-    data,
-    isLoading,
-    isValidating,
-    error,
-    goalsLength: data?.goals?.length || 0,
-    progressKeys: Object.keys(data?.progress || {}).length,
-    rulesLength: data?.rules?.length || 0,
-    isFromCache: !isLoading && !isValidating && data?.goals?.length > 0
-  });
-
-  // 🚀 DEBUG: Log detailed data structure
-  if (data?.goals?.length > 0) {
-    console.log('🚀 DEBUG: First Goal Data:', data.goals[0]);
-    console.log('🚀 DEBUG: Goal Items:', data.goals[0]?.items?.length || 0, 'items');
-  }
 
   return {
     // Goals data

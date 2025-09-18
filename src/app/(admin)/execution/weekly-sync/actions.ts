@@ -247,7 +247,6 @@ export async function setWeeklyGoalItems(data: {
 
 // 🚀 ULTRA FAST: Use existing optimized functions for maximum performance
 export async function getWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
-  console.log('🚀 DEBUG: getWeeklySyncUltraFast called with:', { year, quarter, weekNumber, startDate, endDate });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -261,15 +260,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
   }
 
   try {
-    console.log('🚀 DEBUG: Calling RPC with params:', { 
-      p_user_id: user.id, 
-      p_year: year, 
-      p_quarter: quarter, 
-      p_week_number: weekNumber, 
-      p_start_date: startDate, 
-      p_end_date: endDate 
-    });
-
     const { data, error } = await supabase.rpc('get_weekly_sync_ultra_fast', {
       p_user_id: user.id,
       p_year: year,
@@ -278,8 +268,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       p_start_date: startDate,
       p_end_date: endDate
     });
-
-    console.log('🚀 DEBUG: RPC Response:', { data, error });
 
     if (error) {
       console.error("Error calling get_weekly_sync_ultra_fast:", error);
@@ -297,15 +285,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       progress: data?.progress || {},
       rules: data?.rules || []
     };
-
-    console.log('🚀 OPTIMIZED DATA SIZE:', {
-      goals: optimizedData.goals.length,
-      progress: Object.keys(optimizedData.progress).length,
-      rules: optimizedData.rules.length,
-      originalSize: JSON.stringify(data).length,
-      optimizedSize: JSON.stringify(optimizedData).length,
-      savedBytes: JSON.stringify(data).length - JSON.stringify(optimizedData).length
-    });
 
     return optimizedData;
   } catch (error) {
