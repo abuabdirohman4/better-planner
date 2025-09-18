@@ -58,7 +58,7 @@ Transform your goals into achievements with Better Planner, the most comprehensi
 ## 🚀 **Get Started in 60 Seconds**
 
 ### **For Users (Install the App)**
-1. **Visit**: Open [Better Planner](https://your-domain.com) in your browser
+1. **Visit**: Open [Better Planner](https://planning.abuabdirohman.com) in your browser
 2. **Install**: Click "Install" when prompted (works on any device!)
 3. **Sign Up**: Create your free account in seconds
 4. **Start Planning**: Begin your journey to peak productivity
@@ -160,7 +160,7 @@ Better Planner/
 ## 🎯 **Get Started Today**
 
 ### **🚀 Ready to Transform Your Life?**
-1. **Visit**: [Better Planner](https://your-domain.com)
+1. **Visit**: [Better Planner](https://planning.abuabdirohman.com)
 2. **Install**: Click "Install" when prompted
 3. **Sign Up**: Create your free account
 4. **Start Planning**: Begin your journey to peak productivity
@@ -183,7 +183,7 @@ Better Planner/
 
 **Better Planner** isn't just another app—it's your strategic partner in achieving extraordinary results. Join thousands of ambitious individuals who have transformed their productivity and achieved their biggest goals.
 
-**Ready to stop planning and start achieving?** [Get Better Planner Now →](https://your-domain.com)
+**Ready to stop planning and start achieving?** [Get Better Planner Now →](https://planning.abuabdirohman.com)
 
 ---
 
