@@ -99,8 +99,7 @@ export const dailyPlanKeys = {
  */
 export const weeklySyncKeys = {
   all: ['weekly-sync'] as const,
-  unscheduledTasks: (year: number, quarter: number) => [...weeklySyncKeys.all, 'unscheduled-tasks', year, quarter] as const,
-  scheduledTasks: (startDate: string, endDate: string) => [...weeklySyncKeys.all, 'scheduled-tasks', startDate, endDate] as const,
+  // 🚀 OPTIMIZED: Removed unused task scheduling keys
   weeklyRules: (year: number, weekNumber: number) => [...weeklySyncKeys.all, 'weekly-rules', year, weekNumber] as const,
   // OPTIMIZED: Batched keys
   weeklySyncBatched: (year: number, weekNumber: number) => [...weeklySyncKeys.all, 'batched', year, weekNumber] as const,

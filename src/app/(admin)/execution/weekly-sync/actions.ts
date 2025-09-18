@@ -4,7 +4,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 
 import { createClient } from '@/lib/supabase/server';
-import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 
 // Get selectable items (Main Quests and their Milestones) for the current quarter
 export async function getSelectableItems(year: number, quarter: number) {
@@ -459,8 +458,6 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
       goals: [],
       progress: {},
       rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
       toDontList: []
     };
   }
@@ -479,8 +476,6 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
         goals: [],
         progress: {},
         rules: [],
-        unscheduledTasks: [],
-        scheduledTasks: [],
         toDontList: []
       };
     }
@@ -489,8 +484,6 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
       goals: [],
       progress: {},
       rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
       toDontList: []
     };
   } catch (error) {
@@ -499,8 +492,6 @@ export async function getWeeklySyncCompleteData(year: number, weekNumber: number
       goals: [],
       progress: {},
       rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
       toDontList: []
     };
   }
@@ -517,8 +508,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       goals: [],
       progress: {},
       rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
       weekDates: []
     };
   }
@@ -550,8 +539,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
         goals: [],
         progress: {},
         rules: [],
-        unscheduledTasks: [],
-        scheduledTasks: [],
         weekDates: []
       };
     }
@@ -561,7 +548,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       goals: data?.goals || [],
       progress: data?.progress || {},
       rules: data?.rules || []
-      // 🚀 REMOVED: unscheduledTasks, scheduledTasks, weekDates (not used)
     };
 
     console.log('🚀 OPTIMIZED DATA SIZE:', {
@@ -580,8 +566,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       goals: [],
       progress: {},
       rules: [],
-      unscheduledTasks: [],
-      scheduledTasks: [],
       weekDates: []
     };
   }

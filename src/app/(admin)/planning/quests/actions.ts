@@ -494,76 +494,9 @@ export async function getSubtasksForTask(parent_task_id: string) {
   return data;
 }
 
-// Ambil semua sub-tugas dari Main Quest yang belum terjadwal untuk user, year, quarter
-export async function getUnscheduledTasks(year: number, quarter: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+// 🚀 OPTIMIZED: Removed getUnscheduledTasks function (task scheduling features removed)
 
-  // 1. Ambil quest id yang committed di quarter & year tsb
-  const { data: quests, error: questError } = await supabase
-    .from('quests')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('year', year)
-    .eq('quarter', quarter)
-    .eq('is_committed', true);
-  if (questError || !quests || quests.length === 0) return [];
-  const questIds = quests.map(q => q.id);
-
-  // 2. Ambil milestone id dari quest-quest tsb
-  const { data: milestones, error: milestoneError } = await supabase
-    .from('milestones')
-    .select('id')
-    .in('quest_id', questIds);
-  if (milestoneError || !milestones || milestones.length === 0) return [];
-  const milestoneIds = milestones.map(m => m.id);
-
-  // 3. Ambil tasks yang belum terjadwal, status TODO, dan parent_task_id null
-  const { data: tasks, error: taskError } = await supabase
-    .from('tasks')
-    .select('id, title, status, scheduled_date, milestone_id, parent_task_id')
-    .in('milestone_id', milestoneIds)
-    .eq('status', 'TODO')
-    .is('scheduled_date', null)
-    .is('parent_task_id', null);
-  if (taskError || !tasks) return [];
-  return tasks;
-}
-
-// Ambil semua tugas yang sudah dijadwalkan dalam rentang minggu tertentu (startDate, endDate)
-export async function getScheduledTasksForWeek(startDate: string, endDate: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  // 1. Ambil quest id yang committed milik user
-  const { data: quests, error: questError } = await supabase
-    .from('quests')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('is_committed', true);
-  if (questError || !quests || quests.length === 0) return [];
-  const questIds = quests.map(q => q.id);
-
-  // 2. Ambil milestone id dari quest-quest tsb
-  const { data: milestones, error: milestoneError } = await supabase
-    .from('milestones')
-    .select('id')
-    .in('quest_id', questIds);
-  if (milestoneError || !milestones || milestones.length === 0) return [];
-  const milestoneIds = milestones.map(m => m.id);
-
-  // 3. Ambil tasks yang scheduled_date di range minggu
-  const { data: tasks, error: taskError } = await supabase
-    .from('tasks')
-    .select('id, title, status, scheduled_date, milestone_id, parent_task_id')
-    .in('milestone_id', milestoneIds)
-    .gte('scheduled_date', startDate)
-    .lte('scheduled_date', endDate);
-  if (taskError || !tasks) return [];
-  return tasks;
-}
+// 🚀 OPTIMIZED: Removed getScheduledTasksForWeek function (task scheduling features removed)
 
 // Update scheduled_date pada task tertentu
 export async function scheduleTask(taskId: string, newScheduledDate: string | null) {

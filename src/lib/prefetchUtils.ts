@@ -1,7 +1,7 @@
 import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
 import { getWeeklyGoals, getWeeklyRules, calculateGoalProgress } from '@/app/(admin)/execution/weekly-sync/actions';
-import { getAllQuestsForQuarter, getQuests, getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
+import { getAllQuestsForQuarter, getQuests } from '@/app/(admin)/planning/quests/actions';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
 import type { WeeklyGoal } from '@/hooks/execution/useWeeklySync';
 import { getWeekOfYear } from '@/lib/quarterUtils';
@@ -123,14 +123,10 @@ async function prefetchDashboardData() {
 async function prefetchWeeklyData(year: number, weekNumber: number) {
   try {
     // OPTIMIZATION: Prefetch all weekly data in parallel with aggressive caching
-    const [weeklyGoals, weeklyRules, unscheduledTasks, scheduledTasks] = await Promise.all([
+    const [weeklyGoals, weeklyRules] = await Promise.all([
       getWeeklyGoals(year, weekNumber),
-      getWeeklyRules(year, weekNumber),
-      getUnscheduledTasks(year, Math.ceil((new Date().getMonth() + 1) / 3)), // current quarter
-      getScheduledTasksForWeek(
-        new Date().toISOString().slice(0, 10), // today
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) // next week
-      ),
+      getWeeklyRules(year, weekNumber)
+      // 🚀 OPTIMIZED: Removed unused task scheduling prefetch
     ]);
 
           // OPTIMIZATION: Prefetch progress data for weekly goals to avoid N+1 queries
@@ -149,11 +145,7 @@ async function prefetchWeeklyData(year: number, weekNumber: number) {
     return {
       [toSWRKey(weeklyGoalKeys.list(year, weekNumber))]: weeklyGoals,
       [toSWRKey(weeklySyncKeys.weeklyRules(year, weekNumber))]: weeklyRules,
-      [toSWRKey(weeklySyncKeys.unscheduledTasks(year, Math.ceil((new Date().getMonth() + 1) / 3)))]: unscheduledTasks,
-      [toSWRKey(weeklySyncKeys.scheduledTasks(
-        new Date().toISOString().slice(0, 10),
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-      ))]: scheduledTasks,
+      // 🚀 OPTIMIZED: Removed unused task scheduling prefetch
       // Prefetch progress data with the same key format as useWeeklyGoalsWithProgress
       [toSWRKey(['weekly-goals-progress', year, weekNumber, weeklyGoals])]: progressData,
     };

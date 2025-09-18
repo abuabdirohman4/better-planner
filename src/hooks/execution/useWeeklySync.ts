@@ -1,7 +1,6 @@
 import useSWR from 'swr';
 
 import { getWeeklyGoals, getWeeklyRules, getWeeklyGoalsWithProgress, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
-import { getUnscheduledTasks, getScheduledTasksForWeek } from '@/app/(admin)/planning/quests/actions';
 import { weeklyGoalKeys, weeklySyncKeys } from '@/lib/swr';
 interface GoalItem {
   id: string;
@@ -23,64 +22,6 @@ export interface WeeklyGoal {
   id: string;
   goal_slot: number;
   items: GoalItem[];
-}
-
-/**
- * Custom hook for fetching unscheduled tasks
- * ✅ OPTIMIZED: Conservative settings for better performance
- */
-export function useUnscheduledTasks(year: number, quarter: number) {
-  const { 
-    data: unscheduledTasks = [], 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    weeklySyncKeys.unscheduledTasks(year, quarter),
-    () => getUnscheduledTasks(year, quarter),
-    {
-      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
-      revalidateIfStale: false, // ✅ Disabled stale revalidation
-      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
-      errorRetryCount: 1, // ✅ Reduced retry count
-    }
-  );
-
-  return {
-    unscheduledTasks,
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
- * Custom hook for fetching scheduled tasks for a week
- * ✅ OPTIMIZED: Conservative settings for better performance
- */
-export function useScheduledTasksForWeek(startDate: string, endDate: string) {
-  const { 
-    data: scheduledTasks = [], 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    startDate && endDate ? weeklySyncKeys.scheduledTasks(startDate, endDate) : null,
-    () => getScheduledTasksForWeek(startDate, endDate),
-    {
-      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
-      revalidateIfStale: false, // ✅ Disabled stale revalidation
-      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - much longer cache
-      errorRetryCount: 1, // ✅ Reduced retry count
-    }
-  );
-
-  return {
-    scheduledTasks,
-    error,
-    isLoading,
-    mutate,
-  };
 }
 
 /**
