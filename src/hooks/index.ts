@@ -1,5 +1,5 @@
 // Planning Hooks
-export { useQuests, useMainQuests } from './planning/useQuests';
+export { useQuests, usePairwiseResults, useQuestsAndPairwise } from './planning/useQuests';
 export { useVisions } from './planning/useVision';
 
 // Execution Hooks
