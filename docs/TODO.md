@@ -47,5 +47,6 @@
 - [x] ✅ PWA install for mobile
 - [x] ✅ Update logo in splash screen
 - [ ] Update logo in prompt install PWA
+- [ ] Prompt Install in mobile, blocked by navbar
 - [ ] In mobile view, sign out have not bg color
 - [ ] Mobile responsive with bottom navigation

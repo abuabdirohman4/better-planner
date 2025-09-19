@@ -1,4 +1,5 @@
 import useSWR from 'swr';
+import { useState, useEffect, useCallback } from 'react';
 
 import { getAllQuestsForQuarter, getPairwiseResults, getQuests } from '@/app/(admin)/planning/main-quests/actions/questActions';
 import { questKeys, pairwiseKeys } from '@/lib/swr';
@@ -34,29 +35,51 @@ export function useQuests(year: number, quarter: number) {
 
 /**
  * Custom hook for fetching committed quests (Main Quests) - top 3 only
+ * Using useState + useEffect instead of SWR for better CRUD performance
  */
 export function useMainQuests(year: number, quarter: number) {
-  const { 
-    data: quests = [], 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    questKeys.mainQuests(year, quarter),
-    () => getQuests(year, quarter, true), // isCommitted = true
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10 * 60 * 1000, // OPTIMIZED: 10 minutes instead of 5
-      errorRetryCount: 2, // OPTIMIZED: Reduced retry count
-      keepPreviousData: true,
+  const [quests, setQuests] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Fetch quests on mount and when year/quarter changes
+  useEffect(() => {
+    const fetchQuests = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getQuests(year, quarter, true);
+        setQuests(data);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch quests'));
+        setQuests([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuests();
+  }, [year, quarter]);
+
+  // Manual refetch function (replaces mutate)
+  const refetch = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getQuests(year, quarter, true);
+      setQuests(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch quests'));
+    } finally {
+      setIsLoading(false);
     }
-  );
+  }, [year, quarter]);
 
   return {
     quests,
     error,
     isLoading,
-    mutate,
+    mutate: refetch, // Alias for compatibility
   };
 }
 

@@ -5,17 +5,17 @@ import { SWRConfiguration } from 'swr';
  */
 export const swrConfig: SWRConfiguration = {
   // Prefetching configuration
-  revalidateOnFocus: false, // ✅ DISABLED - Prevent unnecessary revalidation on focus
+  revalidateOnFocus: true, // ✅ ENABLED - Revalidate on focus for fresh data
   revalidateOnReconnect: true, // Revalidate when internet comes back
-  revalidateIfStale: false, // ✅ DISABLED - Prevent unnecessary revalidation
+  revalidateIfStale: true, // ✅ ENABLED - Revalidate stale data
   
   // Cache configuration
-  dedupingInterval: 5 * 60 * 1000, // ✅ 5 minutes - longer cache for better performance
-  focusThrottleInterval: 5000, // ✅ Increased to 5 seconds
+  dedupingInterval: 2 * 60 * 1000, // ✅ 2 minutes - shorter cache for fresher data
+  focusThrottleInterval: 2000, // ✅ Reduced to 2 seconds for faster updates
   
   // Error handling
-  errorRetryCount: 1, // ✅ Reduced to 1 retry for faster failure
-  errorRetryInterval: 1000, // ✅ Increased retry interval
+  errorRetryCount: 2, // ✅ Increased to 2 retries
+  errorRetryInterval: 1000, // ✅ 1 second retry interval
   
   // Keep data in cache longer
   keepPreviousData: true, // Show previous data while revalidating

@@ -174,6 +174,5 @@ export async function updateQuestMotivation(questId: string, motivation: string)
   revalidatePath('/planning/main-quests');
   revalidatePath('/planning/12-week-quests');
   
-  console.log('✅ Motivation updated for quest:', questId, 'New motivation:', motivation);
   return { message: 'Motivation berhasil diupdate!' };
 }
