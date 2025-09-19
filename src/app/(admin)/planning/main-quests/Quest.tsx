@@ -3,10 +3,10 @@ import { useState } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 
-import { updateQuestMotivation } from '../actions/questActions';
+import { updateQuestMotivation } from './actions/questActions';
 
-import Milestone from '../Milestone';
-import SubTask from '../SubTask';
+import Milestone from './Milestone';
+import SubTask from './SubTask';
 
 interface Task {
   id: string;
