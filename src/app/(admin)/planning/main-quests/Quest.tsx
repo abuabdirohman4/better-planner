@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
@@ -23,6 +23,7 @@ interface QuestProps {
 export default function Quest({ quest }: { quest: QuestProps }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
+  const [showSubTask, setShowSubTask] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Track if there are changes to the motivation
@@ -54,9 +55,29 @@ export default function Quest({ quest }: { quest: QuestProps }) {
     }
   };
 
+  // Handle SubTask opening/closing with smooth animation
+  useEffect(() => {
+    if (activeSubTask) {
+      // Delay showing content to allow container animation to start
+      const timer = setTimeout(() => {
+        setShowSubTask(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      // Hide content immediately when closing
+      setShowSubTask(false);
+    }
+  }, [activeSubTask]);
+
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      <div className={`flex-1 max-w-2xl ${!activeSubTask ? 'mx-auto' : 'mx-auto lg:mx-0'}`}>
+    <div className={`flex flex-col lg:flex-row gap-4 transition-all duration-300 ease-in ${
+      !activeSubTask ? 'justify-center' : ''
+    }`}>
+      <div className={`flex-1 max-w-2xl transition-all duration-300 ease-in ${
+        !activeSubTask 
+          ? 'mx-auto transform translate-x-0' 
+          : 'mx-auto lg:mx-0 lg:transform lg:translate-x-0'
+      }`}>
         <ComponentCard title={quest.title} className='' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
           <label className='block mb-2 font-semibold'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
           <textarea
@@ -103,13 +124,19 @@ export default function Quest({ quest }: { quest: QuestProps }) {
           />
         </ComponentCard>
       </div>
-      {activeSubTask ? <div className="flex-1 max-w-2xl md:mx-auto lg:mx-0">
+      <div className={`transition-all duration-300 ease-out ${
+        activeSubTask 
+          ? 'flex-1 max-w-2xl md:mx-auto lg:mx-0 opacity-100 translate-x-0' 
+          : 'w-0 opacity-0 translate-x-4 overflow-hidden pointer-events-none'
+      }`}>
+        {showSubTask && activeSubTask && (
           <SubTask
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
             milestoneId=""
           />
-        </div> : null}
+        )}
+      </div>
     </div>
   );
 } 

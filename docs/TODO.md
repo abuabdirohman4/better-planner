@@ -22,6 +22,7 @@
 
 ## LIST IDEA
 - [ ] Add visible password in sign in
+- [ ] Change Loading page with Skeleton
 
 ## PAGES
 ### VISION
@@ -33,8 +34,9 @@
 - [x] ✅ Loading spinner for loading langkah milestone
 - [x] ✅ Add button for milestone & task item
 - [ ] Detail Item not show after click in prod
-- [ ] Make can select task that empty -> and will close card subtask
-- [ ] When change milestone -> close card subtask
+- [x] ✅ Make can select task that empty -> and will close card subtask
+- [x] ✅ When change milestone -> close card subtask
+- [ ] Change spinner loading for task with skeleton
 
 ### WEEKLY SYNC
 - [ ] Optimize code & file
