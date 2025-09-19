@@ -18,6 +18,7 @@ interface TaskItemProps {
   canNavigateUp?: boolean;
   canNavigateDown?: boolean;
   onEdit: (taskId: string, newTitle: string) => void;
+  onClearActiveTaskIdx?: () => void;
 }
 
 export default function TaskItem({ 
@@ -29,7 +30,8 @@ export default function TaskItem({
   onNavigateDown, 
   canNavigateUp = true, 
   canNavigateDown = true,
-  onEdit
+  onEdit,
+  onClearActiveTaskIdx
 }: TaskItemProps) {
   const [editValue, setEditValue] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,7 +66,10 @@ export default function TaskItem({
       className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${
         active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
       }`}
-      onClick={() => onOpenSubtask?.()}
+      onClick={() => {
+        onClearActiveTaskIdx?.();
+        onOpenSubtask?.();
+      }}
     >
       <div className='flex gap-2 w-full items-center'>
         {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}

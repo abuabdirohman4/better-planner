@@ -98,7 +98,7 @@ export default function MilestoneItem({
 
   return (
     <div
-      className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center gap-2 group hover:shadow-md ${
+      className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center cursor-pointer gap-2 group hover:shadow-md ${
         isActive 
           ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' 
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'

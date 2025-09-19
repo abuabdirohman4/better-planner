@@ -56,7 +56,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
-      <div className="flex-1 max-w-2xl mx-auto lg:mx-0">
+      <div className={`flex-1 max-w-2xl ${!activeSubTask ? 'mx-auto' : 'mx-auto lg:mx-0'}`}>
         <ComponentCard title={quest.title} className='' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
           <label className='block mb-2 font-semibold'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
           <textarea

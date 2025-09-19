@@ -53,19 +53,32 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
                   key={task.id}
                   task={task}
                   onOpenSubtask={onOpenSubtask ? () => onOpenSubtask(task) : undefined}
-                  active={activeSubTask?.id === task.id || activeTaskIdx === idx}
+                  active={activeSubTask?.id === task.id}
                   orderNumber={idx + 1}
                   onNavigateUp={() => handleNavigateUp(idx)}
                   onNavigateDown={() => handleNavigateDown(idx)}
                   canNavigateUp={idx > 0}
                   canNavigateDown={idx < 2}
                   onEdit={handleTaskEdit}
+                  onClearActiveTaskIdx={() => setActiveTaskIdx(-1)}
                 />
               );
             } else {
               const slotName = idx === 0 ? 'slot-0' : idx === 1 ? 'slot-1' : 'slot-2';
               return (
-                <div key={`empty-task-${milestone.id}-${slotName}`} className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700 transition">
+                <div 
+                  key={`empty-task-${milestone.id}-${slotName}`} 
+                  className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${
+                    activeTaskIdx === idx && activeTaskIdx !== -1 ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  }`}
+                  onClick={() => {
+                    // Set active state and close SubTask when clicking empty slot
+                    setActiveTaskIdx(idx);
+                    if (onOpenSubtask) {
+                      onOpenSubtask(null as any);
+                    }
+                  }}
+                >
                   <div className='flex gap-2 w-3/4'>
                     <span className="font-medium text-lg w-6 text-center select-none">{idx + 1}.</span>
                     <input
@@ -101,13 +114,23 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
                           }
                         }
                       }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setActiveTaskIdx(idx);
+                      }}
+                      onFocus={() => {
+                        setActiveTaskIdx(idx);
+                      }}
                       disabled={newTaskLoading[idx]}
                       data-task-idx={idx}
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleSaveTask(idx)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveTask(idx);
+                      }}
                       disabled={!newTaskInputs[idx].trim() || newTaskLoading[idx]}
                       className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
                     >
