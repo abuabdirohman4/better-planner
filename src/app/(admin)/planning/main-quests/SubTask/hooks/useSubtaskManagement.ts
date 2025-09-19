@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { getSubtasksForTask } from '../../../quests/actions';
+import { getSubtasksForTask } from '../../actions/subTaskActions';
 
 interface Subtask {
   id: string;

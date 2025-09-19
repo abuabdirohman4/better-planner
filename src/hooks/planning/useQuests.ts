@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getAllQuestsForQuarter, getPairwiseResults, getQuests } from '@/app/(admin)/planning/quests/actions';
+import { getAllQuestsForQuarter, getPairwiseResults, getQuests } from '@/app/(admin)/planning/main-quests/actions/questActions';
 import { questKeys, pairwiseKeys } from '@/lib/swr';
 
 /**

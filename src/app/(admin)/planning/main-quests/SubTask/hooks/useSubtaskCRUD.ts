@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { addTask, updateTaskStatus, deleteTask } from '../../../quests/actions';
+import { addTask, updateTaskStatus } from '../../actions/taskActions';
 import CustomToast from '@/components/ui/toast/CustomToast';
 
 interface Subtask {

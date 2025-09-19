@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import debounce from 'lodash/debounce';
 import ComponentCard from '@/components/common/ComponentCard';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { addTask } from '../quests/actions';
+import { addTask } from './actions/taskActions';
 import { useSubtaskManagement } from './SubTask/hooks/useSubtaskManagement';
 import { useSubtaskState } from './SubTask/hooks/useSubtaskState';
 import { useSubtaskCRUD } from './SubTask/hooks/useSubtaskCRUD';

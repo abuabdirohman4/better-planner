@@ -8,7 +8,7 @@ import CustomToast from '@/components/ui/toast/CustomToast';
 import { useSidebar } from '@/context/SidebarContext';
 import { useQuarter } from "@/hooks/common/useQuarter";
 
-import { addMultipleQuests, updateQuests, finalizeQuests } from "../quests/actions";
+import { addMultipleQuests, updateQuests, finalizeQuests } from "../main-quests/actions/questActions";
 
 const QUEST_LABELS = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'

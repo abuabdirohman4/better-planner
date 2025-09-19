@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getTasksForMilestone, addTask, updateTask } from '../../../quests/actions';
+import { getTasksForMilestone, addTask, updateTask } from '../../actions/taskActions';
 
 interface Task {
   id: string;
