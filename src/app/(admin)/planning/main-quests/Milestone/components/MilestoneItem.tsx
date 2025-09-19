@@ -59,7 +59,8 @@ export default function MilestoneItem({
       // For existing milestone, compare with original title
       setHasChanges(newValue.trim() !== milestone.title.trim());
     } else {
-      // For new milestone, check if not empty
+      // For new milestone, update newMilestoneInputs and check if not empty
+      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? newValue : v));
       setHasChanges(newValue.trim() !== '');
     }
   };
@@ -106,7 +107,9 @@ export default function MilestoneItem({
         setHasChanges(false);
         return; // No changes
       }
-      await handleSaveNewMilestone(idx);
+      // Update newMilestoneInputs before saving
+      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? editValue : v));
+      handleSaveNewMilestone(idx);
       setHasChanges(false);
     }
   };
