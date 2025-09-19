@@ -1,7 +1,5 @@
 // Planning Hooks
 export { useQuests, useMainQuests } from './planning/useQuests';
-export { useMilestones } from './planning/useMilestones';
-export { useTasks } from './planning/useTasks';
 export { useVisions } from './planning/useVision';
 
 // Execution Hooks

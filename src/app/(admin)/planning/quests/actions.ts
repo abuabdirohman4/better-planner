@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/server';
 
@@ -26,38 +25,6 @@ export async function addMultipleQuests(quests: { title: string, label: string }
     .select('id, title, label');
   if (error) throw new Error('Gagal menyimpan quest: ' + (error.message || ''));
   return { quests: data, message: '10 Kandidat Quest berhasil disimpan!' };
-}
-
-// Commit 3 quest teratas
-export async function commitTopQuests(questIds: string[]) {
-  const supabase = await createClient();
-  // Update is_committed untuk quest terpilih
-  const { error } = await supabase
-    .from('quests')
-    .update({ is_committed: true })
-    .in('id', questIds);
-  if (error) throw new Error('Gagal meng-commit quest: ' + (error.message || ''));
-  revalidatePath('/planning/12-week-quests');
-  revalidatePath('/planning/main-quests');
-  redirect('/planning/main-quests');
-  // (redirect akan menghentikan eksekusi, tapi return pesan untuk konsistensi)
-  return { message: 'Selamat! 3 Main Quest telah ditetapkan.' };
-}
-
-// Ambil quest yang belum committed untuk user, year, quarter
-export async function getUncommittedQuests(year: number, quarter: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-  const { data, error } = await supabase
-    .from('quests')
-    .select('id, title')
-    .eq('user_id', user.id)
-    .eq('year', year)
-    .eq('quarter', quarter)
-    .eq('is_committed', false);
-  if (error) return [];
-  return data;
 }
 
 // Update judul quest berdasarkan id
@@ -177,18 +144,6 @@ export async function getQuests(year: number, quarter: number, isCommitted: bool
     console.error('❌ Error fetching quests:', error);
     return [];
   }
-  
-  // Also check if the specific quest ID exists
-  if (data && data.length > 0) {
-    const targetQuestId = '3d3ed8be-c383-4b8f-ba1e-dba1526367a7';
-    const foundQuest = data.find(q => q.id === targetQuestId);
-    if (foundQuest) {
-      console.warn('🎯 Target quest found in results:', foundQuest);
-    } else {
-      console.warn('❌ Target quest NOT found in results. Available quests:', data.map(q => q.id));
-    }
-  }
-  
   return data;
 }
 
@@ -208,33 +163,15 @@ export async function getMilestonesForQuest(questId: string) {
     return [];
   }
   
-  console.warn('✅ Quest found:', quest);
-  
   const { data, error } = await supabase
     .from('milestones')
     .select('id, title, display_order')
     .eq('quest_id', questId)
     .order('display_order', { ascending: true });
   
-  console.warn('📊 Supabase response:', { data, error });
-  
   if (error) {
     console.error('❌ Error fetching milestones:', error);
     return [];
-  }
-  
-  console.warn('✅ Milestones found:', data?.length || 0);
-  console.warn('📋 Raw milestones data:', data);
-  
-  // Log each milestone individually
-  if (data && data.length > 0) {
-    data.forEach((milestone, index) => {
-      console.warn(`📌 Milestone ${index + 1}:`, {
-        id: milestone.id,
-        title: milestone.title,
-        display_order: milestone.display_order
-      });
-    });
   }
   
   return data;
@@ -408,18 +345,6 @@ export async function updateMilestone(milestoneId: string, title: string) {
   return { message: 'Milestone berhasil diupdate!' };
 }
 
-// Hapus milestone
-export async function deleteMilestone(milestoneId: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('milestones')
-    .delete()
-    .eq('id', milestoneId);
-  if (error) throw new Error('Gagal hapus milestone: ' + (error.message || ''));
-  revalidatePath('/planning/main-quests');
-  return { message: 'Milestone berhasil dihapus!' };
-}
-
 // Edit task
 export async function updateTask(taskId: string, title: string) {
   const supabase = await createClient();
@@ -478,22 +403,3 @@ export async function getSubtasksForTask(parent_task_id: string) {
   if (error) return [];
   return data;
 }
-
-// 🚀 OPTIMIZED: Removed getUnscheduledTasks function (task scheduling features removed)
-
-// 🚀 OPTIMIZED: Removed getScheduledTasksForWeek function (task scheduling features removed)
-
-// Update scheduled_date pada task tertentu
-export async function scheduleTask(taskId: string, newScheduledDate: string | null) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from('tasks')
-    .update({ scheduled_date: newScheduledDate })
-    .eq('id', taskId);
-  if (error) {
-    return { success: false, message: error.message || 'Gagal menjadwalkan tugas.' };
-  }
-  // Revalidate path agar data fresh
-  revalidatePath('/execution/weekly-sync');
-  return { success: true, message: 'Tugas berhasil dijadwalkan.' };
-} 
