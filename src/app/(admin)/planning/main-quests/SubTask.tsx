@@ -120,7 +120,7 @@ export default function SubTask({ task, onBack, milestoneId }: { task: { id: str
   };
 
   return (
-    <div className="flex-1 max-w-xl mx-auto">
+    <div className="flex-1 mx-auto">
       <ComponentCard 
         title={task.title} 
         className='' 
