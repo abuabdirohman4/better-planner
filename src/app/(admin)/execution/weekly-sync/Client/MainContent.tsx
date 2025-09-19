@@ -63,9 +63,10 @@ export function MainContent({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold">
-            Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''}
+            Weekly Sync
+            {/* Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''} */}
           </h2>
-          {dataSource && (
+          {/* {dataSource && (
             <div className={`text-xs font-medium mt-1 ${
               dataSource === 'ULTRA FAST RPC' 
                 ? 'text-green-600 dark:text-green-400' 
@@ -81,7 +82,7 @@ export function MainContent({
                 🔄 Force Refresh
               </button>
             </div>
-          )}
+          )} */}
         </div>
         <MemoizedWeekSelector
           displayWeek={displayWeek}

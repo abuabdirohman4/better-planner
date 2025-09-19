@@ -280,7 +280,7 @@ function EmptyStateInput({
         onPaste={handleBulkPaste}
         placeholder="Masukkan aturan..."
         disabled={newRuleLoading}
-        autoFocus
+        // autoFocus
       />
     </div>
   );
