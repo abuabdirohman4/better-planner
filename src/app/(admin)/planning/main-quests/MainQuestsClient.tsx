@@ -34,12 +34,12 @@ export default function MainQuestsClient() {
       <div className="mb-6">
         {/* Mobile: Horizontal scroll, Desktop: Centered */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="flex justify-evenly">
-            <div className="flex min-w-max">
+          <div className="flex justify-evenly w-full md:w-auto">
+            <div className="flex min-w-max md:min-w-max w-full md:w-auto">
               {quests.map((quest, idx) => (
                 <button
                   key={quest.id}
-                  className={`px-3 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none whitespace-nowrap text-sm md:text-base md:px-4 ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 
+                  className={`px-3 py-2 -mb-px font-medium border-b-2 transition-colors duration-200 focus:outline-none whitespace-nowrap text-sm md:text-base md:px-4 flex-1 md:flex-none ${activeTab === idx ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 
                     'border-transparent text-gray-500 dark:text-gray-400'}`}
                   onClick={() => setActiveTab(idx)}
                 >
