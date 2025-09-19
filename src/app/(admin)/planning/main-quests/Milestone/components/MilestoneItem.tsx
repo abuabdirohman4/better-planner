@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Milestone {
   id: string;
@@ -35,19 +35,41 @@ export default function MilestoneItem({
   handleSaveMilestone,
   handleMilestoneChange,
 }: MilestoneItemProps) {
+  const [editValue, setEditValue] = useState(milestone ? milestone.title : newMilestoneInputs[idx]);
+  const [hasChanges, setHasChanges] = useState(false);
+  
   const isActive = activeMilestoneIdx === idx;
   const isLoading = milestone ? milestoneLoading[milestone.id] : newMilestoneLoading[idx];
-  const hasChanges = milestone ? milestoneChanges[milestone.id] : false;
-  const canSave = milestone ? hasChanges && !isLoading : newMilestoneInputs[idx].trim() && !isLoading;
+  const canSave = hasChanges && !isLoading;
+
+  // Sync editValue with props changes
+  useEffect(() => {
+    if (milestone) {
+      setEditValue(milestone.title);
+    } else {
+      setEditValue(newMilestoneInputs[idx]);
+    }
+  }, [milestone, newMilestoneInputs, idx]);
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setEditValue(newValue);
+    
+    if (milestone) {
+      // For existing milestone, compare with original title
+      setHasChanges(newValue.trim() !== milestone.title.trim());
+    } else {
+      // For new milestone, check if not empty
+      setHasChanges(newValue.trim() !== '');
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
-      if (milestone && hasChanges && !isLoading) {
-        handleSaveMilestone(milestone.id, milestone.title);
-      } else if (!milestone && newMilestoneInputs[idx].trim() && !isLoading) {
-        handleSaveNewMilestone(idx);
+      if (canSave) {
+        handleSave();
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -70,20 +92,22 @@ export default function MilestoneItem({
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (milestone) {
-      handleMilestoneChange(milestone.id, val);
-    } else {
-      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? val : v));
-    }
-  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (milestone) {
-      handleSaveMilestone(milestone.id, milestone.title);
+      if (editValue.trim() === milestone.title.trim()) {
+        setHasChanges(false);
+        return; // No changes
+      }
+      await handleSaveMilestone(milestone.id, editValue);
+      setHasChanges(false);
     } else {
-      handleSaveNewMilestone(idx);
+      if (!editValue.trim()) {
+        setHasChanges(false);
+        return; // No changes
+      }
+      await handleSaveNewMilestone(idx);
+      setHasChanges(false);
     }
   };
 
@@ -93,7 +117,9 @@ export default function MilestoneItem({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleSave();
+    if (canSave) {
+      handleSave();
+    }
   };
 
   return (
@@ -110,8 +136,8 @@ export default function MilestoneItem({
       <div className="flex gap-2 w-full">
         <input
           className="border rounded px-2 py-2 text-sm flex-1 bg-white dark:bg-gray-900 font-semibold focus:outline-none transition-all"
-          value={milestone ? milestone.title : newMilestoneInputs[idx]}
-          onChange={handleInputChange}
+          value={editValue}
+          onChange={handleEditChange}
           onKeyDown={handleKeyDown}
           onClick={e => e.stopPropagation()}
           onFocus={handleFocus}

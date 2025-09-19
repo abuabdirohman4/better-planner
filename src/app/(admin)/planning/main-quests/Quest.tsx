@@ -25,18 +25,29 @@ export default function Quest({ quest }: { quest: QuestProps }) {
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [showSubTask, setShowSubTask] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   
-  // Track if there are changes to the motivation
-  const hasChanges = motivationValue !== (quest.motivation || '');
   const hasExistingContent = !!quest.motivation;
   const canSave = hasChanges && !isSaving;
 
+  const handleEditChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setMotivationValue(newValue);
+    setHasChanges(newValue.trim() !== (quest.motivation || '').trim());
+  };
+
   const handleSaveMotivation = async () => {
+    if (motivationValue.trim() === (quest.motivation || '').trim()) {
+      setHasChanges(false);
+      return; // No changes
+    }
+    
     if (isSaving) return;
     
     setIsSaving(true);
     try {
       await updateQuestMotivation(quest.id, motivationValue);
+      setHasChanges(false);
     } catch (error) {
       console.error('Failed to save motivation:', error);
     } finally {
@@ -83,7 +94,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
           <textarea
             className="border rounded mb-0 px-2 py-1 text-sm w-full"
             value={motivationValue}
-            onChange={(e) => setMotivationValue(e.target.value)}
+            onChange={handleEditChange}
             onKeyDown={handleKeyDown}
             rows={3}
           />
