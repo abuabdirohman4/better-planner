@@ -1,13 +1,12 @@
-import debounce from 'lodash/debounce';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 
-import { updateQuestMotivation } from './actions/questActions';
+import { updateQuestMotivation } from '../actions/questActions';
 
-import Milestone from './Milestone';
-import SubTask from './SubTask';
+import Milestone from '../Milestone';
+import SubTask from '../SubTask';
 
 interface Task {
   id: string;
@@ -25,18 +24,6 @@ export default function Quest({ quest }: { quest: QuestProps }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  const handleMotivationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMotivationValue(e.target.value);
-    debouncedSaveMotivation(e.target.value);
-  };
-
-  // Debounced auto-save
-  const debouncedSaveMotivation = useMemo(() => debounce(async (val: string) => {
-    try {
-      await updateQuestMotivation(quest.id, val);
-    } catch {}
-  }, 1500), [quest.id]);
 
   const handleSaveMotivation = async () => {
     if (isSaving) return;
@@ -67,7 +54,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
           <textarea
             className="border rounded mb-0 px-2 py-1 text-sm w-full"
             value={motivationValue}
-            onChange={handleMotivationChange}
+            onChange={(e) => setMotivationValue(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={3}
           />

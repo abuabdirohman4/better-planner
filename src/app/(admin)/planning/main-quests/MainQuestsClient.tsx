@@ -4,13 +4,13 @@ import { useState } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useQuarter } from '@/hooks/common/useQuarter';
-import { useMainQuests } from '@/hooks/planning/useQuests';
 
 import Quest from './Quest';
+import { useQuestState } from "./Quest/hooks/useQuestState";
 
 export default function MainQuestsClient() {
   const { year, quarter } = useQuarter();
-  const { quests, isLoading } = useMainQuests(year, quarter);
+  const { quests, isLoading } = useQuestState(year, quarter);
   const [activeTab, setActiveTab] = useState(0);
 
   if (isLoading) {
