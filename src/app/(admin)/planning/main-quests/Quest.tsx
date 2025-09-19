@@ -137,7 +137,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
       </div>
       <div className={`transition-all duration-300 ease-out ${
         activeSubTask 
-          ? 'flex-1 max-w-2xl md:mx-auto lg:mx-0 opacity-100 translate-x-0' 
+          ? 'flex-1 max-w-2xl w-full md:mx-auto lg:mx-0 opacity-100 translate-x-0' 
           : 'w-0 opacity-0 translate-x-4 overflow-hidden pointer-events-none'
       }`}>
         {showSubTask && activeSubTask && (
