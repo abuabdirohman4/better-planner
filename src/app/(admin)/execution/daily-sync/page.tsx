@@ -13,7 +13,8 @@ import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
 
-import { setDailyPlan , logActivity } from './actions';
+import { setDailyPlan } from './actions/dailyPlanActions';
+import { logActivity } from './actions/activityLoggingActions';
 import ActivityLog from "./ActivityLog";
 import DailySyncClient from "./DailySyncClient";
 import PomodoroTimer from "./PomodoroTimer";

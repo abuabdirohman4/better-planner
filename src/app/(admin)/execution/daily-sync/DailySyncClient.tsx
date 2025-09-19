@@ -4,7 +4,8 @@ import React, { useState, useTransition } from "react";
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useDailySyncUltraFast, useTasksForWeek } from "@/hooks/execution/useDailySync";
 
-import { addSideQuest, updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions";
+import { addSideQuest } from "./actions/sideQuestActions";
+import { updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions/dailyPlanActions";
 
 
 interface WeeklyTaskItem {

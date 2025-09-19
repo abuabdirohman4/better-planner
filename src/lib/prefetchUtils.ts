@@ -1,5 +1,5 @@
 import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
-import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions';
+import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions/dailyPlanActions';
 import { getWeeklyRules } from '@/app/(admin)/execution/weekly-sync/actions/weeklyRulesActions';
 import { getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions/ultraFastSyncActions';
 import { getAllQuestsForQuarter, getQuests } from '@/app/(admin)/planning/main-quests/actions/questActions';
