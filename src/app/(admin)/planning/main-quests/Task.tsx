@@ -44,8 +44,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     <div className="rounded-lg mb-2">
       <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
       <div className="space-y-2 mb-2">
-        {!loadingTasks && (
-          Array.from({ length: 3 }).map((_, idx) => {
+        {Array.from({ length: 3 }).map((_, idx) => {
             const task = tasks.find(t => t.display_order === idx + 1);
             if (task) {
               return (
@@ -156,7 +155,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
               );
             }
           })
-        )}
+        }
       </div>
     </div>
   );
