@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { setWeeklyGoalItems, removeWeeklyGoal } from './actions';
+import { setWeeklyGoalItems, removeWeeklyGoal } from './actions/weeklyGoalsActions';
 import WeeklyFocusModal from './Modal';
 import GoalRow from './Table/GoalRow';
 import type { WeeklyGoalsTableProps } from './types';

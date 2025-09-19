@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { getHierarchicalData } from '../actions';
+import { getHierarchicalData } from '../actions/hierarchicalDataActions';
 import type { Quest } from '../types';
 
 export function useHierarchicalData(year: number, quarter: number, isOpen: boolean) {

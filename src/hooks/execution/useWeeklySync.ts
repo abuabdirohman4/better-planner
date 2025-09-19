@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 
-import { getWeeklyRules, getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions';
+import { getWeeklyRules } from '@/app/(admin)/execution/weekly-sync/actions/weeklyRulesActions';
+import { getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions/ultraFastSyncActions';
 import { weeklySyncKeys } from '@/lib/swr';
 interface GoalItem {
   id: string;
