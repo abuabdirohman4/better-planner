@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 
 import Spinner from '@/components/ui/spinner/Spinner';
 
-import ColdStartLoader, { QuickLoader } from './ColdStartLoader';
+// QuickLoader component moved inline since ColdStartLoader is no longer needed
 
 interface SmartLoaderProps {
   children: React.ReactNode;
@@ -35,6 +35,20 @@ export default function SmartLoader({
     <Suspense fallback={fallback || <QuickLoader />}>
       {children}
     </Suspense>
+  );
+}
+
+/**
+ * Quick Loader for cached visits
+ */
+function QuickLoader({ message = "Loading..." }: { message?: string }) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <Spinner size={48} />
+        <p className="mt-4 text-gray-600 dark:text-gray-400">{message}</p>
+      </div>
+    </div>
   );
 }
 
