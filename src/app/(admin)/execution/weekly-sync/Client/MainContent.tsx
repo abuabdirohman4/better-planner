@@ -62,10 +62,10 @@ export function MainContent({
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold">
+          {/* <h2 className="text-xl font-bold">
             Weekly Sync
-            {/* Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''} */}
-          </h2>
+            Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''}
+          </h2> */}
           {/* {dataSource && (
             <div className={`text-xs font-medium mt-1 ${
               dataSource === 'ULTRA FAST RPC' 

@@ -161,24 +161,24 @@ export default function WeeklySyncClient() {
   }
 
   // Main content
-        return (
-          <MainContent
-            displayWeek={weekCalculations.displayWeek}
-            totalWeeks={weekCalculations.totalWeeks}
-            isWeekDropdownOpen={isWeekDropdownOpen}
-            setIsWeekDropdownOpen={setIsWeekDropdownOpen}
-            handleSelectWeek={handleSelectWeek}
-            goPrevWeek={goPrevWeek}
-            goNextWeek={goNextWeek}
-            year={year}
-            mobileOptimizedGoals={mobileOptimizedGoals}
-            processedProgress={processedProgress}
-            processedRules={processedRules}
-            toDontListLoading={ultraFastLoading}
-            handleRefreshGoals={enhancedHandleRefreshGoals}
-            handleRefreshToDontList={enhancedHandleRefreshToDontList}
-            loadingTime={loadingTime}
-            dataSource={dataSource}
-          />
-        );
+  return (
+    <MainContent
+      displayWeek={weekCalculations.displayWeek}
+      totalWeeks={weekCalculations.totalWeeks}
+      isWeekDropdownOpen={isWeekDropdownOpen}
+      setIsWeekDropdownOpen={setIsWeekDropdownOpen}
+      handleSelectWeek={handleSelectWeek}
+      goPrevWeek={goPrevWeek}
+      goNextWeek={goNextWeek}
+      year={year}
+      mobileOptimizedGoals={mobileOptimizedGoals}
+      processedProgress={processedProgress}
+      processedRules={processedRules}
+      toDontListLoading={ultraFastLoading}
+      handleRefreshGoals={enhancedHandleRefreshGoals}
+      handleRefreshToDontList={enhancedHandleRefreshToDontList}
+      loadingTime={loadingTime}
+      dataSource={dataSource}
+    />
+  );
 }
