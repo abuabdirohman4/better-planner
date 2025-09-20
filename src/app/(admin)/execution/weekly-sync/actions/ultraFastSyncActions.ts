@@ -17,7 +17,8 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_weekly_sync_ultra_fast', {
+    // 🚀 OPTIMIZED: Use simplified RPC function without progress calculation
+    const { data, error } = await supabase.rpc('get_weekly_sync', {
       p_user_id: user.id,
       p_year: year,
       p_quarter: quarter,
@@ -27,19 +28,16 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
     });
 
     if (error) {
-      console.error("Error calling get_weekly_sync_ultra_fast:", error);
+      console.error("Error calling get_weekly_sync:", error);
       return {
         goals: [],
-        progress: {},
-        rules: [],
-        weekDates: []
+        rules: []
       };
     }
 
-    // 🚀 OPTIMIZED: Only return data that's actually used
+    // 🚀 OPTIMIZED: Only return goals and rules, progress calculated client-side
     const optimizedData = {
       goals: data?.goals || [],
-      progress: data?.progress || {},
       rules: data?.rules || []
     };
 
@@ -48,9 +46,7 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
     console.error("Error in getWeeklySyncUltraFast:", error);
     return {
       goals: [],
-      progress: {},
-      rules: [],
-      weekDates: []
+      rules: []
     };
   }
 }

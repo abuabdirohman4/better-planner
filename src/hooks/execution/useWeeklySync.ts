@@ -110,7 +110,6 @@ export function useWeeklySyncUltraFast(year: number, quarter: number, weekNumber
   return {
     // Goals data
     goals: data.goals,
-    goalProgress: data.progress,
     
     // Rules data
     rules: data.rules,

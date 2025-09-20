@@ -3,9 +3,6 @@ import { useWeeklySyncUltraFast } from '@/hooks/execution/useWeeklySync';
 import { getWeekDates } from '@/lib/dateUtils';
 import { 
   useIsMobile, 
-  processGoalItems, 
-  processProgressData, 
-  processRulesData 
 } from '@/lib/performanceUtils';
 
 export function useWeeklySyncData(
@@ -24,7 +21,6 @@ export function useWeeklySyncData(
   // 🚀 MOBILE OPTIMIZED: Use ultra fast RPC with mobile-specific settings
   const {
     goals: ultraFastGoals,
-    goalProgress: ultraFastProgress,
     rules: ultraFastRules,
     isLoading: ultraFastLoading,
     error: ultraFastError,
@@ -33,7 +29,6 @@ export function useWeeklySyncData(
 
   // 🚀 ULTRA OPTIMIZED: Direct data usage - no fallback overhead
   const goals = ultraFastGoals || [];
-  const goalProgress = ultraFastProgress || {};
   const toDontList = ultraFastRules || [];
   const isLoading = ultraFastLoading;
   const error = ultraFastError;
@@ -58,9 +53,10 @@ export function useWeeklySyncData(
     }));
   }, [goalsWithItems]);
 
+  // 🚀 OPTIMIZED: Progress calculation moved to client-side in Table.tsx
   const processedProgress = useMemo(() => {
-    return goalProgress || {}; // Minimal processing for speed
-  }, [goalProgress]);
+    return {}; // Progress will be calculated in Table.tsx using useWeeklyGoalsProgress
+  }, []);
 
   const processedRules = useMemo(() => {
     return toDontList || []; // Minimal processing for speed
@@ -84,7 +80,6 @@ export function useWeeklySyncData(
   return {
     // Raw data
     goals,
-    goalProgress,
     toDontList,
     
     // Processed data

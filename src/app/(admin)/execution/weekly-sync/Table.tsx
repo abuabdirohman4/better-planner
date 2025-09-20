@@ -6,16 +6,20 @@ import CustomToast from '@/components/ui/toast/CustomToast';
 import { setWeeklyGoalItems, removeWeeklyGoal } from './actions/weeklyGoalsActions';
 import WeeklyFocusModal from './Modal';
 import GoalRow from './Table/GoalRow';
+import { useWeeklyGoalsProgress, getSlotProgress } from '@/hooks/execution/useWeeklyGoalsProgress';
 import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklyGoalsTable({ 
   goals = [], 
-  goalProgress = {}, 
+  goalProgress = {}, // Keep for backward compatibility, but will use client calculation
   onRefreshGoals, 
   ...props 
 }: WeeklyGoalsTableProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 🚀 OPTIMIZED: Use client-side progress calculation
+  const clientProgress = useWeeklyGoalsProgress(goals);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -78,7 +82,8 @@ export default function WeeklyGoalsTable({
           <tbody>
             {[1, 2, 3].map((slotNumber: number) => {
               const goal = goals.find(goal => goal.goal_slot === slotNumber);
-              const progress = goalProgress[slotNumber] || { completed: 0, total: 0, percentage: 0 };
+              // 🚀 OPTIMIZED: Use client-side calculated progress
+              const progress = getSlotProgress(clientProgress, slotNumber);
 
               return (
                 <GoalRow
