@@ -5,7 +5,6 @@ import React from "react";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { TimerProvider } from '@/context/TimerContext';
-import { useProgressiveLoading } from "@/hooks/common/useProgressiveLoading";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
@@ -20,9 +19,6 @@ export default function AdminLayout({
   const pathname = usePathname();
   const isTwelveWeeksGoals = pathname.includes("/planning/12-week-quests");
 
-  // Enable progressive loading for better performance
-  useProgressiveLoading();
-
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
     ? "ml-0"
@@ -33,21 +29,16 @@ export default function AdminLayout({
   return (
     <TimerProvider>
       <div className="min-h-screen dark:bg-gray-900 xl:flex">
-        {/* Sidebar and Backdrop */}
         <AppSidebar />
         <Backdrop />
-        {/* Main Content Area */}
         <div
           className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
         >
-          {/* Header */}
           <AppHeader />
-          {/* Page Content */}
           <div className={`p-4 mx-auto ${!isTwelveWeeksGoals ? "max-w-[var(--breakpoint-2xl)]" : ""} md:p-6 pb-20 md:pb-6`}>
             {children}
           </div>
         </div>
-        {/* Bottom Navigation for Mobile */}
         <BottomNavigation />
       </div>
     </TimerProvider>

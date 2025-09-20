@@ -6,11 +6,6 @@ export { useVisions } from './planning/useVision';
 export { useWeeklyRules, useWeeklySyncUltraFast } from './execution/useWeeklySync';
 export { useDailySyncUltraFast, useTasksForWeek } from './execution/useDailySync';
 
-// Dashboard Hooks - Removed (dashboard is now static)
-
 // Common Hooks
 export { useQuarter } from './common/useQuarter';
 export { useWeek } from './common/useWeek';
-export { useProgressiveLoading } from './common/useProgressiveLoading';
-
-// PWA Hooks - Removed (PWA components use local state management) 
