@@ -6,7 +6,7 @@ import CustomToast from '@/components/ui/toast/CustomToast';
 import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActions';
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
-import { useWeeklyGoalsProgress, getSlotProgress } from '@/hooks/features/useWeeklyGoalsProgress';
+import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
 import type { WeeklyGoalsTableProps } from '../types';
 
 export default function WeeklySyncTable({ 

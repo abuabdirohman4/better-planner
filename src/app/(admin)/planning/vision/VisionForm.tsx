@@ -6,10 +6,10 @@ import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import VisionSkeleton from '@/components/ui/skeleton/VisionSkeleton';
 import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
-import { useVisions } from '@/hooks/features/useVision';
 
 import { upsertVision } from './actions';
 import { LIFE_AREAS } from './constants';
+import { useVisions } from './hooks/useVision';
 
 export default function VisionForm() {
   const { visions, isLoading, mutate } = useVisions();

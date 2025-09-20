@@ -6,11 +6,11 @@ import { usePerformanceMonitor } from "@/lib/performanceUtils";
 import { getQuarterWeekRange, getDateFromWeek, getWeekOfYear } from "@/lib/quarterUtils";
 
 // Custom hooks
-import { useWeeklySyncData } from "@/hooks/features/useWeeklySync";
-import { useWeekCalculations } from "./WeeklySyncClient/hooks/useWeekCalculations";
+import { useWeeklySyncData } from "./hooks/useWeeklySync";
+import { useWeekCalculations } from "./hooks/useWeekCalculations";
 
 // Components
-import { MainContent } from "./WeeklySyncClient/MainContent";
+import { MainContent } from "./components/MainContent";
 import WeeklySyncSkeleton from "@/components/ui/skeleton/WeeklySyncSkeleton";
 
 export default function WeeklySyncClient() {

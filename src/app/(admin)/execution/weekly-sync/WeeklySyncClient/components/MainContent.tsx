@@ -1,7 +1,7 @@
 import React from 'react';
 import { WeekSelector } from './WeekSelector';
-import WeeklySyncTable from '../WeeklySyncTable/WeeklySyncTable';
-import ToDontListCard from '../ToDontList/ToDontListCard';
+import WeeklySyncTable from '../../WeeklySyncTable/WeeklySyncTable';
+import ToDontListCard from '../../ToDontList/ToDontListCard';
 
 // Memoized components
 const MemoizedWeeklySyncTable = React.memo(WeeklySyncTable);
