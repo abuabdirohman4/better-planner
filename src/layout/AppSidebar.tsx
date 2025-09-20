@@ -32,7 +32,7 @@ const executionNav: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    path: "/",
+    path: "/dashboard",
   },
   {
     icon: <TaskIcon />,

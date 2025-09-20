@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server'
 import { EyeIcon, TaskIcon, PieChartIcon } from '@/icons/index';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
+import QuarterSelector from '@/components/common/QuarterSelector';
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",
@@ -37,6 +38,7 @@ async function DashboardContent() {
             </div>
           </div>
         </div>
+        <QuarterSelector />
 
         <div className="col-span-12">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">

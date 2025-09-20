@@ -1,5 +1,4 @@
 "use client";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
 import Button from "@/components/ui/button/Button";
@@ -7,49 +6,17 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
 import { 
-  parseQParam, 
-  formatQParam, 
   getPrevQuarter, 
   getNextQuarter,
   getQuarterString,
   generateQuarterOptions
 } from "@/lib/quarterUtils";
-
-// Helper: check if QuarterSelector should be hidden based on current pathname
-function shouldHideQuarterSelector(pathname: string): boolean {
-  const hiddenPaths = [
-    '/planning/vision',
-    '/settings',
-    '/profile',
-  ];
-  
-  return hiddenPaths.some(path => pathname.startsWith(path));
-}
+import { useQuarterStore } from "@/stores/quarterStore";
 
 const QuarterSelector: React.FC = () => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const qParam = searchParams.get("q");
-  const { year, quarter } = parseQParam(qParam);
-
+  const { year, quarter, setQuarter } = useQuarterStore();
   const [isOpen, setIsOpen] = useState(false);
   const options = useMemo(() => generateQuarterOptions({ year, quarter }), [year, quarter]);
-  
-  // Check if component should be hidden based on current pathname
-  const isHidden = shouldHideQuarterSelector(pathname);
-
-  // If component should be hidden, return null AFTER all hooks
-  if (isHidden) {
-    return null;
-  }
-
-  const setQuarter = (y: number, q: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("q", formatQParam(y, q));
-    router.push(`${pathname}?${params.toString()}`);
-    setIsOpen(false);
-  };
 
   const handlePrev = () => {
     const prev = getPrevQuarter(year, quarter);
@@ -63,6 +30,7 @@ const QuarterSelector: React.FC = () => {
   
   const handleSelect = (y: number, q: number) => {
     setQuarter(y, q);
+    setIsOpen(false);
   };
 
   const handleDropdownToggle = () => {
@@ -87,7 +55,7 @@ const QuarterSelector: React.FC = () => {
           <div className="max-h-64 overflow-y-auto">
             {options.map((opt) => (
               <DropdownItem
-                key={formatQParam(opt.year, opt.quarter)}
+                key={`${opt.year}-Q${opt.quarter}`}
                 onClick={() => handleSelect(opt.year, opt.quarter)}
                 className={
                   opt.year === year && opt.quarter === quarter

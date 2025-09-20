@@ -6,7 +6,7 @@ import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useTimer } from '@/context/TimerContext';
-import { useWeek } from '@/hooks/common/useWeek';
+import { useQuarterStore } from '@/stores/quarterStore';
 import { useDailySyncUltraFast } from '@/hooks/execution/useDailySync';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
@@ -35,10 +35,44 @@ function ensureMonday(date: Date) {
 
 // Custom hook for week management
 function useWeekManagement() {
-  const { year, quarter } = useWeek();
-  const today = getTodayDate();
-  const [currentWeek, setCurrentWeek] = useState(() => ensureMonday(today));
+  const { year, quarter } = useQuarterStore();
+  
+  // Memoize today to prevent infinite loops
+  const today = useMemo(() => getTodayDate(), []);
+  
+  // Check if today falls within the selected quarter
+  const isTodayInQuarter = useMemo(() => {
+    const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+    const todayWeek = getWeekOfYear(today);
+    return todayWeek >= startWeek && todayWeek <= endWeek;
+  }, [year, quarter, today]);
+  
+  // Initialize currentWeek based on whether today is in quarter or not
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    if (isTodayInQuarter) {
+      // If today is in the selected quarter, use today's week
+      return ensureMonday(today);
+    } else {
+      // If today is not in the selected quarter, use first week of quarter
+      const { startWeek } = getQuarterWeekRange(year, quarter);
+      const weekStartDate = getDateFromWeek(year, startWeek, 1);
+      return ensureMonday(weekStartDate);
+    }
+  });
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
+
+  // Update currentWeek when quarter changes
+  useEffect(() => {
+    if (isTodayInQuarter) {
+      // If today is in the selected quarter, use today's week
+      setCurrentWeek(ensureMonday(today));
+    } else {
+      // If today is not in the selected quarter, use first week of quarter
+      const { startWeek } = getQuarterWeekRange(year, quarter);
+      const weekStartDate = getDateFromWeek(year, startWeek, 1);
+      setCurrentWeek(ensureMonday(weekStartDate));
+    }
+  }, [year, quarter, isTodayInQuarter, today]);
 
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
     const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));

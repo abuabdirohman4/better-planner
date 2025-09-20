@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { useWeek } from "@/hooks/common/useWeek";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useQuarterStore } from "@/stores/quarterStore";
 import { usePerformanceMonitor } from "@/lib/performanceUtils";
+import { getQuarterWeekRange, getDateFromWeek, getWeekOfYear } from "@/lib/quarterUtils";
 
 // Custom hooks
 import { useWeeklySyncData } from "./Client/useWeeklySyncData";
@@ -20,18 +21,63 @@ export default function WeeklySyncClient() {
   usePerformanceMonitor('WeeklySyncClient');
   
   const [refreshFlag, setRefreshFlag] = useState(0);
-  const { year, quarter } = useWeek();
+  const { year, quarter } = useQuarterStore();
+  
+  // Memoize today to prevent infinite loops
+  const today = useMemo(() => new Date(), []);
+  
+  // Check if today falls within the selected quarter
+  const isTodayInQuarter = useMemo(() => {
+    const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
+    const todayWeek = getWeekOfYear(today);
+    return todayWeek >= startWeek && todayWeek <= endWeek;
+  }, [year, quarter, today]);
   
   // 🚀 OPTIMIZED: Single week calculation with memoization
   const [currentWeek, setCurrentWeek] = useState(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = (day === 0 ? -6 : 1 - day);
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
+    if (isTodayInQuarter) {
+      // If today is in the selected quarter, use today's week
+      const day = today.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    } else {
+      // If today is not in the selected quarter, use first week of quarter
+      const { startWeek } = getQuarterWeekRange(year, quarter);
+      const weekStartDate = getDateFromWeek(year, startWeek, 1);
+      const day = weekStartDate.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(weekStartDate);
+      monday.setDate(weekStartDate.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    }
   });
+  
+  // Update currentWeek when quarter changes
+  useEffect(() => {
+    if (isTodayInQuarter) {
+      // If today is in the selected quarter, use today's week
+      const day = today.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      setCurrentWeek(monday);
+    } else {
+      // If today is not in the selected quarter, use first week of quarter
+      const { startWeek } = getQuarterWeekRange(year, quarter);
+      const weekStartDate = getDateFromWeek(year, startWeek, 1);
+      const day = weekStartDate.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(weekStartDate);
+      monday.setDate(weekStartDate.getDate() + diff);
+      monday.setHours(0, 0, 0, 0);
+      setCurrentWeek(monday);
+    }
+  }, [year, quarter, isTodayInQuarter, today]);
   
   // 🚀 OPTIMIZED: Single week calculations call
   const weekCalculations = useWeekCalculations(

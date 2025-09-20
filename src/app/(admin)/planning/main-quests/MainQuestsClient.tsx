@@ -3,13 +3,13 @@ import { useState } from "react";
 
 import ComponentCard from '@/components/common/ComponentCard';
 import MainQuestsSkeleton from '@/components/ui/skeleton/MainQuestsSkeleton';
-import { useQuarter } from '@/hooks/common/useQuarter';
+import { useQuarterStore } from '@/stores/quarterStore';
 
 import Quest from './Quest';
 import { useQuestState } from "./Quest/hooks/useQuestState";
 
 export default function MainQuestsClient() {
-  const { year, quarter } = useQuarter();
+  const { year, quarter } = useQuarterStore();
   const { quests, isLoading } = useQuestState(year, quarter);
   const [activeTab, setActiveTab] = useState(0);
 

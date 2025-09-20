@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { useWeek } from '@/hooks/common/useWeek';
+import { useQuarterStore } from '@/stores/quarterStore';
 
 import type { WeeklyFocusModalProps } from './types';
 import { ModalHeader } from './Modal/ModalHeader';
@@ -21,7 +21,7 @@ export default function WeeklyFocusModal({
   initialSelectedItems = [],
   existingSelectedIds = new Set()
 }: WeeklyFocusModalProps) {
-  const { quarter } = useWeek();
+  const { quarter } = useQuarterStore();
   const [loading, setLoading] = useState(false);
   
   const { hierarchicalData, dataLoading } = useHierarchicalData(year, quarter, isOpen);
