@@ -3,8 +3,8 @@ import React, { useState ,useEffect, Suspense} from "react";
 import { usePathname } from "next/navigation";
 
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
-import NotificationDropdown from "@/components/header/NotificationDropdown";
-import UserDropdown from "@/components/header/UserDropdown";
+import NotificationDropdown from "./header/NotificationDropdown";
+import UserDropdown from "./header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
 
 // Page Title Component

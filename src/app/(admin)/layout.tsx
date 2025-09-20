@@ -5,10 +5,10 @@ import React from "react";
 
 import { useSidebar } from "@/context/SidebarContext";
 import { TimerProvider } from '@/context/TimerContext';
-import AppHeader from "@/layout/AppHeader";
-import AppSidebar from "@/layout/AppSidebar";
-import Backdrop from "@/layout/Backdrop";
-import BottomNavigation from "@/layout/BottomNavigation";
+import AppHeader from "@/components/layouts/AppHeader";
+import AppSidebar from "@/components/layouts/AppSidebar";
+import Backdrop from "@/components/layouts/Backdrop";
+import BottomNavigation from "@/components/layouts/BottomNavigation";
 
 export default function AdminLayout({
   children,

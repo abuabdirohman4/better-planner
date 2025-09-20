@@ -4,8 +4,8 @@ import React, { useState, useCallback } from "react";
 
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 
-import { Dropdown } from "../ui/dropdown/Dropdown";
-import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { Dropdown } from "../../ui/dropdown/Dropdown";
+import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 
 // Dropdown Menu Items Component
 function DropdownMenuItems({ onClose }: { onClose: () => void }) {
