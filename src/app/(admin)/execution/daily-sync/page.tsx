@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
-import { useTimer } from '@/context/TimerContext';
+import { useTimer } from '@/stores/timerStore';
 import { useQuarterStore } from '@/stores/quarterStore';
 import { useDailySyncUltraFast } from './hooks/useDailySync';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';

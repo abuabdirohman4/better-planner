@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/stores/themeStore";
 
 export default function ThemeTogglerTwo() {
   const { toggleTheme } = useTheme();

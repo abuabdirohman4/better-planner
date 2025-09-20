@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
-import { useSidebar } from "@/context/SidebarContext";
+import { useSidebar } from "@/stores/sidebarStore";
 
 // Page Title Component
 function PageTitle() {

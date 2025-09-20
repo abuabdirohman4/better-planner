@@ -8,8 +8,7 @@ import PreloadProvider from '@/components/common/PreloadProvider';
 import PWAComponents from '@/components/PWA';
 import SplashScreen from '@/components/PWA/SplashScreen';
 import SWRProvider from '@/components/common/SWRProvider';
-import { SidebarProvider } from '@/context/SidebarContext';
-import { ThemeProvider } from '@/context/ThemeContext';
+// Note: SidebarProvider and ThemeProvider are no longer needed with Zustand
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -68,13 +67,9 @@ export default function RootLayout({
         
         <SWRProvider>
           <PreloadProvider>
-            <ThemeProvider>
-              <SidebarProvider>
-                <SplashScreen>
-                  {children}
-                </SplashScreen>
-              </SidebarProvider>
-            </ThemeProvider>
+            <SplashScreen>
+              {children}
+            </SplashScreen>
             <Toaster
               position="top-right"
               richColors

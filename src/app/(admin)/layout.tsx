@@ -3,8 +3,8 @@
 import { usePathname } from "next/navigation";
 import React from "react";
 
-import { useSidebar } from "@/context/SidebarContext";
-import { TimerProvider } from '@/context/TimerContext';
+import { useSidebar } from "@/stores/sidebarStore";
+import { useTimerStore } from '@/stores/timerStore';
 import AppHeader from "@/components/layouts/AppHeader";
 import AppSidebar from "@/components/layouts/AppSidebar";
 import Backdrop from "@/components/layouts/Backdrop";
@@ -27,8 +27,7 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
   return (
-    <TimerProvider>
-      <div className="min-h-screen dark:bg-gray-900 xl:flex">
+    <div className="min-h-screen dark:bg-gray-900 xl:flex">
         <AppSidebar />
         <Backdrop />
         <div
@@ -41,6 +40,5 @@ export default function AdminLayout({
         </div>
         <BottomNavigation />
       </div>
-    </TimerProvider>
   );
 }

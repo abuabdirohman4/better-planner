@@ -2,7 +2,7 @@
 import React from 'react';
 
 import Button from '@/components/ui/button/Button';
-import { useTimer } from '@/context/TimerContext';
+import { useTimer } from '@/stores/timerStore';
 
 const FOCUS_DURATION = 25 * 60;
 const SHORT_BREAK_DURATION = 5 * 60;

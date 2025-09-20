@@ -5,7 +5,7 @@ import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { useSidebar } from '@/context/SidebarContext';
+import { useSidebar } from '@/stores/sidebarStore';
 import { useQuarter } from "./hooks/useQuarter";
 
 import { addMultipleQuests, updateQuests, finalizeQuests } from "../main-quests/actions/questActions";
