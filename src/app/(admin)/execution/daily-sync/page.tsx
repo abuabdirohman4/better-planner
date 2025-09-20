@@ -7,7 +7,7 @@ import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useTimer } from '@/context/TimerContext';
 import { useQuarterStore } from '@/stores/quarterStore';
-import { useDailySyncUltraFast } from '@/hooks/execution/useDailySync';
+import { useDailySyncUltraFast } from '@/hooks/features/useDailySync';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';

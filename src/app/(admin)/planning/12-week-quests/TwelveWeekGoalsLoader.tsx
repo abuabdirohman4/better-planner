@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuestsAndPairwise } from "@/hooks/planning/useQuests";
+import { useQuestsAndPairwise } from "@/hooks/features/useQuests";
 import { useQuarterStore } from "@/stores/quarterStore";
 
 import TwelveWeekGoalsUI from "./TwelveWeekGoalsUI";

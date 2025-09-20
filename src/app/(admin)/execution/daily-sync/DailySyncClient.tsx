@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 // import Spinner from '@/components/ui/spinner/Spinner';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
-import { useDailySyncUltraFast, useTasksForWeek } from "@/hooks/execution/useDailySync";
+import { useDailySyncUltraFast, useTasksForWeek } from "@/hooks/features/useDailySync";
 
 import { addSideQuest } from "./actions/sideQuestActions";
 import { updateDailyPlanItemStatus, setDailyPlan, updateDailySessionTarget } from "./actions/dailyPlanActions";

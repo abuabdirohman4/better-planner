@@ -6,7 +6,7 @@ import { usePerformanceMonitor } from "@/lib/performanceUtils";
 import { getQuarterWeekRange, getDateFromWeek, getWeekOfYear } from "@/lib/quarterUtils";
 
 // Custom hooks
-import { useWeeklySyncData } from "@/hooks/execution/useWeeklySync";
+import { useWeeklySyncData } from "@/hooks/features/useWeeklySync";
 import { useErrorHandling } from "./Client/useErrorHandling";
 import { useLoadingTime } from "./Client/useLoadingTime";
 import { useWeekCalculations } from "./Client/useWeekCalculations";
