@@ -2,8 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 
-// 🚀 ULTRA FAST: Use existing optimized functions for maximum performance
-export async function getWeeklySyncUltraFast(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
+export async function getWeeklySync(year: number, quarter: number, weekNumber: number, startDate: string, endDate: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -17,7 +16,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
   }
 
   try {
-    // 🚀 OPTIMIZED: Use simplified RPC function without progress calculation
     const { data, error } = await supabase.rpc('get_weekly_sync', {
       p_user_id: user.id,
       p_year: year,
@@ -35,7 +33,6 @@ export async function getWeeklySyncUltraFast(year: number, quarter: number, week
       };
     }
 
-    // 🚀 OPTIMIZED: Only return goals and rules, progress calculated client-side
     const optimizedData = {
       goals: data?.goals || [],
       rules: data?.rules || []

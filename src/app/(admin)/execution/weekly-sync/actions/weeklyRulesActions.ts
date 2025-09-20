@@ -4,30 +4,6 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * Ambil semua aturan mingguan (To Don't List) untuk user, tahun, dan minggu tertentu
- */
-export async function getWeeklyRules(year: number, weekNumber: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  try {
-    const { data, error } = await supabase
-      .from('weekly_rules')
-      .select('id, rule_text, display_order')
-      .eq('user_id', user.id)
-      .eq('year', year)
-      .eq('week_number', weekNumber)
-      .order('display_order', { ascending: true });
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching weekly rules:', error);
-    return [];
-  }
-}
-
-/**
  * Tambah aturan baru ke To Don't List minggu ini
  * formData: { rule_text, year, week_number }
  */

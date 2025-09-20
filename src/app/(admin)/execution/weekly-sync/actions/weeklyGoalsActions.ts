@@ -3,50 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
-// Get selectable items (Main Quests and their Milestones) for the current quarter
-export async function getSelectableItems(year: number, quarter: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { quests: [], milestones: [] };
-
-  try {
-    // Get committed quests for the quarter
-    const { data: quests, error: questError } = await supabase
-      .from('quests')
-      .select('id, title')
-      .eq('user_id', user.id)
-      .eq('year', year)
-      .eq('quarter', quarter)
-      .eq('is_committed', true)
-      .order('priority_score', { ascending: false });
-
-    if (questError) throw questError;
-
-    // Get milestones for these quests
-    const questIds = quests?.map(q => q.id) || [];
-    let milestones: { id: string; title: string; quest_id: string }[] = [];
-    
-    if (questIds.length > 0) {
-      const { data: milestoneData, error: milestoneError } = await supabase
-        .from('milestones')
-        .select('id, title, quest_id')
-        .in('quest_id', questIds)
-        .order('display_order', { ascending: true });
-
-      if (milestoneError) throw milestoneError;
-      milestones = milestoneData || [];
-    }
-
-    return {
-      quests: quests || [],
-      milestones: milestones || []
-    };
-  } catch (error) {
-    console.error('Error fetching selectable items:', error);
-    return { quests: [], milestones: [] };
-  }
-}
-
 // Remove a weekly goal
 export async function removeWeeklyGoal(goalId: string) {
   const supabase = await createClient();

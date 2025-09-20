@@ -7,5 +7,5 @@ export * from './hierarchicalDataActions';
 // Weekly Rules Actions
 export * from './weeklyRulesActions';
 
-// Ultra Fast Sync Actions
-export * from './ultraFastSyncActions';
+// Weekly Sync Actions
+export * from './weeklySyncActions';

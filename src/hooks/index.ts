@@ -3,7 +3,7 @@ export { useQuests, usePairwiseResults, useQuestsAndPairwise } from './planning/
 export { useVisions } from './planning/useVision';
 
 // Execution Hooks
-export { useWeeklyRules, useWeeklySyncUltraFast } from './execution/useWeeklySync';
+export { useWeeklySync, useWeeklySyncData } from './execution/useWeeklySync';
 export { useDailySyncUltraFast, useTasksForWeek } from './execution/useDailySync';
 export { useWeeklyGoalsProgress, getSlotProgress, isSlotCompleted } from './execution/useWeeklyGoalsProgress';
 
