@@ -7,14 +7,11 @@ import { getQuarterWeekRange, getDateFromWeek, getWeekOfYear } from "@/lib/quart
 
 // Custom hooks
 import { useWeeklySyncData } from "@/hooks/features/useWeeklySync";
-import { useErrorHandling } from "./Client/useErrorHandling";
-import { useLoadingTime } from "./Client/useLoadingTime";
-import { useWeekCalculations } from "./Client/useWeekCalculations";
+import { useWeekCalculations } from "./WeeklySyncClient/hooks/useWeekCalculations";
 
 // Components
-import { LoadingState } from "./Client/LoadingState";
-import { ErrorState } from "./Client/ErrorState";
-import { MainContent } from "./Client/MainContent";
+import { MainContent } from "./WeeklySyncClient/MainContent";
+import WeeklySyncSkeleton from "@/components/ui/skeleton/WeeklySyncSkeleton";
 
 export default function WeeklySyncClient() {
   // 🚀 OPTIMIZED: Performance monitoring
@@ -133,11 +130,28 @@ export default function WeeklySyncClient() {
     dataSource
   } = useWeeklySyncData(currentWeek, year, quarter, weekCalculations);
   
-  // Error handling
-  const { error, retryCount, handleRetry } = useErrorHandling(ultraFastError, mutateUltraFast);
-  
-  // Loading time tracking
-  const loadingTime = useLoadingTime(ultraFastLoading, ultraFastLoading, ultraFastLoading);
+  // Simple error handling
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Error handling effect
+  useEffect(() => {
+    if (ultraFastError) {
+      const errorMessage = ultraFastError.message || 'Failed to load data';
+      setError(errorMessage);
+      
+      // Auto-clear error after 5 seconds
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [ultraFastError]);
+
+  // Retry logic
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setRetryCount(prev => prev + 1);
+    mutateUltraFast();
+  }, [mutateUltraFast]);
 
   // Enhanced refresh handlers with refresh flag
   const enhancedHandleRefreshGoals = () => {
@@ -150,14 +164,48 @@ export default function WeeklySyncClient() {
     setRefreshFlag(f => f + 1);
   };
 
-  // Error state
+  // Error state - simple inline error display
   if (error) {
-    return <ErrorState error={error} retryCount={retryCount} onRetry={handleRetry} />;
+    return (
+      <div className="container mx-auto py-8 pt-0">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="text-red-600 dark:text-red-400 mr-3">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-red-800 dark:text-red-200">Error Loading Data</h3>
+              <p className="text-sm text-red-600 dark:text-red-400 mt-1">{error}</p>
+              <div className="mt-2 flex gap-2">
+                <button 
+                  onClick={handleRetry}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                >
+                  Try Again ({retryCount}/3)
+                </button>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Loading state
+  // Loading state - using WeeklySyncSkeleton
   if (ultraFastLoading) {
-    return <LoadingState isMobile={false} />; // Will be detected in the component
+    return (
+      <div className="container mx-auto py-8 pt-0">
+        <WeeklySyncSkeleton />
+      </div>
+    );
   }
 
   // Main content
@@ -177,7 +225,6 @@ export default function WeeklySyncClient() {
       toDontListLoading={ultraFastLoading}
       handleRefreshGoals={enhancedHandleRefreshGoals}
       handleRefreshToDontList={enhancedHandleRefreshToDontList}
-      loadingTime={loadingTime}
       dataSource={dataSource}
     />
   );

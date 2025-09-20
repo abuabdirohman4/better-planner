@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 
-import WeeklySyncClient from "./Client";
+import WeeklySyncClient from "./WeeklySyncClient";
 
 export const metadata: Metadata = {
   title: "Weekly Sync | Better Planner",

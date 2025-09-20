@@ -31,9 +31,6 @@ interface MainContentProps {
   handleRefreshGoals: () => void;
   handleRefreshToDontList: () => void;
   
-  // Loading time
-  loadingTime: number | null;
-  
   // Data source indicator
   dataSource?: string;
 }
@@ -53,7 +50,6 @@ export function MainContent({
   toDontListLoading,
   handleRefreshGoals,
   handleRefreshToDontList,
-  loadingTime,
   dataSource
 }: MainContentProps) {
 
