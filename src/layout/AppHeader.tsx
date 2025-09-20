@@ -1,10 +1,52 @@
 "use client";
 import React, { useState ,useEffect, Suspense} from "react";
+import { usePathname } from "next/navigation";
 
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+
+// Page Title Component
+function PageTitle() {
+  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const getPageTitle = (path: string) => {
+    switch (path) {
+      case '/dashboard':
+        return 'Dashboard';
+      case '/planning/vision':
+        return 'Vision';
+      case '/planning/12-week-quests':
+        return '12 Week Quests';
+      case '/planning/main-quests':
+        return 'Main Quests';
+      case '/execution/daily-sync':
+        return 'Daily Sync';
+      case '/execution/weekly-sync':
+        return 'Weekly Sync';
+      case '/analytics':
+        return 'Analytics';
+      default:
+        return 'Better Planner';
+    }
+  };
+
+  if (!mounted) {
+    return <div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />;
+  }
+
+  return (
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+        {getPageTitle(pathname)}
+      </h1>
+  );
+}
 
 // Date Time Display Component
 function DateTimeDisplay({ isClient, currentDateTime }: { isClient: boolean; currentDateTime: Date | null }) {
@@ -142,11 +184,11 @@ const AppHeader: React.FC = () => {
               </svg>
             )}
           </button>
-          {/* <div className="block lg:ml-4">
-            <Suspense fallback={<div className="w-32 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />}>
-            </Suspense>
-          </div> */}
-          <button
+          <div className="block lg:ml-4">
+            <PageTitle />
+          </div>
+          <div></div>
+          {/* <button
             onClick={toggleApplicationMenu}
             className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
           >
@@ -164,7 +206,7 @@ const AppHeader: React.FC = () => {
                 fill="currentColor"
               />
             </svg>
-          </button>
+          </button> */}
         </div>
         <ApplicationMenu 
           isOpen={isApplicationMenuOpen} 
