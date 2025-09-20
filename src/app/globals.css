@@ -747,3 +747,71 @@ span.flatpickr-weekday,
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
 }
+
+/* Bottom Navigation Styles */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-300 min-w-0 flex-1 relative;
+  }
+  
+  .bottom-nav-item-active {
+    @apply text-brand-500;
+  }
+  
+  .bottom-nav-item-inactive {
+    @apply text-gray-500 hover:text-gray-700;
+  }
+  
+  .bottom-nav-icon {
+    @apply flex items-center justify-center mb-1 p-2 rounded-lg transition-all duration-300 ease-out;
+  }
+  
+  .bottom-nav-icon-active {
+    @apply bg-brand-50 scale-110 shadow-sm;
+  }
+  
+  .bottom-nav-icon-inactive {
+    @apply hover:bg-gray-50 hover:scale-105;
+  }
+  
+  .bottom-nav-label {
+    @apply text-xs font-medium truncate transition-all duration-300 ease-out;
+  }
+  
+  .bottom-nav-label-active {
+    @apply text-brand-500 font-semibold;
+  }
+  
+  .bottom-nav-label-inactive {
+    @apply text-gray-500;
+  }
+  
+  /* Active indicator animation */
+  .bottom-nav-item-active::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: var(--color-brand-500);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: translateX(-50%) scale(1.2);
+    }
+  }
+}

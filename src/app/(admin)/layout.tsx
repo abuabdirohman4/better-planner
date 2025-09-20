@@ -9,6 +9,7 @@ import { useProgressiveLoading } from "@/hooks/common/useProgressiveLoading";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
+import BottomNavigation from "@/layout/BottomNavigation";
 
 export default function AdminLayout({
   children,
@@ -42,10 +43,12 @@ export default function AdminLayout({
           {/* Header */}
           <AppHeader />
           {/* Page Content */}
-          <div className={`p-4 mx-auto ${!isTwelveWeeksGoals ? "max-w-[var(--breakpoint-2xl)]" : ""} md:p-6`}>
+          <div className={`p-4 mx-auto ${!isTwelveWeeksGoals ? "max-w-[var(--breakpoint-2xl)]" : ""} md:p-6 pb-20 md:pb-6`}>
             {children}
           </div>
         </div>
+        {/* Bottom Navigation for Mobile */}
+        <BottomNavigation />
       </div>
     </TimerProvider>
   );
