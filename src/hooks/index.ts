@@ -11,8 +11,6 @@ export { useDailySyncUltraFast, useTasksForWeek } from './execution/useDailySync
 // Common Hooks
 export { useQuarter } from './common/useQuarter';
 export { useWeek } from './common/useWeek';
-export { useProgressiveLoading, usePrefetchOnDemand } from './common/useProgressiveLoading';
+export { useProgressiveLoading } from './common/useProgressiveLoading';
 
-// PWA Hooks
-export { usePWA } from './usePWA';
-export { useGlobalLoading } from './useGlobalLoading'; 
+// PWA Hooks - Removed (PWA components use local state management) 

@@ -25,17 +25,3 @@ export function useProgressiveLoading() {
     return () => clearTimeout(timer);
   }, [mutate, pathname]);
 }
-
-/**
- * Hook for prefetching specific data on demand
- */
-export function usePrefetchOnDemand() {
-  // These are placeholders for future on-demand prefetch logic
-  const prefetchQuestsForQuarter = () => {};
-  const prefetchWeeklyDataForWeek = () => {};
-
-  return {
-    prefetchQuestsForQuarter,
-    prefetchWeeklyDataForWeek,
-  };
-} 
