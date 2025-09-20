@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/lib/icons";
 import { 
   getPrevQuarter, 
   getNextQuarter,

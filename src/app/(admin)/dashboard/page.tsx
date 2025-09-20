@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { createClient } from '@/lib/supabase/server'
-import { EyeIcon, TaskIcon, PieChartIcon } from '@/icons/index';
+import { EyeIcon, TaskIcon, PieChartIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import QuarterSelector from '@/components/common/QuarterSelector';
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { CloseLineIcon } from "@/icons";
+import { CloseLineIcon } from "@/lib/icons";
 
 interface ComponentCardProps {
   title: string;

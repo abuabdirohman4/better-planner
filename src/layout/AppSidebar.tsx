@@ -17,7 +17,7 @@ import {
   CheckCircleIcon,
   // DocsIcon,
   // ShootingStarIcon,
-} from "../icons/index";
+} from "@/lib/icons";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
