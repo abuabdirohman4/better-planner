@@ -1,10 +1,10 @@
 import React from 'react';
 import { WeekSelector } from './WeekSelector';
-import WeeklyGoalsTable from '../Table';
-import ToDontListCard from '../ToDontListCard';
+import WeeklySyncTable from '../WeeklySyncTable/WeeklySyncTable';
+import ToDontListCard from '../ToDontList/ToDontListCard';
 
 // Memoized components
-const MemoizedWeeklyGoalsTable = React.memo(WeeklyGoalsTable);
+const MemoizedWeeklySyncTable = React.memo(WeeklySyncTable);
 const MemoizedToDontListCard = React.memo(ToDontListCard);
 const MemoizedWeekSelector = React.memo(WeekSelector);
 
@@ -96,7 +96,7 @@ export function MainContent({
       </div>
 
       {/* Kolom 3 Goal Mingguan */}
-      <MemoizedWeeklyGoalsTable
+      <MemoizedWeeklySyncTable
         year={year}
         weekNumber={displayWeek}
         goals={mobileOptimizedGoals}

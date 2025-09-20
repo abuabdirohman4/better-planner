@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import type { GoalItem } from '../types';
+import type { GoalItem } from '../../types';
 
 interface HorizontalGoalDisplayProps {
   items: GoalItem[];

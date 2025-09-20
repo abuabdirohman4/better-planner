@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import CustomToast from '@/components/ui/toast/CustomToast';
-import { setWeeklyGoalItems, removeWeeklyGoal } from './actions/weeklyGoalsActions';
-import WeeklyFocusModal from './Modal';
-import GoalRow from './Table/GoalRow';
+import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActions';
+import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
+import GoalRow from './components/GoalRow';
 import { useWeeklyGoalsProgress, getSlotProgress } from '@/hooks/features/useWeeklyGoalsProgress';
-import type { WeeklyGoalsTableProps } from './types';
+import type { WeeklyGoalsTableProps } from '../types';
 
-export default function WeeklyGoalsTable({ 
+export default function WeeklySyncTable({ 
   goals = [], 
   goalProgress = {}, // Keep for backward compatibility, but will use client calculation
   onRefreshGoals, 
@@ -101,7 +101,7 @@ export default function WeeklyGoalsTable({
 
       {/* Hierarchical Modal */}
       {selectedSlot ? (
-        <WeeklyFocusModal
+        <WeeklySyncModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);

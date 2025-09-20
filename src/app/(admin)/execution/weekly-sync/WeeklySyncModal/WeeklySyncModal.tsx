@@ -5,15 +5,15 @@ import React, { useState, useEffect } from 'react';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { useQuarterStore } from '@/stores/quarterStore';
 
-import type { WeeklyFocusModalProps } from './types';
-import { ModalHeader } from './Modal/ModalHeader';
-import { ModalFooter } from './Modal/ModalFooter';
-import { MilestoneList } from './Modal/MilestoneList';
-import { useHierarchicalData } from './Modal/useHierarchicalData';
-import { useSelectionManagement } from './Modal/useSelectionManagement';
-import { useExpansionManagement } from './Modal/useExpansionManagement';
+import type { WeeklyFocusModalProps } from '../types';
+import { ModalHeader } from './components/ModalHeader';
+import { ModalFooter } from './components/ModalFooter';
+import { MilestoneList } from './components/MilestoneList';
+import { useHierarchicalData } from './hooks/useHierarchicalData';
+import { useSelectionManagement } from './hooks/useSelectionManagement';
+import { useExpansionManagement } from './hooks/useExpansionManagement';
 
-export default function WeeklyFocusModal({
+export default function WeeklySyncModal({
   isOpen,
   onClose,
   onSave,

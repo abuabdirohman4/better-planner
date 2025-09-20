@@ -2,7 +2,7 @@ import React from 'react';
 import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 
 import Button from '@/components/ui/button/Button';
-import type { SelectedItem, Quest } from '../types';
+import type { SelectedItem, Quest } from '../../types';
 
 interface ModalFooterProps {
   selectedItems: SelectedItem[];

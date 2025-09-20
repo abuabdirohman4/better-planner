@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Milestone, SelectedItem } from '../types';
+import type { Milestone, SelectedItem } from '../../types';
 import { TaskList } from './TaskList';
 
 interface MilestoneListProps {

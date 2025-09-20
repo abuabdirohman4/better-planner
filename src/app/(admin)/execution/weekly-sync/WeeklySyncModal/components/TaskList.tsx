@@ -1,5 +1,5 @@
 import React from 'react';
-import type { HierarchicalItem, SelectedItem } from '../types';
+import type { HierarchicalItem, SelectedItem } from '../../types';
 import { SubtaskList } from './SubtaskList';
 
 interface TaskListProps {
