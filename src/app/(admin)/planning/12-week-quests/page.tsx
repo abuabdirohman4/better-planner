@@ -1,7 +1,5 @@
 import { Suspense } from "react";
 
-import SmartLoader from '@/components/common/SmartLoader';
-
 import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
 
@@ -12,7 +10,7 @@ export const metadata = {
 
 export default function Page() {
   return  (
-    <SmartLoader pageName="12 Week Quests">
+    <>
       <Suspense fallback={null}>
         <TwelveWeekGoalsRedirector />
       </Suspense>
@@ -21,6 +19,6 @@ export default function Page() {
           <TwelveWeekGoalsLoader />
         </Suspense>
       </div>
-    </SmartLoader>
+    </>
   );
 } 

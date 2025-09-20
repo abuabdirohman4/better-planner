@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
-import Spinner from '@/components/ui/spinner/Spinner';
+import VisionSkeleton from '@/components/ui/skeleton/VisionSkeleton';
 import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
 import { useVisions } from '@/hooks/planning/useVision';
 
@@ -67,9 +67,7 @@ export default function VisionForm() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={64} />
-      </div>
+      <VisionSkeleton />
     );
   }
 

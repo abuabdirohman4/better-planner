@@ -1,14 +1,13 @@
 "use client";
 import React, { useState, useMemo, useTransition, useEffect, useCallback } from "react";
 
-import SmartLoader from '@/components/common/SmartLoader';
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
-import Spinner from '@/components/ui/spinner/Spinner';
+import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useTimer } from '@/context/TimerContext';
 import { useWeek } from '@/hooks/common/useWeek';
-import { useDailySyncUltraFast, useTasksForWeek } from '@/hooks/execution/useDailySync';
+import { useDailySyncUltraFast } from '@/hooks/execution/useDailySync';
 import { daysOfWeek, getWeekDates } from '@/lib/dateUtils';
 import { getWeekOfYear, getQuarterWeekRange, getDateFromWeek } from '@/lib/quarterUtils';
 import { useActivityStore } from '@/stores/activityStore';
@@ -334,9 +333,7 @@ function DailySyncContent() {
   return (
     <div className="mx-auto py-8 px-4">
       {initialLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-[600px]">
-          <Spinner size={164} />
-        </div>
+        <DailySyncSkeleton />
       ) : (
         <>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
@@ -356,9 +353,7 @@ function DailySyncContent() {
             />
           </div>
           {loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
-              <Spinner size={164} />
-            </div>
+            <DailySyncSkeleton />
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -395,9 +390,5 @@ function DailySyncContent() {
 }
 
 export default function DailySyncPage() {
-  return (
-    <SmartLoader pageName="Daily Sync">
-      <DailySyncContent />
-    </SmartLoader>
-  );
+  return <DailySyncContent />;
 }

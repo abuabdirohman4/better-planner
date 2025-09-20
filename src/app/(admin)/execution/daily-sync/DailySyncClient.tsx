@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useTransition } from "react";
 
-import Spinner from '@/components/ui/spinner/Spinner';
+// import Spinner from '@/components/ui/spinner/Spinner';
+import Skeleton from '@/components/ui/skeleton/Skeleton';
+import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useDailySyncUltraFast, useTasksForWeek } from "@/hooks/execution/useDailySync";
 
 import { addSideQuest } from "./actions/sideQuestActions";
@@ -127,7 +129,8 @@ const TaskCard: React.FC<{
         <div className="flex items-center space-x-2">
           <div className="flex items-center gap-1 text-xs">
             {loading ? (
-              <span className="text-gray-400"><Spinner size={16} /></span>
+              // <span className="text-gray-400"><Spinner size={16} /></span>
+              <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
             ) : (
               <span className="font-semibold">({completed} / {target})</span>
             )}
@@ -347,7 +350,8 @@ const TaskSelectionModal: React.FC<{
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Spinner size={32} />
+            {/* <Spinner size={32} /> */}
+            <Skeleton className="w-8 h-8 rounded" />
           </div>
         ) : (
           <div className="space-y-6">
@@ -617,7 +621,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   if (effectiveLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
-        <Spinner size={164} />
+        {/* <Spinner size={164} /> */}
+        <DailySyncSkeleton />
       </div>
     );
   }

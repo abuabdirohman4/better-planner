@@ -1,22 +1,30 @@
 import type { Metadata } from "next";
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-import SmartLoader from '@/components/common/SmartLoader';
 import { createClient } from '@/lib/supabase/server'
 import { EyeIcon, TaskIcon, PieChartIcon } from '@/icons/index';
+import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",
   description: "Dashboard untuk aplikasi Better Planner",
 };
 
-export default async function Dashboard() {
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+async function DashboardContent() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <SmartLoader pageName="Dashboard">
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
+    <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -86,6 +94,5 @@ export default async function Dashboard() {
           </div>
         </div>
       </div>
-    </SmartLoader>
   );
 }

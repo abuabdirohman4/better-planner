@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 import ComponentCard from '@/components/common/ComponentCard';
-import Spinner from '@/components/ui/spinner/Spinner';
+import MainQuestsSkeleton from '@/components/ui/skeleton/MainQuestsSkeleton';
 import { useQuarter } from '@/hooks/common/useQuarter';
 
 import Quest from './Quest';
@@ -15,9 +15,7 @@ export default function MainQuestsClient() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[800px]">
-        <Spinner size={164} />
-      </div>
+        <MainQuestsSkeleton />
     );
   }
 

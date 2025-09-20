@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
-import Spinner from "@/components/ui/spinner/Spinner";
+import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { useSidebar } from '@/context/SidebarContext';
 import { useQuarter } from "@/hooks/common/useQuarter";
@@ -422,9 +422,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[800px]">
-        <Spinner size={164} />
-      </div>
+        <TwelveWeekGoalsSkeleton />
     );
   }
 
