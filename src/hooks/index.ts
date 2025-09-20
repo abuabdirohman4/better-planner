@@ -6,8 +6,7 @@ export { useVisions } from './planning/useVision';
 export { useWeeklyRules, useWeeklySyncUltraFast } from './execution/useWeeklySync';
 export { useDailySyncUltraFast, useTasksForWeek } from './execution/useDailySync';
 
-// Dashboard Hooks
-export { useDashboardMetrics, useTodayTasks, useActiveQuests, useHabitsStreak, useWeeklyProgress } from './dashboard/useDashboard';
+// Dashboard Hooks - Removed (dashboard is now static)
 
 // Common Hooks
 export { useQuarter } from './common/useQuarter';

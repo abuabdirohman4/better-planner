@@ -1,4 +1,3 @@
-import { getDashboardMetrics } from '@/app/(admin)/dashboard/actions';
 import { getDailyPlan } from '@/app/(admin)/execution/daily-sync/actions/dailyPlanActions';
 import { getWeeklyRules } from '@/app/(admin)/execution/weekly-sync/actions/weeklyRulesActions';
 import { getWeeklySyncUltraFast } from '@/app/(admin)/execution/weekly-sync/actions/ultraFastSyncActions';
@@ -16,54 +15,7 @@ function toSWRKey(key: readonly unknown[]): string {
   return JSON.stringify(key);
 }
 
-/**
- * Prefetch critical data for instant navigation experience
- * OPTIMIZED: Only prefetch essential data to reduce initial load time
- */
-export async function prefetchCriticalData() {
-  try {
-    // OPTIMIZATION: Only prefetch dashboard data initially
-    // Other data will be loaded progressively
-    const prefetchedData = await Promise.allSettled([
-      // Dashboard Data (High Priority - Only essential metrics)
-      prefetchDashboardMetrics(),
-    ]);
 
-    // Convert to SWR fallback format using proper key format
-    const fallback: Record<string, unknown> = {};
-    
-    prefetchedData.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        Object.assign(fallback, result.value);
-      } else {
-        console.warn('⚠️ Prefetch failed:', result.reason);
-      }
-    });
-
-    return fallback;
-  } catch (error) {
-    console.error('❌ Critical data prefetching failed:', error);
-    return {};
-  }
-}
-
-/**
- * Prefetch only essential dashboard metrics (optimized)
- * ✅ SINGLE API CALL - Much faster than multiple calls
- */
-async function prefetchDashboardMetrics() {
-  try {
-    // ✅ SINGLE API CALL - Get all metrics at once
-    const metrics = await getDashboardMetrics();
-
-    return {
-      [toSWRKey(['dashboard-metrics'])]: metrics,
-    };
-  } catch (error) {
-    console.error('❌ Failed to prefetch dashboard metrics:', error);
-    return {};
-  }
-}
 
 /**
  * Prefetch quests data for current quarter
@@ -100,23 +52,6 @@ async function prefetchVisions() {
   }
 }
 
-/**
- * Prefetch dashboard data
- * ✅ SINGLE API CALL - Much faster than multiple calls
- */
-async function prefetchDashboardData() {
-  try {
-    // ✅ SINGLE API CALL - Get all metrics at once
-    const metrics = await getDashboardMetrics();
-
-    return {
-      [toSWRKey(['dashboard-metrics'])]: metrics,
-    };
-  } catch (error) {
-    console.error('❌ Failed to prefetch dashboard data:', error);
-    return {};
-  }
-}
 
 /**
  * Prefetch weekly data for current week - ULTRA OPTIMIZED VERSION
@@ -187,9 +122,10 @@ export async function prefetchPageData(pathname: string) {
         prefetchDailyData(today),
       ]);
     } else if (pathname.includes('/dashboard')) {
-      // Dashboard already has basic data, prefetch additional metrics
+      // Dashboard is now static, no prefetching needed
+      // Just prefetch visions for quick access
       await Promise.allSettled([
-        prefetchDashboardData(),
+        prefetchVisions(),
       ]);
     }
   } catch (error) {

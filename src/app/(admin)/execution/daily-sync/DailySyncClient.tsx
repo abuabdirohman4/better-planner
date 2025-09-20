@@ -106,7 +106,7 @@ const TaskCard: React.FC<{
         <div className="flex items-center gap-2">
           {onSetActiveTask ? (
             <button
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
               onClick={() => onSetActiveTask({
                 id: item.item_id,
                 title: item.title || `Task ${item.item_id}`,
@@ -151,11 +151,11 @@ const TaskCard: React.FC<{
         </div>
       </div>
       <div className="flex items-center justify-between">
-        {item.quest_title ? (
+        {item.quest_title && (
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.quest_title}
           </div>
-        ) : <div />}
+        )}
         <div className="flex items-center space-x-1">
           <input
             type="checkbox"
