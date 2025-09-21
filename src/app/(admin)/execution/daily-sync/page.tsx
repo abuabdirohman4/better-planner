@@ -165,7 +165,7 @@ function DailySyncContent() {
         <DailySyncSkeleton />
       ) : (
         <>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-8 gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-6 gap-4">
             <WeekSelector
               displayWeek={displayWeek}
               totalWeeks={totalWeeks}
@@ -185,6 +185,13 @@ function DailySyncContent() {
             <DailySyncSkeleton />
           ) : (
             <>
+              <div className="block md:hidden mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+                  <PomodoroTimer />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <DailySyncClient
@@ -201,9 +208,14 @@ function DailySyncContent() {
                     forceRefreshTaskId={null}
                   />
                 </div>
-                <div className="flex flex-col gap-4 mt-4">
-                  <PomodoroTimer />
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[300px] flex flex-col">
+                <div className="flex flex-col gap-6">
+                  <div className="hidden md:block">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                      <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+                      <PomodoroTimer />
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full min-h-[285px] flex flex-col">
                     <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
                     <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
                   </div>
