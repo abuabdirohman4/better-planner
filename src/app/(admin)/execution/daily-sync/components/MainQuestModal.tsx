@@ -2,7 +2,7 @@ import React from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import { TaskSelectionModalProps } from '../types';
 
-const TaskSelectionModal: React.FC<TaskSelectionModalProps> = ({ 
+const MainQuestModal: React.FC<TaskSelectionModalProps> = ({ 
   isOpen, 
   onClose, 
   tasks, 
@@ -112,4 +112,4 @@ const TaskSelectionModal: React.FC<TaskSelectionModalProps> = ({
   );
 };
 
-export default TaskSelectionModal;
+export default MainQuestModal;

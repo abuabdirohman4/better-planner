@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useWeekManagement, useTimerManagement, useDailyPlanManagement } from './hooks';
-import { WeekSelector, DaySelector, BrainDumpSection, TaskColumn, TaskSelectionModal, ActivityLog, PomodoroTimer } from './components';
+import { WeekSelector, DaySelector, BrainDumpSection, SideQuestSection, MainQuestModal, ActivityLog, PomodoroTimer } from './components';
 import { groupItemsByType } from './utils/groupItemsByType';
 import { setDailyPlan } from './actions/dailyPlanActions';
 import { getWeekDates } from '@/lib/dateUtils';
@@ -70,7 +70,7 @@ function DailySyncClient({
     <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <TaskColumn
+          <SideQuestSection
             title="Main Quest"
             items={groupedItems['MAIN_QUEST']}
             onStatusChange={handleStatusChange}
@@ -86,7 +86,7 @@ function DailySyncClient({
           />
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <TaskColumn
+          <SideQuestSection
             title="Side Quest"
             items={groupedItems['SIDE_QUEST']}
             onStatusChange={handleStatusChange}
@@ -102,7 +102,7 @@ function DailySyncClient({
         </div>
       </div>
       
-      <TaskSelectionModal
+      <MainQuestModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         tasks={effectiveWeeklyTasks}

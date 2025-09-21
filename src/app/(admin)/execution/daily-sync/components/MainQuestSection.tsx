@@ -3,7 +3,7 @@ import Skeleton from '@/components/ui/skeleton/Skeleton';
 import { useTaskSession } from '../hooks/useTaskSession';
 import { TaskCardProps } from '../types';
 
-const TaskCard: React.FC<TaskCardProps> = ({ 
+const MainQuestSection: React.FC<TaskCardProps> = ({ 
   item, 
   onStatusChange, 
   onSetActiveTask, 
@@ -104,4 +104,4 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+export default MainQuestSection;
