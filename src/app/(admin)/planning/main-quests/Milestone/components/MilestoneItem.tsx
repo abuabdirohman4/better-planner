@@ -94,13 +94,13 @@ export default function MilestoneItem({
   };
 
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (milestone) {
       if (editValue.trim() === milestone.title.trim()) {
         setHasChanges(false);
         return; // No changes
       }
-      await handleSaveMilestone(milestone.id, editValue);
+      handleSaveMilestone(milestone.id, editValue);
       setHasChanges(false);
     } else {
       if (!editValue.trim()) {

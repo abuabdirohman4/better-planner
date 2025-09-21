@@ -3,7 +3,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { useMilestoneState } from './Milestone/hooks/useMilestoneState';
 import MilestoneBar from './Milestone/components/MilestoneBar';
 import Task from './Task';
-import { TaskItemSkeleton } from '@/components/ui/skeleton';
+import { TaskItemSkeleton, MilestoneItemSkeleton } from '@/components/ui/skeleton';
 
 interface Task {
   id: string;
@@ -51,19 +51,23 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask }: Mil
     <>
       <label className='block mb-2 font-semibold'>3 Milestone (Goal Kecil) untuk mewujudkan High Focus Goal :</label>
       
-      <MilestoneBar
-        milestones={milestones}
-        newMilestoneInputs={newMilestoneInputs}
-        setNewMilestoneInputs={setNewMilestoneInputs}
-        newMilestoneLoading={newMilestoneLoading}
-        milestoneLoading={milestoneLoading}
-        milestoneChanges={milestoneChanges}
-        activeMilestoneIdx={activeMilestoneIdx}
-        setActiveMilestoneIdx={setActiveMilestoneIdx}
-        handleSaveNewMilestone={handleSaveNewMilestone}
-        handleSaveMilestone={handleSaveMilestone}
-        handleMilestoneChange={handleMilestoneChange}
-      />
+      {loadingMilestones ? (
+        <MilestoneItemSkeleton count={3} />
+      ) : (
+        <MilestoneBar
+          milestones={milestones}
+          newMilestoneInputs={newMilestoneInputs}
+          setNewMilestoneInputs={setNewMilestoneInputs}
+          newMilestoneLoading={newMilestoneLoading}
+          milestoneLoading={milestoneLoading}
+          milestoneChanges={milestoneChanges}
+          activeMilestoneIdx={activeMilestoneIdx}
+          setActiveMilestoneIdx={setActiveMilestoneIdx}
+          handleSaveNewMilestone={handleSaveNewMilestone}
+          handleSaveMilestone={handleSaveMilestone}
+          handleMilestoneChange={handleMilestoneChange}
+        />
+      )}
       
       <div className="space-y-4 mb-4">
         {loadingMilestones ? (
@@ -85,7 +89,7 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask }: Mil
             const activeMilestone = milestones.find((m: Milestone) => m.display_order === activeMilestoneIdx + 1);
             return activeMilestone && (
               <Task
-                key={activeMilestone.id}
+                key={`task-${questId}`}
                 milestone={activeMilestone}
                 milestoneNumber={activeMilestoneIdx + 1}
                 onOpenSubtask={onOpenSubtask}
