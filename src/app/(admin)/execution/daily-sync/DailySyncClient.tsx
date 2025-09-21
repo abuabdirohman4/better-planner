@@ -27,6 +27,7 @@ interface DailyPlanItem {
   title?: string;
   quest_title?: string;
   daily_session_target?: number;
+  focus_duration?: number; // Durasi fokus dalam menit
 }
 
 export interface DailyPlan {
@@ -40,7 +41,7 @@ interface DailySyncClientProps {
   quarter: number;
   weekNumber: number;
   selectedDate: string;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
   dailyPlan: DailyPlan | null;
   setDailyPlanState: (plan: DailyPlan | null) => void;
   setDailyPlanAction?: typeof setDailyPlan;
@@ -93,18 +94,19 @@ function useTaskSession(
 const TaskCard: React.FC<{
   item: DailyPlanItem;
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
+  onFocusDurationChange: (itemId: string, duration: number) => void;
   completedSessions: Record<string, number>;
   refreshKey?: number;
   forceRefreshTaskId?: string | null;
-}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, completedSessions, refreshKey, forceRefreshTaskId }) => {
+}> = ({ item, onStatusChange, onSetActiveTask, selectedDate, onTargetChange, onFocusDurationChange, completedSessions, refreshKey, forceRefreshTaskId }) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(item, selectedDate || '', completedSessions, refreshKey, forceRefreshTaskId);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {onSetActiveTask ? (
             <button
@@ -112,11 +114,12 @@ const TaskCard: React.FC<{
               onClick={() => onSetActiveTask({
                 id: item.item_id,
                 title: item.title || `Task ${item.item_id}`,
-                item_type: item.item_type
+                item_type: item.item_type,
+                focus_duration: item.focus_duration || 25
               })}
               title="Mulai Pomodoro"
             >
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+              <svg width="35" height="35" fill="currentColor" viewBox="0 0 20 20">
                 <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15"/>
                 <polygon points="8,6 14,10 8,14" fill="currentColor"/>
               </svg>
@@ -127,30 +130,24 @@ const TaskCard: React.FC<{
           </h4>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="flex items-center gap-1 text-xs">
-            {loading ? (
-              // <span className="text-gray-400"><Spinner size={16} /></span>
-              <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
-            ) : (
-              <span className="font-semibold">({completed} / {target})</span>
-            )}
-            <button
-              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
-              disabled={savingTarget || target <= 1}
-              onClick={() => handleTargetChange(target - 1, onTargetChange)}
-              aria-label="Kurangi target"
-            >
-              –
-            </button>
-            <button
-              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
-              disabled={savingTarget}
-              onClick={() => handleTargetChange(target + 1, onTargetChange)}
-              aria-label="Tambah target"
-            >
-              +
-            </button>
-          </div>
+          {/* Dropdown untuk durasi fokus */}
+          <select
+            value={item.focus_duration || 25}
+            onChange={(e) => onFocusDurationChange(item.item_id, parseInt(e.target.value))}
+            className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500"
+          >
+            <option value={25}>25m</option>
+            <option value={60}>60m</option>
+            <option value={90}>90m</option>
+          </select>
+          
+          {/* Checkbox untuk status */}
+          <input
+            type="checkbox"
+            checked={item.status === 'DONE'}
+            onChange={(e) => onStatusChange(item.item_id, e.target.checked ? 'DONE' : 'TODO')}
+            className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+          />
         </div>
       </div>
       <div className="flex items-center justify-between">
@@ -160,12 +157,29 @@ const TaskCard: React.FC<{
           </div>
         )}
         <div className="flex items-center space-x-1">
-          <input
-            type="checkbox"
-            checked={item.status === 'DONE'}
-            onChange={(e) => onStatusChange(item.item_id, e.target.checked ? 'DONE' : 'TODO')}
-            className="w-4 h-4 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
-          />
+          <div className="flex items-center gap-1 text-xs">
+            <button
+              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
+              disabled={savingTarget || target <= 1}
+              onClick={() => handleTargetChange(target - 1, onTargetChange)}
+              aria-label="Kurangi target"
+            >
+              –
+            </button>
+            {loading ? (
+              <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
+            ) : (
+              <span className="font-semibold">({completed} / {target})</span>
+            )}
+            <button
+              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
+              disabled={savingTarget}
+              onClick={() => handleTargetChange(target + 1, onTargetChange)}
+              aria-label="Tambah target"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -224,14 +238,15 @@ const TaskColumn: React.FC<{
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
   onAddSideQuest?: (title: string) => void;
   onSelectTasks?: () => void;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => void;
+  onFocusDurationChange: (itemId: string, duration: number) => void;
   completedSessions: Record<string, number>;
   refreshSessionKey?: Record<string, number>;
   forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
-}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, completedSessions, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
+}> = ({ title, items, onStatusChange, onAddSideQuest, onSelectTasks, onSetActiveTask, selectedDate, onTargetChange, onFocusDurationChange, completedSessions, refreshSessionKey, forceRefreshTaskId, showAddQuestButton }) => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const handleAddSideQuest = (title: string) => {
@@ -271,6 +286,7 @@ const TaskColumn: React.FC<{
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={onTargetChange}
+            onFocusDurationChange={onFocusDurationChange}
             completedSessions={completedSessions}
             refreshKey={refreshSessionKey?.[item.id]}
             forceRefreshTaskId={forceRefreshTaskId}
@@ -541,6 +557,16 @@ function useDailyPlanManagement(
     });
   };
 
+  const handleFocusDurationChange = (itemId: string, duration: number) => {
+    if (!dailyPlan) return;
+    setDailyPlanState({
+      ...dailyPlan,
+      daily_plan_items: dailyPlan.daily_plan_items?.map((item: DailyPlanItem) =>
+        item.id === itemId ? { ...item, focus_duration: duration } : item
+      )
+    });
+  };
+
   return {
     weeklyTasks,
     selectedTasks,
@@ -552,7 +578,8 @@ function useDailyPlanManagement(
     handleSaveSelection,
     handleStatusChange,
     handleAddSideQuest,
-    handleTargetChange
+    handleTargetChange,
+    handleFocusDurationChange
   };
 }
 
@@ -615,7 +642,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleSaveSelection,
     handleStatusChange,
     handleAddSideQuest,
-    handleTargetChange
+    handleTargetChange,
+    handleFocusDurationChange
   } = useDailyPlanManagement(year, weekNumber, selectedDate, effectiveDailyPlan, setDailyPlanState, setDailyPlanAction, effectiveWeeklyTasks, mutate);
 
   if (effectiveLoading) {
@@ -641,6 +669,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
+            onFocusDurationChange={handleFocusDurationChange}
             completedSessions={completedSessions}
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}
@@ -656,6 +685,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             onSetActiveTask={onSetActiveTask}
             selectedDate={selectedDate}
             onTargetChange={handleTargetChange}
+            onFocusDurationChange={handleFocusDurationChange}
             completedSessions={completedSessions}
             refreshSessionKey={refreshSessionKey}
             forceRefreshTaskId={forceRefreshTaskId}

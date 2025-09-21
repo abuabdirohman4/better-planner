@@ -7,6 +7,7 @@ export interface Task {
   id: string;
   title: string;
   item_type: string;
+  focus_duration?: number; // Durasi fokus dalam menit
 }
 
 interface SessionCompleteData {
@@ -111,17 +112,20 @@ export const useTimerStore = create<TimerStoreState>()(
       incrementSeconds: () => set((state) => {
         const newSeconds = Math.round(state.secondsElapsed + 1);
         
+        // Get focus duration from active task or use default
+        const focusDuration = state.activeTask?.focus_duration ? state.activeTask.focus_duration * 60 : FOCUS_DURATION;
+        
         // Auto-stop logic
-        if (state.timerState === 'FOCUSING' && newSeconds >= FOCUS_DURATION) {
+        if (state.timerState === 'FOCUSING' && newSeconds >= focusDuration) {
           if (state.activeTask) {
             const now = new Date();
             const endTime = now.toISOString();
-            const startTime = new Date(now.getTime() - FOCUS_DURATION * 1000).toISOString();
+            const startTime = new Date(now.getTime() - focusDuration * 1000).toISOString();
             return {
               lastSessionComplete: {
                 taskId: state.activeTask.id,
                 taskTitle: state.activeTask.title,
-                duration: Math.round(FOCUS_DURATION),
+                duration: Math.round(focusDuration),
                 type: 'FOCUS',
                 startTime,
                 endTime

@@ -4,7 +4,6 @@ import React from 'react';
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
 
-const FOCUS_DURATION = 25 * 60;
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
 
@@ -77,14 +76,15 @@ export default function PomodoroTimer() {
   } = useTimer();
 
   // Helper to get total seconds for progress
+  const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
   let totalSeconds = 0;
-  if (timerState === 'FOCUSING') totalSeconds = FOCUS_DURATION;
+  if (timerState === 'FOCUSING') totalSeconds = focusDuration;
   else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
   else if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
   else if (timerState === 'PAUSED' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
   else if (timerState === 'PAUSED' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
-  else if (timerState === 'PAUSED') totalSeconds = FOCUS_DURATION;
-  else totalSeconds = FOCUS_DURATION; // fallback/idle
+  else if (timerState === 'PAUSED') totalSeconds = focusDuration;
+  else totalSeconds = focusDuration; // fallback/idle
 
   // Progress calculation
   let progress = 0;
