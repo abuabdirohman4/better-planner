@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
-import { useWeekManagement, useTimerManagement, useDailyPlanManagement } from './hooks';
+import { useWeekManagement, useTimerManagement, useDailyPlanManagement, useGlobalTimer } from './hooks';
 import { WeekSelector, DaySelector, BrainDumpSection, SideQuestSection, MainQuestModal, ActivityLog, PomodoroTimer } from './components';
 import { groupItemsByType } from './utils/groupItemsByType';
 import { setDailyPlan } from './actions/dailyPlanActions';
@@ -139,6 +139,9 @@ function DailySyncContent() {
   const { loading, initialLoading, dailyPlan, mutate } = useDailyPlanManagement(year, displayWeek, selectedDateStr);
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
+  
+  // Global timer - hanya ada 1 interval untuk seluruh aplikasi
+  useGlobalTimer();
 
   useEffect(() => {
     setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));

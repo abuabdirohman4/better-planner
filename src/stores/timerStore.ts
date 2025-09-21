@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK' | 'BREAK_TIME';
+export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
 
 export interface Task {
   id: string;
@@ -37,7 +37,7 @@ interface TimerStoreState {
 }
 
 // Durasi default (detik)
-const FOCUS_DURATION = 15;
+const FOCUS_DURATION = 25 * 60; // 25 menit default
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
 
@@ -130,27 +130,31 @@ export const useTimerStore = create<TimerStoreState>()(
                 startTime,
                 endTime
               },
-              timerState: 'BREAK_TIME' as TimerState,
+              timerState: 'IDLE' as TimerState,
               sessionCount: state.sessionCount + 1,
-              secondsElapsed: newSeconds,
+              secondsElapsed: 0,
+              activeTask: null,
+              breakType: null,
             };
           }
           return {
-            timerState: 'BREAK_TIME' as TimerState,
+            timerState: 'IDLE' as TimerState,
             sessionCount: state.sessionCount + 1,
-            secondsElapsed: newSeconds,
+            secondsElapsed: 0,
+            activeTask: null,
+            breakType: null,
           };
         } else if (state.timerState === 'BREAK' && state.breakType === 'SHORT' && newSeconds >= SHORT_BREAK_DURATION) {
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
-            secondsElapsed: newSeconds,
+            secondsElapsed: 0,
           };
         } else if (state.timerState === 'BREAK' && state.breakType === 'LONG' && newSeconds >= LONG_BREAK_DURATION) {
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
-            secondsElapsed: newSeconds,
+            secondsElapsed: 0,
           };
         }
         
