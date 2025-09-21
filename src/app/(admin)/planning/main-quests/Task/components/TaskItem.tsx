@@ -71,7 +71,7 @@ export default function TaskItem({
         onOpenSubtask?.();
       }}
     >
-      <div className='flex gap-2 w-full items-center'>
+      <div className='flex gap-2 w-full items-center mr-2'>
         {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
         <input
           className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none transition-all"

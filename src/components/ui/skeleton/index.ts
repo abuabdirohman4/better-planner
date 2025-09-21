@@ -5,3 +5,4 @@ export { default as WeeklySyncSkeleton } from './WeeklySyncSkeleton';
 export { default as VisionSkeleton } from './VisionSkeleton';
 export { default as TwelveWeekGoalsSkeleton } from './TwelveWeekGoalsSkeleton';
 export { default as MainQuestsSkeleton } from './MainQuestsSkeleton';
+export { default as TaskItemSkeleton } from './TaskItemSkeleton';

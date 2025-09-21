@@ -3,6 +3,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { useMilestoneState } from './Milestone/hooks/useMilestoneState';
 import MilestoneBar from './Milestone/components/MilestoneBar';
 import Task from './Task';
+import { TaskItemSkeleton } from '@/components/ui/skeleton';
 
 interface Task {
   id: string;
@@ -66,9 +67,17 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask }: Mil
       
       <div className="space-y-4 mb-4">
         {loadingMilestones ? (
-          <div className="flex items-center">
-            <Spinner size={16} className='mr-2'/>
-            <p className="text-gray-400">Loading...</p>
+          <div className="rounded-lg mb-2">
+            <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone 1 :</label>
+            <div className="space-y-2 mb-2">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <TaskItemSkeleton
+                  key={`loading-milestone-${idx}`}
+                  orderNumber={idx + 1}
+                  showButton={true}
+                />
+              ))}
+            </div>
           </div>
         ) : (
           (() => {
