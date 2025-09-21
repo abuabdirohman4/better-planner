@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useActivityStore } from '@/stores/activityStore';
 
-import { getTodayActivityLogs } from './actions/activityLoggingActions';
+import { getTodayActivityLogs } from '../actions/activityLoggingActions';
 
 interface ActivityLogProps {
   date: string;
@@ -184,4 +184,4 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   );
 };
 
-export default ActivityLog; 
+export default ActivityLog;
