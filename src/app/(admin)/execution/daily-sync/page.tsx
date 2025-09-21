@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useTransition, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useTransition, useEffect, useCallback, useRef } from "react";
 
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -245,12 +245,12 @@ function WeekSelector({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Button size="sm" className="!py-5" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
+      <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
         &lt;
       </Button>
       <div className="relative">
         <button
-          className="flex items-center justify-center gap-1 px-8 py-4 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
           aria-haspopup="listbox"
           aria-expanded={isWeekDropdownOpen}
@@ -271,7 +271,7 @@ function WeekSelector({
           </div>
         </Dropdown>
       </div>
-      <Button size="sm" className="!py-5" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
+      <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
         &gt;
       </Button>
     </div>
@@ -288,18 +288,51 @@ function DaySelector({
   selectedDayIdx: number;
   setSelectedDayIdx: (idx: number) => void;
 }) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to selected day when selectedDayIdx changes
+  useEffect(() => {
+    if (scrollContainerRef.current && selectedDayIdx >= 0) {
+      const container = scrollContainerRef.current;
+      const buttons = container.querySelectorAll('button');
+      const selectedButton = buttons[selectedDayIdx] as HTMLElement;
+      
+      if (selectedButton) {
+        const containerRect = container.getBoundingClientRect();
+        const buttonRect = selectedButton.getBoundingClientRect();
+        
+        // Check if button is outside visible area
+        const isButtonLeftOfVisible = buttonRect.left < containerRect.left;
+        const isButtonRightOfVisible = buttonRect.right > containerRect.right;
+        
+        if (isButtonLeftOfVisible || isButtonRightOfVisible) {
+          selectedButton.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+        }
+      }
+    }
+  }, [selectedDayIdx]);
+
   return (
-    <div className="flex items-center gap-2">
+    <div 
+      ref={scrollContainerRef}
+      className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+    >
       {weekDates.map((date, idx) => (
         <button
           key={`day-${date.toISOString()}`}
           onClick={() => setSelectedDayIdx(idx)}
-          className={`w-24 min-w-[110px] px-3 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
+          className={`flex-shrink-0 w-20 min-w-[80px] px-2 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
         >
-          {daysOfWeek[idx]}
-          <span className="block text-xs mt-1 whitespace-nowrap">
-            {date.getDate()} {date.toLocaleDateString('en-US', { month: 'short' })} {date.getFullYear()}
-          </span>
+          <div className="flex flex-col items-center">
+            <span className="text-xs font-semibold">{daysOfWeek[idx]}</span>
+            <span className="text-xs mt-0.5">
+              {date.getDate()}/{date.getMonth() + 1}
+            </span>
+          </div>
         </button>
       ))}
     </div>
@@ -347,7 +380,7 @@ function DailySyncContent() {
 
   useEffect(() => {
     setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));
-  }, [currentWeek, getDefaultDayIndexForWeek]);
+  }, [currentWeek]);
 
   const handleGoPrevWeek = () => {
     const defaultDayIdx = goPrevWeek();
@@ -365,12 +398,12 @@ function DailySyncContent() {
   };
 
   return (
-    <div className="mx-auto py-8 px-4">
+    <div className="mx-auto">
       {initialLoading ? (
         <DailySyncSkeleton />
       ) : (
         <>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-8 gap-4">
             <WeekSelector
               displayWeek={displayWeek}
               totalWeeks={totalWeeks}
