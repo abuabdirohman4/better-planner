@@ -2,13 +2,7 @@
 
 import React from 'react';
 
-interface ProgressIndicatorProps {
-  progress: {
-    completed: number;
-    total: number;
-    percentage: number;
-  };
-}
+import type { ProgressIndicatorProps } from '../types';
 
 export default function ProgressIndicator({ progress }: ProgressIndicatorProps) {
   return (

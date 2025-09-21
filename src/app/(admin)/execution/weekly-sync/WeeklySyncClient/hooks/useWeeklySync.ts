@@ -4,26 +4,7 @@ import { useMemo, useCallback } from 'react';
 import { getWeeklySync } from '@/app/(admin)/execution/weekly-sync/actions/weeklySyncActions';
 import { getWeekDates } from '@/lib/dateUtils';
 import { useIsMobile } from '@/lib/performanceUtils';
-interface GoalItem {
-  id: string;
-  item_id: string;
-  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
-  title: string;
-  status: string;
-  display_order?: number;
-  priority_score?: number;
-  quest_id?: string;
-  milestone_id?: string;
-  parent_task_id?: string;
-  parent_quest_id?: string;
-  parent_quest_title?: string;
-  parent_quest_priority_score?: number;
-}
-export interface WeeklyGoal {
-  id: string;
-  goal_slot: number;
-  items: GoalItem[];
-}
+
 
 /**
  * 🚀 ULTRA FAST: Single hook that fetches ALL weekly sync data in one query

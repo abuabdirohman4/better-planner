@@ -1,8 +1,6 @@
 import React from 'react';
 
-interface ModalHeaderProps {
-  onClose: () => void;
-}
+import type { ModalHeaderProps } from '../types';
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({ onClose }) => {
   return (

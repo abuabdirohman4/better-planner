@@ -8,32 +8,7 @@ const MemoizedWeeklySyncTable = React.memo(WeeklySyncTable);
 const MemoizedToDontListCard = React.memo(ToDontListCard);
 const MemoizedWeekSelector = React.memo(WeekSelector);
 
-interface MainContentProps {
-  // Week navigation
-  displayWeek: number;
-  totalWeeks: number;
-  isWeekDropdownOpen: boolean;
-  setIsWeekDropdownOpen: (value: boolean) => void;
-  handleSelectWeek: (weekIdx: number) => void;
-  goPrevWeek: () => void;
-  goNextWeek: () => void;
-  
-  // Data
-  year: number;
-  mobileOptimizedGoals: any[];
-  processedProgress: any;
-  processedRules: any[];
-  
-  // Loading states
-  toDontListLoading: boolean;
-  
-  // Handlers
-  handleRefreshGoals: () => void;
-  handleRefreshToDontList: () => void;
-  
-  // Data source indicator
-  dataSource?: string;
-}
+import type { MainContentProps } from '../types';
 
 export function MainContent({
   displayWeek,

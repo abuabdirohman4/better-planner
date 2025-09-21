@@ -1,16 +1,8 @@
 import React from 'react';
-import type { Milestone, SelectedItem } from '../../types';
+import type { Milestone } from '../../types';
 import { TaskList } from './TaskList';
 
-interface MilestoneListProps {
-  milestones: Milestone[];
-  questId: string;
-  expandedItems: Set<string>;
-  existingSelectedIds: Set<string>;
-  selectedItems: SelectedItem[];
-  handleItemToggle: (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK', subtasks?: any[], parentTaskId?: string) => void;
-  toggleExpanded: (itemId: string) => void;
-}
+import type { MilestoneListProps } from '../types';
 
 export const MilestoneList: React.FC<MilestoneListProps> = ({ 
   milestones, 
@@ -22,15 +14,15 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   toggleExpanded 
 }) => {
   const expanded = expandedItems.has(questId);
-  const filteredMilestones = milestones.filter(milestone => {
+  const filteredMilestones = milestones.filter((milestone: any) => {
     const allTasks = milestone.tasks || [];
-    const allSubtasks = allTasks.flatMap(task => task.subtasks || []);
+    const allSubtasks = allTasks.flatMap((task: any) => task.subtasks || []);
     const allIds = [
-      ...allTasks.map(t => t.id),
-      ...allSubtasks.map(st => st.id)
+      ...allTasks.map((t: any) => t.id),
+      ...allSubtasks.map((st: any) => st.id)
     ];
     if (allIds.length === 0) return true;
-    return !allIds.every(id => existingSelectedIds.has(id));
+    return !allIds.every((id: string) => existingSelectedIds.has(id));
   });
   
   if (filteredMilestones.length === 0) return null;
@@ -41,7 +33,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
       style={{ willChange: 'max-height, opacity' }}
     >
       <div className="ml-2 space-y-3">
-        {filteredMilestones.map((milestone) => (
+        {filteredMilestones.map((milestone: any) => (
           <div key={milestone.id} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
             <div className="flex items-center space-x-2 py-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">

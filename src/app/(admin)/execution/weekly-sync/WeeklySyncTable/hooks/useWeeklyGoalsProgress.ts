@@ -1,15 +1,5 @@
 import { useMemo } from 'react';
-import type { WeeklyGoal } from '@/app/(admin)/execution/weekly-sync/types';
-
-interface ProgressData {
-  completed: number;
-  total: number;
-  percentage: number;
-}
-
-interface WeeklyGoalsProgress {
-  [slotNumber: number]: ProgressData;
-}
+import type { WeeklyGoal, ProgressData, WeeklyGoalsProgress } from '../../types';
 
 /**
  * Custom hook untuk menghitung progress weekly goals di client-side

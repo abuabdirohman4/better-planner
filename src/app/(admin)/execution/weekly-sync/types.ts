@@ -1,5 +1,11 @@
-// Shared types for Weekly Sync components
+// Weekly Sync Types
+// Consolidated types for weekly sync functionality
 
+// ============================================================================
+// DOMAIN TYPES (Business Logic)
+// ============================================================================
+
+// Weekly Goals Domain
 export interface GoalItem {
   id: string;
   item_id: string;
@@ -22,10 +28,7 @@ export interface WeeklyGoal {
   items: GoalItem[];
 }
 
-export interface TreeGoalItem extends GoalItem {
-  children: TreeGoalItem[];
-}
-
+// Weekly Sync Domain
 export interface HierarchicalItem {
   id: string;
   title: string;
@@ -33,47 +36,39 @@ export interface HierarchicalItem {
   subtasks?: HierarchicalItem[];
 }
 
-export interface Milestone extends HierarchicalItem {
-  tasks: (HierarchicalItem & { subtasks: HierarchicalItem[] })[];
-}
-
-export interface Quest extends HierarchicalItem {
-  milestones: Milestone[];
-}
-
 export interface SelectedItem {
   id: string;
   type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
 }
 
-export interface WeeklyFocusModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (selectedItems: SelectedItem[]) => void;
-  year: number;
-  initialSelectedItems?: SelectedItem[];
-  existingSelectedIds?: Set<string>;
-}
-
-export interface WeeklyGoalsTableProps {
-  year: number;
-  weekNumber: number;
-  goals: WeeklyGoal[];
-  goalProgress: { [key: number]: { completed: number; total: number; percentage: number } };
-  onRefreshGoals?: () => void;
-}
-
-export interface ToDontListCardProps {
-  year: number;
-  weekNumber: number;
-  rules: Rule[];
-  loading: boolean;
-  onRefresh: () => void;
-}
-
-export interface Rule {
+export interface Milestone {
   id: string;
-  rule_text: string;
-  display_order: number;
+  title: string;
+  tasks?: (HierarchicalItem & { subtasks: HierarchicalItem[] })[];
 }
 
+export interface Quest {
+  id: string;
+  title: string;
+  milestones?: Milestone[];
+}
+
+// Progress & Calculations Domain
+export interface ProgressData {
+  completed: number;
+  total: number;
+  percentage: number;
+}
+
+export interface WeeklyGoalsProgress {
+  [slotNumber: number]: ProgressData;
+}
+
+// ============================================================================
+// RE-EXPORTED TYPES
+// ============================================================================
+
+// Re-export Rule type (used in hooks)
+export type { 
+  Rule
+} from './ToDontList/types';

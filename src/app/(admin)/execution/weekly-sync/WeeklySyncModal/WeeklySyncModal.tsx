@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import CustomToast from '@/components/ui/toast/CustomToast';
 import { useQuarterStore } from '@/stores/quarterStore';
 
-import type { WeeklyFocusModalProps } from '../types';
+import type { WeeklyFocusModalProps } from './types';
 import { ModalHeader } from './components/ModalHeader';
 import { ModalFooter } from './components/ModalFooter';
 import { MilestoneList } from './components/MilestoneList';

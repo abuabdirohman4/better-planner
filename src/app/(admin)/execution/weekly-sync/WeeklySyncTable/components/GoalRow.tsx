@@ -5,17 +5,7 @@ import Button from '@/components/ui/button/Button';
 import HorizontalGoalDisplay from './HorizontalGoalDisplay';
 import ProgressIndicator from './ProgressIndicator';
 import type { WeeklyGoal } from '../../types';
-
-interface GoalRowProps {
-  slotNumber: number;
-  goal: WeeklyGoal | undefined;
-  progress: {
-    completed: number;
-    total: number;
-    percentage: number;
-  };
-  onSlotClick: (slotNumber: number) => void;
-}
+import type { GoalRowProps } from '../types';
 
 export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: GoalRowProps) {
   const isCompleted = progress.percentage === 100;

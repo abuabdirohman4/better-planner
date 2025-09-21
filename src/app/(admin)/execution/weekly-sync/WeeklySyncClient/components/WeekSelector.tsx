@@ -3,15 +3,7 @@ import Button from '@/components/ui/button/Button';
 import { Dropdown } from '@/components/ui/dropdown/Dropdown';
 import { DropdownItem } from '@/components/ui/dropdown/DropdownItem';
 
-interface WeekSelectorProps {
-  displayWeek: number;
-  totalWeeks: number;
-  isWeekDropdownOpen: boolean;
-  setIsWeekDropdownOpen: (value: boolean) => void;
-  handleSelectWeek: (weekIdx: number) => void;
-  goPrevWeek: () => void;
-  goNextWeek: () => void;
-}
+import type { WeekSelectorProps } from '../types';
 
 export function WeekSelector({ 
   displayWeek, 

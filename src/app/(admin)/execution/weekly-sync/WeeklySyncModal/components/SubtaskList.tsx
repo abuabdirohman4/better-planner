@@ -1,14 +1,6 @@
 import React from 'react';
-import type { HierarchicalItem, SelectedItem } from '../../types';
-
-interface SubtaskListProps {
-  subtasks: HierarchicalItem[];
-  taskId: string;
-  expandedItems: Set<string>;
-  existingSelectedIds: Set<string>;
-  selectedItems: SelectedItem[];
-  handleItemToggle: (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK', subtasks?: HierarchicalItem[], parentTaskId?: string) => void;
-}
+// Removed unused HierarchicalItem and SelectedItem imports
+import type { SubtaskListProps } from '../types';
 
 export const SubtaskList: React.FC<SubtaskListProps> = ({ 
   subtasks, 
@@ -19,7 +11,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
   handleItemToggle 
 }) => {
   const expanded = expandedItems.has(taskId);
-  const filteredSubtasks = subtasks.filter(subtask => subtask.status !== 'DONE' && !existingSelectedIds.has(subtask.id));
+  const filteredSubtasks = subtasks.filter((subtask: any) => subtask.status !== 'DONE' && !existingSelectedIds.has(subtask.id));
   
   return (
     <div
@@ -27,7 +19,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
       style={{ willChange: 'max-height, opacity' }}
     >
       <div className="ml-2 space-y-2">
-        {filteredSubtasks.map((subtask) => {
+        {filteredSubtasks.map((subtask: any) => {
           const parentTaskSelected = selectedItems.some(item => item.id === taskId && item.type === 'TASK');
           return (
             <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">

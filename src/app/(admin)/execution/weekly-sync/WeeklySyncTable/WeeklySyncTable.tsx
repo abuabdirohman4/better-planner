@@ -7,7 +7,7 @@ import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActi
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
 import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
-import type { WeeklyGoalsTableProps } from '../types';
+import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklySyncTable({ 
   goals = [], 

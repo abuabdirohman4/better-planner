@@ -2,19 +2,8 @@ import React from 'react';
 import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 
 import Button from '@/components/ui/button/Button';
-import type { SelectedItem, Quest } from '../../types';
-
-interface ModalFooterProps {
-  selectedItems: SelectedItem[];
-  handleSelectAll: (hierarchicalData: Quest[]) => void;
-  handleClearAll: () => void;
-  handleExpandAll: () => void;
-  handleCollapseAll: () => void;
-  onClose: () => void;
-  handleSave: () => void;
-  loading: boolean;
-  hierarchicalData: Quest[];
-}
+// Removed unused SelectedItem and Quest imports
+import type { ModalFooterProps } from '../types';
 
 export const ModalFooter: React.FC<ModalFooterProps> = ({
   selectedItems,

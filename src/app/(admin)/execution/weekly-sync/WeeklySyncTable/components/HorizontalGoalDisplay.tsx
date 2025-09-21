@@ -2,12 +2,7 @@
 
 import React from 'react';
 import type { GoalItem } from '../../types';
-
-interface HorizontalGoalDisplayProps {
-  items: GoalItem[];
-  onClick: () => void;
-  slotNumber: number;
-}
+import type { HorizontalGoalDisplayProps } from '../types';
 
 const questColors = [
   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
