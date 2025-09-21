@@ -4,7 +4,7 @@ import React from 'react';
 import Button from '@/components/ui/button/Button';
 import HorizontalGoalDisplay from './HorizontalGoalDisplay';
 import ProgressIndicator from './ProgressIndicator';
-import type { WeeklyGoal } from '../../types';
+import type { WeeklyGoal } from '../../WeeklySyncClient/types';
 import type { GoalRowProps } from '../types';
 
 export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: GoalRowProps) {

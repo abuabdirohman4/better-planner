@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SelectedItem, HierarchicalItem, Quest } from '../../types';
+import type { SelectedItem, HierarchicalItem, Quest } from '../../WeeklySyncClient/types';
 
 export function useSelectionManagement(initialSelectedItems: SelectedItem[]) {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(initialSelectedItems);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Quest } from '../../types';
+import type { Quest } from '../../WeeklySyncClient/types';
 
 export function useExpansionManagement(hierarchicalData: Quest[], dataLoading: boolean) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import type { GoalItem } from '../../types';
+import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
 
 const questColors = [

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { WeeklyGoal, ProgressData, WeeklyGoalsProgress } from '../../types';
+import type { WeeklyGoal, ProgressData, WeeklyGoalsProgress } from '../../WeeklySyncClient/types';
 
 /**
  * Custom hook untuk menghitung progress weekly goals di client-side
