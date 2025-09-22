@@ -115,13 +115,12 @@ export async function getActiveTimerSession() {
       .from('timer_sessions')
       .select('*')
       .eq('user_id', user.id)
-      .eq('status', 'RUNNING')
+      .eq('status', 'FOCUSING')
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('[getActiveTimerSession] Supabase error:', error);
       throw error;
     }
     

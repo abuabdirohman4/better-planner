@@ -57,6 +57,16 @@
 - [ ] **Timer Session Validation** - **Priority**: Low
   - **Problem**: Timer kadang tidak start karena aggressive validation
   - **Fix**: Monitor dan adjust validation logic jika diperlukan
+
+- [x] **Timer Recovery Accuracy** - **Priority**: High
+  - **Problem**: Timer tidak akurat saat logout/login (tidak hitung waktu terlewat)
+  - **Fix**: Hitung actual elapsed time berdasarkan start_time, bukan stored duration
+  - **Status**: COMPLETED - Foundation untuk multi-device sync
+
+- [x] **Database Query Status Mismatch** - **Priority**: High
+  - **Problem**: Query cari status 'RUNNING' tapi database simpan status 'FOCUSING'
+  - **Fix**: Ubah query dari 'RUNNING' ke 'FOCUSING'
+  - **Status**: COMPLETED - Recovery sekarang bekerja
 ---
 
 **Last Updated**: 2024-01-XX

@@ -118,21 +118,41 @@ export function useTimerPersistence() {
   // Recovery on app load - OPTIMIZED
   useEffect(() => {
     const recoverSession = async () => {
-      if (globalRecoveryInProgress || globalRecoveryCompleted) return;
+      // Reset global state untuk testing
+      if (globalRecoveryCompleted) {
+        globalRecoveryCompleted = false;
+        globalRecoveryInProgress = false;
+      }
+      
+      if (globalRecoveryInProgress) return;
       
       globalRecoveryInProgress = true;
       setIsRecovering(true);
       
       try {
         const activeSession = await getActiveTimerSession();
+        
         if (activeSession) {
-          useTimerStore.getState().resumeFromDatabase({
-            taskId: activeSession.task_id,
-            taskTitle: activeSession.task_title,
-            startTime: activeSession.start_time,
-            currentDuration: activeSession.current_duration_seconds,
-            status: activeSession.status
-          });
+          // Calculate actual elapsed time based on start_time
+          const now = new Date();
+          const startTime = new Date(activeSession.start_time);
+          const actualElapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+          
+          // Check if timer should be completed
+          const targetDuration = activeSession.target_duration_seconds;
+          if (actualElapsed >= targetDuration) {
+            // Timer should be completed, mark as completed
+            await completeTimerSession(activeSession.id);
+          } else {
+            // Resume with actual elapsed time
+            useTimerStore.getState().resumeFromDatabase({
+              taskId: activeSession.task_id,
+              taskTitle: activeSession.task_title,
+              startTime: activeSession.start_time,
+              currentDuration: actualElapsed,
+              status: activeSession.status
+            });
+          }
         }
       } catch (error) {
         console.error('❌ Failed to recover timer session:', error);
