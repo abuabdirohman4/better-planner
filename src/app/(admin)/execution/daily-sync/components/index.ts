@@ -6,3 +6,4 @@ export { default as DaySelector } from './DaySelector';
 export { default as BrainDumpSection } from './BrainDumpSection';
 export { default as ActivityLog } from './ActivityLog';
 export { default as PomodoroTimer } from './PomodoroTimer';
+export { default as SoundSelector } from './SoundSelector';

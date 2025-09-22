@@ -8,7 +8,7 @@
     - [ ] 12 Week Quests
     - [x] ✅ Main Quest
     - [x] ✅ Weekly Sync
-    - [ ] Daily Sync
+    - [x] ✅ Daily Sync
     - [x] ✅ Dashboad
 - [ ] Increase Performance Loading each page & app
 

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { playTimerCompleteSound } from '@/lib/soundUtils';
+import { useSoundStore } from './soundStore';
 
 export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
 
@@ -121,6 +123,17 @@ export const useTimerStore = create<TimerStoreState>()(
             const now = new Date();
             const endTime = now.toISOString();
             const startTime = new Date(now.getTime() - focusDuration * 1000).toISOString();
+            
+            // Play completion sound
+            const soundSettings = useSoundStore.getState().settings;
+            if (soundSettings.enabled) {
+              playTimerCompleteSound(
+                soundSettings.soundId,
+                soundSettings.volume,
+                state.activeTask.title
+              ).catch(console.error);
+            }
+            
             return {
               lastSessionComplete: {
                 taskId: state.activeTask.id,

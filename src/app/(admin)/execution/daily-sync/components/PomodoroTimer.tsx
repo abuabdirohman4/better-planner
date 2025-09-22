@@ -1,8 +1,9 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
+import SoundSelector from './SoundSelector';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
@@ -74,6 +75,8 @@ export default function PomodoroTimer() {
     resumeTimer,
     stopTimer,
   } = useTimer();
+  
+  const [showSoundSelector, setShowSoundSelector] = useState(false);
 
   // Helper to get total seconds for progress
   const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
@@ -153,6 +156,23 @@ export default function PomodoroTimer() {
           Cancel
         </Button>
       )}
+      
+      {/* Sound Settings Button */}
+      <div className="mt-4">
+        <button
+          onClick={() => setShowSoundSelector(true)}
+          className="text-xs text-gray-500 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400 transition-colors"
+          title="Sound Settings"
+        >
+          🔊 Sound Settings
+        </button>
+      </div>
+      
+      {/* Sound Selector Modal */}
+      <SoundSelector
+        isOpen={showSoundSelector}
+        onClose={() => setShowSoundSelector(false)}
+      />
     </div>
   );
 }
