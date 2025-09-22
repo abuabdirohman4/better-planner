@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
+import { useTimerPersistence } from '../hooks/useTimerPersistence';
 import SoundSelector from './SoundSelector';
 
 const SHORT_BREAK_DURATION = 5 * 60;
@@ -76,6 +77,9 @@ export default function PomodoroTimer() {
     stopTimer,
   } = useTimer();
   
+  // Initialize timer persistence
+  const { isOnline, isRecovering } = useTimerPersistence();
+  
   const [showSoundSelector, setShowSoundSelector] = useState(false);
 
   // Helper to get total seconds for progress
@@ -116,6 +120,18 @@ export default function PomodoroTimer() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
+      {/* Status indicators */}
+      {isRecovering && (
+        <div className="mb-2 text-xs text-blue-500">
+          🔄 Recovering timer session...
+        </div>
+      )}
+      {!isOnline && (
+        <div className="mb-2 text-xs text-orange-500">
+          ⚠️ You're offline - timer will sync when online
+        </div>
+      )}
+      
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
         {activeTask ? (

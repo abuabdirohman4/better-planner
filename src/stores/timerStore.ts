@@ -28,6 +28,7 @@ interface TimerStoreState {
   sessionCount: number;
   breakType: 'SHORT' | 'LONG' | null;
   lastSessionComplete: SessionCompleteData | null;
+  startTime: string | null;
   startFocusSession: (task: Task) => void;
   startBreak: (type: 'SHORT' | 'LONG') => void;
   pauseTimer: () => void;
@@ -36,6 +37,13 @@ interface TimerStoreState {
   resetTimer: () => void;
   setLastSessionComplete: (data: SessionCompleteData | null) => void;
   incrementSeconds: () => void;
+  resumeFromDatabase: (sessionData: {
+    taskId: string;
+    taskTitle: string;
+    startTime: string;
+    currentDuration: number;
+    status: string;
+  }) => void;
 }
 
 // Durasi default (detik)
@@ -52,18 +60,21 @@ export const useTimerStore = create<TimerStoreState>()(
       sessionCount: 0,
       breakType: null,
       lastSessionComplete: null,
+      startTime: null,
 
       startFocusSession: (task: Task) => set({
         activeTask: task,
         timerState: 'FOCUSING',
         secondsElapsed: 0,
         breakType: null,
+        startTime: new Date().toISOString(),
       }),
 
       startBreak: (type: 'SHORT' | 'LONG') => set({
         timerState: 'BREAK',
         breakType: type,
         secondsElapsed: 0,
+        startTime: new Date().toISOString(),
       }),
 
       pauseTimer: () => set({ timerState: 'PAUSED' }),
@@ -173,6 +184,18 @@ export const useTimerStore = create<TimerStoreState>()(
         
         return { secondsElapsed: newSeconds };
       }),
+
+      resumeFromDatabase: (sessionData) => set({
+        activeTask: {
+          id: sessionData.taskId,
+          title: sessionData.taskTitle,
+          item_type: 'TASK'
+        },
+        timerState: sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING',
+        secondsElapsed: sessionData.currentDuration,
+        startTime: sessionData.startTime,
+        breakType: null,
+      }),
     }),
     {
       name: 'timer-storage',
@@ -182,6 +205,7 @@ export const useTimerStore = create<TimerStoreState>()(
         activeTask: state.activeTask,
         sessionCount: state.sessionCount,
         breakType: state.breakType,
+        startTime: state.startTime,
       }),
     }
   )
