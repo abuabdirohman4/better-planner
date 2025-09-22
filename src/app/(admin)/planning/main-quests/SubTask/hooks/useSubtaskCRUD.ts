@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { addTask, updateTaskStatus } from '../../actions/taskActions';
+import { addTask, updateTaskStatus, deleteTask } from '../../actions/taskActions';
 import CustomToast from '@/components/ui/toast/CustomToast';
 
 interface Subtask {
@@ -95,7 +95,25 @@ export function useSubtaskCRUD(
   }, [setSubtasks]);
 
   const handleDeleteSubtask = useCallback(async (id: string, idx: number): Promise<number> => {
+    // Optimistic update - hapus dari UI dulu
     setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== id));
+    
+    // Validasi UUID format untuk Supabase
+    if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      return idx > 0 ? idx - 1 : -1;
+    }
+    
+    try {
+      // Hapus dari database
+      await deleteTask(id);
+      CustomToast.success('Subtask berhasil dihapus');
+    } catch (error) {
+      // Jika gagal, kembalikan ke state semula
+      console.error('Failed to delete subtask:', error);
+      CustomToast.error('Gagal menghapus subtask');
+      // Note: State sudah dihapus di atas, jadi tidak perlu rollback
+    }
+    
     if (idx > 0) {
       return idx - 1;
     }

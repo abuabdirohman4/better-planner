@@ -55,17 +55,23 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
   const milestone_id = milestone_id_val ? milestone_id_val.toString() : null;
   const title = title_val ? title_val.toString() : null;
   const parent_task_id = parent_task_id_val ? parent_task_id_val.toString() : null;
-  if (!milestone_id) throw new Error('milestone_id wajib diisi');
   
-  // Validasi milestone_id exists
-  const { data: milestoneExists, error: milestoneError } = await supabase
-    .from('milestones')
-    .select('id')
-    .eq('id', milestone_id)
-    .single();
+  // Untuk subtask, milestone_id tidak wajib karena sudah punya parent_task_id
+  if (!parent_task_id && !milestone_id) {
+    throw new Error('milestone_id wajib diisi untuk task utama');
+  }
   
-  if (milestoneError || !milestoneExists) {
-    throw new Error('Milestone tidak ditemukan atau tidak valid');
+  // Validasi milestone_id exists hanya jika milestone_id ada
+  if (milestone_id) {
+    const { data: milestoneExists, error: milestoneError } = await supabase
+      .from('milestones')
+      .select('id')
+      .eq('id', milestone_id)
+      .single();
+    
+    if (milestoneError || !milestoneExists) {
+      throw new Error('Milestone tidak ditemukan atau tidak valid');
+    }
   }
   
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,7 +85,13 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
     type?: string;
     display_order?: number;
   }
-  const insertData: InsertTaskData = { milestone_id, title, status: 'TODO', user_id: user.id };
+  const insertData: InsertTaskData = { 
+    milestone_id: parent_task_id ? null : milestone_id, // Subtask tidak perlu milestone_id
+    title, 
+    status: 'TODO', 
+    user_id: user.id 
+  };
+  
   if (parent_task_id) {
     insertData.parent_task_id = parent_task_id;
     insertData.type = 'SUBTASK';

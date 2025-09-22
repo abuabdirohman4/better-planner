@@ -59,7 +59,8 @@ export function useSubtaskOperations(
     } else {
       setFocusSubtaskId(null);
     }
-    if (!id.match(/^[\da-f]{24}$/i)) return;
+    // Validasi UUID format untuk Supabase
+    if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) return;
     try {
       await deleteTask(id);
     } catch {}
