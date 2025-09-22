@@ -1,5 +1,5 @@
 import React from 'react';
-import { updateDailySessionTarget } from '../actions/dailyPlanActions';
+import { updateDailySessionTarget } from '../../DailySyncClient/actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
 
 export function useTaskSession(

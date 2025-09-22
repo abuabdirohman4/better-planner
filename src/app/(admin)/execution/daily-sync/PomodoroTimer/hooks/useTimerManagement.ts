@@ -1,7 +1,7 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useTimer } from '@/stores/timerStore';
 import { useActivityStore } from '@/stores/activityStore';
-import { logActivity } from '../actions/activityLoggingActions';
+import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 
 export function useTimerManagement(selectedDateStr: string) {
   const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete } = useTimer();

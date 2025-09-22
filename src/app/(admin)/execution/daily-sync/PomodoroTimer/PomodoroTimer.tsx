@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
-import { useTimerPersistence } from '../hooks/useTimerPersistence';
-import SoundSelector from './SoundSelector';
+import { useTimerPersistence } from './hooks/useTimerPersistence';
+import SoundSelector from './components/SoundSelector';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;

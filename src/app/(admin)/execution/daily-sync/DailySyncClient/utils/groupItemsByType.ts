@@ -1,4 +1,4 @@
-import { DailyPlanItem } from '../types';
+import { DailyPlanItem } from '../../DailySyncClient/types';
 
 export const groupItemsByType = (items: DailyPlanItem[] = []) => {
   const groups = {

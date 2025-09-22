@@ -2,118 +2,19 @@
 import React, { useState, useEffect } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
-import { useWeekManagement, useTimerManagement, useDailyPlanManagement, useGlobalTimer } from './hooks';
-import { WeekSelector, DaySelector, BrainDumpSection, SideQuestSection, MainQuestModal, ActivityLog, PomodoroTimer } from './components';
-import { groupItemsByType } from './utils/groupItemsByType';
-import { setDailyPlan } from './actions/dailyPlanActions';
+import { useWeekManagement } from './DateSelector/hooks/useWeekManagement';
+import { useTimerManagement } from './PomodoroTimer/hooks/useTimerManagement';
+import { useGlobalTimer } from './PomodoroTimer/hooks/useGlobalTimer';
+import { useDailyPlanManagement } from './DailySyncClient/hooks/useDailyPlanManagement';
+import WeekSelector from './DateSelector/WeekSelector';
+import DaySelector from './DateSelector/DaySelector';
+import BrainDumpSection from './BrainDump/BrainDumpSection';
+import ActivityLog from './ActivityLog/ActivityLog';
+import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
+import DailySyncClient from './DailySyncClient/DailySyncClient';
+import { setDailyPlan } from './DailySyncClient/actions/dailyPlanActions';
+import { DailyPlan } from './DailySyncClient/types';
 import { getWeekDates } from '@/lib/dateUtils';
-
-// Daily Sync Client Component (merged from DailySyncClient.tsx)
-function DailySyncClient({ 
-  year, 
-  weekNumber, 
-  selectedDate, 
-  onSetActiveTask, 
-  dailyPlan, 
-  setDailyPlanState, 
-  setDailyPlanAction, 
-  loading, 
-  refreshSessionKey, 
-  forceRefreshTaskId 
-}: {
-  year: number;
-  quarter: number;
-  weekNumber: number;
-  selectedDate: string;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
-  dailyPlan: any;
-  setDailyPlanState: (plan: any) => void;
-  setDailyPlanAction?: typeof setDailyPlan;
-  loading: boolean;
-  refreshSessionKey?: Record<string, number>;
-  forceRefreshTaskId?: string | null;
-}) {
-  const {
-    dailyPlan: hookDailyPlan,
-    weeklyTasks: hookWeeklyTasks,
-    completedSessions,
-    loading: hookLoading,
-    selectedTasks,
-    showModal,
-    setShowModal,
-    modalLoading,
-    handleOpenModal,
-    handleTaskToggle,
-    handleSaveSelection,
-    handleStatusChange,
-    handleAddSideQuest,
-    handleTargetChange,
-    handleFocusDurationChange
-  } = useDailyPlanManagement(year, weekNumber, selectedDate);
-
-  // Use hook data
-  const effectiveDailyPlan = hookDailyPlan || dailyPlan;
-  const effectiveWeeklyTasks = hookWeeklyTasks;
-  const effectiveLoading = hookLoading || loading;
-
-  if (effectiveLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
-        <DailySyncSkeleton />
-      </div>
-    );
-  }
-
-  const groupedItems = groupItemsByType(effectiveDailyPlan?.daily_plan_items);
-
-  return (
-    <div className="mx-auto relative">
-      <div className="flex flex-col gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <SideQuestSection
-            title="Main Quest"
-            items={groupedItems['MAIN_QUEST']}
-            onStatusChange={handleStatusChange}
-            onSelectTasks={handleOpenModal}
-            onSetActiveTask={onSetActiveTask}
-            selectedDate={selectedDate}
-            onTargetChange={handleTargetChange}
-            onFocusDurationChange={handleFocusDurationChange}
-            completedSessions={completedSessions}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
-            showAddQuestButton={true}
-          />
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <SideQuestSection
-            title="Side Quest"
-            items={groupedItems['SIDE_QUEST']}
-            onStatusChange={handleStatusChange}
-            onAddSideQuest={handleAddSideQuest}
-            onSetActiveTask={onSetActiveTask}
-            selectedDate={selectedDate}
-            onTargetChange={handleTargetChange}
-            onFocusDurationChange={handleFocusDurationChange}
-            completedSessions={completedSessions}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
-          />
-        </div>
-      </div>
-      
-      <MainQuestModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        tasks={effectiveWeeklyTasks}
-        selectedTasks={selectedTasks}
-        onTaskToggle={handleTaskToggle}
-        onSave={handleSaveSelection}
-        isLoading={modalLoading}
-      />
-    </div>
-  );
-}
 
 function DailySyncContent() {
   const {
@@ -137,6 +38,14 @@ function DailySyncContent() {
   const { displayWeek, totalWeeks } = weekCalculations;
 
   const { loading, initialLoading, dailyPlan, mutate } = useDailyPlanManagement(year, displayWeek, selectedDateStr);
+
+  const handleSetDailyPlanState = (plan: DailyPlan | null) => {
+    // This is a placeholder - the actual state management is handled by SWR
+    // The mutate function will handle the data updates
+    if (mutate) {
+      mutate();
+    }
+  };
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
   
@@ -204,7 +113,7 @@ function DailySyncContent() {
                     selectedDate={selectedDateStr}
                     onSetActiveTask={handleSetActiveTask}
                     dailyPlan={dailyPlan}
-                    setDailyPlanState={mutate}
+                    setDailyPlanState={handleSetDailyPlanState}
                     setDailyPlanAction={setDailyPlan}
                     loading={loading}
                     refreshSessionKey={{}}

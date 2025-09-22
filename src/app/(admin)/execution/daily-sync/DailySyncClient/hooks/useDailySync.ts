@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { getDailySyncCompleteData, getTasksForWeek } from '@/app/(admin)/execution/daily-sync/actions/weeklyTasksActions';
+import { getDailySyncCompleteData, getTasksForWeek } from '../actions/weeklyTasksActions';
 import { dailySyncKeys } from '@/lib/swr';
 
 /**

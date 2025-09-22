@@ -1,7 +1,7 @@
 import React from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
-import { useTaskSession } from '../hooks/useTaskSession';
-import { TaskCardProps } from '../types';
+import { useTaskSession } from './hooks/useTaskSession';
+import { TaskCardProps } from './types';
 
 const MainQuestSection: React.FC<TaskCardProps> = ({ 
   item, 

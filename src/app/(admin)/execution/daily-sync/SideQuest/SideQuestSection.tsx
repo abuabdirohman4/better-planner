@@ -1,6 +1,7 @@
 import { useState, useTransition } from 'react';
-import MainQuestSection from './MainQuestSection';
-import { TaskColumnProps, SideQuestFormProps } from '../types';
+import MainQuestSection from '../MainQuest/MainQuestSection';
+import { TaskColumnProps } from '../DailySyncClient/types';
+import { SideQuestFormProps } from './types';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
 const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => {
