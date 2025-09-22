@@ -16,7 +16,7 @@ import { setDailyPlan } from './DailySyncClient/actions/dailyPlanActions';
 import { DailyPlan } from './DailySyncClient/types';
 import { getWeekDates } from '@/lib/dateUtils';
 
-function DailySyncContent() {
+export default function DailySyncPage() {
   const {
     year,
     quarter,
@@ -140,8 +140,4 @@ function DailySyncContent() {
       )}
     </div>
   );
-}
-
-export default function DailySyncPage() {
-  return <DailySyncContent />;
 }
