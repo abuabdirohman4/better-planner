@@ -103,7 +103,16 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
       })
     );
 
-    return itemsWithDetails;
+    // Remove duplicates based on item_id and goal_slot combination
+    const uniqueItems = itemsWithDetails.reduce((acc, item) => {
+      const key = `${item.id}-${item.goal_slot}`;
+      if (!acc.find(existing => `${existing.id}-${existing.goal_slot}` === key)) {
+        acc.push(item);
+      }
+      return acc;
+    }, [] as typeof itemsWithDetails);
+
+    return uniqueItems;
   } catch (error) {
     console.error('Error fetching tasks for week:', error);
     throw error;

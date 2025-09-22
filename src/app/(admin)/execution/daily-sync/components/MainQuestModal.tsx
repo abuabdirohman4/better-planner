@@ -51,11 +51,13 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
               <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
                 <div className="space-y-3">
-                  {slotTasks.map((task) => {
+                  {slotTasks.map((task, index) => {
                     const isSelected = selectedTasks[task.id] || false;
+                    // Create unique key by combining task.id with goal_slot and index to prevent duplicates
+                    const uniqueKey = `${task.id}-${task.goal_slot}-${index}`;
                     return (
                       <div 
-                        key={task.id} 
+                        key={uniqueKey} 
                         className={`flex items-center space-x-3 cursor-pointer p-3 rounded-lg transition-colors ${
                           isSelected 
                             ? 'bg-blue-50 border border-blue-200' 
