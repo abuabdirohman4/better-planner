@@ -120,6 +120,20 @@ export default function PomodoroTimer() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
+      <div className="absolute right-[26px] top-[26px]">
+        {/* Sound Settings */}
+        <button
+          onClick={() => setShowSoundSelector(true)}
+          className="flex items-center space-x-2 text-gray-500 hover:text-brand-500 transition-colors"
+          title="Sound Settings"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.808L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-3.808a1 1 0 011.617.808zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+          </svg>
+          <span className="text-sm">Sound Settings</span>
+        </button>
+      </div>
+
       {/* Status indicators */}
       {isRecovering && (
         <div className="mb-2 text-xs text-blue-500">
@@ -133,55 +147,50 @@ export default function PomodoroTimer() {
       )}
       
       {/* Timer lingkaran dan kontrol play/pause */}
-      <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
-        {activeTask ? (
-          <CircularTimer progress={progress} size={90} stroke={5} />
-        ) : (
-          <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
-            <circle
-              cx={45}
-              cy={45}
-              r={41}
-              stroke="#e5e7eb"
-              strokeWidth={4}
-              fill="none"
-            />
-          </svg>
-        )}
-        {!activeTask ? (
-          <span className="text-lg select-none">00:00</span>
-        ) : (
-          <>
-            <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
-              <IconComponent className={`w-16 h-16 ${iconColor}`} />
+      <div className="flex gap-5">
+        <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
+          {activeTask ? (
+            <CircularTimer progress={progress} size={90} stroke={5} />
+          ) : (
+            <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
+              <circle
+                cx={45}
+                cy={45}
+                r={41}
+                stroke="#e5e7eb"
+                strokeWidth={4}
+                fill="none"
+              />
+            </svg>
+          )}
+          {!activeTask ? (
+            <span className="text-lg select-none">00:00</span>
+          ) : (
+            <>
+              <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+                <IconComponent className={`w-16 h-16 ${iconColor}`} />
+              </Button>
+              <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+            </>
+          )}
+        </div>
+
+        <div>
+          {/* Judul dan subjudul */}
+          {activeTask ? <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div> : null}
+
+          {/* Tombol Cancel */}
+          {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
+            <Button
+              variant="outline"
+              size="xs"
+              className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+              onClick={stopTimer}
+            >
+              Cancel
             </Button>
-            <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
-          </>
-        )}
-      </div>
-      {/* Judul dan subjudul */}
-      {activeTask ? <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div> : null}
-      {/* Tombol Cancel */}
-      {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-2 text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-          onClick={stopTimer}
-        >
-          Cancel
-        </Button>
-      )}
-      
-      {/* Sound Settings Button */}
-      <div className="mt-4">
-        <button
-          onClick={() => setShowSoundSelector(true)}
-          className="text-xs text-gray-500 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400 transition-colors"
-          title="Sound Settings"
-        >
-          🔊 Sound Settings
-        </button>
+          )}
+        </div>
       </div>
       
       {/* Sound Selector Modal */}

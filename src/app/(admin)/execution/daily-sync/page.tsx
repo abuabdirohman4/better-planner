@@ -189,7 +189,7 @@ function DailySyncContent() {
           ) : (
             <>
               <div className="block md:hidden mb-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 relative">
                   <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
                   <PomodoroTimer />
                 </div>
@@ -213,7 +213,7 @@ function DailySyncContent() {
                 </div>
                 <div className="flex flex-col gap-6">
                   <div className="hidden md:block">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 relative">
                       <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
                       <PomodoroTimer />
                     </div>
