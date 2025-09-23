@@ -32,14 +32,16 @@ async function getDailyPlan(selectedDate: string) {
       (plan.daily_plan_items || []).map(async (item: { item_id: string; item_type: string; [key: string]: unknown }) => {
         let title = '';
         let quest_title = '';
+        let task_status = item.status; // Preserve existing status
 
         if (item.item_type === 'MAIN_QUEST') {
           const { data: task } = await supabase
             .from('tasks')
-            .select('id, title, milestone_id')
+            .select('id, title, milestone_id, status')
             .eq('id', item.item_id)
             .single();
           title = task?.title || '';
+          task_status = task?.status || item.status; // Use task status if available
           
           if (task?.milestone_id) {
             const { data: milestone } = await supabase
@@ -60,16 +62,18 @@ async function getDailyPlan(selectedDate: string) {
         } else if (item.item_type === 'SIDE_QUEST') {
           const { data: task } = await supabase
             .from('tasks')
-            .select('id, title')
+            .select('id, title, status')
             .eq('id', item.item_id)
             .single();
           title = task?.title || '';
+          task_status = task?.status || item.status; // Use task status if available
         }
 
         return {
           ...item,
           title,
-          quest_title
+          quest_title,
+          status: task_status // Use synced status
         };
       })
     );
@@ -169,12 +173,30 @@ export function useDailyPlanManagement(
       .filter(([, selected]) => selected)
       .map(([taskId]) => {
         const task = weeklyTasks.find((t: any) => t.id === taskId);
-        const itemType = 'MAIN_QUEST';
+        // Preserve existing item type or determine from task type
+        const existingItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.item_id === taskId);
+        const itemType = existingItem?.item_type || (task?.type === 'SIDE_QUEST' ? 'SIDE_QUEST' : 'MAIN_QUEST');
         return {
           item_id: taskId,
           item_type: itemType
         };
       });
+
+    // Also include existing side quests that are not in weeklyTasks
+    const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+      item.item_type === 'SIDE_QUEST' && 
+      !weeklyTasks.some((t: any) => t.id === item.item_id)
+    ) || [];
+
+    // Add existing side quests to selectedItems
+    existingSideQuests.forEach((item: DailyPlanItem) => {
+      if (!selectedItems.some(selected => selected.item_id === item.item_id)) {
+        selectedItems.push({
+          item_id: item.item_id,
+          item_type: item.item_type
+        });
+      }
+    });
     if (selectedItems.length === 0) return;
     startTransition(async () => {
       try {

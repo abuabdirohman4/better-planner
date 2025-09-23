@@ -137,23 +137,23 @@ export async function getHierarchicalData(year: number, quarter: number) {
     });
 
     // Step 7: Add orphan tasks (tasks without milestone) to a special "Orphan Tasks" quest
-    if (orphanTasks.length > 0) {
-      const orphanQuest = {
-        id: 'orphan-tasks-quest',
-        title: 'Tasks Without Milestone',
-        milestones: [{
-          id: 'orphan-tasks-milestone',
-          title: 'Selected Tasks',
-          quest_id: 'orphan-tasks-quest',
-          tasks: orphanTasks.map(task => ({
-            ...task,
-            subtasks: []
-          }))
-        }]
-      };
+    // if (orphanTasks.length > 0) {
+    //   const orphanQuest = {
+    //     id: 'orphan-tasks-quest',
+    //     title: 'Tasks Without Milestone',
+    //     milestones: [{
+    //       id: 'orphan-tasks-milestone',
+    //       title: 'Selected Tasks',
+    //       quest_id: 'orphan-tasks-quest',
+    //       tasks: orphanTasks.map(task => ({
+    //         ...task,
+    //         subtasks: []
+    //       }))
+    //     }]
+    //   };
       
-      hierarchicalData.push(orphanQuest);
-    }
+    //   hierarchicalData.push(orphanQuest);
+    // }
 
     return hierarchicalData;
   } catch (error) {

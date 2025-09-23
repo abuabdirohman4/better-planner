@@ -20,16 +20,32 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
     if (upsertError) throw upsertError;
     const daily_plan_id = plan.id;
 
+    // Get existing items to preserve their status and type
+    const { data: existingItems } = await supabase
+      .from('daily_plan_items')
+      .select('item_id, status, item_type, daily_session_target')
+      .eq('daily_plan_id', daily_plan_id);
+
+    // Create a map of existing items for quick lookup
+    const existingItemsMap = new Map();
+    existingItems?.forEach(item => {
+      existingItemsMap.set(item.item_id, item);
+    });
+
     // Delete all existing daily_plan_items
     await supabase.from('daily_plan_items').delete().eq('daily_plan_id', daily_plan_id);
 
-    // Insert new items
+    // Insert new items with preserved status and type
     if (selectedItems.length > 0) {
-      const itemsToInsert = selectedItems.map((item) => ({ 
-        ...item, 
-        daily_plan_id,
-        status: 'TODO'
-      }));
+      const itemsToInsert = selectedItems.map((item) => {
+        const existingItem = existingItemsMap.get(item.item_id);
+        return { 
+          ...item, 
+          daily_plan_id,
+          status: existingItem?.status || 'TODO', // Preserve existing status
+          daily_session_target: existingItem?.daily_session_target || 1 // Preserve existing target
+        };
+      });
       await supabase.from('daily_plan_items').insert(itemsToInsert);
     }
 
