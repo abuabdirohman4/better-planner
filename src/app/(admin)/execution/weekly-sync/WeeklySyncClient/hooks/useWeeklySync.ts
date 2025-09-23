@@ -30,25 +30,25 @@ export function useWeeklySync(year: number, quarter: number, weekNumber: number,
     swrKey,
     () => getWeeklySync(year, quarter, weekNumber, startDate, endDate),
     {
-      // 🚀 ULTRA FAST: Optimized for speed on all devices
-      revalidateOnFocus: false,            // ✅ No revalidation on focus
-      revalidateIfStale: false,            // ✅ No revalidation if stale
-      revalidateOnReconnect: false,        // ✅ No revalidation on reconnect
-      dedupingInterval: 30 * 1000,         // ✅ 30 seconds - short but reasonable
-      errorRetryCount: 1,                  // ✅ 1 retry only
-      errorRetryInterval: 1000,            // ✅ 1 second retry interval
-      focusThrottleInterval: 5000,         // ✅ 5 seconds throttle
-      keepPreviousData: true,              // ✅ Keep previous data for smooth UX
-      refreshInterval: 0,                  // ✅ No auto refresh
-      loadingTimeout: 10000,               // ✅ 10 seconds max - much faster!
+      // 🚀 FIXED: More responsive caching like Main Quests
+      revalidateOnFocus: true,
+      revalidateIfStale: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5 * 1000,
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
+      focusThrottleInterval: 5000,
+      keepPreviousData: true,
+      refreshInterval: 0,
+      loadingTimeout: 10000,
       
-      // 🚀 ULTRA FAST: Minimal error handling
+      // 🚀 IMPROVED: Better error handling
       onError: (err) => {
         console.warn('SWR Error:', err.message);
         return;
       },
       
-      // 🚀 ULTRA FAST: Minimal success handling
+      // 🚀 IMPROVED: Better success handling
       onSuccess: (data) => {
         return;
       }

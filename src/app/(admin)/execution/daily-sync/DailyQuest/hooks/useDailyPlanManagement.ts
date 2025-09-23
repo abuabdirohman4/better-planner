@@ -99,9 +99,11 @@ export function useDailyPlanManagement(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
     () => getDailyPlan(selectedDate),
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,
+      revalidateIfStale: true,
+      revalidateOnReconnect: true,
       dedupingInterval: 2 * 60 * 1000,
-      errorRetryCount: 1,
+      errorRetryCount: 3,
     }
   );
 

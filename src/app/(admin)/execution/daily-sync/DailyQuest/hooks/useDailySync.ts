@@ -17,8 +17,10 @@ export function useTasksForWeek(year: number, weekNumber: number) {
     dailySyncKeys.tasksForWeek(year, weekNumber),
     () => getTasksForWeek(year, weekNumber),
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
+      revalidateOnFocus: true,
+      revalidateIfStale: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2 * 60 * 1000,
       errorRetryCount: 3,
     }
   );
