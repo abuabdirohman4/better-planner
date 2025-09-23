@@ -31,20 +31,16 @@ export default function WeeklySyncModal({
     handleItemToggle, 
     handleSelectAll, 
     handleClearAll 
-  } = useSelectionManagement(initialSelectedItems);
+  } = useSelectionManagement(initialSelectedItems, existingSelectedIds);
+
+  // Debug log untuk modal
+
   const { 
     expandedItems, 
     handleExpandAll, 
     handleCollapseAll, 
     toggleExpanded 
   } = useExpansionManagement(hierarchicalData, dataLoading);
-
-  // Set selected items when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedItems(initialSelectedItems);
-    }
-  }, [isOpen, initialSelectedItems, setSelectedItems]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -89,25 +85,26 @@ export default function WeeklySyncModal({
                 Pilih item-item yang ingin menjadi fokus mingguan ini. Anda dapat memilih kombinasi Quest, Milestone, atau Task.
                 {existingSelectedIds.size > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md text-xs">
-                    <span className="font-medium text-blue-800 dark:text-blue-300">Info:</span> {existingSelectedIds.size} item sudah dipilih di slot lain dan tidak ditampilkan di sini.
+                    <span className="font-medium text-blue-800 dark:text-blue-300">Info:</span> {existingSelectedIds.size} item sudah dipilih di slot lain dan tidak dapat dipilih lagi di slot ini.
                   </div>
                 )}
               </div>
               
               {hierarchicalData
                 .filter(quest => {
+                  // Show all quests that have milestones, regardless of selection status
                   const allMilestones = quest.milestones || [];
-                  const remainingMilestones = allMilestones.filter(m => !existingSelectedIds.has(m.id));
-                  if (remainingMilestones.length === 0) return false;
+                  if (allMilestones.length === 0) return false;
 
-                  const hasAnyAvailableChild = remainingMilestones.some(milestone => {
+                  // Show quest if it has any tasks or subtasks (including already selected ones)
+                  const hasAnyChild = allMilestones.some(milestone => {
                     const tasks = milestone.tasks || [];
-                    if (tasks.some(task => !existingSelectedIds.has(task.id))) return true;
+                    if (tasks.length > 0) return true;
                     return tasks.some(task =>
-                      (task.subtasks || []).some(subtask => !existingSelectedIds.has(subtask.id))
+                      (task.subtasks || []).length > 0
                     );
                   });
-                  return hasAnyAvailableChild;
+                  return hasAnyChild;
                 })
                 .map((quest) => (
                 <div key={quest.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">

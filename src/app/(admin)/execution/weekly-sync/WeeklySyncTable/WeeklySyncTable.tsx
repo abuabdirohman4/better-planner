@@ -68,6 +68,8 @@ export default function WeeklySyncTable({
         });
       }
     });
+    
+    
     return existingIds;
   };
 
@@ -103,6 +105,7 @@ export default function WeeklySyncTable({
       {/* Hierarchical Modal */}
       {selectedSlot ? (
         <WeeklySyncModal
+          key={`modal-${selectedSlot}`} // Force re-render when slot changes
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
@@ -110,12 +113,17 @@ export default function WeeklySyncTable({
           }}
           onSave={handleModalSave}
           year={props.year}
-          initialSelectedItems={
-            (goals.find(goal => goal.goal_slot === selectedSlot)?.items || []).map(item => ({ 
-              id: item.item_id, 
-              type: 'TASK' as const // Map MAIN_QUEST from database to TASK for modal
-            }))
-          }
+          initialSelectedItems={(() => {
+            const currentGoal = goals.find(goal => goal.goal_slot === selectedSlot);
+            const items = currentGoal?.items || [];
+            const mappedItems = items.map(item => ({ 
+              id: item.item_id, // item_id adalah task ID dari database
+              type: 'TASK' as const // Semua item di weekly_goal_items adalah TASK
+            }));
+            
+            
+            return mappedItems;
+          })()}
           existingSelectedIds={getExistingSelectedIds(selectedSlot)}
         />
       ) : null}

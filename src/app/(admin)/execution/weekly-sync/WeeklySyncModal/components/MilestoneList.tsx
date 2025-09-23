@@ -14,16 +14,9 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   toggleExpanded 
 }) => {
   const expanded = expandedItems.has(questId);
-  const filteredMilestones = milestones.filter((milestone: any) => {
-    const allTasks = milestone.tasks || [];
-    const allSubtasks = allTasks.flatMap((task: any) => task.subtasks || []);
-    const allIds = [
-      ...allTasks.map((t: any) => t.id),
-      ...allSubtasks.map((st: any) => st.id)
-    ];
-    if (allIds.length === 0) return true;
-    return !allIds.every((id: string) => existingSelectedIds.has(id));
-  });
+  // Show all milestones, including those with already selected tasks
+  const filteredMilestones = milestones;
+  
   
   if (filteredMilestones.length === 0) return null;
   

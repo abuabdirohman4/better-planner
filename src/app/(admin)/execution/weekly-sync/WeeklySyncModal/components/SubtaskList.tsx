@@ -10,7 +10,8 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
   handleItemToggle 
 }) => {
   const expanded = expandedItems.has(taskId);
-  const filteredSubtasks = subtasks.filter((subtask: any) => subtask.status !== 'DONE' && !existingSelectedIds.has(subtask.id));
+  // Show all subtasks that are not done, including already selected ones
+  const filteredSubtasks = subtasks.filter((subtask: any) => subtask.status !== 'DONE');
   
   return (
     <div
@@ -25,7 +26,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
               <div className="flex items-center space-x-2 py-1">
                 <input
                   type="checkbox"
-                  checked={selectedItems.some(item => item.id === subtask.id && item.type === 'SUBTASK') || parentTaskSelected}
+                  checked={selectedItems.some(item => item.id === subtask.id && (item.type === 'SUBTASK' || item.type === 'TASK')) || existingSelectedIds.has(subtask.id) || parentTaskSelected}
                   onChange={() => handleItemToggle(subtask.id, 'SUBTASK', [], taskId)}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   disabled={parentTaskSelected}

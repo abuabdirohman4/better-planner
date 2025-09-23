@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SelectedItem, HierarchicalItem, Quest } from '../../WeeklySyncClient/types';
 
-export function useSelectionManagement(initialSelectedItems: SelectedItem[]) {
+export function useSelectionManagement(initialSelectedItems: SelectedItem[], existingSelectedIds: Set<string> = new Set()) {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(initialSelectedItems);
+
+  // Update selectedItems when initialSelectedItems changes
+  useEffect(() => {
+    setSelectedItems(initialSelectedItems);
+  }, [initialSelectedItems, existingSelectedIds]);
 
   const handleItemToggle = (
     itemId: string,
@@ -12,14 +17,25 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[]) {
   ) => {
     setSelectedItems(prev => {
       const isSelected = prev.some(item => item.id === itemId && item.type === itemType);
+      const isExistingSelected = existingSelectedIds.has(itemId);
+      
       if (itemType === 'TASK') {
         if (isSelected) {
+          // Remove from current selection (uncheck)
           return prev.filter(
             item =>
               !(item.id === itemId && item.type === 'TASK') &&
               !subtasks.some(st => st.id === item.id && item.type === 'SUBTASK')
           );
+        } else if (isExistingSelected) {
+          // Task is selected in another slot, add to current selection
+          return [
+            ...prev,
+            { id: itemId, type: 'TASK' },
+            ...subtasks.map(st => ({ id: st.id, type: 'SUBTASK' as const })),
+          ];
         } else {
+          // Add to current selection (check)
           return [
             ...prev,
             { id: itemId, type: 'TASK' },
@@ -27,7 +43,7 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[]) {
           ];
         }
       } else if (itemType === 'SUBTASK') {
-        if (parentTaskId && prev.some(item => item.id === parentTaskId && item.type === 'TASK')) return prev;
+        if (parentTaskId && (prev.some(item => item.id === parentTaskId && item.type === 'TASK') || existingSelectedIds.has(parentTaskId))) return prev;
         if (isSelected) {
           return prev.filter(item => !(item.id === itemId && item.type === 'SUBTASK'));
         } else {

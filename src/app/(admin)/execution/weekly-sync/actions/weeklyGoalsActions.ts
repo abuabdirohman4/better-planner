@@ -94,7 +94,12 @@ export async function setWeeklyGoalItems(data: {
     if (deleteError) throw deleteError;
 
     if (data.items.length > 0) {
-      const goalItemsData = data.items.map(item => ({
+      // Remove duplicates from items array
+      const uniqueItems = data.items.filter((item, index, self) => 
+        index === self.findIndex(t => t.id === item.id)
+      );
+
+      const goalItemsData = uniqueItems.map(item => ({
         weekly_goal_id: weeklyGoal.id,
         item_id: item.id
         // item_type removed since we deleted that column
@@ -104,7 +109,14 @@ export async function setWeeklyGoalItems(data: {
         .from('weekly_goal_items')
         .insert(goalItemsData);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        // If unique constraint violation, ignore it (item already exists)
+        if (insertError.code === '23505') {
+          console.log('Some items already exist in this weekly goal, skipping duplicates');
+        } else {
+          throw insertError;
+        }
+      }
     }
 
     revalidatePath('/execution/weekly-sync');

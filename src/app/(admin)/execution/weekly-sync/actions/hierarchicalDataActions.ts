@@ -22,6 +22,35 @@ export async function getHierarchicalData(year: number, quarter: number) {
     if (questError) throw questError;
     if (!quests || quests.length === 0) return [];
 
+    // Step 1.5: Get tasks that are already selected in weekly goals (even without milestone)
+    const { data: selectedTasks, error: selectedTasksError } = await supabase
+      .from('weekly_goal_items')
+      .select(`
+        item_id,
+        weekly_goals!inner(
+          year,
+          quarter,
+          week_number
+        )
+      `)
+      .eq('weekly_goals.year', year)
+      .eq('weekly_goals.quarter', quarter);
+
+    if (selectedTasksError) throw selectedTasksError;
+
+    // Get task details for selected tasks (including subtasks)
+    const selectedTaskIds = selectedTasks?.map(st => st.item_id) || [];
+    let orphanTasks: any[] = [];
+    if (selectedTaskIds.length > 0) {
+      const { data: orphanTasksData, error: orphanTasksError } = await supabase
+        .from('tasks')
+        .select('id, title, status, milestone_id, parent_task_id')
+        .in('id', selectedTaskIds);
+
+      if (orphanTasksError) throw orphanTasksError;
+      orphanTasks = orphanTasksData || [];
+    }
+
     // Step 2: Get all milestones for all quests in one query
     const questIds = quests.map(q => q.id);
     const { data: allMilestones, error: milestoneError } = await supabase
@@ -106,6 +135,25 @@ export async function getHierarchicalData(year: number, quarter: number) {
         milestones: milestonesWithTasks
       };
     });
+
+    // Step 7: Add orphan tasks (tasks without milestone) to a special "Orphan Tasks" quest
+    if (orphanTasks.length > 0) {
+      const orphanQuest = {
+        id: 'orphan-tasks-quest',
+        title: 'Tasks Without Milestone',
+        milestones: [{
+          id: 'orphan-tasks-milestone',
+          title: 'Selected Tasks',
+          quest_id: 'orphan-tasks-quest',
+          tasks: orphanTasks.map(task => ({
+            ...task,
+            subtasks: []
+          }))
+        }]
+      };
+      
+      hierarchicalData.push(orphanQuest);
+    }
 
     return hierarchicalData;
   } catch (error) {
