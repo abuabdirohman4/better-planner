@@ -79,6 +79,7 @@ export interface MainContentProps {
   
   // Data
   year: number;
+  quarter: number;
   mobileOptimizedGoals: WeeklyGoal[];
   processedProgress: any;
   processedRules: Rule[];

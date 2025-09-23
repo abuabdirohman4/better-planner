@@ -86,6 +86,9 @@ export function useWeeklySyncData(
   const startDate = weekDates[0].toISOString().slice(0, 10);
   const endDate = weekDates[6].toISOString().slice(0, 10);
   
+  // 🚀 SYNCED: Use relative week number (1-13) for RPC function, same as Daily Sync
+  const relativeWeekNumber = weekCalculations.displayWeek;
+  
   // 🚀 MOBILE OPTIMIZED: Use ultra fast RPC with mobile-specific settings
   const {
     goals: ultraFastGoals,
@@ -93,7 +96,7 @@ export function useWeeklySyncData(
     isLoading: ultraFastLoading,
     error: ultraFastError,
     mutate: mutateUltraFast
-  } = useWeeklySync(year, quarter, weekCalculations.displayWeek, startDate, endDate);
+  } = useWeeklySync(year, quarter, relativeWeekNumber, startDate, endDate);
 
   // 🚀 ULTRA OPTIMIZED: Direct data usage - no fallback overhead
   const goals = ultraFastGoals || [];

@@ -29,6 +29,7 @@ export async function removeWeeklyGoal(goalId: string) {
 // Set weekly goal items for a specific slot
 export async function setWeeklyGoalItems(data: {
   year: number;
+  quarter: number;
   weekNumber: number;
   goalSlot: number;
   items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
@@ -44,10 +45,11 @@ export async function setWeeklyGoalItems(data: {
       .upsert({
         user_id: user.id,
         year: data.year,
+        quarter: data.quarter,
         week_number: data.weekNumber,
         goal_slot: data.goalSlot
       }, {
-        onConflict: 'user_id,year,week_number,goal_slot'
+        onConflict: 'user_id,year,quarter,week_number,goal_slot'
       })
       .select('id')
       .single();

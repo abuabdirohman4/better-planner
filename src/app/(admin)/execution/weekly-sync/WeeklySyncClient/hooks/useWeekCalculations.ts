@@ -13,7 +13,8 @@ export function useWeekCalculations(
     const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
     const totalWeeks = endWeek - startWeek + 1;
     const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
-    const displayWeek = selectedWeekInQuarter ?? weekInQuarter;
+    // SYNCED: Always use weekInQuarter like Daily Sync, ignore selectedWeekInQuarter
+    const displayWeek = weekInQuarter;
 
     const weekStartDate = getDateFromWeek(year, startWeek + displayWeek - 1, 1);
     const weekEndDate = getDateFromWeek(year, startWeek + displayWeek - 1, 7);

@@ -9,6 +9,7 @@ export interface Rule {
 
 export interface ToDontListCardProps {
   year: number;
+  quarter: number;
   weekNumber: number;
   rules: Rule[];
   loading: boolean;

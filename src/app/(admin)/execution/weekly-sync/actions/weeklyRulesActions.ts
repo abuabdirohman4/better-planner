@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 
 /**
  * Tambah aturan baru ke To Don't List minggu ini
- * formData: { rule_text, year, week_number }
+ * formData: { rule_text, year, quarter, week_number }
  */
 export async function addWeeklyRule(formData: FormData) {
   const supabase = await createClient();
@@ -14,6 +14,7 @@ export async function addWeeklyRule(formData: FormData) {
 
   const rule_text = formData.get('rule_text') as string;
   const year = Number(formData.get('year'));
+  const quarter = Number(formData.get('quarter'));
   const week_number = Number(formData.get('week_number'));
 
   try {
@@ -23,6 +24,7 @@ export async function addWeeklyRule(formData: FormData) {
       .select('display_order')
       .eq('user_id', user.id)
       .eq('year', year)
+      .eq('quarter', quarter)
       .eq('week_number', week_number)
       .order('display_order', { ascending: false })
       .limit(1);
@@ -36,6 +38,7 @@ export async function addWeeklyRule(formData: FormData) {
         user_id: user.id,
         rule_text,
         year,
+        quarter,
         week_number,
         display_order: nextOrder,
       })

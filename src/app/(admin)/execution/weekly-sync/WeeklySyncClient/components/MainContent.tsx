@@ -18,6 +18,7 @@ export function MainContent({
   handleSelectWeek,
   goPrevWeek,
   goNextWeek,
+  quarter,
   year,
   mobileOptimizedGoals,
   processedProgress,
@@ -78,6 +79,7 @@ export function MainContent({
       {/* === To Don't List Card === */}
       <MemoizedToDontListCard
         year={year}
+        quarter={quarter}
         weekNumber={displayWeek}
         rules={processedRules}
         loading={toDontListLoading}

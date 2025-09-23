@@ -43,6 +43,7 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
     const formData = new FormData();
     formData.append("rule_text", newRule);
     formData.append("year", String(year));
+    formData.append("quarter", String(quarter));
     formData.append("week_number", String(weekNumber));
     const res = await addWeeklyRule(formData);
     if (res.success) {
@@ -65,6 +66,7 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
       const formData = new FormData();
       formData.append("rule_text", line);
       formData.append("year", String(year));
+      formData.append("quarter", String(quarter));
       formData.append("week_number", String(weekNumber));
       await addWeeklyRule(formData);
     }
@@ -80,6 +82,7 @@ function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], o
     const formData = new FormData();
     formData.append("rule_text", "");
     formData.append("year", String(year));
+    formData.append("quarter", String(quarter));
     formData.append("week_number", String(weekNumber));
     formData.append("display_order", String(newOrder));
     const res = await addWeeklyRule(formData);
@@ -296,7 +299,7 @@ function LoadingSkeleton() {
   );
 }
 
-const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules, loading, onRefresh }) => {
+const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, quarter, weekNumber, rules, loading, onRefresh }) => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
@@ -344,6 +347,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, weekNumber, rules
       const formData = new FormData();
       formData.append("rule_text", line);
       formData.append("year", String(year));
+      formData.append("quarter", String(quarter));
       formData.append("week_number", String(weekNumber));
       await addWeeklyRule(formData);
     }

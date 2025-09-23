@@ -76,37 +76,38 @@ export default function WeeklySyncClient() {
     }
   }, [year, quarter, isTodayInQuarter, today]);
   
-  // 🚀 OPTIMIZED: Single week calculations call
+  // 🚀 OPTIMIZED: Single week calculations call - always use current week
   const weekCalculations = useWeekCalculations(
     currentWeek, 
     year, 
     quarter, 
-    undefined
+    undefined // Always undefined - use current week like Daily Sync
   );
   
   // Week navigation state
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
-  const [selectedWeekInQuarter, setSelectedWeekInQuarter] = useState<number | undefined>(undefined);
+  // REMOVED: selectedWeekInQuarter - now always use current week like Daily Sync
   
-  // 🚀 OPTIMIZED: Week navigation handlers
+  // 🚀 OPTIMIZED: Week navigation handlers - now updates currentWeek directly
   const handleSelectWeek = useCallback((weekIdx: number) => {
     const { startWeek } = weekCalculations;
     const weekNumber = startWeek + weekIdx - 1;
-    const monday = new Date();
-    const day = monday.getDay();
+    const weekStartDate = getDateFromWeek(year, weekNumber, 1);
+    const day = weekStartDate.getDay();
     const diff = (day === 0 ? -6 : 1 - day);
-    monday.setDate(monday.getDate() + diff);
+    const monday = new Date(weekStartDate);
+    monday.setDate(weekStartDate.getDate() + diff);
     monday.setHours(0, 0, 0, 0);
     setCurrentWeek(monday);
-    setSelectedWeekInQuarter(weekIdx);
-  }, [weekCalculations.startWeek]);
+    // REMOVED: setSelectedWeekInQuarter - now always use current week
+  }, [weekCalculations.startWeek, year]);
 
   const goPrevWeek = useCallback(() => {
     if (weekCalculations.displayWeek <= 1) return;
     const prev = new Date(currentWeek);
     prev.setDate(currentWeek.getDate() - 7);
     setCurrentWeek(prev);
-    setSelectedWeekInQuarter(undefined);
+    // REMOVED: setSelectedWeekInQuarter - now always use current week
   }, [weekCalculations.displayWeek, currentWeek.getTime()]);
   
   const goNextWeek = useCallback(() => {
@@ -114,7 +115,7 @@ export default function WeeklySyncClient() {
     const next = new Date(currentWeek);
     next.setDate(currentWeek.getDate() + 7);
     setCurrentWeek(next);
-    setSelectedWeekInQuarter(undefined);
+    // REMOVED: setSelectedWeekInQuarter - now always use current week
   }, [weekCalculations.displayWeek, weekCalculations.totalWeeks, currentWeek.getTime()]);
 
   // 🚀 OPTIMIZED: Data fetching with progressive loading
@@ -219,6 +220,7 @@ export default function WeeklySyncClient() {
       goPrevWeek={goPrevWeek}
       goNextWeek={goNextWeek}
       year={year}
+      quarter={quarter}
       mobileOptimizedGoals={mobileOptimizedGoals}
       processedProgress={processedProgress}
       processedRules={processedRules}
