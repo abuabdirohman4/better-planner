@@ -1,8 +1,8 @@
 import { useState, useTransition } from 'react';
 import { useDailySyncUltraFast, useTasksForWeek } from './useDailySync';
-import { addSideQuest } from '../../SideQuest/actions/sideQuestActions';
+import { addSideQuest } from '../actions/sideQuestActions';
 import { updateDailyPlanItemStatus, setDailyPlan } from '../actions/dailyPlanActions';
-import { DailyPlan, DailyPlanItem } from '@/app/(admin)/execution/daily-sync/DailySyncClient/types';
+import { DailyPlan, DailyPlanItem } from '../types';
 
 export function useDailyPlanManagement(
   year: number,

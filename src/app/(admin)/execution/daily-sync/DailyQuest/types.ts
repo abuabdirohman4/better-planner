@@ -46,3 +46,47 @@ export interface TaskColumnProps {
   forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
 }
+
+export interface TaskCardProps {
+  item: DailyPlanItem;
+  onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
+  selectedDate?: string;
+  onTargetChange?: (itemId: string, newTarget: number) => void;
+  onFocusDurationChange: (itemId: string, duration: number) => void;
+  completedSessions: Record<string, number>;
+  refreshKey?: number;
+  forceRefreshTaskId?: string | null;
+}
+
+export interface TaskSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tasks: WeeklyTaskItem[];
+  selectedTasks: Record<string, boolean>;
+  onTaskToggle: (taskId: string) => void;
+  onSave: () => void;
+  isLoading: boolean;
+}
+
+export interface WeeklyTaskItem {
+  id: string;
+  type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  title: string;
+  status: string;
+  quest_title: string;
+  goal_slot: number;
+}
+
+export interface SideQuestFormProps {
+  onSubmit: (title: string) => void;
+  onCancel: () => void;
+}
+
+export interface SideQuestItem {
+  id: string;
+  title: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  item_type: string;
+  focus_duration?: number;
+}

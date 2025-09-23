@@ -145,7 +145,7 @@ export async function getDailySyncCompleteData(year: number, weekNumber: number,
     
     if (dailyPlan?.daily_plan_items) {
       // Import countCompletedSessions dynamically to avoid circular dependency
-      const { countCompletedSessions } = await import('../../MainQuest/actions/sessionActions');
+      const { countCompletedSessions } = await import('./sessionActions');
       
       const sessionPromises = dailyPlan.daily_plan_items.map(async (item: any) => {
         try {

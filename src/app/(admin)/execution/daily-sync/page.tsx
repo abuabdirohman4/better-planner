@@ -5,15 +5,15 @@ import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useWeekManagement } from './DateSelector/hooks/useWeekManagement';
 import { useTimerManagement } from './PomodoroTimer/hooks/useTimerManagement';
 import { useGlobalTimer } from './PomodoroTimer/hooks/useGlobalTimer';
-import { useDailyPlanManagement } from './DailySyncClient/hooks/useDailyPlanManagement';
+import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagement';
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
 import BrainDumpSection from './BrainDump/BrainDumpSection';
 import ActivityLog from './ActivityLog/ActivityLog';
 import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
-import DailySyncClient from './DailySyncClient/DailySyncClient';
-import { setDailyPlan } from './DailySyncClient/actions/dailyPlanActions';
-import { DailyPlan } from './DailySyncClient/types';
+import DailySyncClient from './DailyQuest/DailySyncClient';
+import { setDailyPlan } from './DailyQuest/actions/dailyPlanActions';
+import { DailyPlan } from './DailyQuest/types';
 import { getWeekDates } from '@/lib/dateUtils';
 
 export default function DailySyncPage() {

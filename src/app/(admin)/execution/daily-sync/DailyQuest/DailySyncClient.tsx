@@ -3,8 +3,9 @@ import React from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useDailyPlanManagement } from './hooks/useDailyPlanManagement';
-import SideQuestSection from '../SideQuest/SideQuestSection';
-import MainQuestModal from '../MainQuest/components/MainQuestModal';
+import MainQuestListSection from './MainQuestListSection';
+import SideQuestListSection from './SideQuestListSection';
+import MainQuestModal from './components/MainQuestModal';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { DailySyncClientProps } from './types';
 
@@ -58,7 +59,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <SideQuestSection
+          <MainQuestListSection
             title="Main Quest"
             items={groupedItems['MAIN_QUEST']}
             onStatusChange={handleStatusChange}
@@ -74,7 +75,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           />
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <SideQuestSection
+          <SideQuestListSection
             title="Side Quest"
             items={groupedItems['SIDE_QUEST']}
             onStatusChange={handleStatusChange}

@@ -1,6 +1,6 @@
 import { useState, useTransition } from 'react';
-import MainQuestSection from '../MainQuest/MainQuestSection';
-import { TaskColumnProps } from '../DailySyncClient/types';
+import TaskItemCard from './components/TaskItemCard';
+import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
@@ -48,8 +48,8 @@ const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => 
   );
 };
 
-// Main SideQuestSection component (merged from TaskColumn.tsx)
-const SideQuestSection: React.FC<TaskColumnProps> = ({ 
+// Main SideQuestListSection component
+const SideQuestListSection: React.FC<TaskColumnProps> = ({ 
   title, 
   items, 
   onStatusChange, 
@@ -96,7 +96,7 @@ const SideQuestSection: React.FC<TaskColumnProps> = ({
 
       <div className="space-y-3">
         {items.map((item) => (
-          <MainQuestSection
+          <TaskItemCard
             key={item.id}
             item={item}
             onStatusChange={onStatusChange}
@@ -111,29 +111,17 @@ const SideQuestSection: React.FC<TaskColumnProps> = ({
         ))}
         {items.length === 0 ? (
           <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="mb-6 py-8">Tidak ada tugas main quest hari ini</p>
-            {onSelectTasks ? (
+            <p className="mb-6 py-8">Tidak ada side quest hari ini</p>
+            {onAddSideQuest ? (
               <div className="border-t border-gray-200 pt-4">
                 <button
-                  onClick={onSelectTasks}
+                  onClick={() => setShowAddForm(true)}
                   className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
                 >
-                  Tambah Quest
+                  Tambah Side Quest
                 </button>
               </div>
             ) : null}
-          </div>
-        ) : null}
-        
-        {/* Tombol Tambah Quest di dalam card Main Quest - hanya muncul jika ada task */}
-        {showAddQuestButton && items.length > 0 ? (
-          <div className="flex justify-center mt-6">
-            <button 
-              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-              onClick={onSelectTasks}
-            >
-              Tambah Quest
-            </button>
           </div>
         ) : null}
       </div>
@@ -141,4 +129,4 @@ const SideQuestSection: React.FC<TaskColumnProps> = ({
   );
 };
 
-export default SideQuestSection;
+export default SideQuestListSection;
