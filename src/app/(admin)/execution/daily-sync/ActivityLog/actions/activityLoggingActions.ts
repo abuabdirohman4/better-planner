@@ -24,6 +24,21 @@ export async function logActivity(formData: FormData) {
   const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
 
   try {
+    // Check for duplicate session first
+    const { data: existingSession } = await supabase
+      .from('activity_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('task_id', taskId)
+      .eq('start_time', startTime)
+      .eq('end_time', endTime)
+      .single();
+
+    if (existingSession) {
+      console.log('[logActivity] Duplicate session detected, skipping insert');
+      return existingSession;
+    }
+
     const { data: activity, error } = await supabase
       .from('activity_logs')
       .insert({

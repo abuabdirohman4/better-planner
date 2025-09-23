@@ -54,17 +54,20 @@
 ## 🐛 **Active Bugs & Issues**
 
 ### **Current Bugs (Need Fix)**
-- [ ] **React Strict Mode Duplicate Inserts** - **Priority**: Medium
+- [x] **React Strict Mode Duplicate Inserts** - **Priority**: Medium
   - **Problem**: Data ter-insert 2x saat refresh di development mode
-  - **Fix**: Implementasi lebih robust global state management
+  - **Fix**: Implementasi duplicate prevention di `logActivity` + database constraint
+  - **Status**: COMPLETED - Duplicate prevention implemented
 
-- [ ] **Database Performance** - **Priority**: Medium
+- [x] **Database Performance** - **Priority**: Medium
   - **Problem**: Multiple database calls untuk find-then-update pattern
-  - **Fix**: Implementasi proper `upsert` dengan conflict resolution
+  - **Fix**: Implementasi duplicate check sebelum insert + unique constraint
+  - **Status**: COMPLETED - Optimized with duplicate prevention
 
-- [ ] **Timer Session Validation** - **Priority**: Low
+- [x] **Timer Session Validation** - **Priority**: Low
   - **Problem**: Timer kadang tidak start karena aggressive validation
   - **Fix**: Monitor dan adjust validation logic jika diperlukan
+  - **Status**: COMPLETED - Fixed startTime calculation logic
 
 - [x] **Timer Recovery Accuracy** - **Priority**: High
   - **Problem**: Timer tidak akurat saat logout/login (tidak hitung waktu terlewat)

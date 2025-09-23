@@ -43,7 +43,20 @@ function formatTimeRange(start: string, end: string) {
   const s = new Date(start);
   const e = new Date(end);
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${pad(s.getHours())}:${pad(s.getMinutes())} - ${pad(e.getHours())}:${pad(e.getMinutes())}`;
+  // Convert to local time
+  const startLocal = s.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+  const endLocal = e.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+  return `${startLocal} - ${endLocal}`;
 }
 
 function formatDuration(minutes: number) {
@@ -166,10 +179,15 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   }, {} as Record<string, { title: string; sessions: ActivityLogItem[]; totalMinutes: number }>);
   const summary = Object.values(grouped);
 
-  // Helper format waktu
+  // Helper format waktu - convert UTC to local time
   const formatTime = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return d.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
   };
   const formatTotal = (minutes: number) => {
     const h = Math.floor(minutes / 60);

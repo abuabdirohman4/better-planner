@@ -88,7 +88,8 @@ export const useTimerStore = create<TimerStoreState>()(
         if (state.timerState === 'FOCUSING' && state.activeTask && state.secondsElapsed > 0) {
           const now = new Date();
           const endTime = now.toISOString();
-          const startTime = new Date(now.getTime() - state.secondsElapsed * 1000).toISOString();
+          // Use actual startTime from store, not calculated
+          const startTime = state.startTime || new Date(now.getTime() - state.secondsElapsed * 1000).toISOString();
           set({
             lastSessionComplete: {
               taskId: state.activeTask.id,
@@ -102,6 +103,7 @@ export const useTimerStore = create<TimerStoreState>()(
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
+            startTime: null, // Clear startTime
           });
         } else {
           set({
@@ -109,6 +111,7 @@ export const useTimerStore = create<TimerStoreState>()(
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
+            startTime: null, // Clear startTime
           });
         }
       },
@@ -133,7 +136,8 @@ export const useTimerStore = create<TimerStoreState>()(
           if (state.activeTask) {
             const now = new Date();
             const endTime = now.toISOString();
-            const startTime = new Date(now.getTime() - focusDuration * 1000).toISOString();
+            // Use actual startTime from store, not calculated
+            const startTime = state.startTime || new Date(now.getTime() - focusDuration * 1000).toISOString();
             
             // Play completion sound
             const soundSettings = useSoundStore.getState().settings;
