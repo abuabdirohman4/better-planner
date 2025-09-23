@@ -141,26 +141,6 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
   }
 }
 
-export async function updateDailyPlanItemStatus(itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
-
-  try {
-    const { error } = await supabase
-      .from('daily_plan_items')
-      .update({ status })
-      .eq('id', itemId);
-
-    if (error) throw error;
-
-    revalidatePath('/execution/daily-sync');
-    return { success: true };
-  } catch (error) {
-    console.error('Error updating daily plan item status:', error);
-    throw error;
-  }
-}
 
 export async function updateDailySessionTarget(dailyPlanItemId: string, newTarget: number) {
   const supabase = await createClient();
@@ -179,6 +159,60 @@ export async function updateDailySessionTarget(dailyPlanItemId: string, newTarge
     return { success: true };
   } catch (error) {
     console.error('Error updating daily session target:', error);
+    throw error;
+  }
+}
+
+export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, focusDuration: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { error } = await supabase
+      .from('daily_plan_items')
+      .update({ focus_duration: focusDuration })
+      .eq('id', dailyPlanItemId);
+
+    if (error) throw error;
+
+    revalidatePath('/execution/daily-sync');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating focus duration:', error);
+    throw error;
+  }
+}
+
+
+export async function updateDailyPlanItemAndTaskStatus(
+  dailyPlanItemId: string, 
+  taskId: string, 
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE'
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // Update both tables in parallel
+    const [dailyPlanResult, taskResult] = await Promise.all([
+      supabase
+        .from('daily_plan_items')
+        .update({ status })
+        .eq('id', dailyPlanItemId),
+      supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', taskId)
+    ]);
+
+    if (dailyPlanResult.error) throw dailyPlanResult.error;
+    if (taskResult.error) throw taskResult.error;
+    revalidatePath('/execution/daily-sync');
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating status:', error);
     throw error;
   }
 }

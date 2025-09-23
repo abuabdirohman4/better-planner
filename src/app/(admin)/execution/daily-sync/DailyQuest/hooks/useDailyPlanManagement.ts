@@ -1,7 +1,8 @@
 import { useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { useDailySyncUltraFast, useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
-import { updateDailyPlanItemStatus, setDailyPlan } from '../actions/dailyPlanActions';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus } from '../actions/dailyPlanActions';
 import { DailyPlan, DailyPlanItem } from '../types';
 
 export function useDailyPlanManagement(
@@ -91,13 +92,26 @@ export function useDailyPlanManagement(
   const handleStatusChange = async (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
     startTransition(async () => {
       try {
-        await updateDailyPlanItemStatus(itemId, status);
+        // Find the daily plan item to get the task_id
+        const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
+        if (!dailyPlanItem) {
+          throw new Error('Daily plan item not found');
+        }
+
+        // Update both daily_plan_items and tasks status
+        await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
+        
         // Trigger refresh of optimized data instead of individual API call
         if (mutate) {
           await mutate();
         }
+        
+        // Show success toast
+        const statusText = status === 'DONE' ? 'Selesai' : status === 'IN_PROGRESS' ? 'Sedang Dikerjakan' : 'Belum Dimulai';
+        toast.success(`Status tugas diubah menjadi: ${statusText}`);
       } catch (err) {
         console.error('Error updating task status:', err);
+        toast.error('Gagal mengubah status tugas. Silakan coba lagi.');
       }
     });
   };
@@ -126,11 +140,22 @@ export function useDailyPlanManagement(
     console.log('Target change:', itemId, newTarget);
   };
 
-  const handleFocusDurationChange = (itemId: string, duration: number) => {
-    if (!dailyPlan) return;
-    // This would need to be handled by the parent component
-    // since we don't have direct access to setDailyPlanState
-    console.log('Focus duration change:', itemId, duration);
+  const handleFocusDurationChange = async (itemId: string, duration: number) => {
+    startTransition(async () => {
+      try {
+        await updateDailyPlanItemFocusDuration(itemId, duration);
+        // Trigger refresh of optimized data instead of individual API call
+        if (mutate) {
+          await mutate();
+        }
+        
+        // Show success toast
+        toast.success(`Durasi fokus diubah menjadi: ${duration} menit`);
+      } catch (err) {
+        console.error('Error updating focus duration:', err);
+        toast.error('Gagal mengubah durasi fokus. Silakan coba lagi.');
+      }
+    });
   };
 
   return {

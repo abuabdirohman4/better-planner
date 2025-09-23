@@ -7,7 +7,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
   item, 
   onStatusChange, 
   onSetActiveTask, 
-  selectedDate, 
+  selectedDate,
   onTargetChange, 
   onFocusDurationChange, 
   completedSessions, 
@@ -21,6 +21,10 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
     refreshKey, 
     forceRefreshTaskId
   );
+  
+  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
+  const [isUpdatingFocus, setIsUpdatingFocus] = React.useState(false);
+  const [optimisticStatus, setOptimisticStatus] = React.useState<string | null>(null);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
@@ -51,8 +55,16 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
           {/* Dropdown untuk durasi fokus */}
           <select
             value={item.focus_duration || 25}
-            onChange={(e) => onFocusDurationChange(item.item_id, parseInt(e.target.value))}
-            className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500"
+            disabled={isUpdatingFocus}
+            onChange={async (e) => {
+              setIsUpdatingFocus(true);
+              try {
+                await onFocusDurationChange(item.id, parseInt(e.target.value));
+              } finally {
+                setIsUpdatingFocus(false);
+              }
+            }}
+            className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value={25}>25m</option>
             <option value={60}>60m</option>
@@ -62,9 +74,28 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
           {/* Checkbox untuk status */}
           <input
             type="checkbox"
-            checked={item.status === 'DONE'}
-            onChange={(e) => onStatusChange(item.item_id, e.target.checked ? 'DONE' : 'TODO')}
-            className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+            checked={(optimisticStatus || item.status) === 'DONE'}
+            disabled={isUpdatingStatus}
+            onChange={(e) => {
+              const newStatus = e.target.checked ? 'DONE' : 'TODO';
+              
+              // Optimistic update - update UI immediately
+              setOptimisticStatus(newStatus);
+              setIsUpdatingStatus(true);
+              
+              try {
+                onStatusChange(item.id, newStatus);
+                // Clear optimistic status after successful update
+                setOptimisticStatus(null);
+              } catch (error) {
+                // Revert optimistic update on error
+                setOptimisticStatus(null);
+                console.error('Error updating status:', error);
+              } finally {
+                setIsUpdatingStatus(false);
+              }
+            }}
+            className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
