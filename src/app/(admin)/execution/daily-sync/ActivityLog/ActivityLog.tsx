@@ -22,6 +22,8 @@ interface ActivityLogItem {
   milestone_title?: string | null;
   quest_id?: string;
   quest_title?: string | null;
+  what_done?: string | null;
+  what_think?: string | null;
 }
 
 const ICONS = {
@@ -75,6 +77,44 @@ interface ActivityLogTree {
   logs?: ActivityLogItem[]; // hanya di level task
 }
 
+// Komponen untuk menampilkan journal entry
+const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
+  if (!log.what_done && !log.what_think) return null;
+
+  return (
+    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div className="flex items-start gap-2 mb-2">
+        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span className="text-xs font-semibold text-blue-800 dark:text-blue-200">One Minute Journal</span>
+      </div>
+      
+      {log.what_done && (
+        <div className="mb-2">
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Apa yang diselesaikan:
+          </div>
+          <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded p-2 border">
+            {log.what_done}
+          </div>
+        </div>
+      )}
+      
+      {log.what_think && (
+        <div>
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Yang masih dipikirkan:
+          </div>
+          <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded p-2 border">
+            {log.what_think}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Komponen rekursif untuk render pohon
 const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node, level = 0 }) => {
   return (
@@ -101,14 +141,17 @@ const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node
               title = 'Istirahat';
             }
             return (
-              <li key={log.id} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
-                <div className="shrink-0">{icon}</div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900 dark:text-gray-100 text-xs">{title}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatTimeRange(log.start_time, log.end_time)} &bull; {formatDuration(log.duration_minutes)}
+              <li key={log.id} className="bg-gray-50 dark:bg-gray-700 rounded px-2 py-1">
+                <div className="flex items-center gap-2">
+                  <div className="shrink-0">{icon}</div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-xs">{title}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatTimeRange(log.start_time, log.end_time)} &bull; {formatDuration(log.duration_minutes)}
+                    </div>
                   </div>
                 </div>
+                <JournalEntry log={log} />
               </li>
             );
           })}

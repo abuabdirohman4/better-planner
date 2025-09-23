@@ -60,7 +60,7 @@ export function useTimerPersistence() {
         taskTitle: activeTask.title,
         sessionType: 'FOCUS',
         startTime: startTime,
-        targetDuration: (activeTask.focus_duration || 25) * 60,
+        targetDuration: (activeTask.focus_duration || 10), // 10 seconds for testing
         currentDuration: secondsElapsed,
         status: timerState
       });
@@ -71,10 +71,14 @@ export function useTimerPersistence() {
     }
   }, [activeTask, startTime, secondsElapsed, timerState]);
 
-  // Auto-save setiap 30 detik - OPTIMIZED
+  // Auto-save dengan interval berdasarkan environment
   useEffect(() => {
     if (timerState === 'FOCUSING' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
-      const interval = setInterval(debouncedSave, 30000);
+      // Environment-based auto-save interval
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const saveInterval = isDevelopment ? 5000 : 30000; // 5s dev, 30s prod
+      
+      const interval = setInterval(debouncedSave, saveInterval);
       return () => clearInterval(interval);
     }
   }, [timerState, activeTask, startTime, isRecovering, debouncedSave]);

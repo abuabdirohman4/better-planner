@@ -68,6 +68,10 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
                 }}
                 className="appearance-none h-8 pl-3 pr-8 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
               >
+                {/* Testing option - only show in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <option value={10} className="text-gray-700 dark:text-gray-200">10s</option>
+                )}
                 <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
                 <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
                 <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>

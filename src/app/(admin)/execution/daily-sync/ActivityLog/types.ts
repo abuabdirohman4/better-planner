@@ -10,6 +10,8 @@ export interface ActivityLogItem {
   milestone_title?: string | null;
   quest_id?: string;
   quest_title?: string | null;
+  what_done?: string | null;
+  what_think?: string | null;
 }
 
 export interface ActivityLogProps {

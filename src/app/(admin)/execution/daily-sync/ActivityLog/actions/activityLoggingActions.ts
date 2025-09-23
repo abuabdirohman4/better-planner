@@ -13,6 +13,8 @@ export async function logActivity(formData: FormData) {
   const date = formData.get('date')?.toString();
   const startTime = formData.get('startTime')?.toString();
   const endTime = formData.get('endTime')?.toString();
+  const whatDone = formData.get('whatDone')?.toString();
+  const whatThink = formData.get('whatThink')?.toString();
 
   if (!taskId || !sessionType || !date || !startTime || !endTime) {
     console.error('[logActivity] Missing required fields', { taskId, sessionType, date, startTime, endTime });
@@ -49,6 +51,8 @@ export async function logActivity(formData: FormData) {
         end_time: endTime,
         duration_minutes: durationInMinutes,
         local_date: date,
+        what_done: whatDone || null,
+        what_think: whatThink || null,
       })
       .select()
       .single();
@@ -143,3 +147,4 @@ export async function getTodayActivityLogs(date: string) {
 
   return logsWithHierarchy;
 }
+

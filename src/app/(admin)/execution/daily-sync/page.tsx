@@ -15,6 +15,8 @@ import DailySyncClient from './DailyQuest/DailySyncClient';
 import { setDailyPlan } from './DailyQuest/actions/dailyPlanActions';
 import { DailyPlan } from './DailyQuest/types';
 import { getWeekDates } from '@/lib/dateUtils';
+import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
+import { useJournal } from './Journal/hooks/useJournal';
 
 export default function DailySyncPage() {
   const {
@@ -47,7 +49,16 @@ export default function DailySyncPage() {
     }
   };
 
-  const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
+  // Journal modal hook
+  const {
+    isJournalModalOpen,
+    pendingActivityData,
+    closeJournalModal,
+    saveJournal,
+    openJournalModal,
+  } = useJournal();
+
+  const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr, openJournalModal);
   
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
@@ -138,6 +149,17 @@ export default function DailySyncPage() {
           )}
         </>
       )}
+
+      {/* One Minute Journal Modal */}
+      <OneMinuteJournalModal
+        isOpen={isJournalModalOpen}
+        onClose={closeJournalModal}
+        onSave={async (whatDone: string, whatThink: string) => {
+          await saveJournal({ whatDone, whatThink });
+        }}
+        taskTitle={pendingActivityData?.taskTitle}
+        duration={pendingActivityData?.duration || 0}
+      />
     </div>
   );
 }

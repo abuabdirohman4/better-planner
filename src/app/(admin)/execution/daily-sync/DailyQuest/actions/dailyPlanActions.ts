@@ -44,7 +44,7 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
           daily_plan_id,
           status: existingItem?.status || 'TODO', // Preserve existing status
           daily_session_target: existingItem?.daily_session_target || 1, // Preserve existing target
-          focus_duration: existingItem?.focus_duration || 25 // Preserve existing focus duration
+          focus_duration: existingItem?.focus_duration || 10 // Default 10 seconds for testing
         };
       });
       await supabase.from('daily_plan_items').insert(itemsToInsert);
