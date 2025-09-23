@@ -39,22 +39,51 @@ export async function setWeeklyGoalItems(data: {
   if (!user) throw new Error('User not found');
 
   try {
-    // First, upsert weekly goal record for the slot
-    const { data: weeklyGoal, error: goalError } = await supabase
+    // First, check if weekly goal already exists for this slot
+    const { data: existingGoal, error: checkError } = await supabase
       .from('weekly_goals')
-      .upsert({
-        user_id: user.id,
-        year: data.year,
-        quarter: data.quarter,
-        week_number: data.weekNumber,
-        goal_slot: data.goalSlot
-      }, {
-        onConflict: 'user_id,year,quarter,week_number,goal_slot'
-      })
       .select('id')
+      .eq('user_id', user.id)
+      .eq('year', data.year)
+      .eq('week_number', data.weekNumber)
+      .eq('goal_slot', data.goalSlot)
       .single();
 
-    if (goalError) throw goalError;
+    let weeklyGoal;
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
+    }
+
+    if (existingGoal) {
+      // Update existing goal
+      const { data: updatedGoal, error: updateError } = await supabase
+        .from('weekly_goals')
+        .update({
+          quarter: data.quarter
+        })
+        .eq('id', existingGoal.id)
+        .select('id')
+        .single();
+      
+      if (updateError) throw updateError;
+      weeklyGoal = updatedGoal;
+    } else {
+      // Insert new goal
+      const { data: newGoal, error: insertError } = await supabase
+        .from('weekly_goals')
+        .insert({
+          user_id: user.id,
+          year: data.year,
+          quarter: data.quarter,
+          week_number: data.weekNumber,
+          goal_slot: data.goalSlot
+        })
+        .select('id')
+        .single();
+      
+      if (insertError) throw insertError;
+      weeklyGoal = newGoal;
+    }
 
     // Second, delete all existing goal items for this slot
     const { error: deleteError } = await supabase
