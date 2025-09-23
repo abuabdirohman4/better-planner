@@ -2,7 +2,6 @@ import React from 'react';
 import { FaCheck, FaTimes, FaExpand, FaCompress } from 'react-icons/fa';
 
 import Button from '@/components/ui/button/Button';
-// Removed unused SelectedItem and Quest imports
 import type { ModalFooterProps } from '../types';
 
 export const ModalFooter: React.FC<ModalFooterProps> = ({

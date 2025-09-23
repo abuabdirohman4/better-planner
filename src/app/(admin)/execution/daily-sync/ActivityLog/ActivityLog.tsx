@@ -166,11 +166,16 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
                 <ul className="space-y-1 ml-2">
                   {item.sessions.map((log) => (
                     <li key={log.id} className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-                      <span>•</span>
-                      <span className="flex items-center gap-2 font-mono">
-                        <span className="w-9 text-left">{formatTime(log.start_time)}</span>
-                        <span className="w-6 text-center">→</span>
-                        <span className="w-12 text-left">{formatTime(log.end_time)}</span>
+                      <div className="flex items-center gap-2">
+                        <span>•</span>
+                        <span className="flex items-center gap-2 font-mono">
+                          <span className="w-9 text-left">{formatTime(log.start_time)}</span>
+                          <span className="w-6 text-center">→</span>
+                          <span className="w-12 text-left">{formatTime(log.end_time)}</span>
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        ({formatDuration(log.duration_minutes)})
                       </span>
                     </li>
                   ))}

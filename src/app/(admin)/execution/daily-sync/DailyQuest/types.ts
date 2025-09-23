@@ -71,7 +71,7 @@ export interface TaskSelectionModalProps {
 
 export interface WeeklyTaskItem {
   id: string;
-  type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  type: 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING';
   title: string;
   status: string;
   quest_title: string;

@@ -1,5 +1,4 @@
 import React from 'react';
-// Removed unused HierarchicalItem and SelectedItem imports
 import { SubtaskList } from './SubtaskList';
 
 import type { TaskListProps } from '../types';

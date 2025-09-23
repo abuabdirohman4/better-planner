@@ -70,6 +70,7 @@ export function MainContent({
       {/* Kolom 3 Goal Mingguan */}
       <MemoizedWeeklySyncTable
         year={year}
+        quarter={quarter}
         weekNumber={displayWeek}
         goals={mobileOptimizedGoals}
         goalProgress={processedProgress}

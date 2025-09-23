@@ -31,7 +31,7 @@ function useRuleEditing() {
 }
 
 // Custom hook for new rule management
-function useNewRuleManagement(year: number, weekNumber: number, rules: Rule[], onRefresh: () => void) {
+function useNewRuleManagement(year: number, quarter: number, weekNumber: number, rules: Rule[], onRefresh: () => void) {
   const [newRule, setNewRule] = useState("");
   const [newRuleLoading, setNewRuleLoading] = useState(false);
   const [loadingInsertAt, setLoadingInsertAt] = useState<number | null>(null);
@@ -322,7 +322,7 @@ const ToDontListCard: React.FC<ToDontListCardProps> = ({ year, quarter, weekNumb
     handleAddRule,
     handleBulkPaste,
     handleAddEmptyRuleAt
-  } = useNewRuleManagement(year, weekNumber, rules, onRefresh);
+  } = useNewRuleManagement(year, quarter, weekNumber, rules, onRefresh);
   
   const {
     handleSaveEdit,

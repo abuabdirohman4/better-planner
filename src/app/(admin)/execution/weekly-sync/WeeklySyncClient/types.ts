@@ -38,7 +38,7 @@ export interface HierarchicalItem {
 // Used in: WeeklySyncClient, MainContent component, useWeeklySync hook
 export interface SelectedItem {
   id: string;
-  type: 'QUEST' | 'MILESTONE' | 'MAIN_QUEST';
+  type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
 }
 
 // Used in: WeeklySyncClient, WeekSelector component, useWeeklySync hook

@@ -40,6 +40,7 @@ export default function WeeklySyncTable({
       } else {
         await setWeeklyGoalItems({
           year: props.year,
+          quarter: props.quarter,
           weekNumber: props.weekNumber,
           goalSlot: selectedSlot,
           items: selectedItems
@@ -112,7 +113,7 @@ export default function WeeklySyncTable({
           initialSelectedItems={
             (goals.find(goal => goal.goal_slot === selectedSlot)?.items || []).map(item => ({ 
               id: item.item_id, 
-              type: 'MAIN_QUEST' // Since we removed item_type, all items are MAIN_QUEST
+              type: 'TASK' as const // Map MAIN_QUEST from database to TASK for modal
             }))
           }
           existingSelectedIds={getExistingSelectedIds(selectedSlot)}

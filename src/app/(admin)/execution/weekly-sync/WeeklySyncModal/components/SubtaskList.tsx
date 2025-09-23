@@ -1,5 +1,4 @@
 import React from 'react';
-// Removed unused HierarchicalItem and SelectedItem imports
 import type { SubtaskListProps } from '../types';
 
 export const SubtaskList: React.FC<SubtaskListProps> = ({ 

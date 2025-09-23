@@ -169,9 +169,10 @@ export function useDailyPlanManagement(
       .filter(([, selected]) => selected)
       .map(([taskId]) => {
         const task = weeklyTasks.find((t: any) => t.id === taskId);
+        const itemType = 'MAIN_QUEST';
         return {
           item_id: taskId,
-          item_type: task?.type === 'MAIN_QUEST' ? 'MAIN_QUEST' : task?.type || 'MAIN_QUEST'
+          item_type: itemType
         };
       });
     if (selectedItems.length === 0) return;
@@ -252,6 +253,31 @@ export function useDailyPlanManagement(
     });
   };
 
+  const handleTargetChange = async (itemId: string, newTarget: number) => {
+    startTransition(async () => {
+      try {
+        // Update daily session target in database
+        const supabase = await createClient();
+        const { error } = await supabase
+          .from('daily_plan_items')
+          .update({ daily_session_target: newTarget })
+          .eq('id', itemId);
+
+        if (error) {
+          throw error;
+        }
+
+        // Trigger refresh of optimized data
+        if (mutate) {
+          await mutate();
+        }
+      } catch (err) {
+        console.error('Error updating session target:', err);
+        toast.error('Gagal mengubah target sesi. Silakan coba lagi.');
+      }
+    });
+  };
+
   return {
     // Data
     dailyPlan,
@@ -270,6 +296,7 @@ export function useDailyPlanManagement(
     handleSaveSelection,
     handleStatusChange,
     handleAddSideQuest,
+    handleTargetChange,
     handleFocusDurationChange,
     
     // Utilities

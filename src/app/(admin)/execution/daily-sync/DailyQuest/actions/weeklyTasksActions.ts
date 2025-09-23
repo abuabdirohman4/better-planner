@@ -71,9 +71,13 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
           }
         }
 
+        // Ensure type is valid for WeeklyTaskItem (matches task_type enum from database)
+        const validTypes = ['MAIN_QUEST', 'WORK', 'SIDE_QUEST', 'LEARNING'] as const;
+        const validType = validTypes.includes(task_type as any) ? task_type as 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING' : 'MAIN_QUEST';
+
         return {
           id: item.item_id,
-          type: task_type,
+          type: validType,
           title,
           status,
           quest_title,

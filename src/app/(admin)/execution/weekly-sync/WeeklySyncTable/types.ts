@@ -5,6 +5,7 @@ import type { GoalItem, WeeklyGoal, ProgressData } from '../WeeklySyncClient/typ
 
 export interface WeeklyGoalsTableProps {
   year: number;
+  quarter: number;
   weekNumber: number;
   goals: WeeklyGoal[];
   goalProgress: { [key: number]: ProgressData };
