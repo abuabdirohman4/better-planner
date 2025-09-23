@@ -17,7 +17,7 @@ async function getDailyPlan(selectedDate: string) {
   try {
     const { data: plan, error } = await supabase
       .from('daily_plans')
-      .select('*, daily_plan_items(*)')
+      .select('*, daily_plan_items(id, item_id, item_type, status, daily_session_target, focus_duration, created_at, updated_at)')
       .eq('plan_date', selectedDate)
       .eq('user_id', user.id)
       .single();

@@ -23,7 +23,7 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
     // Get existing items to preserve their status and type
     const { data: existingItems } = await supabase
       .from('daily_plan_items')
-      .select('item_id, status, item_type, daily_session_target')
+      .select('item_id, status, item_type, daily_session_target, focus_duration')
       .eq('daily_plan_id', daily_plan_id);
 
     // Create a map of existing items for quick lookup
@@ -43,7 +43,8 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
           ...item, 
           daily_plan_id,
           status: existingItem?.status || 'TODO', // Preserve existing status
-          daily_session_target: existingItem?.daily_session_target || 1 // Preserve existing target
+          daily_session_target: existingItem?.daily_session_target || 1, // Preserve existing target
+          focus_duration: existingItem?.focus_duration || 25 // Preserve existing focus duration
         };
       });
       await supabase.from('daily_plan_items').insert(itemsToInsert);

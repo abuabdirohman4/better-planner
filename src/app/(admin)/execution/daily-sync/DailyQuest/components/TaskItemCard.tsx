@@ -54,33 +54,46 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
         <div className="flex items-center space-x-2">
           {/* Dropdown untuk durasi fokus dengan loading indicator */}
           <div className="relative">
-            <select
-              value={item.focus_duration || 25}
-              disabled={isUpdatingFocus}
-              onChange={async (e) => {
-                setIsUpdatingFocus(true);
-                try {
-                  await onFocusDurationChange(item.id, parseInt(e.target.value));
-                } finally {
-                  setIsUpdatingFocus(false);
-                }
-              }}
-              className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <option value={25}>25m</option>
-              <option value={60}>60m</option>
-              <option value={90}>90m</option>
-            </select>
+            <div className="relative">
+              <select
+                value={item.focus_duration || 25}
+                disabled={isUpdatingFocus}
+                onChange={async (e) => {
+                  setIsUpdatingFocus(true);
+                  try {
+                    await onFocusDurationChange(item.id, parseInt(e.target.value));
+                  } finally {
+                    setIsUpdatingFocus(false);
+                  }
+                }}
+                className="appearance-none h-8 pl-3 pr-8 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
+              >
+                <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
+                <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
+                <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg 
+                  className="w-3 h-3 text-gray-400 dark:text-gray-500" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
             {/* Loading spinner overlay */}
             {isUpdatingFocus && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </div>
           
           {/* Checkbox untuk status dengan loading indicator */}
-          <div className="relative">
+          <div className="flex items-center">
             <input
               type="checkbox"
               checked={(optimisticStatus || item.status) === 'DONE'}
