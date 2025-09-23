@@ -1,5 +1,4 @@
 import React from 'react';
-import { updateDailySessionTarget } from '../actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
 
 export function useTaskSession(
@@ -25,7 +24,8 @@ export function useTaskSession(
     setSavingTarget(true);
     setTarget(newTarget);
     try {
-      await updateDailySessionTarget(item.id, newTarget);
+      // TODO: Implement updateDailySessionTarget function
+      console.log('Target change:', item.id, newTarget);
       if (onTargetChange) onTargetChange(item.id, newTarget);
     } finally {
       setSavingTarget(false);

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useDailySyncUltraFast, useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus } from '../actions/dailyPlanActions';
-import { DailyPlan, DailyPlanItem } from '../types';
+import { DailyPlanItem } from '../types';
 
 export function useDailyPlanManagement(
   year: number,
@@ -68,7 +68,7 @@ export function useDailyPlanManagement(
     const selectedItems = Object.entries(selectedTasks)
       .filter(([, selected]) => selected)
       .map(([taskId]) => {
-        const task = weeklyTasks.find(t => t.id === taskId);
+        const task = weeklyTasks.find((t: any) => t.id === taskId);
         return {
           item_id: taskId,
           item_type: task?.type || 'TASK'
@@ -133,12 +133,6 @@ export function useDailyPlanManagement(
     });
   };
 
-  const handleTargetChange = (itemId: string, newTarget: number) => {
-    if (!dailyPlan) return;
-    // This would need to be handled by the parent component
-    // since we don't have direct access to setDailyPlanState
-    console.log('Target change:', itemId, newTarget);
-  };
 
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
     startTransition(async () => {
@@ -176,7 +170,6 @@ export function useDailyPlanManagement(
     handleSaveSelection,
     handleStatusChange,
     handleAddSideQuest,
-    handleTargetChange,
     handleFocusDurationChange,
     
     // Utilities

@@ -1,56 +1,7 @@
 import useSWR from 'swr';
 
-import { getDailySyncCompleteData, getTasksForWeek } from '../actions/weeklyTasksActions';
+import { getTasksForWeek } from '../actions/weeklyTasksActions';
 import { dailySyncKeys } from '@/lib/swr';
-
-/**
- * 🚀 ULTRA-FAST DAILY SYNC HOOK
- * Uses single RPC call to get all data at once
- * Replaces multiple separate hooks for maximum performance
- */
-export function useDailySyncUltraFast(year: number, weekNumber: number, selectedDate: string) {
-  const { 
-    data = {
-      dailyPlan: null,
-      weeklyTasks: [],
-      completedSessions: {}
-    }, 
-    error, 
-    isLoading,
-    mutate 
-  } = useSWR(
-    year && weekNumber && selectedDate ? dailySyncKeys.dailySyncBatched(year, weekNumber, selectedDate) : null,
-    () => getDailySyncCompleteData(year, weekNumber, selectedDate),
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes - shorter cache for real-time data
-      errorRetryCount: 1, // Reduced retry for faster failure
-      keepPreviousData: true, // Show previous data while revalidating
-    }
-  );
-
-
-  return {
-    // Daily plan data
-    dailyPlan: data.dailyPlan,
-    
-    // Weekly tasks for selection modal
-    weeklyTasks: data.weeklyTasks,
-    
-    // Completed sessions for all tasks (pre-calculated)
-    completedSessions: data.completedSessions,
-    
-    // Loading and error states
-    isLoading,
-    error,
-    
-    // Mutate function for manual refresh
-    mutate,
-    
-    // Helper function to get completed sessions for specific task
-    getCompletedSessions: (taskId: string) => data.completedSessions[taskId] || 0,
-  };
-}
 
 /**
  * Custom hook for fetching tasks for week selection

@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from '@/lib/supabase/server';
-import { getDailyPlan } from './dailyPlanActions';
 
 // Get tasks available for selection from weekly goals for the current week
 export async function getTasksForWeek(year: number, weekNumber: number) {
@@ -119,61 +118,3 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
   }
 }
 
-// Get daily plan for a specific date
-// ULTRA OPTIMIZED: Get all daily sync data in single call
-export async function getDailySyncCompleteData(year: number, weekNumber: number, selectedDate: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return {
-      dailyPlan: null,
-      weeklyTasks: [],
-      completedSessions: {}
-    };
-  }
-
-  try {
-    // FALLBACK: Use existing functions but in parallel for better performance
-    const [dailyPlan, weeklyTasks] = await Promise.all([
-      getDailyPlan(selectedDate),
-      getTasksForWeek(year, weekNumber)
-    ]);
-
-    // Get completed sessions for all tasks in parallel
-    const completedSessions: Record<string, number> = {};
-    
-    if (dailyPlan?.daily_plan_items) {
-      // Import countCompletedSessions dynamically to avoid circular dependency
-      const { countCompletedSessions } = await import('./sessionActions');
-      
-      const sessionPromises = dailyPlan.daily_plan_items.map(async (item: any) => {
-        try {
-          const count = await countCompletedSessions(item.id, selectedDate);
-          return { itemId: item.id, count };
-        } catch (error) {
-          console.error(`Error getting completed sessions for item ${item.id}:`, error);
-          return { itemId: item.id, count: 0 };
-        }
-      });
-
-      const sessionResults = await Promise.all(sessionPromises);
-      sessionResults.forEach(({ itemId, count }) => {
-        completedSessions[itemId] = count;
-      });
-    }
-
-    return {
-      dailyPlan,
-      weeklyTasks,
-      completedSessions
-    };
-  } catch (error) {
-    console.error("Error in getDailySyncCompleteData:", error);
-    return {
-      dailyPlan: null,
-      weeklyTasks: [],
-      completedSessions: {}
-    };
-  }
-}
