@@ -26,54 +26,34 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
     // Get all weekly goal items
     const { data: items, error: itemsError } = await supabase
       .from('weekly_goal_items')
-      .select('id, weekly_goal_id, item_id, item_type')
+      .select('id, weekly_goal_id, item_id')
       .in('weekly_goal_id', weeklyGoalIds);
 
     if (itemsError) throw itemsError;
     if (!items?.length) return [];
 
-    // Get details for each item
+    // Get details for each item by fetching from tasks table
     const itemsWithDetails = await Promise.all(
       items.map(async (item) => {
         let title = '';
         let status = 'TODO';
         let quest_title = '';
+        let task_type = '';
         const goal_slot = weeklyGoals.find(g => g.id === item.weekly_goal_id)?.goal_slot || 0;
 
-        if (item.item_type === 'QUEST') {
-          const { data: quest } = await supabase
-            .from('quests')
-            .select('id, title')
-            .eq('id', item.item_id)
-            .single();
-          title = quest?.title || '';
-          quest_title = title;
-        } else if (item.item_type === 'MILESTONE') {
-          const { data: milestone } = await supabase
-            .from('milestones')
-            .select('id, title, quest_id')
-            .eq('id', item.item_id)
-            .single();
-          title = milestone?.title || '';
+        // Fetch task details directly from tasks table
+        const { data: task } = await supabase
+          .from('tasks')
+          .select('id, title, status, milestone_id, type')
+          .eq('id', item.item_id)
+          .single();
+        
+        if (task) {
+          title = task.title || '';
+          status = task.status || 'TODO';
+          task_type = task.type || '';
           
-          if (milestone?.quest_id) {
-            const { data: quest } = await supabase
-              .from('quests')
-              .select('id, title')
-              .eq('id', milestone.quest_id)
-              .single();
-            quest_title = quest?.title || '';
-          }
-        } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title, status, milestone_id')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          status = task?.status || 'TODO';
-          
-          if (task?.milestone_id) {
+          if (task.milestone_id) {
             const { data: milestone } = await supabase
               .from('milestones')
               .select('id, title, quest_id')
@@ -93,7 +73,7 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
 
         return {
           id: item.item_id,
-          type: item.item_type,
+          type: task_type,
           title,
           status,
           quest_title,

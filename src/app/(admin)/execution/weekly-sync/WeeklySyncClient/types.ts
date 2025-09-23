@@ -7,7 +7,7 @@ import type { Rule } from '../ToDontList/types';
 export interface GoalItem {
   id: string;
   item_id: string;
-  item_type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  // item_type removed since we deleted that column from weekly_goal_items
   title: string;
   status: string;
   display_order?: number;
@@ -38,7 +38,7 @@ export interface HierarchicalItem {
 // Used in: WeeklySyncClient, MainContent component, useWeeklySync hook
 export interface SelectedItem {
   id: string;
-  type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK';
+  type: 'QUEST' | 'MILESTONE' | 'MAIN_QUEST';
 }
 
 // Used in: WeeklySyncClient, WeekSelector component, useWeeklySync hook

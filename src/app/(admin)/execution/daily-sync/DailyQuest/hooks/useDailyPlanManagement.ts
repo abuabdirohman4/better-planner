@@ -33,31 +33,7 @@ async function getDailyPlan(selectedDate: string) {
         let title = '';
         let quest_title = '';
 
-        if (item.item_type === 'QUEST') {
-          const { data: quest } = await supabase
-            .from('quests')
-            .select('id, title')
-            .eq('id', item.item_id)
-            .single();
-          title = quest?.title || '';
-          quest_title = title;
-        } else if (item.item_type === 'MILESTONE') {
-          const { data: milestone } = await supabase
-            .from('milestones')
-            .select('id, title, quest_id')
-            .eq('id', item.item_id)
-            .single();
-          title = milestone?.title || '';
-          
-          if (milestone?.quest_id) {
-            const { data: quest } = await supabase
-              .from('quests')
-              .select('id, title')
-              .eq('id', milestone.quest_id)
-              .single();
-            quest_title = quest?.title || '';
-          }
-        } else if (item.item_type === 'TASK' || item.item_type === 'SUBTASK') {
+        if (item.item_type === 'MAIN_QUEST') {
           const { data: task } = await supabase
             .from('tasks')
             .select('id, title, milestone_id')
@@ -193,7 +169,7 @@ export function useDailyPlanManagement(
         const task = weeklyTasks.find((t: any) => t.id === taskId);
         return {
           item_id: taskId,
-          item_type: task?.type === 'MAIN_QUEST' ? 'TASK' : task?.type || 'TASK'
+          item_type: task?.type === 'MAIN_QUEST' ? 'MAIN_QUEST' : task?.type || 'MAIN_QUEST'
         };
       });
     if (selectedItems.length === 0) return;

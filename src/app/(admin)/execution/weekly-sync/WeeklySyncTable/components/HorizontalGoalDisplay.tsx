@@ -19,12 +19,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: Ho
     
     // First pass: collect all items and identify quest and task items
     items.forEach(item => {
-      if (item.item_type === 'QUEST') {
-        questItems[item.item_id] = item;
-      }
-      if (item.item_type === 'TASK') {
-        taskItems[item.item_id] = item;
-      }
+      // Since we removed item_type, all items in weekly_goal_items are MAIN_QUEST
+      taskItems[item.item_id] = item;
       const questId = item.parent_quest_id || item.item_id;
       if (!groups[questId]) {
         groups[questId] = [];
@@ -56,10 +52,11 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: Ho
         const processedItems: GoalItem[] = [];
         
         groupItems.forEach(item => {
-          if (item.item_type === 'TASK') {
+          // Since we removed item_type, all items are MAIN_QUEST
+          if (!item.parent_task_id) {
             // Check if this task has subtasks
             const subtasks = groupItems.filter(subtask => 
-              subtask.item_type === 'SUBTASK' && subtask.parent_task_id === item.item_id
+              subtask.parent_task_id === item.item_id
             );
             
             if (subtasks.length > 0) {
@@ -77,8 +74,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: Ho
               // Task has no subtasks, add normally
               processedItems.push(item);
             }
-          } else if (item.item_type !== 'SUBTASK') {
-            // Add non-subtask items (quests, milestones)
+          } else {
+            // Add subtask items
             processedItems.push(item);
           }
         });
@@ -118,7 +115,7 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: Ho
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
-                    {['Q1','Q2','Q3'][slotNumber-1] || item.item_type}
+                    {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
                   </span>
                   <span className="text-gray-900 dark:text-white font-medium">
                     {item.title}

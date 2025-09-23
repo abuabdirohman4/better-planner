@@ -13,17 +13,8 @@ export function useWeeklyGoalsProgress(goals: WeeklyGoal[]): WeeklyGoalsProgress
       const total = goal.items.length;
       
       const completed = goal.items.filter(item => {
-        switch (item.item_type) {
-          case 'QUEST':
-            return item.status === 'Completed';
-          case 'MILESTONE':
-            return true; // Milestones selalu dianggap completed
-          case 'TASK':
-          case 'SUBTASK':
-            return item.status === 'DONE';
-          default:
-            return false;
-        }
+        // Since we removed item_type, all items are MAIN_QUEST (tasks)
+        return item.status === 'DONE';
       }).length;
       
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;

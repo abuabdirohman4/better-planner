@@ -112,7 +112,7 @@ export default function WeeklySyncTable({
           initialSelectedItems={
             (goals.find(goal => goal.goal_slot === selectedSlot)?.items || []).map(item => ({ 
               id: item.item_id, 
-              type: item.item_type 
+              type: 'MAIN_QUEST' // Since we removed item_type, all items are MAIN_QUEST
             }))
           }
           existingSelectedIds={getExistingSelectedIds(selectedSlot)}

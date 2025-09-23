@@ -62,12 +62,11 @@ export async function setWeeklyGoalItems(data: {
 
     if (deleteError) throw deleteError;
 
-    // Third, insert new goal items
     if (data.items.length > 0) {
       const goalItemsData = data.items.map(item => ({
         weekly_goal_id: weeklyGoal.id,
-        item_id: item.id,
-        item_type: item.type
+        item_id: item.id
+        // item_type removed since we deleted that column
       }));
 
       const { error: insertError } = await supabase

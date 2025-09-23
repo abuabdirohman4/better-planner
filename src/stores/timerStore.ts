@@ -189,7 +189,7 @@ export const useTimerStore = create<TimerStoreState>()(
         activeTask: {
           id: sessionData.taskId,
           title: sessionData.taskTitle,
-          item_type: 'TASK'
+          item_type: 'MAIN_QUEST'
         },
         timerState: sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING',
         secondsElapsed: sessionData.currentDuration,
