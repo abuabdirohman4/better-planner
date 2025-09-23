@@ -1,9 +1,34 @@
 import { useState, useTransition } from 'react';
 import { toast } from 'sonner';
-import { useDailySyncUltraFast, useTasksForWeek } from './useDailySync';
+import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus } from '../actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
+import useSWR from 'swr';
+import { dailySyncKeys } from '@/lib/swr';
+import { createClient } from '@/lib/supabase/client';
+
+// Helper function to get daily plan
+async function getDailyPlan(selectedDate: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  try {
+    const { data: plan, error } = await supabase
+      .from('daily_plans')
+      .select('*, daily_plan_items(*)')
+      .eq('plan_date', selectedDate)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return plan;
+  } catch (error) {
+    console.error('Error fetching daily plan:', error);
+    return null;
+  }
+}
 
 export function useDailyPlanManagement(
   year: number,
@@ -11,21 +36,40 @@ export function useDailyPlanManagement(
   selectedDate: string
 ) {
   // Data fetching
-  const {
-    dailyPlan: optimizedDailyPlan,
-    weeklyTasks: optimizedWeeklyTasks,
-    completedSessions,
-    isLoading: ultraFastLoading,
-    mutate
-  } = useDailySyncUltraFast(year, weekNumber, selectedDate);
+  const { 
+    data: dailyPlan, 
+    error: dailyPlanError, 
+    isLoading: dailyPlanLoading,
+    mutate: mutateDailyPlan 
+  } = useSWR(
+    selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
+    () => getDailyPlan(selectedDate),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2 * 60 * 1000,
+      errorRetryCount: 1,
+    }
+  );
 
-  // Fallback: Use individual hook if optimized data is empty
-  const { tasks: fallbackWeeklyTasks } = useTasksForWeek(year, weekNumber);
+  const { 
+    tasks: weeklyTasks, 
+    error: tasksError, 
+    isLoading: tasksLoading,
+    mutate: mutateTasks 
+  } = useTasksForWeek(year, weekNumber);
 
-  // Use optimized data if available, fallback to individual hooks
-  const dailyPlan = optimizedDailyPlan;
-  const weeklyTasks = (optimizedWeeklyTasks && optimizedWeeklyTasks.length > 0) ? optimizedWeeklyTasks : fallbackWeeklyTasks;
-  const loading = ultraFastLoading;
+  // Combine loading states
+  const loading = dailyPlanLoading || tasksLoading;
+  const error = dailyPlanError || tasksError;
+  
+  // Simple mutate function that refreshes both
+  const mutate = async () => {
+    await Promise.all([mutateDailyPlan(), mutateTasks()]);
+  };
+
+  // For now, we'll use empty completed sessions
+  const completedSessions: Record<string, number> = {};
+
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);

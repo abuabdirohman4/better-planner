@@ -52,51 +52,67 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
           </h4>
         </div>
         <div className="flex items-center space-x-2">
-          {/* Dropdown untuk durasi fokus */}
-          <select
-            value={item.focus_duration || 25}
-            disabled={isUpdatingFocus}
-            onChange={async (e) => {
-              setIsUpdatingFocus(true);
-              try {
-                await onFocusDurationChange(item.id, parseInt(e.target.value));
-              } finally {
-                setIsUpdatingFocus(false);
-              }
-            }}
-            className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value={25}>25m</option>
-            <option value={60}>60m</option>
-            <option value={90}>90m</option>
-          </select>
+          {/* Dropdown untuk durasi fokus dengan loading indicator */}
+          <div className="relative">
+            <select
+              value={item.focus_duration || 25}
+              disabled={isUpdatingFocus}
+              onChange={async (e) => {
+                setIsUpdatingFocus(true);
+                try {
+                  await onFocusDurationChange(item.id, parseInt(e.target.value));
+                } finally {
+                  setIsUpdatingFocus(false);
+                }
+              }}
+              className="w-16 h-8 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-brand-500 focus:border-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value={25}>25m</option>
+              <option value={60}>60m</option>
+              <option value={90}>90m</option>
+            </select>
+            {/* Loading spinner overlay */}
+            {isUpdatingFocus && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
           
-          {/* Checkbox untuk status */}
-          <input
-            type="checkbox"
-            checked={(optimisticStatus || item.status) === 'DONE'}
-            disabled={isUpdatingStatus}
-            onChange={(e) => {
-              const newStatus = e.target.checked ? 'DONE' : 'TODO';
-              
-              // Optimistic update - update UI immediately
-              setOptimisticStatus(newStatus);
-              setIsUpdatingStatus(true);
-              
-              try {
-                onStatusChange(item.id, newStatus);
-                // Clear optimistic status after successful update
-                setOptimisticStatus(null);
-              } catch (error) {
-                // Revert optimistic update on error
-                setOptimisticStatus(null);
-                console.error('Error updating status:', error);
-              } finally {
-                setIsUpdatingStatus(false);
-              }
-            }}
-            className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          />
+          {/* Checkbox untuk status dengan loading indicator */}
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={(optimisticStatus || item.status) === 'DONE'}
+              disabled={isUpdatingStatus}
+              onChange={async (e) => {
+                const newStatus = e.target.checked ? 'DONE' : 'TODO';
+                
+                // Optimistic update - update UI immediately
+                setOptimisticStatus(newStatus);
+                setIsUpdatingStatus(true);
+                
+                try {
+                  await onStatusChange(item.id, newStatus);
+                  // Clear optimistic status after successful update
+                  setOptimisticStatus(null);
+                } catch (error) {
+                  // Revert optimistic update on error
+                  setOptimisticStatus(null);
+                  console.error('Error updating status:', error);
+                } finally {
+                  setIsUpdatingStatus(false);
+                }
+              }}
+              className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {/* Loading spinner overlay */}
+            {isUpdatingStatus && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex items-center justify-between">
