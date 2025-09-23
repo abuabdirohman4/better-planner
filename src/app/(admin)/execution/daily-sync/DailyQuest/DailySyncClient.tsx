@@ -58,7 +58,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   return (
     <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 main-quest-card">
           <MainQuestListSection
             title="Main Quest"
             items={groupedItems['MAIN_QUEST']}
@@ -74,7 +74,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             showAddQuestButton={true}
           />
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 side-quest-card">
           <SideQuestListSection
             title="Side Quest"
             items={groupedItems['SIDE_QUEST']}

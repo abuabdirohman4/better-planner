@@ -107,8 +107,42 @@ const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dynamicHeight, setDynamicHeight] = useState('400px');
 
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
+  
+  // Calculate dynamic height based on Main Quest + Side Quest + Pomodoro Timer heights
+  useEffect(() => {
+    const calculateHeight = () => {
+      try {
+        // Get Main Quest + Side Quest + Pomodoro Timer
+        const mainQuestCard = document.querySelector('.main-quest-card');
+        const sideQuestCard = document.querySelector('.side-quest-card');
+        const pomodoroTimer = document.querySelector('.pomodoro-timer');
+        
+        // Get viewport height
+        const mainQuestHeight = mainQuestCard ? mainQuestCard.getBoundingClientRect().height : 0;
+        const sideQuestHeight = sideQuestCard ? sideQuestCard.getBoundingClientRect().height : 0;
+        const pomodoroHeight = pomodoroTimer ? pomodoroTimer.getBoundingClientRect().height : 0;
+        
+        // Calculate heights
+        const finalHeight = (mainQuestHeight + sideQuestHeight) - pomodoroHeight - 100;
+
+        // Set dynamic height based on available space
+        setDynamicHeight(`${finalHeight}px`);
+        
+      } catch (error) {
+        console.warn('Error calculating dynamic height:', error);
+      }
+    };
+    
+    // Calculate height on mount and window resize
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, [date]); // Recalculate when date changes
+  
   useEffect(() => {
     setLoading(true);
     getTodayActivityLogs(date)
@@ -144,7 +178,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 max-h-[420px] flex flex-col">
+    <div className="bg-white dark:bg-gray-800 flex flex-col" style={{ height: dynamicHeight }}>
       <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">Memuat aktivitas...</div>
