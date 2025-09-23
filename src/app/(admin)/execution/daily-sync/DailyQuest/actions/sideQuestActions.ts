@@ -24,7 +24,8 @@ export async function addSideQuest(formData: FormData) {
         user_id: user.id,
         title,
         type: 'SIDE_QUEST',
-        status: 'TODO'
+        status: 'TODO',
+        milestone_id: null // Side quest tidak perlu milestone_id
       })
       .select()
       .single();

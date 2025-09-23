@@ -94,7 +94,7 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
   
   if (parent_task_id) {
     insertData.parent_task_id = parent_task_id;
-    insertData.type = 'SUBTASK';
+    insertData.type = 'MAIN_QUEST'; // Subtask juga MAIN_QUEST
     if (display_order !== undefined && display_order !== null) {
       insertData.display_order = Number(display_order);
     }

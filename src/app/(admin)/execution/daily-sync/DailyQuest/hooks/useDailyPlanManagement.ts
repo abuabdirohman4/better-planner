@@ -193,7 +193,7 @@ export function useDailyPlanManagement(
         const task = weeklyTasks.find((t: any) => t.id === taskId);
         return {
           item_id: taskId,
-          item_type: task?.type || 'TASK'
+          item_type: task?.type === 'MAIN_QUEST' ? 'TASK' : task?.type || 'TASK'
         };
       });
     if (selectedItems.length === 0) return;
