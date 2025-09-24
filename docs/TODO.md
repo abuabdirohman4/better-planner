@@ -10,7 +10,7 @@
     - [x] ✅ Weekly Sync
     - [x] ✅ Daily Sync
     - [x] ✅ Dashboad
-- [ ] Increase Performance Loading each page & app
+- [x] ✅ Increase Performance Loading each page & app
 
 ## BUG/ISSUE
 - [ ] Function logout in dropdown profile
@@ -24,6 +24,8 @@
 ## LIST IDEA
 - [ ] Add visible password in sign in
 - [ ] Change Loading page with Skeleton
+- [ ] Add brain dump
+- [ ] Add target & sesi per hari
 
 ## PAGES
 ### VISION
