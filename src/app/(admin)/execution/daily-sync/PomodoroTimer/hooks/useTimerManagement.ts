@@ -2,6 +2,37 @@ import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useTimer } from '@/stores/timerStore';
 import { useActivityStore } from '@/stores/activityStore';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
+import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
+
+// Helper function to get client-side device ID
+function getClientDeviceId(): string {
+  if (typeof window === 'undefined') return 'server-unknown';
+  
+  let deviceId = localStorage.getItem('device-id');
+  if (!deviceId) {
+    // Create more meaningful device ID
+    const userAgent = navigator.userAgent;
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const browser = getBrowserName(userAgent);
+    const deviceType = isMobile ? 'mobile' : 'desktop';
+    
+    // Generate UUID but prefix with device info
+    const uuid = crypto.randomUUID();
+    deviceId = `${deviceType}-${browser}-${uuid.substring(0, 8)}`;
+    localStorage.setItem('device-id', deviceId);
+  }
+  return deviceId;
+}
+
+// Helper function to detect browser
+function getBrowserName(userAgent: string): string {
+  if (userAgent.includes('Chrome')) return 'chrome';
+  if (userAgent.includes('Firefox')) return 'firefox';
+  if (userAgent.includes('Safari')) return 'safari';
+  if (userAgent.includes('Edge')) return 'edge';
+  if (userAgent.includes('Arc')) return 'arc';
+  return 'unknown';
+}
 
 export function useTimerManagement(selectedDateStr: string, openJournalModal: (data: {
   activityId?: string;
@@ -46,14 +77,54 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
           console.error('Missing required fields', sessionData);
           return;
         }
-        const formData = new FormData();
-        formData.append('taskId', sessionData.taskId);
-        formData.append('taskTitle', sessionData.taskTitle);
-        formData.append('sessionType', sessionData.type);
-        formData.append('date', selectedDateStr);
-        formData.append('startTime', sessionData.startTime);
-        formData.append('endTime', sessionData.endTime);
-        await logActivity(formData);
+
+        // ✅ FIX: Use completeTimerSession for FOCUS sessions
+        if (sessionData.type === 'FOCUS') {
+          try {
+            // Get active timer session
+            const activeSession = await getActiveTimerSession();
+            if (activeSession) {
+              // Get client device ID
+              const deviceId = getClientDeviceId();
+              // Complete the timer session (this will create activity log and mark session as completed)
+              await completeTimerSession(activeSession.id, deviceId);
+              console.log('✅ Timer session completed successfully');
+            } else {
+              // Fallback to old method if no active session found
+              console.log('⚠️ No active session found, using fallback method');
+              const formData = new FormData();
+              formData.append('taskId', sessionData.taskId);
+              formData.append('taskTitle', sessionData.taskTitle);
+              formData.append('sessionType', sessionData.type);
+              formData.append('date', selectedDateStr);
+              formData.append('startTime', sessionData.startTime);
+              formData.append('endTime', sessionData.endTime);
+              await logActivity(formData);
+            }
+          } catch (error) {
+            console.error('Error completing timer session:', error);
+            // Fallback to old method
+            const formData = new FormData();
+            formData.append('taskId', sessionData.taskId);
+            formData.append('taskTitle', sessionData.taskTitle);
+            formData.append('sessionType', sessionData.type);
+            formData.append('date', selectedDateStr);
+            formData.append('startTime', sessionData.startTime);
+            formData.append('endTime', sessionData.endTime);
+            await logActivity(formData);
+          }
+        } else {
+          // For break sessions, use old method
+          const formData = new FormData();
+          formData.append('taskId', sessionData.taskId);
+          formData.append('taskTitle', sessionData.taskTitle);
+          formData.append('sessionType', sessionData.type);
+          formData.append('date', selectedDateStr);
+          formData.append('startTime', sessionData.startTime);
+          formData.append('endTime', sessionData.endTime);
+          await logActivity(formData);
+        }
+
         setActivityLogRefreshKey((k) => k + 1);
         useActivityStore.getState().triggerRefresh();
         

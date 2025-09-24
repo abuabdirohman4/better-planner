@@ -152,6 +152,10 @@ export const useTimerStore = create<TimerStoreState>()(
               ).catch(console.error);
             }
             
+            // ✅ FIX: Complete timer session in database
+            // This will be handled by useTimerManagement hook
+            // We just need to trigger the completion
+            
             return {
               lastSessionComplete: {
                 taskId: state.activeTask.id,

@@ -10,6 +10,36 @@ import {
   resumeTimerSession
 } from '../actions/timerSessionActions';
 
+// Helper function to get client-side device ID
+function getClientDeviceId(): string {
+  if (typeof window === 'undefined') return 'server-unknown';
+  
+  let deviceId = localStorage.getItem('device-id');
+  if (!deviceId) {
+    // Create more meaningful device ID
+    const userAgent = navigator.userAgent;
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const browser = getBrowserName(userAgent);
+    const deviceType = isMobile ? 'mobile' : 'desktop';
+    
+    // Generate UUID but prefix with device info
+    const uuid = crypto.randomUUID();
+    deviceId = `${deviceType}-${browser}-${uuid.substring(0, 8)}`;
+    localStorage.setItem('device-id', deviceId);
+  }
+  return deviceId;
+}
+
+// Helper function to detect browser
+function getBrowserName(userAgent: string): string {
+  if (userAgent.includes('Chrome')) return 'chrome';
+  if (userAgent.includes('Firefox')) return 'firefox';
+  if (userAgent.includes('Safari')) return 'safari';
+  if (userAgent.includes('Edge')) return 'edge';
+  if (userAgent.includes('Arc')) return 'arc';
+  return 'unknown';
+}
+
 // Global state to prevent multiple instances (Strict Mode safe)
 let globalRecoveryInProgress = false;
 let globalLastSaveTime = 0;
@@ -57,6 +87,8 @@ export function useTimerPersistence() {
     try {
       // ✅ FIX: Validasi session sebelum save
       const existingSession = await getActiveTimerSession();
+      const deviceId = getClientDeviceId(); // ✅ Get client-side device ID
+      
       if (existingSession && existingSession.task_id === activeTask.id) {
         // Session sudah ada, update saja
         await saveTimerSession({
@@ -66,7 +98,8 @@ export function useTimerPersistence() {
           startTime: startTime,
           targetDuration: (activeTask.focus_duration || 25) * 60,
           currentDuration: secondsElapsed,
-          status: timerState
+          status: timerState,
+          deviceId: deviceId // ✅ Send device ID
         });
       } else {
         // Session belum ada, buat baru
@@ -77,7 +110,8 @@ export function useTimerPersistence() {
           startTime: startTime,
           targetDuration: (activeTask.focus_duration || 25) * 60,
           currentDuration: secondsElapsed,
-          status: timerState
+          status: timerState,
+          deviceId: deviceId // ✅ Send device ID
         });
       }
     } catch (error) {
@@ -148,23 +182,30 @@ export function useTimerPersistence() {
         const activeSession = await getActiveTimerSession();
         
         if (activeSession) {
-          // Calculate actual elapsed time based on start_time
-          const now = new Date();
-          const startTime = new Date(activeSession.start_time);
-          const actualElapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+          // ✅ FIX: Gunakan current_duration_seconds dari database, bukan hitung ulang
+          const currentDuration = activeSession.current_duration_seconds;
+          const targetDuration = activeSession.target_duration_seconds;
+          
+          console.log('🔄 Recovery session:', {
+            sessionId: activeSession.id,
+            currentDuration,
+            targetDuration,
+            status: activeSession.status
+          });
           
           // Check if timer should be completed
-          const targetDuration = activeSession.target_duration_seconds;
-          if (actualElapsed >= targetDuration) {
+          if (currentDuration >= targetDuration) {
             // Timer should be completed, mark as completed
+            console.log('⏰ Timer should be completed, marking as completed');
             await completeTimerSession(activeSession.id);
           } else {
-            // Resume with actual elapsed time
+            // Resume with database duration (not calculated)
+            console.log('▶️ Resuming timer with database duration:', currentDuration);
             useTimerStore.getState().resumeFromDatabase({
               taskId: activeSession.task_id,
               taskTitle: activeSession.task_title,
               startTime: activeSession.start_time,
-              currentDuration: actualElapsed,
+              currentDuration: currentDuration, // ✅ Use database value
               status: activeSession.status
             });
           }

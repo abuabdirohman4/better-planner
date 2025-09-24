@@ -22,8 +22,11 @@ function getDeviceId(): string {
     }
     return deviceId;
   }
-  // SERVER-SIDE: Use user-specific device ID
-  return 'server-user-device';
+  // SERVER-SIDE: Generate meaningful device ID based on request context
+  // This will be called from server actions, so we need to generate a unique ID
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `server-${timestamp}-${random}`;
 }
 
 // Helper function to detect browser
@@ -44,6 +47,7 @@ export async function saveTimerSession(sessionData: {
   targetDuration: number;
   currentDuration: number;
   status: string;
+  deviceId?: string; // ✅ Add deviceId parameter
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +81,9 @@ export async function saveTimerSession(sessionData: {
     }
 
     if (existingSession) {
+      // ✅ FIX: Validasi currentDuration tidak boleh lebih besar dari targetDuration
+      const validCurrentDuration = Math.min(sessionData.currentDuration, sessionData.targetDuration);
+      
       // Update existing session
       const result = await supabase
         .from('timer_sessions')
@@ -85,9 +92,9 @@ export async function saveTimerSession(sessionData: {
           session_type: sessionData.sessionType,
           start_time: sessionData.startTime,
           target_duration_seconds: sessionData.targetDuration,
-          current_duration_seconds: sessionData.currentDuration,
+          current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
           status: sessionData.status,
-          device_id: getDeviceId(),
+          device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSession.id)
@@ -97,6 +104,9 @@ export async function saveTimerSession(sessionData: {
       data = result.data;
       error = result.error;
     } else {
+      // ✅ FIX: Validasi currentDuration tidak boleh lebih besar dari targetDuration
+      const validCurrentDuration = Math.min(sessionData.currentDuration, sessionData.targetDuration);
+      
       // Create new session
       const result = await supabase
         .from('timer_sessions')
@@ -107,9 +117,9 @@ export async function saveTimerSession(sessionData: {
           session_type: sessionData.sessionType,
           start_time: sessionData.startTime,
           target_duration_seconds: sessionData.targetDuration,
-          current_duration_seconds: sessionData.currentDuration,
+          current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
           status: sessionData.status,
-          device_id: getDeviceId(),
+          device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
           updated_at: new Date().toISOString()
         })
         .select()
@@ -127,7 +137,7 @@ export async function saveTimerSession(sessionData: {
     await logTimerEvent(data.id, 'sync', {
       currentDuration: sessionData.currentDuration,
       status: sessionData.status
-    });
+    }, sessionData.deviceId);
 
     revalidatePath('/execution/daily-sync');
     return data;
@@ -162,7 +172,7 @@ export async function getActiveTimerSession() {
   }
 }
 
-export async function completeTimerSession(sessionId: string) {
+export async function completeTimerSession(sessionId: string, deviceId?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -238,7 +248,7 @@ export async function completeTimerSession(sessionId: string) {
       await logTimerEvent(sessionId, 'stop', {
         finalDuration: session.current_duration_seconds,
         completed: true
-      });
+      }, deviceId);
     } else {
       console.log('[completeTimerSession] Stop event already exists, skipping creation');
     }
@@ -392,7 +402,7 @@ export async function resumeTimerSession(sessionId: string) {
 }
 
 // Helper function to log timer events
-async function logTimerEvent(sessionId: string, eventType: string, eventData: any) {
+async function logTimerEvent(sessionId: string, eventType: string, eventData: any, deviceId?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -404,7 +414,7 @@ async function logTimerEvent(sessionId: string, eventType: string, eventData: an
         session_id: sessionId,
         event_type: eventType,
         event_data: eventData,
-        device_id: getDeviceId()
+        device_id: deviceId || getDeviceId() // ✅ Use provided deviceId or generate new one
       });
   } catch (error) {
     console.error('[logTimerEvent] Error:', error);
