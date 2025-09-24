@@ -5,9 +5,9 @@ import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
 
 const questColors = [
-  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
+  'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-700',
+  'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 border border-orange-200 dark:border-orange-700',
 ];
 
 export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: HorizontalGoalDisplayProps) {
@@ -95,42 +95,64 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber }: Ho
   });
 
   return (
-    <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-3 rounded transition-colors" onClick={onClick}>
-      <div className="flex flex-wrap gap-3">
+    <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 md:p-4 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700" onClick={onClick}>
+      <div className="space-y-3 space-x-3">
         {sortedQuestIds.map((questId, questIndex) => {
           const questItems = groupedItems[questId];
           const colorClass = questColors[(slotNumber-1)%questColors.length];
           
           return (
-            <React.Fragment key={questId}>
-              {questItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="inline-flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <input
-                    type="checkbox"
-                    checked={item.status === 'DONE'}
-                    readOnly
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>
-                    {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
-                  </span>
-                  <span className="text-gray-900 dark:text-white font-medium">
-                    {item.title}
-                  </span>
+            questItems.map((item) => (
+              <div
+                key={item.id}
+                className={`inline-flex items-center space-x-2 rounded-lg px-3 py-2 text-sm transition-all duration-300 transform hover:scale-105 ${
+                  item.status === 'DONE' 
+                    ? 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 opacity-75' 
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-lg'
+                }`}
+              >
+                {/* Custom Checkbox dengan animation */}
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                  item.status === 'DONE' 
+                    ? 'bg-blue-600 border-blue-600 scale-110' 
+                    : 'border-gray-300 dark:border-gray-500 hover:border-blue-400'
+                }`}>
+                  {item.status === 'DONE' && (
+                    <svg 
+                      className="w-2.5 h-2.5 text-white animate-pulse" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20"
+                    >
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </div>
-              ))}
-              {/* Add visual separator between quest groups if there are multiple quests */}
-              {questIndex < sortedQuestIds.length - 1 && sortedQuestIds.length > 1 && (
-                <div className="w-full h-px bg-gray-200 dark:bg-gray-600 my-3" />
-              )}
-            </React.Fragment>
+                
+                {/* Label dengan hover effect */}
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors duration-200 ${colorClass}`}>
+                  {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
+                </span>
+                
+                {/* Text dengan better typography */}
+                <span className={`text-sm font-medium leading-relaxed transition-colors duration-200 ${
+                  item.status === 'DONE' 
+                    ? 'text-gray-500 dark:text-gray-400 line-through' 
+                    : 'text-gray-900 dark:text-white'
+                }`}>
+                  {item.title}
+                </span>
+              </div>
+            ))
           );
         })}
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">Klik untuk mengedit</p>
+      
+      {/* Edit hint dengan styling yang lebih subtle */}
+      <div className="my-3 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+          Klik untuk mengedit
+        </p>
+      </div>
     </div>
   );
 }

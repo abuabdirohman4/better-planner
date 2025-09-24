@@ -19,16 +19,16 @@ export function WeekSelector({
       <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
         &lt;
       </Button>
-      <div className="relative">
+      <div className="w-full md:relative">
         <button
-          className="flex items-center justify-center gap-1 px-8 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="lex items-center justify-center gap-1 px-4 py-2 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer w-full md:min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
           aria-haspopup="listbox"
           aria-expanded={isWeekDropdownOpen}
         >
           <span>Week {displayWeek}</span>
         </button>
-        <Dropdown className="w-28 !right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
+        <Dropdown className="w-10/12 left-0 mx-auto md:w-28 md:!right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
           <div className="max-h-64 overflow-y-auto">
             {Array.from({ length: totalWeeks }, (_, i) => (
               <DropdownItem

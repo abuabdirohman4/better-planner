@@ -32,9 +32,9 @@ export function MainContent({
   return (
     <div className="container mx-auto py-8 pt-0">
       {/* Header: Judul halaman kiri, navigasi minggu kanan */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          {/* <h2 className="text-xl font-bold">
+      <div className="md:flex justify-end mb-6">
+        {/* <div>
+           <h2 className="text-xl font-bold">
             Weekly Sync
             Weekly Sync Update 1.0 {loadingTime !== null ? ` (${loadingTime}s)` : ''}
           </h2> */}
@@ -54,8 +54,8 @@ export function MainContent({
                 🔄 Force Refresh
               </button>
             </div>
-          )} */}
-        </div>
+          )} 
+        </div> */}
         <MemoizedWeekSelector
           displayWeek={displayWeek}
           totalWeeks={totalWeeks}
@@ -78,14 +78,14 @@ export function MainContent({
       />
       
       {/* === To Don't List Card === */}
-      <MemoizedToDontListCard
+      {/* <MemoizedToDontListCard
         year={year}
         quarter={quarter}
         weekNumber={displayWeek}
         rules={processedRules}
         loading={toDontListLoading}
         onRefresh={handleRefreshToDontList}
-      />
+      /> */}
     </div>
   );
 }

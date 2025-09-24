@@ -4,11 +4,11 @@ import React from 'react';
 
 import type { ProgressIndicatorProps } from '../types';
 
-export default function ProgressIndicator({ progress }: ProgressIndicatorProps) {
+export default function ProgressIndicator({ progress, slotNumber }: ProgressIndicatorProps) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600 dark:text-gray-400">Progress</span>
+        <span className="text-gray-600 dark:text-gray-400">Progress Goal {slotNumber}</span>
         <span className="font-semibold">{progress.percentage}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">

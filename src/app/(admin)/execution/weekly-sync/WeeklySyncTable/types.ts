@@ -27,4 +27,5 @@ export interface HorizontalGoalDisplayProps {
 
 export interface ProgressIndicatorProps {
   progress: ProgressData;
+  slotNumber: number;
 }
