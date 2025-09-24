@@ -31,19 +31,31 @@ export async function saveTimerSession(sessionData: {
   if (!user) throw new Error('User not authenticated');
 
   try {
+    // Cleanup abandoned sessions first
+    await cleanupAbandonedSessions();
+    
     // First, try to find existing running session for this user and task
     const { data: existingSession, error: findError } = await supabase
       .from('timer_sessions')
       .select('id')
       .eq('user_id', user.id)
       .eq('task_id', sessionData.taskId)
-      .eq('status', 'RUNNING')
+      .eq('status', 'FOCUSING')
       .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     let data, error;
 
+    // Cleanup any abandoned sessions for this user and task before creating/updating
+    if (!existingSession) {
+      await supabase
+        .from('timer_sessions')
+        .update({ status: 'COMPLETED' })
+        .eq('user_id', user.id)
+        .eq('task_id', sessionData.taskId)
+        .eq('status', 'FOCUSING');
+    }
 
     if (existingSession) {
       // Update existing session
@@ -238,7 +250,7 @@ export async function resumeTimerSession(sessionId: string) {
     const { error } = await supabase
       .from('timer_sessions')
       .update({ 
-        status: 'RUNNING',
+        status: 'FOCUSING',
         updated_at: new Date().toISOString()
       })
       .eq('id', sessionId)
@@ -281,5 +293,29 @@ async function logTimerEvent(sessionId: string, eventType: string, eventData: an
   } catch (error) {
     console.error('[logTimerEvent] Error:', error);
     // Don't throw error for logging failures
+  }
+}
+
+// Cleanup abandoned sessions (sessions that haven't been updated for more than 1 hour)
+export async function cleanupAbandonedSessions() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  try {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    
+    const { error } = await supabase
+      .from('timer_sessions')
+      .update({ status: 'COMPLETED' })
+      .eq('user_id', user.id)
+      .eq('status', 'FOCUSING')
+      .lt('updated_at', oneHourAgo);
+
+    if (error) {
+      console.error('[cleanupAbandonedSessions] Error:', error);
+    }
+  } catch (error) {
+    console.error('[cleanupAbandonedSessions] Exception:', error);
   }
 }
