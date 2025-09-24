@@ -11,6 +11,10 @@ export type ErrorContext =
   | 'autentikasi'
   | 'validasi'
   | 'network'
+  | 'memuat profil user'
+  | 'menyimpan pengaturan suara'
+  | 'memuat pengaturan suara'
+  | 'mereset pengaturan suara'
   | 'unknown';
 
 export interface ErrorInfo {

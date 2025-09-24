@@ -9,9 +9,16 @@ interface SoundSelectorProps {
 }
 
 const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
-  const { settings, updateSettings } = useSoundStore();
+  const { settings, updateSettings, isLoading, loadSettings } = useSoundStore();
   const [isPlaying, setIsPlaying] = useState<string | null>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load settings from server when component mounts
+  useEffect(() => {
+    if (isOpen) {
+      loadSettings();
+    }
+  }, [isOpen, loadSettings]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -81,6 +88,16 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="mb-6 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500"></div>
+            <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+              Loading settings...
+            </span>
+          </div>
+        )}
+
         {/* Enable/Disable Toggle */}
         <div className="mb-6">
           <label className="flex items-center space-x-3">
@@ -88,7 +105,8 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
               type="checkbox"
               checked={settings.enabled}
               onChange={handleToggleEnabled}
-              className="w-5 h-5 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2"
+              disabled={isLoading}
+              className="w-5 h-5 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 disabled:opacity-50"
             />
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Enable timer sounds
