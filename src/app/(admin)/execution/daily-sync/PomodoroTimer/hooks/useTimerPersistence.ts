@@ -55,15 +55,31 @@ export function useTimerPersistence() {
     globalLastSaveTime = now;
     
     try {
-      await saveTimerSession({
-        taskId: activeTask.id,
-        taskTitle: activeTask.title,
-        sessionType: 'FOCUS',
-        startTime: startTime,
-        targetDuration: (activeTask.focus_duration || 25) * 60, // 25 minutes default
-        currentDuration: secondsElapsed,
-        status: timerState
-      });
+      // ✅ FIX: Validasi session sebelum save
+      const existingSession = await getActiveTimerSession();
+      if (existingSession && existingSession.task_id === activeTask.id) {
+        // Session sudah ada, update saja
+        await saveTimerSession({
+          taskId: activeTask.id,
+          taskTitle: activeTask.title,
+          sessionType: 'FOCUS',
+          startTime: startTime,
+          targetDuration: (activeTask.focus_duration || 25) * 60,
+          currentDuration: secondsElapsed,
+          status: timerState
+        });
+      } else {
+        // Session belum ada, buat baru
+        await saveTimerSession({
+          taskId: activeTask.id,
+          taskTitle: activeTask.title,
+          sessionType: 'FOCUS',
+          startTime: startTime,
+          targetDuration: (activeTask.focus_duration || 25) * 60,
+          currentDuration: secondsElapsed,
+          status: timerState
+        });
+      }
     } catch (error) {
       console.error('❌ Failed to save timer session:', error);
     } finally {
@@ -119,16 +135,11 @@ export function useTimerPersistence() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [timerState, activeTask, startTime, isRecovering, debouncedSave]);
 
-  // Recovery on app load - OPTIMIZED
+  // Recovery on app load - FIXED
   useEffect(() => {
     const recoverSession = async () => {
-      // Reset global state untuk testing
-      if (globalRecoveryCompleted) {
-        globalRecoveryCompleted = false;
-        globalRecoveryInProgress = false;
-      }
-      
-      if (globalRecoveryInProgress) return;
+      // ✅ FIX: Hanya jalankan jika belum pernah recovery
+      if (globalRecoveryInProgress || globalRecoveryCompleted) return;
       
       globalRecoveryInProgress = true;
       setIsRecovering(true);
@@ -167,7 +178,10 @@ export function useTimerPersistence() {
       }
     };
 
-    recoverSession();
+    // ✅ FIX: Hanya jalankan recovery jika belum pernah dilakukan
+    if (!globalRecoveryCompleted) {
+      recoverSession();
+    }
   }, []);
 
   // Online/Offline status
@@ -183,6 +197,55 @@ export function useTimerPersistence() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // ✅ FIX: Browser tab detection untuk handle multi-browser access
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab tidak aktif - pause timer dan save state
+        if (timerState === 'FOCUSING' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
+          debouncedSave();
+        }
+      } else {
+        // Tab aktif kembali - resume timer jika perlu
+        if (timerState === 'PAUSED' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
+          // Resume timer dari database state
+          const resumeTimer = async () => {
+            try {
+              const activeSession = await getActiveTimerSession();
+              if (activeSession && activeSession.task_id === activeTask.id) {
+                useTimerStore.getState().resumeFromDatabase({
+                  taskId: activeSession.task_id,
+                  taskTitle: activeSession.task_title,
+                  startTime: activeSession.start_time,
+                  currentDuration: activeSession.current_duration_seconds,
+                  status: activeSession.status
+                });
+              }
+            } catch (error) {
+              console.error('❌ Failed to resume timer from database:', error);
+            }
+          };
+          resumeTimer();
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      // Tab ditutup - save state terakhir
+      if (timerState === 'FOCUSING' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
+        debouncedSave();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [timerState, activeTask, startTime, isRecovering, globalRecoveryCompleted, debouncedSave]);
 
   // Handle timer completion
   const handleTimerComplete = useCallback(async (sessionId: string) => {
