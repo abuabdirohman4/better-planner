@@ -83,7 +83,7 @@ export default function PomodoroTimer() {
   const [showSoundSelector, setShowSoundSelector] = useState(false);
 
   // Helper to get total seconds for progress
-  const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 10; // Default 10 seconds for testing
+  const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
   let totalSeconds = 0;
   if (timerState === 'FOCUSING') totalSeconds = focusDuration;
   else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;

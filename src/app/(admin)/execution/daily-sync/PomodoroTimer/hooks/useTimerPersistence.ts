@@ -60,7 +60,7 @@ export function useTimerPersistence() {
         taskTitle: activeTask.title,
         sessionType: 'FOCUS',
         startTime: startTime,
-        targetDuration: (activeTask.focus_duration || 10), // 10 seconds for testing
+        targetDuration: (activeTask.focus_duration || 25) * 60, // 25 minutes default
         currentDuration: secondsElapsed,
         status: timerState
       });

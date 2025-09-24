@@ -47,7 +47,7 @@ interface TimerStoreState {
 }
 
 // Durasi default (detik)
-const FOCUS_DURATION = 10; // 10 detik untuk testing
+const FOCUS_DURATION = 25 * 60; // 25 menit default
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
 
@@ -129,10 +129,9 @@ export const useTimerStore = create<TimerStoreState>()(
         const newSeconds = Math.round(state.secondsElapsed + 1);
         
         // Get focus duration from active task or use default
-        // For testing: if focus_duration is 10, use it directly (already in seconds)
-        // If focus_duration is 25, 60, 90, etc., convert to seconds
+        // focus_duration is stored in minutes, convert to seconds
         const focusDuration = state.activeTask?.focus_duration 
-          ? (state.activeTask.focus_duration <= 30 ? state.activeTask.focus_duration : state.activeTask.focus_duration * 60)
+          ? state.activeTask.focus_duration * 60
           : FOCUS_DURATION;
         
         // Auto-stop logic

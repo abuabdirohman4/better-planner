@@ -70,7 +70,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
               >
                 {/* Testing option - only show in development */}
                 {process.env.NODE_ENV === 'development' && (
-                  <option value={10} className="text-gray-700 dark:text-gray-200">10s</option>
+                  <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
                 )}
                 <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
                 <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>

@@ -259,6 +259,7 @@ export function useDailyPlanManagement(
 
 
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
+    console.log('🔍 DEBUG - Focus duration changed:', itemId, duration);
     startTransition(async () => {
       try {
         await updateDailyPlanItemFocusDuration(itemId, duration);
