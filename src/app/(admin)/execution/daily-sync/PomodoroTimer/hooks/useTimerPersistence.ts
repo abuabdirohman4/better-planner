@@ -7,7 +7,8 @@ import {
   getActiveTimerSession, 
   completeTimerSession,
   pauseTimerSession,
-  resumeTimerSession
+  resumeTimerSession,
+  updateSessionWithActualTime
 } from '../actions/timerSessionActions';
 
 // Helper function to get client-side device ID
@@ -189,30 +190,34 @@ export function useTimerPersistence() {
         const activeSession = await getActiveTimerSession();
         
         if (activeSession) {
-          // ✅ FIX: Gunakan current_duration_seconds dari database, bukan hitung ulang
-          const currentDuration = activeSession.current_duration_seconds;
-          const targetDuration = activeSession.target_duration_seconds;
-          
-          console.log('🔄 Recovery session:', {
-            sessionId: activeSession.id,
-            currentDuration,
-            targetDuration,
-            status: activeSession.status
-          });
-          
-          // Check if timer should be completed
-          if (currentDuration >= targetDuration) {
-            // Timer should be completed, mark as completed
-            console.log('⏰ Timer should be completed, marking as completed');
-            await completeTimerSession(activeSession.id);
-          } else {
-            // Resume with database duration (not calculated)
-            console.log('▶️ Resuming timer with database duration:', currentDuration);
+          // ✅ SERVER-SIDE TIMER: Update session with actual elapsed time
+          try {
+            const result = await updateSessionWithActualTime(activeSession.id);
+            
+            if (result.completed) {
+              // Timer completed while app was closed
+              console.log('⏰ Timer completed while app was closed');
+              // Timer will be marked as completed in database
+            } else {
+              // Resume with actual elapsed time from server
+              console.log('▶️ Resuming timer with server-calculated duration:', result.elapsedSeconds);
+              useTimerStore.getState().resumeFromDatabase({
+                taskId: activeSession.task_id,
+                taskTitle: activeSession.task_title,
+                startTime: activeSession.start_time,
+                currentDuration: result.elapsedSeconds, // ✅ Use server-calculated value
+                status: activeSession.status
+              });
+            }
+          } catch (error) {
+            console.error('❌ Failed to update session with actual time:', error);
+            // Fallback to database duration
+            const currentDuration = activeSession.current_duration_seconds;
             useTimerStore.getState().resumeFromDatabase({
               taskId: activeSession.task_id,
               taskTitle: activeSession.task_title,
               startTime: activeSession.start_time,
-              currentDuration: currentDuration, // ✅ Use database value
+              currentDuration: currentDuration,
               status: activeSession.status
             });
           }
