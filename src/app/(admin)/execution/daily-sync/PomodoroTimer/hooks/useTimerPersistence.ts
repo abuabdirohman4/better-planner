@@ -74,7 +74,9 @@ export function useTimerPersistence() {
 
   // Debounced save function with global state
   const debouncedSave = useCallback(async () => {
-    if (globalIsSaving || !activeTask || !startTime) return;
+    if (globalIsSaving || !activeTask || !startTime) {
+      return;
+    }
     
     const now = Date.now();
     if (now - globalLastSaveTime < 5000) { // Prevent saves within 5 seconds
@@ -128,8 +130,13 @@ export function useTimerPersistence() {
       const isDevelopment = process.env.NODE_ENV === 'development';
       const saveInterval = isDevelopment ? 5000 : 30000; // 5s dev, 30s prod
       
-      const interval = setInterval(debouncedSave, saveInterval);
-      return () => clearInterval(interval);
+      const interval = setInterval(() => {
+        debouncedSave();
+      }, saveInterval);
+      
+      return () => {
+        clearInterval(interval);
+      };
     }
   }, [timerState, activeTask, startTime, isRecovering, debouncedSave]);
 
@@ -279,12 +286,29 @@ export function useTimerPersistence() {
       }
     };
 
+    // ✅ MOBILE FIX: Handle mobile background/foreground transitions
+    const handleFocus = () => {
+      if (timerState === 'FOCUSING' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
+        debouncedSave();
+      }
+    };
+
+    const handleBlur = () => {
+      if (timerState === 'FOCUSING' && activeTask && startTime && !isRecovering && globalRecoveryCompleted) {
+        debouncedSave();
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
     };
   }, [timerState, activeTask, startTime, isRecovering, globalRecoveryCompleted, debouncedSave]);
 
