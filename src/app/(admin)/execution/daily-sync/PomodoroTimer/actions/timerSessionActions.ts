@@ -13,8 +13,10 @@ function getDeviceId(): string {
     }
     return deviceId;
   }
-  // For server-side, use a consistent device ID
-  return 'server-device';
+  // For server-side, generate a unique ID based on timestamp and random
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `server-${timestamp}-${random}`;
 }
 
 export async function saveTimerSession(sessionData: {
