@@ -26,6 +26,22 @@ const nextConfig: NextConfig = {
   
   // Powered by header
   poweredByHeader: false,
+  
+  // Konfigurasi untuk file audio
+  async headers() {
+    return [
+      {
+        // File audio di public/audio bisa diakses dengan cache yang panjang
+        source: '/audio/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 const pwaConfig = withPWA({

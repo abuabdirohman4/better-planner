@@ -9,6 +9,7 @@ export interface SoundOption {
   type: 'builtin' | 'custom' | 'tts';
   description: string;
   emoji: string;
+  filePath?: string; // Path untuk custom audio files
 }
 
 // Built-in sound options menggunakan Web Audio API
@@ -23,9 +24,10 @@ export const SOUND_OPTIONS: SoundOption[] = [
   {
     id: 'children',
     name: 'Children',
-    type: 'builtin',
+    type: 'custom',
     description: 'Playful children chime',
-    emoji: '👶'
+    emoji: '👶',
+    filePath: '/audio/children.WAV'
   },
   {
     id: 'cinematic',
@@ -247,6 +249,23 @@ export function generateBuiltInSound(soundId: string): Promise<AudioBuffer> {
   });
 }
 
+// Load custom audio file
+async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {
+  try {
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      throw new Error(`Failed to load audio file: ${response.statusText}`);
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    return await audioContext.decodeAudioData(arrayBuffer);
+  } catch (error) {
+    console.error('Error loading custom audio:', error);
+    throw error;
+  }
+}
+
 // Play sound function
 export async function playSound(soundId: string, volume: number = 0.5): Promise<void> {
   try {
@@ -258,7 +277,22 @@ export async function playSound(soundId: string, volume: number = 0.5): Promise<
       return;
     }
 
-    const buffer = await generateBuiltInSound(soundId);
+    // Find sound option
+    const soundOption = SOUND_OPTIONS.find(option => option.id === soundId);
+    if (!soundOption) {
+      throw new Error(`Sound option not found: ${soundId}`);
+    }
+
+    let buffer: AudioBuffer;
+
+    if (soundOption.type === 'custom' && soundOption.filePath) {
+      // Load custom audio file
+      buffer = await loadCustomAudio(soundOption.filePath);
+    } else {
+      // Generate built-in sound
+      buffer = await generateBuiltInSound(soundId);
+    }
+
     const source = audioContext.createBufferSource();
     const gainNode = audioContext.createGain();
     

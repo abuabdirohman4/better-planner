@@ -13,6 +13,15 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   const [isPlaying, setIsPlaying] = useState<string | null>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (!isOpen) return null;
 
   const handleSoundSelect = async (soundId: string) => {
@@ -37,15 +46,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   const handleToggleEnabled = () => {
     updateSettings({ enabled: !settings.enabled });
   };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (volumeTimeoutRef.current) {
-        clearTimeout(volumeTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const playPreview = async (soundId: string) => {
     if (isPlaying) return;
