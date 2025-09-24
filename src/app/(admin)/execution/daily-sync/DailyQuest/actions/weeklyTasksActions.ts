@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 
 // Get tasks available for selection from weekly goals for the current week
-export async function getTasksForWeek(year: number, weekNumber: number) {
+export async function getTasksForWeek(year: number, weekNumber: number, selectedDate?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -87,13 +87,76 @@ export async function getTasksForWeek(year: number, weekNumber: number) {
     );
 
     // Remove duplicates based on item_id and goal_slot combination
-    const uniqueItems = itemsWithDetails.reduce((acc, item) => {
+    let uniqueItems = itemsWithDetails.reduce((acc, item) => {
       const key = `${item.id}-${item.goal_slot}`;
       if (!acc.find(existing => `${existing.id}-${existing.goal_slot}` === key)) {
         acc.push(item);
       }
       return acc;
     }, [] as typeof itemsWithDetails);
+
+    // Filter out tasks that were completed in previous days within the current week
+    if (selectedDate) {
+      const selectedDateObj = new Date(selectedDate);
+      
+      // Calculate the start of the current week (Monday) - consistent with app logic
+      const startOfWeek = new Date(selectedDateObj);
+      const dayOfWeek = selectedDateObj.getDay();
+      const diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek); // Sunday = 0, so -6 days to Monday
+      startOfWeek.setDate(selectedDateObj.getDate() + diff);
+      startOfWeek.setHours(0, 0, 0, 0); // Reset time to start of day
+      
+      // Calculate all previous days within the current week (from Monday up to the day before selected date)
+      const previousDaysInWeek: string[] = [];
+      const currentDate = new Date(startOfWeek);
+      
+      while (currentDate < selectedDateObj) {
+        previousDaysInWeek.push(currentDate.toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Get tasks that were completed on any previous day within the current week
+      const { data: completedTasksPreviousDays, error: completedError } = await supabase
+        .from('daily_plan_items')
+        .select(`
+          item_id, 
+          status, 
+          updated_at,
+          daily_plans!inner(plan_date, user_id)
+        `)
+        .eq('daily_plans.user_id', user_id)
+        .in('daily_plans.plan_date', previousDaysInWeek)
+        .eq('status', 'DONE');
+
+      if (completedError) {
+        console.error('Error fetching completed tasks:', completedError);
+      }
+
+      // Get tasks that are already added to today's plan
+      const { data: todayTasks, error: todayError } = await supabase
+        .from('daily_plan_items')
+        .select(`
+          item_id, 
+          status,
+          daily_plans!inner(plan_date, user_id)
+        `)
+        .eq('daily_plans.user_id', user_id)
+        .eq('daily_plans.plan_date', selectedDate);
+
+      if (todayError) {
+        console.error('Error fetching today tasks:', todayError);
+      }
+
+      if (completedTasksPreviousDays?.length) {
+        const completedTaskIds = new Set(completedTasksPreviousDays.map(t => t.item_id));
+        const todayTaskIds = new Set(todayTasks?.map(t => t.item_id) || []);
+        
+        // Filter out completed tasks from any previous day in the week, but keep tasks that are already in today's plan
+        uniqueItems = uniqueItems.filter(item => 
+          !completedTaskIds.has(item.id) || todayTaskIds.has(item.id)
+        );
+      }
+    }
 
     return uniqueItems;
   } catch (error) {

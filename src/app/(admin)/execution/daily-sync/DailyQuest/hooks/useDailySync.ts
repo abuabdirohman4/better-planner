@@ -7,15 +7,15 @@ import { dailySyncKeys } from '@/lib/swr';
  * Custom hook for fetching tasks for week selection
  * Fallback for when ultra-fast hook doesn't work
  */
-export function useTasksForWeek(year: number, weekNumber: number) {
+export function useTasksForWeek(year: number, weekNumber: number, selectedDate?: string) {
   const { 
     data: tasks = [], 
     error, 
     isLoading,
     mutate 
   } = useSWR(
-    dailySyncKeys.tasksForWeek(year, weekNumber),
-    () => getTasksForWeek(year, weekNumber),
+    dailySyncKeys.tasksForWeek(year, weekNumber, selectedDate),
+    () => getTasksForWeek(year, weekNumber, selectedDate),
     {
       revalidateOnFocus: true,
       revalidateIfStale: true,

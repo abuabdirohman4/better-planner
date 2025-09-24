@@ -24,7 +24,19 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
 
   if (!isOpen) return null;
 
-  const groupedTasks = groupByGoalSlot(tasks);
+  // Filter out tasks that are not available for selection
+  // Tasks that were completed yesterday are already filtered out in getTasksForWeek
+  // But we need to ensure tasks added today are still available
+  const availableTasks = tasks.filter(task => {
+    // Always show tasks that are currently selected (added today)
+    if (selectedTasks[task.id]) {
+      return true;
+    }
+    // Show all other available tasks (filtered by getTasksForWeek)
+    return true;
+  });
+
+  const groupedTasks = groupByGoalSlot(availableTasks);
   const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
@@ -35,6 +47,9 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Kelola Rencana Harian</h2>
           <p className="text-gray-600 mb-2">
             Tugas yang sudah tercentang adalah yang sudah ada di rencana harian. Anda bisa menambah atau menghapus tugas sesuai kebutuhan.
+          </p>
+          <p className="text-gray-500 text-sm mb-2">
+            💡 Tugas yang sudah selesai di hari sebelumnya tidak akan muncul di pilihan untuk menghindari duplikasi.
           </p>
           <p className="text-blue-600 font-medium">
             {selectedCount} tugas dipilih

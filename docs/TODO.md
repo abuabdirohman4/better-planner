@@ -19,6 +19,7 @@
 - [ ] Click sign out like bug, because no loading and not directly out
 - [ ] Data on prod mobile/PWA not sync with database
 - [ ] Icon in PWA Desktop is wrong
+- [ ] When access root domain like localhost:3000 without page, will not redirect to dashboard
 
 ## LIST IDEA
 - [ ] Add visible password in sign in

@@ -112,7 +112,7 @@ export const weeklySyncKeys = {
 export const dailySyncKeys = {
   all: ['daily-sync'] as const,
   completedSessions: (taskId: string, date: string) => [...dailySyncKeys.all, 'completed-sessions', taskId, date] as const,
-  tasksForWeek: (year: number, weekNumber: number) => [...dailySyncKeys.all, 'tasks-for-week', year, weekNumber] as const,
+  tasksForWeek: (year: number, weekNumber: number, selectedDate?: string) => [...dailySyncKeys.all, 'tasks-for-week', year, weekNumber, selectedDate || 'all'] as const,
   dailyPlan: (date: string) => [...dailySyncKeys.all, 'daily-plan', date] as const,
   // ✅ NEW: Batch completed sessions key
   allCompletedSessions: (taskIds: string[], date: string) => [...dailySyncKeys.all, 'all-completed-sessions', taskIds.sort().join(','), date] as const,
