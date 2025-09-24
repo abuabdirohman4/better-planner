@@ -19,6 +19,7 @@ interface SessionCompleteData {
   type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
   startTime: string;
   endTime: string;
+  completed?: boolean; // ✅ Add completed flag for auto-completion
 }
 
 interface TimerStoreState {
@@ -42,6 +43,13 @@ interface TimerStoreState {
     taskTitle: string;
     startTime: string;
     currentDuration: number;
+    status: string;
+  }) => void;
+  completeTimerFromDatabase: (sessionData: {
+    taskId: string;
+    taskTitle: string;
+    startTime: string;
+    duration: number;
     status: string;
   }) => void;
 }
@@ -205,6 +213,23 @@ export const useTimerStore = create<TimerStoreState>()(
         timerState: sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING',
         secondsElapsed: sessionData.currentDuration,
         startTime: sessionData.startTime,
+        breakType: null,
+      }),
+
+      completeTimerFromDatabase: (sessionData) => set({
+        lastSessionComplete: {
+          taskId: sessionData.taskId,
+          taskTitle: sessionData.taskTitle,
+          type: 'FOCUS',
+          startTime: sessionData.startTime,
+          endTime: new Date().toISOString(), // ✅ Add endTime
+          duration: sessionData.duration,
+          completed: true
+        },
+        timerState: 'IDLE' as TimerState,
+        secondsElapsed: 0,
+        activeTask: null,
+        startTime: null,
         breakType: null,
       }),
     }),

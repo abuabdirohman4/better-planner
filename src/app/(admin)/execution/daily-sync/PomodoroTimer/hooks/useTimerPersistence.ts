@@ -195,9 +195,17 @@ export function useTimerPersistence() {
             const result = await updateSessionWithActualTime(activeSession.id);
             
             if (result.completed) {
-              // Timer completed while app was closed
+              // ✅ FIX: Timer completed while app was closed - trigger completion
               console.log('⏰ Timer completed while app was closed');
-              // Timer will be marked as completed in database
+              
+              // Trigger timer completion in frontend
+              useTimerStore.getState().completeTimerFromDatabase({
+                taskId: activeSession.task_id,
+                taskTitle: activeSession.task_title,
+                startTime: activeSession.start_time,
+                duration: result.elapsedSeconds, // Use the completed duration
+                status: 'COMPLETED'
+              });
             } else {
               // Resume with actual elapsed time from server
               console.log('▶️ Resuming timer with server-calculated duration:', result.elapsedSeconds);
