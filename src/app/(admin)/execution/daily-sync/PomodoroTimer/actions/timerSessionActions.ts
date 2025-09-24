@@ -6,17 +6,34 @@ import { createClient } from '@/lib/supabase/server';
 // Generate unique device ID
 function getDeviceId(): string {
   if (typeof window !== 'undefined') {
+    // CLIENT-SIDE: Generate device ID based on browser + device info
     let deviceId = localStorage.getItem('device-id');
     if (!deviceId) {
-      deviceId = crypto.randomUUID();
+      // Create more meaningful device ID
+      const userAgent = navigator.userAgent;
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const browser = getBrowserName(userAgent);
+      const deviceType = isMobile ? 'mobile' : 'desktop';
+      
+      // Generate UUID but prefix with device info
+      const uuid = crypto.randomUUID();
+      deviceId = `${deviceType}-${browser}-${uuid.substring(0, 8)}`;
       localStorage.setItem('device-id', deviceId);
     }
     return deviceId;
   }
-  // For server-side, generate a unique ID based on timestamp and random
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  return `server-${timestamp}-${random}`;
+  // SERVER-SIDE: Use user-specific device ID
+  return 'server-user-device';
+}
+
+// Helper function to detect browser
+function getBrowserName(userAgent: string): string {
+  if (userAgent.includes('Chrome')) return 'chrome';
+  if (userAgent.includes('Firefox')) return 'firefox';
+  if (userAgent.includes('Safari')) return 'safari';
+  if (userAgent.includes('Edge')) return 'edge';
+  if (userAgent.includes('Arc')) return 'arc';
+  return 'unknown';
 }
 
 export async function saveTimerSession(sessionData: {
@@ -163,22 +180,35 @@ export async function completeTimerSession(sessionId: string) {
       throw sessionError;
     }
 
-    // Move to activity_logs
-    const { error: logError } = await supabase
+    // ✅ FIX: Check if activity log already exists to prevent duplicates
+    const { data: existingLog } = await supabase
       .from('activity_logs')
-      .insert({
-        user_id: user.id,
-        task_id: session.task_id,
-        type: session.session_type,
-        start_time: session.start_time,
-        end_time: new Date().toISOString(),
-        duration_minutes: Math.round(session.current_duration_seconds / 60),
-        local_date: new Date().toISOString().slice(0, 10)
-      });
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('task_id', session.task_id)
+      .eq('start_time', session.start_time)
+      .maybeSingle();
 
-    if (logError) {
-      console.error('[completeTimerSession] Activity log error:', logError);
-      throw logError;
+    if (!existingLog) {
+      // Only create activity log if it doesn't exist
+      const { error: logError } = await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: user.id,
+          task_id: session.task_id,
+          type: session.session_type,
+          start_time: session.start_time,
+          end_time: new Date().toISOString(),
+          duration_minutes: Math.round(session.current_duration_seconds / 60),
+          local_date: new Date().toISOString().slice(0, 10)
+        });
+
+      if (logError) {
+        console.error('[completeTimerSession] Activity log error:', logError);
+        throw logError;
+      }
+    } else {
+      console.log('[completeTimerSession] Activity log already exists, skipping creation');
     }
 
     // Mark session as completed
@@ -195,11 +225,23 @@ export async function completeTimerSession(sessionId: string) {
       throw updateError;
     }
 
-    // Log completion event
-    await logTimerEvent(sessionId, 'stop', {
-      finalDuration: session.current_duration_seconds,
-      completed: true
-    });
+    // ✅ FIX: Check if stop event already exists to prevent duplicates
+    const { data: existingStopEvent } = await supabase
+      .from('timer_events')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('event_type', 'stop')
+      .maybeSingle();
+
+    if (!existingStopEvent) {
+      // Only log stop event if it doesn't exist
+      await logTimerEvent(sessionId, 'stop', {
+        finalDuration: session.current_duration_seconds,
+        completed: true
+      });
+    } else {
+      console.log('[completeTimerSession] Stop event already exists, skipping creation');
+    }
 
     revalidatePath('/execution/daily-sync');
     return { success: true };
