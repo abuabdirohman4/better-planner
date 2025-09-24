@@ -2,7 +2,7 @@
 import React, { useState ,useEffect, Suspense} from "react";
 import { usePathname } from "next/navigation";
 
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+// import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
 import { useSidebar } from "@/stores/sidebarStore";
@@ -86,43 +86,43 @@ function PageTitle() {
 }
 
 // Date Time Display Component
-function DateTimeDisplay({ isClient, currentDateTime }: { isClient: boolean; currentDateTime: Date | null }) {
-  const formatDateTime = (date: Date) => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const day = days[date.getDay()];
-    const dateStr = date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-    });
-    const timeStr = date.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-    return { day, date: dateStr, time: timeStr };
-  };
+// function DateTimeDisplay({ isClient, currentDateTime }: { isClient: boolean; currentDateTime: Date | null }) {
+//   const formatDateTime = (date: Date) => {
+//     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+//     const day = days[date.getDay()];
+//     const dateStr = date.toLocaleDateString('id-ID', {
+//       day: 'numeric',
+//       month: 'short',
+//     });
+//     const timeStr = date.toLocaleTimeString('id-ID', {
+//       hour: '2-digit',
+//       minute: '2-digit',
+//       second: '2-digit'
+//     });
+//     return { day, date: dateStr, time: timeStr };
+//   };
 
-  let day = "", date = "", time = "";
-  if (currentDateTime) {
-    const formatted = formatDateTime(currentDateTime);
-    day = formatted.day;
-    date = formatted.date;
-    time = formatted.time;
-  }
+//   let day = "", date = "", time = "";
+//   if (currentDateTime) {
+//     const formatted = formatDateTime(currentDateTime);
+//     day = formatted.day;
+//     date = formatted.date;
+//     time = formatted.time;
+//   }
 
-  return (
-    <div className="hidden lg:flex flex-col items-end text-sm text-gray-600 dark:text-gray-400">
-      {isClient && currentDateTime ? (
-        <>
-          <div className="text-medium font-mono">{time}</div>
-          <div className="font-medium">{day}, {date}</div>
-        </>
-      ) : (
-        <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="hidden lg:flex flex-col items-end text-sm text-gray-600 dark:text-gray-400">
+//       {isClient && currentDateTime ? (
+//         <>
+//           <div className="text-medium font-mono">{time}</div>
+//           <div className="font-medium">{day}, {date}</div>
+//         </>
+//       ) : (
+//         <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+//       )}
+//     </div>
+//   );
+// }
 
 // Application Menu Component
 function ApplicationMenu({ 
@@ -139,8 +139,8 @@ function ApplicationMenu({
       className={`${isOpen ? "flex" : "hidden"} items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
     >
       <div className="flex items-center gap-2 2xsm:gap-3">
-        <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} />
-        <ThemeToggleButton />
+        {/* <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} /> */}
+        {/* <ThemeToggleButton /> */}
         <NotificationDropdown />
       </div>
       <UserDropdown />
