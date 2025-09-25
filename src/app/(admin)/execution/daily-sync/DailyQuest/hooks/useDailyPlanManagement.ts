@@ -222,7 +222,9 @@ export function useDailyPlanManagement(
         }
 
         // Update both daily_plan_items and tasks status
-        await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
+        // setTimeout(async () => {
+          await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
+        // }, 2000);
         
         // Trigger refresh of optimized data instead of individual API call
         if (mutate) {
@@ -258,7 +260,6 @@ export function useDailyPlanManagement(
 
 
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
-    console.log('🔍 DEBUG - Focus duration changed:', itemId, duration);
     startTransition(async () => {
       try {
         await updateDailyPlanItemFocusDuration(itemId, duration);

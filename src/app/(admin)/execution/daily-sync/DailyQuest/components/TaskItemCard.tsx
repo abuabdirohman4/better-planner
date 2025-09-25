@@ -1,10 +1,10 @@
-import React from 'react';
+import { useState } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
 import { TaskCardProps } from '../types';
 
-const TaskItemCard: React.FC<TaskCardProps> = ({ 
+const TaskItemCard = ({ 
   item, 
   onStatusChange, 
   onSetActiveTask, 
@@ -14,7 +14,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
   completedSessions, 
   refreshKey, 
   forceRefreshTaskId 
-}) => {
+}: TaskCardProps) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(
     item, 
     selectedDate || '', 
@@ -23,9 +23,9 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
     forceRefreshTaskId
   );
   
-  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
-  const [isUpdatingFocus, setIsUpdatingFocus] = React.useState(false);
-  const [optimisticStatus, setOptimisticStatus] = React.useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isUpdatingFocus, setIsUpdatingFocus] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
 
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   
@@ -70,54 +70,58 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
         <div className="flex items-center space-x-2">
           {/* Dropdown untuk durasi fokus dengan loading indicator */}
           <div className="relative">
-            <div className="relative">
-              <select
-                value={item.focus_duration || 25}
-                disabled={isUpdatingFocus || isCompleted}
-                onChange={async (e) => {
-                  if (isCompleted) return;
-                  setIsUpdatingFocus(true);
-                  try {
-                    await onFocusDurationChange(item.id, parseInt(e.target.value));
-                  } finally {
-                    setIsUpdatingFocus(false);
-                  }
-                }}
-                className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
-                  isCompleted
-                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {/* Testing option - only show in development */}
-                {process.env.NODE_ENV === 'development' && (
-                  <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
-                )}
-                <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
-                <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
-                <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
-              </select>
-              {/* Custom dropdown arrow */}
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg 
-                  className="w-3 h-3 text-gray-400 dark:text-gray-500" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-            {/* Loading spinner overlay */}
-            {isUpdatingFocus && (
+            {isUpdatingFocus ? (
               <Spinner size={16} colorClass="border-blue-500" className="mr-2" />
+            ) : (
+              <div className="relative">
+                <select
+                    value={item.focus_duration || 25}
+                    disabled={isUpdatingFocus || isCompleted}
+                     onChange={async (e) => {
+                       if (isCompleted) return;
+                       
+                       try {
+                         setIsUpdatingFocus(true);
+                         await onFocusDurationChange(item.id, parseInt(e.target.value));
+                       } finally {
+                         setIsUpdatingFocus(false);
+                       }
+                     }}
+                  className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
+                    isCompleted
+                      ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {/* Testing option - only show in development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
+                  )}
+                  <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
+                  <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
+                  <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
+                </select>
+                {/* Custom dropdown arrow */}
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg 
+                    className="w-3 h-3 text-gray-400 dark:text-gray-500" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             )}
           </div>
           
           {/* Custom Checkbox untuk status dengan loading indicator */}
           <div className="flex items-center">
-            <button
+            {isUpdatingStatus ? (
+              <Spinner size={16} colorClass="border-brand-500" />
+            ) : (
+              <button
               type="button"
               disabled={isUpdatingStatus}
               onClick={async () => {
@@ -158,10 +162,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
                   />
                 </svg>
               )}
-            </button>
-            {/* Loading spinner overlay */}
-            {isUpdatingStatus && (
-                <Spinner size={16} colorClass="border-brand-500" />
+              </button>
             )}
           </div>
         </div>

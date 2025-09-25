@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TaskItemCard from './components/TaskItemCard';
 import { TaskColumnProps } from './types';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
-const MainQuestListSection: React.FC<TaskColumnProps> = ({ 
+const MainQuestListSection = ({ 
   title, 
   items, 
   onStatusChange, 
@@ -17,7 +17,7 @@ const MainQuestListSection: React.FC<TaskColumnProps> = ({
   refreshSessionKey, 
   forceRefreshTaskId, 
   showAddQuestButton 
-}) => {
+}: TaskColumnProps) => {
   const { showCompletedTasks, toggleShowCompletedTasks } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
 
