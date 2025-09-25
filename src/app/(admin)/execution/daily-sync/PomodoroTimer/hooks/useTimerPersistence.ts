@@ -10,6 +10,7 @@ import {
   resumeTimerSession,
   updateSessionWithActualTime
 } from '../actions/timerSessionActions';
+import { createClient } from '@/lib/supabase/client';
 
 // Helper function to get client-side device ID
 function getClientDeviceId(): string {
@@ -72,6 +73,17 @@ export function useTimerPersistence() {
   
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isRecovering, setIsRecovering] = useState(globalRecoveryInProgress);
+  const [user, setUser] = useState<any>(null);
+  
+  // Get user for real-time sync
+  useEffect(() => {
+    const supabase = createClient();
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   // Debounced save function with global state
   const debouncedSave = useCallback(async () => {
@@ -351,6 +363,114 @@ export function useTimerPersistence() {
       console.error('❌ Failed to resume timer session:', error);
     }
   }, []);
+
+  // ✅ REAL-TIME SYNC: Subscribe to timer_sessions changes
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Subscribe to timer_sessions changes
+    const channel = supabase
+      .channel('timer-sessions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'timer_sessions',
+          filter: `user_id=eq.${user?.id}`
+        },
+        async (payload) => {
+          console.log('🔄 Real-time timer session update:', payload);
+          
+          // Handle different event types
+          if (payload.eventType === 'UPDATE') {
+            const session = payload.new;
+            
+            // Check if this is our current active session
+            if (session.status === 'COMPLETED' && session.task_id === activeTask?.id) {
+              console.log('⏰ Timer completed on another device - syncing...');
+              
+              // Sync timer state with database
+              useTimerStore.getState().completeTimerFromDatabase({
+                taskId: session.task_id,
+                taskTitle: session.task_title || 'Unknown Task',
+                startTime: session.start_time,
+                duration: session.current_duration_seconds,
+                status: session.status
+              });
+            } else if (session.status === 'FOCUSING' && session.task_id === activeTask?.id) {
+              console.log('🔄 Timer session updated on another device - syncing...');
+              
+              // Sync current duration
+              useTimerStore.getState().resumeFromDatabase({
+                taskId: session.task_id,
+                taskTitle: session.task_title || 'Unknown Task',
+                startTime: session.start_time,
+                currentDuration: session.current_duration_seconds,
+                status: session.status
+              });
+            }
+          } else if (payload.eventType === 'INSERT') {
+            const session = payload.new;
+            
+            // Check if this is a new session for the same task
+            if (session.status === 'FOCUSING' && session.task_id === activeTask?.id) {
+              console.log('⚠️ New timer session created on another device for same task');
+              
+              // This might indicate a race condition
+              // We should handle this appropriately
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, activeTask?.id]);
+
+  // ✅ REAL-TIME SYNC: Subscribe to activity_logs changes
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Subscribe to activity_logs changes
+    const channel = supabase
+      .channel('activity-logs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'activity_logs',
+          filter: `user_id=eq.${user?.id}`
+        },
+        async (payload) => {
+          console.log('📝 New activity log created:', payload);
+          
+          const activityLog = payload.new;
+          
+          // Check if this is for our current active task
+          if (activityLog.task_id === activeTask?.id && activeTask) {
+            console.log('⏰ Activity log created for current task - timer should be completed');
+            
+            // Complete timer state
+            useTimerStore.getState().completeTimerFromDatabase({
+              taskId: activityLog.task_id,
+              taskTitle: activeTask.title,
+              startTime: activityLog.start_time,
+              duration: activityLog.duration_minutes * 60,
+              status: 'COMPLETED'
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, activeTask?.id]);
 
   return {
     isOnline,
