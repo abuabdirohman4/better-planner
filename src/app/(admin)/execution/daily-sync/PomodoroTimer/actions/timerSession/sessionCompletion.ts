@@ -1,0 +1,96 @@
+"use server";
+
+// Timer session completion actions
+
+import { revalidatePath } from 'next/cache';
+import { createClient } from '@/lib/supabase/server';
+import { logTimerEvent } from './timerEventActions';
+
+export async function completeTimerSession(sessionId: string, deviceId?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // Get session data
+    const { data: session, error: sessionError } = await supabase
+      .from('timer_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError) {
+      console.error('[completeTimerSession] Session fetch error:', sessionError);
+      throw sessionError;
+    }
+
+    // ✅ FIX: Check if activity log already exists to prevent duplicates
+    const { data: existingLog } = await supabase
+      .from('activity_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('task_id', session.task_id)
+      .eq('start_time', session.start_time)
+      .maybeSingle();
+
+    if (!existingLog) {
+      // Only create activity log if it doesn't exist
+      const { error: logError } = await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: user.id,
+          task_id: session.task_id,
+          type: session.session_type,
+          start_time: session.start_time,
+          end_time: new Date().toISOString(),
+          duration_minutes: Math.round(session.current_duration_seconds / 60),
+          local_date: new Date().toISOString().slice(0, 10)
+        });
+
+      if (logError) {
+        console.error('[completeTimerSession] Activity log error:', logError);
+        throw logError;
+      }
+    } else {
+      console.log('[completeTimerSession] Activity log already exists, skipping creation');
+    }
+
+    // Mark session as completed
+    const { error: updateError } = await supabase
+      .from('timer_sessions')
+      .update({ 
+        status: 'COMPLETED',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', sessionId);
+
+    if (updateError) {
+      console.error('[completeTimerSession] Update error:', updateError);
+      throw updateError;
+    }
+
+    // ✅ FIX: Check if stop event already exists to prevent duplicates
+    const { data: existingStopEvent } = await supabase
+      .from('timer_events')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('event_type', 'stop')
+      .maybeSingle();
+
+    if (!existingStopEvent) {
+      // Only log stop event if it doesn't exist
+      await logTimerEvent(sessionId, 'stop', {
+        finalDuration: session.current_duration_seconds,
+        completed: true
+      }, deviceId);
+    } else {
+      console.log('[completeTimerSession] Stop event already exists, skipping creation');
+    }
+
+    revalidatePath('/execution/daily-sync');
+    return { success: true };
+  } catch (error) {
+    console.error('[completeTimerSession] Exception:', error);
+    throw error;
+  }
+}
