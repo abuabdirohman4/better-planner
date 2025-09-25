@@ -117,7 +117,6 @@ export function useDailyPlanManagement(
     isLoading: tasksLoading,
     mutate: mutateTasks 
   } = useTasksForWeek(year, weekNumber, selectedDate);
-  console.log('🔍 DEBUG - Weekly tasks:', weeklyTasks);
 
   // Combine loading states
   const loading = dailyPlanLoading || tasksLoading;

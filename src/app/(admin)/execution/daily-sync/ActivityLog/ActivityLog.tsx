@@ -163,7 +163,7 @@ const LogTreeItem: React.FC<{ node: ActivityLogTree; level?: number }> = ({ node
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [logs, setLogs] = useState<ActivityLogItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dynamicHeight, setDynamicHeight] = useState('400px');
+  const [dynamicHeight, setDynamicHeight] = useState('');
 
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
   
@@ -171,6 +171,12 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   useEffect(() => {
     const calculateHeight = () => {
       try {
+        // Check if screen size is md or above
+        const isMdAndAbove = window.innerWidth >= 768;
+        if (!isMdAndAbove) {
+          return;
+        }
+        
         // Get Main Quest + Side Quest + Pomodoro Timer
         const mainQuestCard = document.querySelector('.main-quest-card');
         const sideQuestCard = document.querySelector('.side-quest-card');
