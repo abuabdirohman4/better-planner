@@ -27,20 +27,31 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
   const [isUpdatingFocus, setIsUpdatingFocus] = React.useState(false);
   const [optimisticStatus, setOptimisticStatus] = React.useState<string | null>(null);
 
+  const isCompleted = (optimisticStatus || item.status) === 'DONE';
+  
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-3">
+    <div className={`rounded-lg p-4 shadow-sm border mb-3 transition-all duration-200 ${
+      isCompleted 
+        ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60' 
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+    }`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {onSetActiveTask ? (
             <button
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-              onClick={() => onSetActiveTask({
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+                isCompleted 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+              }`}
+              onClick={() => !isCompleted && onSetActiveTask({
                 id: item.item_id,
                 title: item.title || `Task ${item.item_id}`,
                 item_type: item.item_type,
                 focus_duration: item.focus_duration || 25
               })}
-              title="Mulai Pomodoro"
+              disabled={isCompleted}
+              title={isCompleted ? "Quest sudah selesai" : "Mulai Pomodoro"}
             >
               <svg width="35" height="35" fill="currentColor" viewBox="0 0 20 20">
                 <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15"/>
@@ -48,7 +59,11 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
               </svg>
             </button>
           ) : null}
-          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight">
+          <h4 className={`font-medium text-sm leading-tight ${
+            isCompleted 
+              ? 'text-gray-500 dark:text-gray-500 line-through' 
+              : 'text-gray-900 dark:text-gray-100'
+          }`}>
             {item.title || `Task ${item.item_id}`}
           </h4>
         </div>
@@ -58,8 +73,9 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
             <div className="relative">
               <select
                 value={item.focus_duration || 25}
-                disabled={isUpdatingFocus}
+                disabled={isUpdatingFocus || isCompleted}
                 onChange={async (e) => {
+                  if (isCompleted) return;
                   setIsUpdatingFocus(true);
                   try {
                     await onFocusDurationChange(item.id, parseInt(e.target.value));
@@ -67,7 +83,11 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
                     setIsUpdatingFocus(false);
                   }
                 }}
-                className="appearance-none h-8 pl-3 pr-8 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
+                className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
+                  isCompleted
+                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {/* Testing option - only show in development */}
                 {process.env.NODE_ENV === 'development' && (
@@ -95,14 +115,13 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
             )}
           </div>
           
-          {/* Checkbox untuk status dengan loading indicator */}
+          {/* Custom Checkbox untuk status dengan loading indicator */}
           <div className="flex items-center">
-            <input
-              type="checkbox"
-              checked={(optimisticStatus || item.status) === 'DONE'}
+            <button
+              type="button"
               disabled={isUpdatingStatus}
-              onChange={async (e) => {
-                const newStatus = e.target.checked ? 'DONE' : 'TODO';
+              onClick={async () => {
+                const newStatus = isCompleted ? 'TODO' : 'DONE';
                 
                 // Optimistic update - update UI immediately
                 setOptimisticStatus(newStatus);
@@ -120,8 +139,26 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
                   setIsUpdatingStatus(false);
                 }
               }}
-              className="w-6 h-6 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            />
+              className={`w-8 h-8 rounded focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors border border-gray-300 ${
+                isCompleted
+                  ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
+                  : ''
+              }`}
+            >
+              {isCompleted && (
+                <svg 
+                  className="w-10 h-10" 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path 
+                    fillRule="evenodd" 
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                    clipRule="evenodd" 
+                  />
+                </svg>
+              )}
+            </button>
             {/* Loading spinner overlay */}
             {isUpdatingStatus && (
                 <Spinner size={16} colorClass="border-brand-500" />
@@ -138,9 +175,13 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
         <div className="flex items-center space-x-1">
           <div className="flex items-center gap-1 text-xs">
             <button
-              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
-              disabled={savingTarget || target <= 1}
-              onClick={() => handleTargetChange(target - 1, onTargetChange)}
+              className={`px-1 text-lg disabled:opacity-50 ${
+                isCompleted 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-500 hover:text-brand-600'
+              }`}
+              disabled={savingTarget || target <= 1 || isCompleted}
+              onClick={() => !isCompleted && handleTargetChange(target - 1, onTargetChange)}
               aria-label="Kurangi target"
             >
               –
@@ -148,12 +189,22 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
             {loading ? (
               <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
             ) : (
-              <span className="font-semibold">({completed} / {target})</span>
+              <span className={`font-semibold ${
+                isCompleted 
+                  ? 'text-gray-400' 
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}>
+                ({completed} / {target})
+              </span>
             )}
             <button
-              className="px-1 text-lg text-gray-500 hover:text-brand-600 disabled:opacity-50"
-              disabled={savingTarget}
-              onClick={() => handleTargetChange(target + 1, onTargetChange)}
+              className={`px-1 text-lg disabled:opacity-50 ${
+                isCompleted 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-500 hover:text-brand-600'
+              }`}
+              disabled={savingTarget || isCompleted}
+              onClick={() => !isCompleted && handleTargetChange(target + 1, onTargetChange)}
               aria-label="Tambah target"
             >
               +
