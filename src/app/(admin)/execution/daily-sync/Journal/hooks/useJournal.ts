@@ -40,7 +40,7 @@ export const useJournal = () => {
     setPendingActivityData(null);
   }, []);
 
-  const saveJournal = useCallback(async (journalData: JournalData) => {
+  const saveJournal = useCallback(async (journalData: JournalData): Promise<void> => {
     if (!pendingActivityData) {
       throw new Error('No pending activity data');
     }
