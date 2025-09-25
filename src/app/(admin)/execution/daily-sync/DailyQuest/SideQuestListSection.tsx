@@ -1,4 +1,4 @@
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import TaskItemCard from './components/TaskItemCard';
 import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
@@ -7,6 +7,14 @@ import { SideQuestFormProps } from './types';
 const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus input when component mounts
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +30,7 @@ const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => 
     <form onSubmit={handleSubmit} className="mb-4">
       <div className="flex space-x-2">
         <input
+          ref={inputRef}
           type="text"
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -77,22 +86,7 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
     <div className="rounded-lg h-fit">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{title}</h3>
-        {onAddSideQuest ? (
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="text-brand-500 hover:text-brand-600 text-sm font-medium"
-          >
-            + Tambah Side Quest
-          </button>
-        ) : null}
       </div>
-
-      {showAddForm && onAddSideQuest ? (
-        <SideQuestForm
-          onSubmit={handleAddSideQuest}
-          onCancel={() => setShowAddForm(false)}
-        />
-      ) : null}
 
       <div className="space-y-3">
         {items.map((item) => (
@@ -122,6 +116,25 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
                 </button>
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {showAddForm && onAddSideQuest ? (
+          <SideQuestForm
+            onSubmit={handleAddSideQuest}
+            onCancel={() => setShowAddForm(false)}
+          />
+        ) : null}
+        
+        {/* Tombol Tambah Quest */}
+        {onAddSideQuest ? (
+          <div className="flex justify-center mt-6">
+            <button 
+              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+              onClick={() => setShowAddForm(!showAddForm)}
+            >
+              Tambah Quest
+            </button>
           </div>
         ) : null}
       </div>
