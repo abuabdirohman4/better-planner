@@ -1,5 +1,6 @@
 import React from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
+import Button from '@/components/ui/button/Button';
 import { TaskSelectionModalProps } from '../types';
 
 const MainQuestModal: React.FC<TaskSelectionModalProps> = ({ 
@@ -9,7 +10,8 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   selectedTasks, 
   onTaskToggle, 
   onSave, 
-  isLoading 
+  isLoading,
+  savingLoading = false
 }) => {
   const groupByGoalSlot = (tasks: any[]) => {
     const groups: Record<number, any[]> = {};
@@ -73,7 +75,11 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
                     return (
                       <div 
                         key={uniqueKey} 
-                        className={`flex items-center space-x-3 cursor-pointer p-3 rounded-lg transition-colors ${
+                        className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                          savingLoading 
+                            ? 'cursor-not-allowed opacity-50' 
+                            : 'cursor-pointer'
+                        } ${
                           isSelected 
                             ? 'bg-blue-50 border border-blue-200' 
                             : 'bg-gray-50 border border-transparent'
@@ -83,11 +89,12 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onTaskToggle(task.id)}
+                          disabled={savingLoading}
                           className={`w-4 h-4 rounded focus:ring-2 ${
                             isSelected
                               ? 'text-blue-600 bg-blue-600 border-blue-600 focus:ring-blue-500'
                               : 'text-brand-500 bg-gray-100 border-gray-300 focus:ring-brand-500'
-                          }`}
+                          } ${savingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         <div className="flex-1">
                           <span className={`text-sm font-medium block ${
@@ -111,18 +118,23 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
         )}
 
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-          <button
+          <Button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            disabled={savingLoading}
+            variant="outline"
+            size="md"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onSave}
-            className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 font-medium"
+            loading={savingLoading}
+            loadingText="Menyimpan..."
+            variant="primary"
+            size="md"
           >
             Pilih ({selectedCount} Quest)
-          </button>
+          </Button>
         </div>
       </div>
     </div>

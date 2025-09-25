@@ -35,6 +35,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     showModal,
     setShowModal,
     modalLoading,
+    savingLoading,
     handleOpenModal,
     handleTaskToggle,
     handleSaveSelection,
@@ -116,6 +117,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         onTaskToggle={handleTaskToggle}
         onSave={handleSaveSelection}
         isLoading={modalLoading}
+        savingLoading={savingLoading}
       />
     </div>
   );

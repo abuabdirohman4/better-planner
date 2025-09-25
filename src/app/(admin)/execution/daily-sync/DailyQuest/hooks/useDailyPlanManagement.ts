@@ -1,4 +1,4 @@
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
@@ -132,8 +132,8 @@ export function useDailyPlanManagement(
 
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [showModal, setShowModal] = useState(false);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [, startTransition] = useTransition();
+  const [modalLoading, setModalLoading] = useState(false); // Loading untuk konten (skeleton)
+  const [savingLoading, setSavingLoading] = useState(false); // Loading untuk button (spinner)
 
   const getCurrentDailyPlanSelections = () => {
     if (!dailyPlan?.daily_plan_items) return {};
@@ -169,135 +169,135 @@ export function useDailyPlanManagement(
   };
 
   const handleSaveSelection = async () => {
-    const selectedItems = Object.entries(selectedTasks)
-      .filter(([, selected]) => selected)
-      .map(([taskId]) => {
-        const task = weeklyTasks.find((t: any) => t.id === taskId);
-        // Preserve existing item type or determine from task type
-        const existingItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.item_id === taskId);
-        const itemType = existingItem?.item_type || (task?.type === 'SIDE_QUEST' ? 'SIDE_QUEST' : 'MAIN_QUEST');
-        return {
-          item_id: taskId,
-          item_type: itemType
-        };
-      });
-
-    // Also include existing side quests that are not in weeklyTasks
-    const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
-      item.item_type === 'SIDE_QUEST' && 
-      !weeklyTasks.some((t: any) => t.id === item.item_id)
-    ) || [];
-
-    // Add existing side quests to selectedItems
-    existingSideQuests.forEach((item: DailyPlanItem) => {
-      if (!selectedItems.some(selected => selected.item_id === item.item_id)) {
-        selectedItems.push({
-          item_id: item.item_id,
-          item_type: item.item_type
+    setSavingLoading(true); // Gunakan savingLoading untuk button
+    
+    try {
+      const selectedItems = Object.entries(selectedTasks)
+        .filter(([, selected]) => selected)
+        .map(([taskId]) => {
+          const task = weeklyTasks.find((t: any) => t.id === taskId);
+          // Preserve existing item type or determine from task type
+          const existingItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.item_id === taskId);
+          const itemType = existingItem?.item_type || (task?.type === 'SIDE_QUEST' ? 'SIDE_QUEST' : 'MAIN_QUEST');
+          return {
+            item_id: taskId,
+            item_type: itemType
+          };
         });
-      }
-    });
-    if (selectedItems.length === 0) return;
-    startTransition(async () => {
-      try {
-        await setDailyPlan(selectedDate, selectedItems);
-        // Trigger refresh of optimized data instead of individual API call
-        if (mutate) {
-          await mutate();
+
+      // Also include existing side quests that are not in weeklyTasks
+      const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+        item.item_type === 'SIDE_QUEST' && 
+        !weeklyTasks.some((t: any) => t.id === item.item_id)
+      ) || [];
+
+      // Add existing side quests to selectedItems
+      existingSideQuests.forEach((item: DailyPlanItem) => {
+        if (!selectedItems.some(selected => selected.item_id === item.item_id)) {
+          selectedItems.push({
+            item_id: item.item_id,
+            item_type: item.item_type
+          });
         }
-        setShowModal(false);
-      } catch (err) {
-        console.error('Error saving daily plan:', err);
+      });
+      
+      if (selectedItems.length === 0) return;
+      
+      await setDailyPlan(selectedDate, selectedItems);
+      // Trigger refresh of optimized data instead of individual API call
+      if (mutate) {
+        await mutate();
       }
-    });
+      setShowModal(false);
+    } catch (err) {
+      console.error('Error saving daily plan:', err);
+      throw err; // Re-throw error so it can be caught by the calling function
+    } finally {
+      setSavingLoading(false); // Gunakan savingLoading untuk button
+    }
   };
 
   const handleStatusChange = async (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
-    startTransition(async () => {
-      try {
-        // Find the daily plan item to get the task_id
-        const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
-        if (!dailyPlanItem) {
-          throw new Error('Daily plan item not found');
-        }
-
-        // Update both daily_plan_items and tasks status
-        await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
-        
-        // Trigger refresh of optimized data instead of individual API call
-        if (mutate) {
-          await mutate();
-        }
-        
-        // Show success toast
-        const statusText = status === 'DONE' ? 'Selesai' : status === 'IN_PROGRESS' ? 'Sedang Dikerjakan' : 'Belum Dimulai';
-        toast.success(`Status tugas diubah menjadi: ${statusText}`);
-      } catch (err) {
-        console.error('Error updating task status:', err);
-        toast.error('Gagal mengubah status tugas. Silakan coba lagi.');
+    try {
+      // Find the daily plan item to get the task_id
+      const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
+      if (!dailyPlanItem) {
+        throw new Error('Daily plan item not found');
       }
-    });
+
+      // Update both daily_plan_items and tasks status
+      await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
+      
+      // Trigger refresh of optimized data instead of individual API call
+      if (mutate) {
+        await mutate();
+      }
+      
+      // Show success toast
+      const statusText = status === 'DONE' ? 'Selesai' : status === 'IN_PROGRESS' ? 'Sedang Dikerjakan' : 'Belum Dimulai';
+      toast.success(`Status tugas diubah menjadi: ${statusText}`);
+    } catch (err) {
+      console.error('Error updating task status:', err);
+      toast.error('Gagal mengubah status tugas. Silakan coba lagi.');
+      throw err; // Re-throw error so it can be caught by the calling function
+    }
   };
 
   const handleAddSideQuest = async (title: string) => {
-    startTransition(async () => {
-      try {
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('date', selectedDate);
-        await addSideQuest(formData);
-        // Trigger refresh of optimized data instead of individual API call
-        if (mutate) {
-          await mutate();
-        }
-      } catch (err) {
-        console.error('Error adding side quest:', err);
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('date', selectedDate);
+      await addSideQuest(formData);
+      // Trigger refresh of optimized data instead of individual API call
+      if (mutate) {
+        await mutate();
       }
-    });
+    } catch (err) {
+      console.error('Error adding side quest:', err);
+      throw err; // Re-throw error so it can be caught by the calling function
+    }
   };
 
-
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
-    startTransition(async () => {
-      try {
-        await updateDailyPlanItemFocusDuration(itemId, duration);
-        // Trigger refresh of optimized data instead of individual API call
-        if (mutate) {
-          await mutate();
-        }
-        
-        // Show success toast
-        toast.success(`Durasi fokus diubah menjadi: ${duration} menit`);
-      } catch (err) {
-        console.error('Error updating focus duration:', err);
-        toast.error('Gagal mengubah durasi fokus. Silakan coba lagi.');
+    try {
+      await updateDailyPlanItemFocusDuration(itemId, duration);
+      // Trigger refresh of optimized data instead of individual API call
+      if (mutate) {
+        await mutate();
       }
-    });
+      
+      // Show success toast
+      toast.success(`Durasi fokus diubah menjadi: ${duration} menit`);
+    } catch (err) {
+      console.error('Error updating focus duration:', err);
+      toast.error('Gagal mengubah durasi fokus. Silakan coba lagi.');
+      throw err; // Re-throw error so it can be caught by the calling function
+    }
   };
 
   const handleTargetChange = async (itemId: string, newTarget: number) => {
-    startTransition(async () => {
-      try {
-        // Update daily session target in database
-        const supabase = await createClient();
-        const { error } = await supabase
-          .from('daily_plan_items')
-          .update({ daily_session_target: newTarget })
-          .eq('id', itemId);
+    try {
+      // Update daily session target in database
+      const supabase = await createClient();
+      const { error } = await supabase
+        .from('daily_plan_items')
+        .update({ daily_session_target: newTarget })
+        .eq('id', itemId);
 
-        if (error) {
-          throw error;
-        }
-
-        // Trigger refresh of optimized data
-        if (mutate) {
-          await mutate();
-        }
-      } catch (err) {
-        console.error('Error updating session target:', err);
-        toast.error('Gagal mengubah target sesi. Silakan coba lagi.');
+      if (error) {
+        throw error;
       }
-    });
+
+      // Trigger refresh of optimized data
+      if (mutate) {
+        await mutate();
+      }
+    } catch (err) {
+      console.error('Error updating session target:', err);
+      toast.error('Gagal mengubah target sesi. Silakan coba lagi.');
+      throw err; // Re-throw error so it can be caught by the calling function
+    }
   };
 
   return {
@@ -312,7 +312,8 @@ export function useDailyPlanManagement(
     selectedTasks,
     showModal,
     setShowModal,
-    modalLoading,
+    modalLoading, // Loading untuk konten (skeleton)
+    savingLoading, // Loading untuk button (spinner)
     handleOpenModal,
     handleTaskToggle,
     handleSaveSelection,

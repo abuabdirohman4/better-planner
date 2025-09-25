@@ -66,7 +66,8 @@ export interface TaskSelectionModalProps {
   selectedTasks: Record<string, boolean>;
   onTaskToggle: (taskId: string) => void;
   onSave: () => void;
-  isLoading: boolean;
+  isLoading: boolean; // Loading untuk konten (skeleton)
+  savingLoading?: boolean; // Loading untuk button (spinner)
 }
 
 export interface WeeklyTaskItem {

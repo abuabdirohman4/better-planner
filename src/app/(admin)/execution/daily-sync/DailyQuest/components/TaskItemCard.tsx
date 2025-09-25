@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
@@ -27,15 +27,7 @@ const TaskItemCard = ({
   const [isUpdatingFocus, setIsUpdatingFocus] = useState(false);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
 
-  // Debug: Track state changes
-  React.useEffect(() => {
-    console.log('isUpdatingStatus changed to:', isUpdatingStatus, 'for item:', item.id);
-  }, [isUpdatingStatus, item.id]);
-
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
-  
-  // Debug: log state changes
-  console.log('TaskItemCard render - isUpdatingStatus:', isUpdatingStatus, 'isCompleted:', isCompleted, 'item.id:', item.id);
   
   return (
     <div className={`rounded-lg p-4 shadow-sm border mb-3 transition-all duration-200 ${
@@ -126,43 +118,31 @@ const TaskItemCard = ({
           
           {/* Custom Checkbox untuk status dengan loading indicator */}
           <div className="flex items-center">
-            {(() => {
-              console.log('Conditional check - isUpdatingStatus:', isUpdatingStatus);
-              if (isUpdatingStatus) {
-                console.log('Rendering spinner for item:', item.id);
-                return (
-                  <div className="w-8 h-8 flex items-center justify-center bg-red-100 border border-red-300 rounded relative z-50">
-                    <Spinner size={20} colorClass="border-blue-500" />
-                    <span className="text-xs text-red-600 ml-1">Loading</span>
-                    {/* Debug: Force visible */}
-                    <div className="absolute inset-0 bg-yellow-300 opacity-50"></div>
-                  </div>
-                );
-              } else {
-                console.log('Rendering button for item:', item.id);
-                return (
+            {isUpdatingStatus ? (
+              <Spinner size={16} colorClass="border-brand-500" />
+            ) : (
               <button
-                type="button"
-                disabled={isUpdatingStatus}
-                onClick={async () => {
-                  const newStatus = isCompleted ? 'TODO' : 'DONE';
-                  
-                  // Set loading state first (no optimistic update)
-                  console.log('Setting isUpdatingStatus to true for item:', item.id);
-                  setIsUpdatingStatus(true);
-                  console.log('isUpdatingStatus set to true, waiting for async operation...');
-                  
-                  try {
-                    console.log('Starting onStatusChange for item:', item.id);
-                    await onStatusChange(item.id, newStatus);
-                    console.log('onStatusChange completed for item:', item.id);
-                  } catch (error) {
-                    console.error('Error updating status:', error);
-                  } finally {
-                    console.log('Setting isUpdatingStatus to false for item:', item.id);
-                    setIsUpdatingStatus(false);
-                  }
-                }}
+              type="button"
+              disabled={isUpdatingStatus}
+              onClick={async () => {
+                const newStatus = isCompleted ? 'TODO' : 'DONE';
+                
+                // Optimistic update - update UI immediately
+                setOptimisticStatus(newStatus);
+                setIsUpdatingStatus(true);
+                
+                try {
+                  await onStatusChange(item.id, newStatus);
+                  // Clear optimistic status after successful update
+                  setOptimisticStatus(null);
+                } catch (error) {
+                  // Revert optimistic update on error
+                  setOptimisticStatus(null);
+                  console.error('Error updating status:', error);
+                } finally {
+                  setIsUpdatingStatus(false);
+                }
+              }}
               className={`w-8 h-8 rounded focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors border border-gray-300 ${
                 isCompleted
                   ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
@@ -183,9 +163,7 @@ const TaskItemCard = ({
                 </svg>
               )}
               </button>
-                );
-              }
-            })()}
+            )}
           </div>
         </div>
       </div>
