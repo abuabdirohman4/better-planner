@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useBrainDump } from './hooks/useBrainDump';
 import { toast } from 'sonner';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
+import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor';
 
 interface BrainDumpSectionProps {
   date: string;
@@ -39,11 +40,8 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
     }
   };
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
-  };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // Cmd+Enter on Mac or Ctrl+Enter on Windows/Linux
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -93,13 +91,13 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <textarea
+            <RichTextEditor
               value={content}
-              onChange={handleContentChange}
+              onChange={setContent}
               onKeyDown={handleKeyDown}
               placeholder="Tuliskan apa yang ada di pikiran Anda..."
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-              rows={8}
+              className="w-full"
+              rows={10}
               disabled={isSaving}
             />
             
