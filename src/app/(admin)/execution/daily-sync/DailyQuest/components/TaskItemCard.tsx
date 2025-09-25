@@ -35,7 +35,9 @@ const TaskItemCard = ({
         ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60' 
         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
     }`}>
-      <div className="flex items-center justify-between mb-2">
+      
+      {/* Title and Checkbox */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {onSetActiveTask ? (
             <button
@@ -167,7 +169,9 @@ const TaskItemCard = ({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between">
+
+      {/* Quest & Target */}
+      {/* <div className="flex items-center justify-between">
         {item.quest_title && (
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.quest_title}
@@ -212,7 +216,7 @@ const TaskItemCard = ({
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
