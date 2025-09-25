@@ -29,6 +29,9 @@ const TaskItemCard = ({
 
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   
+  // Debug: log state changes
+  console.log('isUpdatingStatus:', isUpdatingStatus, 'isCompleted:', isCompleted);
+  
   return (
     <div className={`rounded-lg p-4 shadow-sm border mb-3 transition-all duration-200 ${
       isCompleted 
@@ -122,27 +125,23 @@ const TaskItemCard = ({
               <Spinner size={16} colorClass="border-brand-500" />
             ) : (
               <button
-              type="button"
-              disabled={isUpdatingStatus}
-              onClick={async () => {
-                const newStatus = isCompleted ? 'TODO' : 'DONE';
-                
-                // Optimistic update - update UI immediately
-                setOptimisticStatus(newStatus);
-                setIsUpdatingStatus(true);
-                
-                try {
-                  await onStatusChange(item.id, newStatus);
-                  // Clear optimistic status after successful update
-                  setOptimisticStatus(null);
-                } catch (error) {
-                  // Revert optimistic update on error
-                  setOptimisticStatus(null);
-                  console.error('Error updating status:', error);
-                } finally {
-                  setIsUpdatingStatus(false);
-                }
-              }}
+                type="button"
+                disabled={isUpdatingStatus}
+                onClick={async () => {
+                  const newStatus = isCompleted ? 'TODO' : 'DONE';
+                  
+                  // Set loading state first (no optimistic update)
+                  console.log('Setting isUpdatingStatus to true');
+                  setIsUpdatingStatus(true);
+                  
+                  try {
+                    await onStatusChange(item.id, newStatus);
+                  } catch (error) {
+                    console.error('Error updating status:', error);
+                  } finally {
+                    setIsUpdatingStatus(false);
+                  }
+                }}
               className={`w-8 h-8 rounded focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors border border-gray-300 ${
                 isCompleted
                   ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
