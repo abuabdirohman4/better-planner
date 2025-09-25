@@ -43,7 +43,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
   taskTitle?: string;
   duration: number;
 }) => void) {
-  const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete } = useTimer();
+  const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete, isProcessingCompletion, setProcessingCompletion } = useTimer();
   const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
   const [, startTransition] = useTransition();
 
@@ -71,6 +71,9 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
     startTime: string;
     endTime: string;
   }) => {
+    // ✅ Set loading state
+    setProcessingCompletion(true);
+    
     startTransition(async () => {
       try {
         if (!sessionData.taskId || !sessionData.type || !sessionData.startTime || !sessionData.endTime) {
@@ -143,9 +146,12 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         }
       } catch (err) {
         console.error('Error logging session:', err);
+      } finally {
+        // ✅ Clear loading state
+        setProcessingCompletion(false);
       }
     });
-  }, [selectedDateStr, setActivityLogRefreshKey, openJournalModal]);
+  }, [selectedDateStr, setActivityLogRefreshKey, openJournalModal, setProcessingCompletion]);
 
   const handleSetActiveTask = (task: { id: string; title: string; item_type: string; focus_duration?: number }) => {
     startFocusSession(task);

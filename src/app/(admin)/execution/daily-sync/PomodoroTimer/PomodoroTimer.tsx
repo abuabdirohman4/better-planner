@@ -5,6 +5,7 @@ import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
 import { useTimerPersistence } from './hooks/useTimerPersistence';
 import SoundSelector from './components/SoundSelector';
+import Spinner from '@/components/ui/spinner/Spinner';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
@@ -75,6 +76,7 @@ export default function PomodoroTimer() {
     pauseTimer,
     resumeTimer,
     stopTimer,
+    isProcessingCompletion,
   } = useTimer();
   
   // Initialize timer persistence
@@ -145,6 +147,12 @@ export default function PomodoroTimer() {
           ⚠️ You're offline - timer will sync when online
         </div>
       )}
+      {isProcessingCompletion && (
+        <div className="mb-2 flex items-center justify-center space-x-2 text-xs text-green-500">
+          <Spinner className="h-3 w-3" />
+          <span>Processing completion... One Minute Journal will appear shortly</span>
+        </div>
+      )}
       
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className="flex gap-5">
@@ -179,7 +187,7 @@ export default function PomodoroTimer() {
           {/* Judul dan subjudul */}
           {activeTask ? <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div> : null}
 
-          {/* Tombol Cancel */}
+          {/* Tombol Stop */}
           {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
             <Button
               variant="outline"
@@ -187,7 +195,7 @@ export default function PomodoroTimer() {
               className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
               onClick={stopTimer}
             >
-              Cancel
+              Stop
             </Button>
           )}
         </div>

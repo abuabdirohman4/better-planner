@@ -30,6 +30,7 @@ interface TimerStoreState {
   breakType: 'SHORT' | 'LONG' | null;
   lastSessionComplete: SessionCompleteData | null;
   startTime: string | null;
+  isProcessingCompletion: boolean;
   startFocusSession: (task: Task) => void;
   startBreak: (type: 'SHORT' | 'LONG') => void;
   pauseTimer: () => void;
@@ -37,6 +38,7 @@ interface TimerStoreState {
   stopTimer: () => void;
   resetTimer: () => void;
   setLastSessionComplete: (data: SessionCompleteData | null) => void;
+  setProcessingCompletion: (isProcessing: boolean) => void;
   incrementSeconds: () => void;
   resumeFromDatabase: (sessionData: {
     taskId: string;
@@ -69,6 +71,7 @@ export const useTimerStore = create<TimerStoreState>()(
       breakType: null,
       lastSessionComplete: null,
       startTime: null,
+      isProcessingCompletion: false,
 
       startFocusSession: (task: Task) => set({
         activeTask: task,
@@ -132,6 +135,8 @@ export const useTimerStore = create<TimerStoreState>()(
       }),
 
       setLastSessionComplete: (data: SessionCompleteData | null) => set({ lastSessionComplete: data }),
+
+      setProcessingCompletion: (isProcessing: boolean) => set({ isProcessingCompletion: isProcessing }),
 
       incrementSeconds: () => set((state) => {
         const newSeconds = Math.round(state.secondsElapsed + 1);
