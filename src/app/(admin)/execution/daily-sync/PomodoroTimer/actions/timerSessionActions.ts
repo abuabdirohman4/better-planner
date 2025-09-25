@@ -483,20 +483,16 @@ export async function calculateActualElapsedTime(sessionId: string) {
       };
     }
     
-    // ✅ FIX: If still within target duration, use conservative approach
-    const lastKnownDuration = session.current_duration_seconds || 0;
-    const maxIncrement = 2 * 60; // 2 minutes max increment per recovery
-    
-    // Use conservative calculation for remaining time
-    const reasonableElapsed = Math.min(timeSinceStart, lastKnownDuration + maxIncrement);
-    const newDuration = Math.min(reasonableElapsed, targetDuration);
+    // ✅ FIX: Use actual elapsed time for accurate timer display
+    // This ensures timer shows correct time when app is reopened
+    const newDuration = Math.min(timeSinceStart, targetDuration);
     
     return {
       actualElapsedSeconds: timeSinceStart,
       cappedElapsedSeconds: newDuration,
       shouldComplete: newDuration >= session.target_duration_seconds,
       status: session.status,
-      lastKnownDuration,
+      lastKnownDuration: session.current_duration_seconds || 0,
       timeSinceLastUpdate: timeSinceStart
     };
   } catch (error) {

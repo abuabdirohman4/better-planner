@@ -203,7 +203,7 @@ export function useTimerPersistence() {
                 taskId: activeSession.task_id,
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
-                duration: result.elapsedSeconds, // Use the completed duration
+                duration: result.elapsedSeconds, // ✅ Use elapsed seconds
                 status: 'COMPLETED'
               });
             } else {
@@ -213,7 +213,7 @@ export function useTimerPersistence() {
                 taskId: activeSession.task_id,
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
-                currentDuration: result.elapsedSeconds, // ✅ Use server-calculated value
+                currentDuration: result.elapsedSeconds, // ✅ Use elapsed seconds
                 status: activeSession.status
               });
             }
