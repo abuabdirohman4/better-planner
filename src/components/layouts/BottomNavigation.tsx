@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, TaskIcon, CalenderIcon } from "@/lib/icons";
+import { GridIcon, TaskIcon, CalenderIcon, PieChartIcon } from "@/lib/icons";
 
 interface NavItem {
   href: string;
@@ -31,6 +31,12 @@ const navItems: NavItem[] = [
     label: "Weekly Sync",
     icon: <CalenderIcon />,
     activeIcon: <CalenderIcon />,
+  },
+  {
+    href: "/planning/main-quests",
+    label: "Main Quests",
+    icon: <PieChartIcon />,
+    activeIcon: <PieChartIcon />,
   },
 ];
 

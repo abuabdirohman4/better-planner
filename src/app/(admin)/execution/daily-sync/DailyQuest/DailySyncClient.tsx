@@ -8,6 +8,8 @@ import SideQuestListSection from './SideQuestListSection';
 import MainQuestModal from './components/MainQuestModal';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { DailySyncClientProps } from './types';
+import CollapsibleCard from '@/components/common/CollapsibleCard';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 const DailySyncClient: React.FC<DailySyncClientProps> = ({ 
   year, 
@@ -22,6 +24,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   refreshSessionKey, 
   forceRefreshTaskId 
 }) => {
+  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
+  
   const {
     dailyPlan: hookDailyPlan,
     weeklyTasks: hookWeeklyTasks,
@@ -58,37 +62,50 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   return (
     <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 main-quest-card">
-          <MainQuestListSection
-            title="Main Quest"
-            items={groupedItems['MAIN_QUEST']}
-            onStatusChange={handleStatusChange}
-            onSelectTasks={handleOpenModal}
-            onSetActiveTask={onSetActiveTask}
-            selectedDate={selectedDate}
-            onTargetChange={handleTargetChange}
-            onFocusDurationChange={handleFocusDurationChange}
-            completedSessions={completedSessions}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
-            showAddQuestButton={true}
-          />
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 side-quest-card">
-          <SideQuestListSection
-            title="Side Quest"
-            items={groupedItems['SIDE_QUEST']}
-            onStatusChange={handleStatusChange}
-            onAddSideQuest={handleAddSideQuest}
-            onSetActiveTask={onSetActiveTask}
-            selectedDate={selectedDate}
-            onTargetChange={handleTargetChange}
-            onFocusDurationChange={handleFocusDurationChange}
-            completedSessions={completedSessions}
-            refreshSessionKey={refreshSessionKey}
-            forceRefreshTaskId={forceRefreshTaskId}
-          />
-        </div>
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.mainQuest}
+          onToggle={() => toggleCardCollapsed('mainQuest')}
+          className="main-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <MainQuestListSection
+              title="Main Quest"
+              items={groupedItems['MAIN_QUEST']}
+              onStatusChange={handleStatusChange}
+              onSelectTasks={handleOpenModal}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
+              showAddQuestButton={true}
+            />
+          </div>
+        </CollapsibleCard>
+        
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.sideQuest}
+          onToggle={() => toggleCardCollapsed('sideQuest')}
+          className="side-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <SideQuestListSection
+              title="Side Quest"
+              items={groupedItems['SIDE_QUEST']}
+              onStatusChange={handleStatusChange}
+              onAddSideQuest={handleAddSideQuest}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
+            />
+          </div>
+        </CollapsibleCard>
       </div>
       
       <MainQuestModal

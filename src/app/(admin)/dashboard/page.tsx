@@ -54,7 +54,7 @@ async function DashboardContent() {
 
         {/* Mobile Cards - Only visible on mobile */}
         <div className="col-span-12 md:hidden">
-          <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-2 gap-4 mt-4">
             {/* Vision Card */}
             <Link 
               href="/planning/vision"
@@ -82,7 +82,7 @@ async function DashboardContent() {
             </Link>
 
             {/* Main Quests Card */}
-            <Link 
+            {/* <Link 
               href="/planning/main-quests"
               className="block bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 hover:shadow-xl transition-all"
             >
@@ -92,7 +92,7 @@ async function DashboardContent() {
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Main Quests</h3>
               </div>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

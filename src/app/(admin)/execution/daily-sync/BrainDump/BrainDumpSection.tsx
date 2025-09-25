@@ -5,6 +5,8 @@ import { useBrainDump } from './hooks/useBrainDump';
 import { toast } from 'sonner';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
 import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor';
+import CollapsibleCard from '@/components/common/CollapsibleCard';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 interface BrainDumpSectionProps {
   date: string;
@@ -12,6 +14,7 @@ interface BrainDumpSectionProps {
 
 const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   const [content, setContent] = useState('');
+  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
 
   const {
     brainDump,
@@ -54,7 +57,7 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   if (error) {
     return (
       <div className="mt-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5  shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Brain Dump</h3>
           <div className="text-center py-8 text-red-500">
             Error: {error}
@@ -66,19 +69,23 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
 
   return (
     <div className="mt-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Brain Dump</h3>
-            <Tooltip
-              content="Brain Dump ini adalah bagian untuk mengisi buah pikir apapun yang muncul sepanjang hari, yang mungkin bisa memberikan Anda ide, atau mungkin akan Anda lakukan suatu hari. Ide-ide menarik bisa muncul, jangan sia-siakan dengan membiarkannya hilang atau membiarkannya terus menghantui pikiran Anda sehingga sulit fokus mengerjakan rencana Anda. Tuliskan di bagian ini, Anda akan membebaskan energi dan menyimpan dengan baik untuk keperluan di masa yang akan datang."
-              position="right"
-              maxWidth="400px"
-              trigger="hover"
-              showIcon={true}
-            />
+      <CollapsibleCard
+        isCollapsed={cardCollapsed.brainDump}
+        onToggle={() => toggleCardCollapsed('brainDump')}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5  shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Brain Dump</h3>
+              <Tooltip
+                content="Brain Dump ini adalah bagian untuk mengisi buah pikir apapun yang muncul sepanjang hari, yang mungkin bisa memberikan Anda ide, atau mungkin akan Anda lakukan suatu hari. Ide-ide menarik bisa muncul, jangan sia-siakan dengan membiarkannya hilang atau membiarkannya terus menghantui pikiran Anda sehingga sulit fokus mengerjakan rencana Anda. Tuliskan di bagian ini, Anda akan membebaskan energi dan menyimpan dengan baik untuk keperluan di masa yang akan datang."
+                position="right"
+                maxWidth="400px"
+                trigger="hover"
+                showIcon={true}
+              />
+            </div>
           </div>
-        </div>
 
         {/* Brain dump textarea */}
         {isLoading ? (
@@ -110,7 +117,8 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
             </button>
           </div>
         )}
-      </div>
+        </div>
+      </CollapsibleCard>
     </div>
   );
 };

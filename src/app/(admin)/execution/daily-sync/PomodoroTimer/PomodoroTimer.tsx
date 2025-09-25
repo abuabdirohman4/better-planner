@@ -122,7 +122,7 @@ export default function PomodoroTimer() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      <div className="absolute right-[26px] top-[26px]">
+      <div className="absolute right-[68px] top-[24px]">
         {/* Sound Settings */}
         <button
           onClick={() => setShowSoundSelector(true)}

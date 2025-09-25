@@ -17,6 +17,8 @@ import { DailyPlan } from './DailyQuest/types';
 import { getWeekDates } from '@/lib/dateUtils';
 import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
 import { useJournal } from './Journal/hooks/useJournal';
+import CollapsibleCard from '@/components/common/CollapsibleCard';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 export default function DailySyncPage() {
   const {
@@ -61,6 +63,9 @@ export default function DailySyncPage() {
   } = useJournal();
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr, openJournalModal);
+  
+  // Card collapse states
+  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
   
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
@@ -111,10 +116,15 @@ export default function DailySyncPage() {
           ) : (
             <>
               <div className="block md:hidden mb-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 relative">
-                  <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                  <PomodoroTimer />
-                </div>
+                <CollapsibleCard
+                  isCollapsed={cardCollapsed.pomodoroTimer}
+                  onToggle={() => toggleCardCollapsed('pomodoroTimer')}
+                >
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
+                    <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+                    <PomodoroTimer />
+                  </div>
+                </CollapsibleCard>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,15 +145,28 @@ export default function DailySyncPage() {
                 </div>
                 <div className="flex flex-col gap-6">
                   <div className="hidden md:block">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
-                      <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                      <PomodoroTimer />
+                    <CollapsibleCard
+                      isCollapsed={cardCollapsed.pomodoroTimer}
+                      onToggle={() => toggleCardCollapsed('pomodoroTimer')}
+                    >
+                      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
+                        <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+                        <PomodoroTimer />
+                      </div>
+                    </CollapsibleCard>
+                  </div>
+                  <CollapsibleCard
+                    isCollapsed={cardCollapsed.activityLog}
+                    onToggle={() => toggleCardCollapsed('activityLog')}
+                    className="h-full flex flex-col"
+                  >
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+                      <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
+                      <div className="flex-1">
+                        <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                    <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Aktivitas Hari Ini</h3>
-                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
-                  </div>
+                  </CollapsibleCard>
                 </div>
               </div>
               <BrainDumpSection date={selectedDateStr} />

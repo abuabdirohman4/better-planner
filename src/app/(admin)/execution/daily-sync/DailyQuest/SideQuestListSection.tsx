@@ -97,10 +97,10 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
         <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{title}</h3>
         
         {/* Toggle Show/Hide Completed Button */}
-        <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+        <div className="relative mr-8" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
           <button
             onClick={toggleShowCompletedTasks}
-            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="mt-0.5 p-1.25 text-gray-500 rounded rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
           >
             {showCompletedTasks ? (
               <EyeIcon className="w-5 h-5" />
