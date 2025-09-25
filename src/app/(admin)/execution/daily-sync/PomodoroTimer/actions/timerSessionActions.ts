@@ -2,41 +2,19 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { getClientDeviceId } from '../hooks/deviceUtils';
 
 // Generate unique device ID
 function getDeviceId(): string {
   if (typeof window !== 'undefined') {
-    // CLIENT-SIDE: Generate device ID based on browser + device info
-    let deviceId = localStorage.getItem('device-id');
-    if (!deviceId) {
-      // Create more meaningful device ID
-      const userAgent = navigator.userAgent;
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-      const browser = getBrowserName(userAgent);
-      const deviceType = isMobile ? 'mobile' : 'desktop';
-      
-      // Generate UUID but prefix with device info
-      const uuid = crypto.randomUUID();
-      deviceId = `${deviceType}-${browser}-${uuid.substring(0, 8)}`;
-      localStorage.setItem('device-id', deviceId);
-    }
-    return deviceId;
+    // CLIENT-SIDE: Use centralized device ID function
+    return getClientDeviceId();
   }
   // SERVER-SIDE: Generate meaningful device ID based on request context
   // This will be called from server actions, so we need to generate a unique ID
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 8);
   return `server-${timestamp}-${random}`;
-}
-
-// Helper function to detect browser
-function getBrowserName(userAgent: string): string {
-  if (userAgent.includes('Chrome')) return 'chrome';
-  if (userAgent.includes('Firefox')) return 'firefox';
-  if (userAgent.includes('Safari')) return 'safari';
-  if (userAgent.includes('Edge')) return 'edge';
-  if (userAgent.includes('Arc')) return 'arc';
-  return 'unknown';
 }
 
 export async function saveTimerSession(sessionData: {

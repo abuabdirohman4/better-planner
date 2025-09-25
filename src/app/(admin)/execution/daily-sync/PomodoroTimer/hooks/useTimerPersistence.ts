@@ -85,4 +85,4 @@ export function useTimerPersistence() {
 
 // Re-export utilities for external use
 export { resetTimerPersistence } from './globalState';
-export { getClientDeviceId, isMobileDevice } from './deviceUtils';
+export { getClientDeviceId } from './deviceUtils';

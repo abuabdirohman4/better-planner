@@ -20,8 +20,8 @@ export function getClientDeviceId(): string {
   return deviceId;
 }
 
-// Helper function to detect browser
-export function getBrowserName(userAgent: string): string {
+// Helper function to detect browser (internal use only)
+function getBrowserName(userAgent: string): string {
   if (userAgent.includes('Chrome')) return 'chrome';
   if (userAgent.includes('Firefox')) return 'firefox';
   if (userAgent.includes('Safari')) return 'safari';
@@ -30,8 +30,3 @@ export function getBrowserName(userAgent: string): string {
   return 'unknown';
 }
 
-// Check if device is mobile
-export function isMobileDevice(): boolean {
-  if (typeof window === 'undefined') return false;
-  return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
