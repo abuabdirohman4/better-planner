@@ -157,7 +157,7 @@ export const useTimerStore = create<TimerStoreState>()(
             
             // Play completion sound
             const soundSettings = useSoundStore.getState().settings;
-            if (soundSettings.enabled) {
+            if (soundSettings.soundId !== 'none') {
               playTimerCompleteSound(
                 soundSettings.soundId,
                 soundSettings.volume,
