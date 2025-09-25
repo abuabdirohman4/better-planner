@@ -222,9 +222,7 @@ export function useDailyPlanManagement(
         }
 
         // Update both daily_plan_items and tasks status
-        // setTimeout(async () => {
-          await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
-        // }, 2000);
+        await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
         
         // Trigger refresh of optimized data instead of individual API call
         if (mutate) {

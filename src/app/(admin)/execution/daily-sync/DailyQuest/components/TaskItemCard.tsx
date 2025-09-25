@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
@@ -27,10 +27,15 @@ const TaskItemCard = ({
   const [isUpdatingFocus, setIsUpdatingFocus] = useState(false);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
 
+  // Debug: Track state changes
+  React.useEffect(() => {
+    console.log('isUpdatingStatus changed to:', isUpdatingStatus, 'for item:', item.id);
+  }, [isUpdatingStatus, item.id]);
+
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   
   // Debug: log state changes
-  console.log('isUpdatingStatus:', isUpdatingStatus, 'isCompleted:', isCompleted);
+  console.log('TaskItemCard render - isUpdatingStatus:', isUpdatingStatus, 'isCompleted:', isCompleted, 'item.id:', item.id);
   
   return (
     <div className={`rounded-lg p-4 shadow-sm border mb-3 transition-all duration-200 ${
@@ -121,9 +126,21 @@ const TaskItemCard = ({
           
           {/* Custom Checkbox untuk status dengan loading indicator */}
           <div className="flex items-center">
-            {isUpdatingStatus ? (
-              <Spinner size={16} colorClass="border-brand-500" />
-            ) : (
+            {(() => {
+              console.log('Conditional check - isUpdatingStatus:', isUpdatingStatus);
+              if (isUpdatingStatus) {
+                console.log('Rendering spinner for item:', item.id);
+                return (
+                  <div className="w-8 h-8 flex items-center justify-center bg-red-100 border border-red-300 rounded relative z-50">
+                    <Spinner size={20} colorClass="border-blue-500" />
+                    <span className="text-xs text-red-600 ml-1">Loading</span>
+                    {/* Debug: Force visible */}
+                    <div className="absolute inset-0 bg-yellow-300 opacity-50"></div>
+                  </div>
+                );
+              } else {
+                console.log('Rendering button for item:', item.id);
+                return (
               <button
                 type="button"
                 disabled={isUpdatingStatus}
@@ -131,14 +148,18 @@ const TaskItemCard = ({
                   const newStatus = isCompleted ? 'TODO' : 'DONE';
                   
                   // Set loading state first (no optimistic update)
-                  console.log('Setting isUpdatingStatus to true');
+                  console.log('Setting isUpdatingStatus to true for item:', item.id);
                   setIsUpdatingStatus(true);
+                  console.log('isUpdatingStatus set to true, waiting for async operation...');
                   
                   try {
+                    console.log('Starting onStatusChange for item:', item.id);
                     await onStatusChange(item.id, newStatus);
+                    console.log('onStatusChange completed for item:', item.id);
                   } catch (error) {
                     console.error('Error updating status:', error);
                   } finally {
+                    console.log('Setting isUpdatingStatus to false for item:', item.id);
                     setIsUpdatingStatus(false);
                   }
                 }}
@@ -162,7 +183,9 @@ const TaskItemCard = ({
                 </svg>
               )}
               </button>
-            )}
+                );
+              }
+            })()}
           </div>
         </div>
       </div>
