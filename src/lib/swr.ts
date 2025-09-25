@@ -152,4 +152,34 @@ export const pairwiseKeys = {
   list: (year: number, quarter: number) => [...pairwiseKeys.lists(), year, quarter] as const,
   details: () => [...pairwiseKeys.all, 'detail'] as const,
   detail: (id: string) => [...pairwiseKeys.details(), id] as const,
+};
+
+/**
+ * SWR key generator for brain dumps
+ */
+export const brainDumpKeys = {
+  all: ['brain-dumps'] as const,
+  lists: () => [...brainDumpKeys.all, 'list'] as const,
+  list: (date: string) => [...brainDumpKeys.lists(), date] as const,
+  details: () => [...brainDumpKeys.all, 'detail'] as const,
+  detail: (id: string) => [...brainDumpKeys.details(), id] as const,
+  byDate: (date: string) => [...brainDumpKeys.all, 'by-date', date] as const,
+  byDateRange: (startDate: string, endDate: string) => [...brainDumpKeys.all, 'by-date-range', startDate, endDate] as const,
+};
+
+/**
+ * Centralized data keys export
+ */
+export const dataKeys = {
+  quests: questKeys,
+  milestones: milestoneKeys,
+  tasks: taskKeys,
+  weeklyGoals: weeklyGoalKeys,
+  dailyPlans: dailyPlanKeys,
+  weeklySync: weeklySyncKeys,
+  dailySync: dailySyncKeys,
+  dashboard: dashboardKeys,
+  vision: visionKeys,
+  pairwise: pairwiseKeys,
+  brainDump: brainDumpKeys,
 }; 

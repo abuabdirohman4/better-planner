@@ -15,6 +15,11 @@ export type ErrorContext =
   | 'menyimpan pengaturan suara'
   | 'memuat pengaturan suara'
   | 'mereset pengaturan suara'
+  | 'memuat brain dump'
+  | 'menyimpan brain dump'
+  | 'mengupdate brain dump'
+  | 'menghapus brain dump'
+  | 'memuat data berdasarkan rentang tanggal'
   | 'unknown';
 
 export interface ErrorInfo {

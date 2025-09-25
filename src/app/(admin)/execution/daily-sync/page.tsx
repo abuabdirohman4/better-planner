@@ -146,7 +146,7 @@ export default function DailySyncPage() {
                   </div>
                 </div>
               </div>
-              <BrainDumpSection />
+              <BrainDumpSection date={selectedDateStr} />
             </>
           )}
         </>

@@ -6,6 +6,7 @@ export function formatDateIndo(date: Date): string {
   });
 }
 
+
 export const daysOfWeek: string[] = [
   "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"
 ];
