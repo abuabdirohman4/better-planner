@@ -60,11 +60,6 @@ export async function upsertBrainDump(brainDumpData: CreateBrainDumpData): Promi
       throw new Error('User not authenticated');
     }
 
-    // Validate input
-    if (!brainDumpData.content || !brainDumpData.content.trim()) {
-      throw new Error('Content tidak boleh kosong');
-    }
-
     if (!brainDumpData.date) {
       throw new Error('Tanggal tidak boleh kosong');
     }
@@ -72,7 +67,7 @@ export async function upsertBrainDump(brainDumpData: CreateBrainDumpData): Promi
     const { data, error } = await supabase
       .from('brain_dumps')
       .upsert({
-        content: brainDumpData.content.trim(),
+        content: brainDumpData.content ? brainDumpData.content.trim() : '',
         date: brainDumpData.date,
         user_id: user.id,
         updated_at: new Date().toISOString()

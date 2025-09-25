@@ -44,14 +44,10 @@ export function useBrainDump({ date, autoRefresh = true }: UseBrainDumpOptions):
 
   // Save brain dump (create or update)
   const saveBrainDump = useCallback(async (content: string): Promise<BrainDumpItem | null> => {
-    if (!content || !content.trim()) {
-      throw new Error('Content tidak boleh kosong');
-    }
-
     setIsSaving(true);
     try {
       const brainDump = await upsertBrainDump({
-        content: content.trim(),
+        content: content || '',
         date
       });
 

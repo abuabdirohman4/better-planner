@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBrainDump } from './hooks/useBrainDump';
 import { toast } from 'sonner';
+import Tooltip from '@/components/ui/tooltip/Tooltip';
 
 interface BrainDumpSectionProps {
   date: string;
@@ -29,11 +30,6 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   }, [brainDump]);
 
   const handleSave = async () => {
-    if (!content || !content.trim()) {
-      toast.error('Content tidak boleh kosong');
-      return;
-    }
-
     try {
       await saveBrainDump(content);
       toast.success('Brain dump berhasil disimpan');
@@ -43,7 +39,6 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
     }
   };
 
-
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
   };
@@ -52,7 +47,7 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
     // Cmd+Enter on Mac or Ctrl+Enter on Windows/Linux
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (content && content.trim() && !isSaving) {
+      if (!isSaving) {
         handleSave();
       }
     }
@@ -75,7 +70,16 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
     <div className="mt-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="mb-4">
-          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Brain Dump</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Brain Dump</h3>
+            <Tooltip
+              content="Brain Dump ini adalah bagian untuk mengisi buah pikir apapun yang muncul sepanjang hari, yang mungkin bisa memberikan Anda ide, atau mungkin akan Anda lakukan suatu hari. Ide-ide menarik bisa muncul, jangan sia-siakan dengan membiarkannya hilang atau membiarkannya terus menghantui pikiran Anda sehingga sulit fokus mengerjakan rencana Anda. Tuliskan di bagian ini, Anda akan membebaskan energi dan menyimpan dengan baik untuk keperluan di masa yang akan datang."
+              position="right"
+              maxWidth="400px"
+              trigger="hover"
+              showIcon={true}
+            />
+          </div>
         </div>
 
         {/* Brain dump textarea */}
@@ -89,7 +93,6 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Brain Dump ini adalah bagian untuk mengisi buah pikir apapun yang muncul sepanjang hari, yang mungkin bisa memberikan Anda ide, atau mungkin akan Anda lakukan suatu hari. Ide-ide menarik bisa muncul, jangan sia-siakan dengan membiarkannya hilang atau membiarkannya terus menghantui pikiran Anda sehingga sulit fokus mengerjakan rencana Anda. Tuliskan di bagian ini, Anda akan membebaskan energi dan menyimpan dengan baik untuk keperluan di masa yang akan datang. */}
             <textarea
               value={content}
               onChange={handleContentChange}
@@ -101,12 +104,12 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
             />
             
             <button
-                onClick={handleSave}
-                disabled={!content || !content.trim() || isSaving}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSaving ? 'Menyimpan...' : 'Simpan'}
-              </button>
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSaving ? 'Menyimpan...' : 'Simpan'}
+            </button>
           </div>
         )}
       </div>
