@@ -5,7 +5,6 @@ import { updateSoundSettings, getSoundSettings, resetSoundSettings as resetServe
 export interface SoundSettings {
   soundId: string;
   volume: number;
-  enabled: boolean;
 }
 
 interface SoundStoreState {
@@ -18,8 +17,7 @@ interface SoundStoreState {
 
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'crystal',
-  volume: 0.5,
-  enabled: true
+  volume: 0.5
 };
 
 export const useSoundStore = create<SoundStoreState>()(

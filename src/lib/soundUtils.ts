@@ -15,6 +15,14 @@ export interface SoundOption {
 // Custom sound options using WAV files
 export const SOUND_OPTIONS: SoundOption[] = [
   {
+    id: 'none',
+    name: 'No Sound',
+    type: 'custom',
+    description: 'Silent - no timer sound',
+    emoji: '🔇',
+    filePath: ''
+  },
+  {
     id: 'boxing',
     name: 'Boxing',
     type: 'custom',
@@ -84,6 +92,11 @@ async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {
 // Play sound function
 export async function playSound(soundId: string, volume: number = 0.5): Promise<void> {
   try {
+    // Handle "No Sound" option
+    if (soundId === 'none') {
+      return; // Silent - no sound played
+    }
+
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
     if (!audioContext) {

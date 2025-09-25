@@ -7,7 +7,6 @@ import { handleApiError } from '@/lib/errorUtils';
 export interface SoundSettings {
   soundId: string;
   volume: number;
-  enabled: boolean;
 }
 
 export interface UserProfile {
@@ -20,8 +19,7 @@ export interface UserProfile {
 
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'children',
-  volume: 0.5,
-  enabled: true
+  volume: 0.5
 };
 
 /**

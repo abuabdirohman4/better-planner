@@ -19,7 +19,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, loadSettings]);
 
-
   if (!isOpen) return null;
 
   const handleSoundSelect = async (soundId: string) => {
@@ -30,10 +29,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
 
   const handleVolumeChange = (volume: number) => {
     updateSettings({ volume: volume / 100 });
-  };
-
-  const handleToggleEnabled = () => {
-    updateSettings({ enabled: !settings.enabled });
   };
 
   const playPreview = async (soundId: string) => {
@@ -83,7 +78,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
           border-radius: 4px;
         }
       `}</style>
-      
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
@@ -109,22 +103,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
             </span>
           </div>
         )}
-
-        {/* Enable/Disable Toggle */}
-        <div className="mb-6">
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={settings.enabled}
-              onChange={handleToggleEnabled}
-              disabled={isLoading}
-              className="w-5 h-5 text-brand-500 bg-gray-100 border-gray-300 rounded focus:ring-brand-500 focus:ring-2 disabled:opacity-50"
-            />
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Enable timer sounds
-            </span>
-          </label>
-        </div>
 
         {/* Sound Options */}
         <div className="space-y-3 mb-6">
