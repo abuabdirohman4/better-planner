@@ -4,6 +4,7 @@ import { useActivityStore } from '@/stores/activityStore';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
+import { createClient } from '@/lib/supabase/client';
 
 export function useTimerManagement(selectedDateStr: string, openJournalModal: (data: {
   activityId?: string;
@@ -53,6 +54,8 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         }
 
         // ✅ FIX: Use completeTimerSession for FOCUS sessions
+        let activityLogId: string | undefined = undefined;
+        
         if (sessionData.type === 'FOCUS') {
           try {
             // Get active timer session
@@ -63,6 +66,27 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
               // Complete the timer session (this will create activity log and mark session as completed)
               await completeTimerSession(activeSession.id, deviceId);
               console.log('✅ Timer session completed successfully');
+              
+              // ✅ FIX: Get the activity log ID after creation
+              const supabase = await createClient();
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                const { data: activityLog } = await supabase
+                  .from('activity_logs')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('task_id', sessionData.taskId)
+                  .eq('start_time', sessionData.startTime)
+                  .eq('type', 'FOCUS')
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .single();
+                
+                if (activityLog) {
+                  activityLogId = activityLog.id;
+                  console.log('✅ Activity log ID found:', activityLogId);
+                }
+              }
             } else {
               // Fallback to old method if no active session found
               console.log('⚠️ No active session found, using fallback method');
@@ -73,7 +97,11 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
               formData.append('date', selectedDateStr);
               formData.append('startTime', sessionData.startTime);
               formData.append('endTime', sessionData.endTime);
-              await logActivity(formData);
+              const result = await logActivity(formData);
+              if (result && result.id) {
+                activityLogId = result.id;
+                console.log('✅ Activity log ID from fallback:', activityLogId);
+              }
             }
           } catch (error) {
             console.error('Error completing timer session:', error);
@@ -85,7 +113,11 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
             formData.append('date', selectedDateStr);
             formData.append('startTime', sessionData.startTime);
             formData.append('endTime', sessionData.endTime);
-            await logActivity(formData);
+            const result = await logActivity(formData);
+            if (result && result.id) {
+              activityLogId = result.id;
+              console.log('✅ Activity log ID from error fallback:', activityLogId);
+            }
           }
         } else {
           // For break sessions, use old method
@@ -102,11 +134,12 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         setActivityLogRefreshKey((k) => k + 1);
         useActivityStore.getState().triggerRefresh();
         
-        // Open journal modal for FOCUS sessions only
+        // ✅ FIX: Open journal modal for FOCUS sessions only, with activity log ID
         if (sessionData.type === 'FOCUS') {
           const durationInSeconds = Math.round((new Date(sessionData.endTime).getTime() - new Date(sessionData.startTime).getTime()) / 1000);
           const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
           openJournalModal({
+            activityId: activityLogId, // ✅ Pass the activity log ID
             taskId: sessionData.taskId,
             date: selectedDateStr,
             startTime: sessionData.startTime,

@@ -51,21 +51,36 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     } catch (error) {
       console.error('Error saving journal:', error);
       
-      // ✅ MOBILE FIX: Better error handling for mobile
+      // ✅ IMPROVED: Better error handling with more specific messages
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
       if (isMobile) {
         // More specific error messages for mobile
-        if (errorMessage.includes('No activity log found')) {
+        if (errorMessage.includes('No activity log found') || errorMessage.includes('PGRST116')) {
           toast.error('Sesi timer tidak ditemukan. Silakan coba lagi.');
         } else if (errorMessage.includes('User not authenticated')) {
           toast.error('Sesi login telah berakhir. Silakan login ulang.');
+        } else if (errorMessage.includes('Database error')) {
+          toast.error('Terjadi kesalahan database. Silakan coba lagi.');
+        } else if (errorMessage.includes('Failed to create activity log')) {
+          toast.error('Gagal membuat log aktivitas. Silakan coba lagi.');
         } else {
           toast.error('Gagal menyimpan jurnal. Periksa koneksi internet Anda.');
         }
       } else {
-        toast.error('Gagal menyimpan jurnal');
+        // Desktop error messages
+        if (errorMessage.includes('No activity log found') || errorMessage.includes('PGRST116')) {
+          toast.error('Sesi timer tidak ditemukan. Silakan coba lagi.');
+        } else if (errorMessage.includes('User not authenticated')) {
+          toast.error('Sesi login telah berakhir. Silakan login ulang.');
+        } else if (errorMessage.includes('Database error')) {
+          toast.error('Terjadi kesalahan database. Silakan coba lagi.');
+        } else if (errorMessage.includes('Failed to create activity log')) {
+          toast.error('Gagal membuat log aktivitas. Silakan coba lagi.');
+        } else {
+          toast.error('Gagal menyimpan jurnal. Silakan coba lagi.');
+        }
       }
     } finally {
       setIsSaving(false);

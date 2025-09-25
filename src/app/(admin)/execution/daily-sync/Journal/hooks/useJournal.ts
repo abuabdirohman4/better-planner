@@ -62,7 +62,7 @@ export const useJournal = () => {
         whatThink
       );
     } else {
-      // ✅ MOBILE FIX: Simplified approach for mobile devices
+      // ✅ FIX: Create activity log first, then update with journal data
       try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -74,7 +74,7 @@ export const useJournal = () => {
           endTime: pendingActivityData.endTime
         });
 
-        // ✅ MOBILE FIX: Direct approach - find activity log directly
+        // ✅ FIX: First try to find existing activity log
         const { data: recentActivity, error: activityError } = await supabase
           .from('activity_logs')
           .select('id')
@@ -87,37 +87,44 @@ export const useJournal = () => {
           .limit(1)
           .single();
 
-        if (activityError) {
+        if (activityError && activityError.code !== 'PGRST116') {
+          // PGRST116 = no rows found, which is expected if activity log doesn't exist yet
           console.error(`📱 [${deviceInfo}] Error finding activity log:`, activityError);
-          
-          // ✅ MOBILE FIX: Try alternative search without exact time match
-          console.log(`📱 [${deviceInfo}] Trying alternative search...`);
-          const { data: alternativeActivity, error: altError } = await supabase
-            .from('activity_logs')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('task_id', pendingActivityData.taskId)
-            .eq('type', 'FOCUS')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+          throw new Error(`Database error: ${activityError.message}`);
+        }
 
-          if (altError) {
-            console.error(`📱 [${deviceInfo}] Alternative search also failed:`, altError);
-            throw new Error(`No activity log found for this session. Please try again.`);
-          }
-
-          if (alternativeActivity) {
-            console.log(`📱 [${deviceInfo}] Found activity log via alternative search:`, alternativeActivity.id);
-            await updateActivityJournal(alternativeActivity.id, whatDone, whatThink);
-          } else {
-            throw new Error('No activity log found for this session');
-          }
-        } else if (recentActivity) {
-          console.log(`📱 [${deviceInfo}] Found activity log:`, recentActivity.id);
+        if (recentActivity) {
+          console.log(`📱 [${deviceInfo}] Found existing activity log:`, recentActivity.id);
           await updateActivityJournal(recentActivity.id, whatDone, whatThink);
         } else {
-          throw new Error('No activity log found for this session');
+          // ✅ FIX: Activity log doesn't exist, create it first
+          console.log(`📱 [${deviceInfo}] Activity log not found, creating new one...`);
+          
+          const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
+          const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
+
+          const { data: newActivity, error: createError } = await supabase
+            .from('activity_logs')
+            .insert({
+              user_id: user.id,
+              task_id: pendingActivityData.taskId,
+              type: 'FOCUS',
+              start_time: pendingActivityData.startTime,
+              end_time: pendingActivityData.endTime,
+              duration_minutes: durationInMinutes,
+              local_date: pendingActivityData.date,
+              what_done: whatDone,
+              what_think: whatThink,
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error(`📱 [${deviceInfo}] Error creating activity log:`, createError);
+            throw new Error(`Failed to create activity log: ${createError.message}`);
+          }
+
+          console.log(`📱 [${deviceInfo}] Created new activity log:`, newActivity.id);
         }
       } catch (error) {
         console.error(`📱 [${deviceInfo}] Journal save failed (attempt ${retryCount + 1}):`, error);
