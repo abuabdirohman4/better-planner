@@ -43,7 +43,7 @@ const DaySelector: React.FC<DaySelectorProps> = ({
   return (
     <div 
       ref={scrollContainerRef}
-      className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide"
+      className="flex items-center gap-2 overflow-x-auto scrollbar-hide"
     >
       {weekDates.map((date, idx) => (
         <button

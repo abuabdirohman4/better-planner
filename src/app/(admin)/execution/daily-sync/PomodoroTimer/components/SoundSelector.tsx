@@ -1,7 +1,7 @@
 'use client';
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSoundStore } from '@/stores/soundStore';
-import { SOUND_OPTIONS, playSound, speakText } from '@/lib/soundUtils';
+import { SOUND_OPTIONS, playSound } from '@/lib/soundUtils';
 
 interface SoundSelectorProps {
   isOpen: boolean;
@@ -11,7 +11,6 @@ interface SoundSelectorProps {
 const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   const { settings, updateSettings, isLoading, loadSettings } = useSoundStore();
   const [isPlaying, setIsPlaying] = useState<string | null>(null);
-  const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load settings from server when component mounts
   useEffect(() => {
@@ -20,14 +19,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, loadSettings]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (volumeTimeoutRef.current) {
-        clearTimeout(volumeTimeoutRef.current);
-      }
-    };
-  }, []);
 
   if (!isOpen) return null;
 
@@ -39,15 +30,6 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
 
   const handleVolumeChange = (volume: number) => {
     updateSettings({ volume: volume / 100 });
-    
-    // Debounced auto-play for volume changes
-    if (volumeTimeoutRef.current) {
-      clearTimeout(volumeTimeoutRef.current);
-    }
-    
-    volumeTimeoutRef.current = setTimeout(async () => {
-      await playPreview(settings.soundId);
-    }, 300); // 300ms delay after user stops dragging
   };
 
   const handleToggleEnabled = () => {
@@ -59,11 +41,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
     
     setIsPlaying(soundId);
     try {
-      if (soundId === 'tts') {
-        speakText('Timer complete! Great work!', settings.volume);
-      } else {
-        await playSound(soundId, settings.volume);
-      }
+      await playSound(soundId, settings.volume);
     } catch (error) {
       console.error('Error playing preview:', error);
     } finally {
@@ -72,8 +50,42 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+    <>
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider::-webkit-slider-track {
+          height: 8px;
+          border-radius: 4px;
+        }
+        
+        .slider::-moz-range-track {
+          height: 8px;
+          border-radius: 4px;
+        }
+      `}</style>
+      
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Timer Sound Settings
@@ -179,7 +191,10 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
             max="100"
             value={Math.round(settings.volume * 100)}
             onChange={(e) => handleVolumeChange(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+            style={{
+              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${settings.volume * 100}%, #e5e7eb ${settings.volume * 100}%, #e5e7eb 100%)`
+            }}
           />
         </div>
 
@@ -201,6 +216,7 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

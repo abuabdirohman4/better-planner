@@ -17,7 +17,7 @@ interface SoundStoreState {
 }
 
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
-  soundId: 'chime',
+  soundId: 'crystal',
   volume: 0.5,
   enabled: true
 };

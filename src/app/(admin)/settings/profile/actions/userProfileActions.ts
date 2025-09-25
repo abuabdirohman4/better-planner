@@ -19,7 +19,7 @@ export interface UserProfile {
 }
 
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
-  soundId: 'chime',
+  soundId: 'children',
   volume: 0.5,
   enabled: true
 };
