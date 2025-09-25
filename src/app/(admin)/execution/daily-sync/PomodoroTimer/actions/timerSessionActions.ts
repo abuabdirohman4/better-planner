@@ -133,11 +133,23 @@ export async function saveTimerSession(sessionData: {
       throw error;
     }
 
-    // Log event
-    await logTimerEvent(data.id, 'sync', {
-      currentDuration: sessionData.currentDuration,
-      status: sessionData.status
-    }, sessionData.deviceId);
+    // ✅ TAMBAHKAN: Log start event untuk session baru, sync event untuk session yang sudah ada
+    if (!existingSession) {
+      // New session - log start event
+      await logTimerEvent(data.id, 'start', {
+        taskId: sessionData.taskId,
+        taskTitle: sessionData.taskTitle,
+        startTime: sessionData.startTime,
+        targetDuration: sessionData.targetDuration,
+        sessionType: sessionData.sessionType
+      }, sessionData.deviceId);
+    } else {
+      // Existing session - log sync event
+      await logTimerEvent(data.id, 'sync', {
+        currentDuration: sessionData.currentDuration,
+        status: sessionData.status
+      }, sessionData.deviceId);
+    }
 
     revalidatePath('/execution/daily-sync');
     return data;
