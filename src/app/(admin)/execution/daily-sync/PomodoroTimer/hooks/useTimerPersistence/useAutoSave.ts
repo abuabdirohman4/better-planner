@@ -2,9 +2,9 @@
 
 import { useEffect, useCallback } from 'react';
 import { useTimer } from '@/stores/timerStore';
-import { saveTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
-import { getClientDeviceId } from './deviceUtils';
-import { getGlobalState, setGlobalLastSaveTime, setGlobalIsSaving } from './globalState';
+import { saveTimerSession, getActiveTimerSession } from '../../actions/timerSessionActions';
+import { getClientDeviceId } from '../deviceUtils';
+import { getGlobalState, setGlobalLastSaveTime, setGlobalIsSaving } from '../globalState';
 
 export function useAutoSave() {
   const { 

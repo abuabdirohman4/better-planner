@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
-import { getActiveTimerSession } from '../actions/timerSessionActions';
-import { getGlobalState } from './globalState';
+import { getActiveTimerSession } from '../../actions/timerSessionActions';
+import { getGlobalState } from '../globalState';
 
 interface UseBrowserEventsProps {
   debouncedSave: () => Promise<void>;

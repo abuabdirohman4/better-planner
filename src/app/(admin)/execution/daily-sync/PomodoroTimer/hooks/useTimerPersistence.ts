@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession } from '../actions/timerSessionActions';
 import { getGlobalState } from './globalState';
-import { useAutoSave } from './useAutoSave';
-import { useRecovery } from './useRecovery';
-import { useOnlineStatus } from './useOnlineStatus';
-import { useBrowserEvents } from './useBrowserEvents';
-import { useRealtimeSync } from './useRealtimeSync';
-import { useTimerActions } from './useTimerActions';
+import { useAutoSave } from './useTimerPersistence/useAutoSave';
+import { useRecovery } from './useTimerPersistence/useRecovery';
+import { useOnlineStatus } from './useTimerPersistence/useOnlineStatus';
+import { useBrowserEvents } from './useTimerPersistence/useBrowserEvents';
+import { useRealtimeSync } from './useTimerPersistence/useRealtimeSync';
+import { useTimerActions } from './useTimerPersistence/useTimerActions';
 
 export function useTimerPersistence() {
   const { 

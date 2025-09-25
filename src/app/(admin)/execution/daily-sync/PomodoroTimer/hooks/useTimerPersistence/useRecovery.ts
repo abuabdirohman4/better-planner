@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useTimerStore } from '@/stores/timerStore';
-import { getActiveTimerSession, updateSessionWithActualTime } from '../actions/timerSessionActions';
-import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from './globalState';
+import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
+import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from '../globalState';
 
 export function useRecovery() {
   const [isRecovering, setIsRecovering] = useState(getGlobalState().recoveryInProgress);

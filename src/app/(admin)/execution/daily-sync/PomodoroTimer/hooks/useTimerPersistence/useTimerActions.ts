@@ -5,7 +5,7 @@ import {
   completeTimerSession,
   pauseTimerSession,
   resumeTimerSession
-} from '../actions/timerSessionActions';
+} from '../../actions/timerSessionActions';
 
 export function useTimerActions() {
   // Handle timer completion
