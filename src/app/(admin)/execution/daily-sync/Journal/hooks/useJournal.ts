@@ -17,6 +17,8 @@ export const useJournal = () => {
     taskTitle?: string;
     duration: number;
   } | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const openJournalModal = useCallback((data: {
     activityId?: string;
@@ -29,6 +31,8 @@ export const useJournal = () => {
   }) => {
     setPendingActivityData(data);
     setIsJournalModalOpen(true);
+    setRetryCount(0); // Reset retry count when opening modal
+    setIsRetrying(false); // Reset retry state
   }, []);
 
   const closeJournalModal = useCallback(() => {
@@ -43,94 +47,35 @@ export const useJournal = () => {
 
     const { whatDone, whatThink } = journalData;
 
+    // ✅ MOBILE FIX: Detect mobile device for better error handling
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const deviceInfo = isMobile ? 'Mobile' : 'Desktop';
+
+    console.log(`📱 [${deviceInfo}] Starting journal save for task:`, pendingActivityData.taskId);
+
     if (pendingActivityData.activityId) {
       // Update existing activity log
+      console.log(`📱 [${deviceInfo}] Updating existing activity log:`, pendingActivityData.activityId);
       await updateActivityJournal(
         pendingActivityData.activityId,
         whatDone,
         whatThink
       );
     } else {
-      // ✅ FIX: Use new function to handle multiple device journal input
+      // ✅ MOBILE FIX: Simplified approach for mobile devices
       try {
-        // First, try to find activity log using new function
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
 
-        // Get session ID from timer_sessions
-        const { data: session, error: sessionError } = await supabase
-          .from('timer_sessions')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('task_id', pendingActivityData.taskId)
-          .eq('start_time', pendingActivityData.startTime)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+        console.log(`📱 [${deviceInfo}] Looking for activity log with data:`, {
+          taskId: pendingActivityData.taskId,
+          startTime: pendingActivityData.startTime,
+          endTime: pendingActivityData.endTime
+        });
 
-        if (sessionError) {
-          console.error('Error finding session:', sessionError);
-          throw sessionError;
-        }
-
-        if (session) {
-          // Get activity log ID using new function
-          const activityLogId = await getActivityLogId(session.id);
-          
-          if (activityLogId) {
-            // Update journal using new function
-            await updateActivityLogJournal(activityLogId, whatDone, whatThink);
-            console.log('✅ Journal updated using new function:', activityLogId);
-          } else {
-            // Fallback to old method
-            console.log('⚠️ No activity log found, using fallback method');
-            const { data: recentActivity, error } = await supabase
-              .from('activity_logs')
-              .select('id')
-              .eq('user_id', user.id)
-              .eq('task_id', pendingActivityData.taskId)
-              .eq('start_time', pendingActivityData.startTime)
-              .eq('end_time', pendingActivityData.endTime)
-              .eq('type', 'FOCUS')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-
-            if (recentActivity) {
-              await updateActivityJournal(recentActivity.id, whatDone, whatThink);
-            } else {
-              throw new Error('No activity log found');
-            }
-          }
-        } else {
-          console.log('⚠️ No session found, using fallback method');
-          const { data: recentActivity, error } = await supabase
-            .from('activity_logs')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('task_id', pendingActivityData.taskId)
-            .eq('start_time', pendingActivityData.startTime)
-            .eq('end_time', pendingActivityData.endTime)
-            .eq('type', 'FOCUS')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (recentActivity) {
-            await updateActivityJournal(recentActivity.id, whatDone, whatThink);
-          } else {
-            throw new Error('No activity log found');
-          }
-        }
-      } catch (newMethodError) {
-        console.error('Error with new journal method, using fallback:', newMethodError);
-        // Fallback to old method
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
-
-        const { data: recentActivity, error: fallbackError } = await supabase
+        // ✅ MOBILE FIX: Direct approach - find activity log directly
+        const { data: recentActivity, error: activityError } = await supabase
           .from('activity_logs')
           .select('id')
           .eq('user_id', user.id)
@@ -142,16 +87,65 @@ export const useJournal = () => {
           .limit(1)
           .single();
 
-        if (recentActivity) {
+        if (activityError) {
+          console.error(`📱 [${deviceInfo}] Error finding activity log:`, activityError);
+          
+          // ✅ MOBILE FIX: Try alternative search without exact time match
+          console.log(`📱 [${deviceInfo}] Trying alternative search...`);
+          const { data: alternativeActivity, error: altError } = await supabase
+            .from('activity_logs')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('task_id', pendingActivityData.taskId)
+            .eq('type', 'FOCUS')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (altError) {
+            console.error(`📱 [${deviceInfo}] Alternative search also failed:`, altError);
+            throw new Error(`No activity log found for this session. Please try again.`);
+          }
+
+          if (alternativeActivity) {
+            console.log(`📱 [${deviceInfo}] Found activity log via alternative search:`, alternativeActivity.id);
+            await updateActivityJournal(alternativeActivity.id, whatDone, whatThink);
+          } else {
+            throw new Error('No activity log found for this session');
+          }
+        } else if (recentActivity) {
+          console.log(`📱 [${deviceInfo}] Found activity log:`, recentActivity.id);
           await updateActivityJournal(recentActivity.id, whatDone, whatThink);
         } else {
-          throw new Error('No activity log found');
+          throw new Error('No activity log found for this session');
         }
+      } catch (error) {
+        console.error(`📱 [${deviceInfo}] Journal save failed (attempt ${retryCount + 1}):`, error);
+        
+        // ✅ MOBILE FIX: Retry mechanism for mobile devices
+        if (isMobile && retryCount < 2) {
+          console.log(`📱 [${deviceInfo}] Retrying journal save... (${retryCount + 1}/2)`);
+          setIsRetrying(true);
+          setRetryCount(prev => prev + 1);
+          
+          // Wait a bit before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Retry the save
+          const result = await saveJournal(journalData);
+          setIsRetrying(false);
+          return result;
+        }
+        
+        // ✅ MOBILE FIX: Better error message for mobile users
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to save journal: ${errorMessage}`);
       }
     }
 
+    console.log(`📱 [${deviceInfo}] Journal saved successfully!`);
     closeJournalModal();
-  }, [pendingActivityData, closeJournalModal]);
+  }, [pendingActivityData, closeJournalModal, retryCount]);
 
   return {
     isJournalModalOpen,
@@ -159,5 +153,7 @@ export const useJournal = () => {
     openJournalModal,
     closeJournalModal,
     saveJournal,
+    isRetrying,
+    retryCount,
   };
 };

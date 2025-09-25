@@ -10,6 +10,8 @@ interface OneMinuteJournalModalProps {
   onSave: (whatDone: string, whatThink: string) => Promise<void>;
   taskTitle?: string;
   duration: number;
+  isRetrying?: boolean;
+  retryCount?: number;
 }
 
 const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
@@ -17,7 +19,9 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
   onClose,
   onSave,
   taskTitle,
-  duration
+  duration,
+  isRetrying = false,
+  retryCount = 0
 }) => {
   const [whatDone, setWhatDone] = useState('');
   const [whatThink, setWhatThink] = useState('');
@@ -46,7 +50,23 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error saving journal:', error);
-      toast.error('Gagal menyimpan jurnal');
+      
+      // ✅ MOBILE FIX: Better error handling for mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      if (isMobile) {
+        // More specific error messages for mobile
+        if (errorMessage.includes('No activity log found')) {
+          toast.error('Sesi timer tidak ditemukan. Silakan coba lagi.');
+        } else if (errorMessage.includes('User not authenticated')) {
+          toast.error('Sesi login telah berakhir. Silakan login ulang.');
+        } else {
+          toast.error('Gagal menyimpan jurnal. Periksa koneksi internet Anda.');
+        }
+      } else {
+        toast.error('Gagal menyimpan jurnal');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -172,7 +192,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
             {isSaving ? (
               <>
                 <Spinner size={16} className="mr-2" />
-                Menyimpan...
+                {isRetrying ? `Mencoba ulang... (${retryCount}/2)` : 'Menyimpan...'}
               </>
             ) : (
               'Simpan'

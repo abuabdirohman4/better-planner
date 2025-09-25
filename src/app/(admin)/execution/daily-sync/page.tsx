@@ -56,6 +56,8 @@ export default function DailySyncPage() {
     closeJournalModal,
     saveJournal,
     openJournalModal,
+    isRetrying,
+    retryCount,
   } = useJournal();
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr, openJournalModal);
@@ -159,6 +161,8 @@ export default function DailySyncPage() {
         }}
         taskTitle={pendingActivityData?.taskTitle}
         duration={pendingActivityData?.duration || 0}
+        isRetrying={isRetrying}
+        retryCount={retryCount}
       />
     </div>
   );

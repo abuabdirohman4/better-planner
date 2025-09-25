@@ -55,3 +55,9 @@
 - [ ] Prompt Install in mobile, blocked by navbar
 - [ ] In mobile view, sign out have not bg color
 - [ ] Mobile responsive with bottom navigation
+
+saya baru baca untuk membuat aplikasi real time itu ada 4 cara yaitu
+1. Ajax
+2. Long Pooling
+3. Server Send Event
+4. Web Socket

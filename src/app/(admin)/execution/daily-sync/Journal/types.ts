@@ -12,6 +12,8 @@ export interface OneMinuteJournalModalProps {
   onSave: (whatDone: string, whatThink: string) => Promise<void>;
   taskTitle?: string;
   duration: number;
+  isRetrying?: boolean;
+  retryCount?: number;
 }
 
 export interface JournalData {

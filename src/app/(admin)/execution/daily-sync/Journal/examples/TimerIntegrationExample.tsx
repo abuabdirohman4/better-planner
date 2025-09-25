@@ -12,6 +12,8 @@ const TimerIntegrationExample: React.FC = () => {
     openJournalModal,
     closeJournalModal,
     saveJournal,
+    isRetrying,
+    retryCount,
   } = useJournal();
 
   // Example function to be called when timer completes
@@ -63,6 +65,8 @@ const TimerIntegrationExample: React.FC = () => {
         }}
         taskTitle={pendingActivityData?.taskTitle}
         duration={pendingActivityData?.duration || 0}
+        isRetrying={isRetrying}
+        retryCount={retryCount}
       />
     </div>
   );
