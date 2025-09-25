@@ -1,5 +1,6 @@
 import React from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
+import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
 import { TaskCardProps } from '../types';
 
@@ -90,9 +91,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
             </div>
             {/* Loading spinner overlay */}
             {isUpdatingFocus && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
+              <Spinner size={16} colorClass="border-blue-500" className="mr-2" />
             )}
           </div>
           
@@ -125,9 +124,7 @@ const TaskItemCard: React.FC<TaskCardProps> = ({
             />
             {/* Loading spinner overlay */}
             {isUpdatingStatus && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
+                <Spinner size={16} colorClass="border-brand-500" />
             )}
           </div>
         </div>
