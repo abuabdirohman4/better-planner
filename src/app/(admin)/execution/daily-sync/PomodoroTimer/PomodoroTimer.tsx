@@ -139,8 +139,7 @@ export default function PomodoroTimer() {
       {/* Status indicators */}
       {isRecovering && (
         <div className="mb-2 flex items-center justify-center space-x-2 text-xs text-blue-500">
-          <Spinner className="h-3 w-3" />
-          🔄 Recovering timer session...
+          <Spinner size={14} className="mr-2" /> Recovering timer session...
         </div>
       )}
       {!isOnline && (
@@ -150,8 +149,7 @@ export default function PomodoroTimer() {
       )}
       {isProcessingCompletion && (
         <div className="mb-2 flex items-center justify-center space-x-2 text-xs text-green-500">
-          <Spinner className="h-3 w-3" />
-          <span>Processing completion...</span>
+          <Spinner size={14} className="mr-2" /> Processing completion...
         </div>
       )}
       
