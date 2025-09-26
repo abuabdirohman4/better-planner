@@ -38,16 +38,6 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => {
-                    console.log('🖱️ Clicking subtask:', {
-                      subtaskId: subtask.id,
-                      subtaskTitle: subtask.title,
-                      isInCurrentSelection,
-                      isInExistingSelection,
-                      parentTaskSelected,
-                      isChecked,
-                      selectedItems,
-                      existingSelectedIds: Array.from(existingSelectedIds)
-                    });
                     handleItemToggle(subtask.id, 'SUBTASK', [], taskId);
                   }}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"

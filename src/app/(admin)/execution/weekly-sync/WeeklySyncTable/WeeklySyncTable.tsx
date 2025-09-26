@@ -35,66 +35,28 @@ export default function WeeklySyncTable({
   const handleModalSave = async (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => {
     if (!selectedSlot) return;
 
-    console.log('💾 handleModalSave called:', {
-      selectedSlot,
-      selectedItems,
-      selectedItemsLength: selectedItems.length,
-      items: selectedItems.map(item => ({ id: item.id, type: item.type }))
-    });
 
     try {
       if (selectedItems.length === 0) {
         // Hapus goal mingguan untuk slot ini
         const goal = goals.find(goal => goal.goal_slot === selectedSlot);
         if (goal) {
-          console.log('🗑️ Removing weekly goal:', goal.id);
           await removeWeeklyGoal(goal.id);
           toast.success('Goal mingguan berhasil dihapus!');
         }
       } else {
-        console.log('💾 Saving weekly goal items:', {
+        await setWeeklyGoalItems({
           year: props.year,
           quarter: props.quarter,
           weekNumber: props.weekNumber,
           goalSlot: selectedSlot,
-          items: selectedItems,
-          selectedItemsDetails: selectedItems.map(item => ({ id: item.id, type: item.type }))
+          items: selectedItems
         });
-        
-        try {
-          console.log('🚀 Calling setWeeklyGoalItems...');
-          
-          // Filter out items that are DONE (not visible in UI)
-          const visibleItems = selectedItems.filter(item => {
-            // For now, we'll keep all items since we don't have access to status here
-            // The filtering should be done in the modal before calling onSave
-            return true;
-          });
-          
-          console.log('📝 Filtered items for saving:', {
-            original: selectedItems.length,
-            filtered: visibleItems.length,
-            items: visibleItems.map(item => ({ id: item.id, type: item.type }))
-          });
-          
-          await setWeeklyGoalItems({
-            year: props.year,
-            quarter: props.quarter,
-            weekNumber: props.weekNumber,
-            goalSlot: selectedSlot,
-            items: visibleItems
-          });
-          console.log('✅ setWeeklyGoalItems completed successfully');
-          toast.success('Goal mingguan berhasil disimpan!');
-        } catch (setError) {
-          console.error('❌ Error in setWeeklyGoalItems:', setError);
-          throw setError; // Re-throw to be caught by outer try-catch
-        }
+        toast.success('Goal mingguan berhasil disimpan!');
       }
       
       // FIXED: Always refresh goals after any operation
       if (onRefreshGoals) {
-        console.log('🔄 Refreshing goals...');
         onRefreshGoals();
       }
     } catch (error) {
@@ -196,11 +158,6 @@ export default function WeeklySyncTable({
               type: 'TASK' as const // Semua item di weekly_goal_items adalah TASK
             }));
             
-            console.log('🔍 Initial selected items for slot', selectedSlot, ':', {
-              currentGoal,
-              items,
-              mappedItems: mappedItems.map(item => ({ id: item.id, type: item.type }))
-            });
             
             return mappedItems;
           })()}

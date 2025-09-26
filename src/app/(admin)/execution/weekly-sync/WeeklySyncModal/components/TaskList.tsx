@@ -51,16 +51,6 @@ export const TaskList: React.FC<TaskListProps> = ({
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => {
-                    console.log('🖱️ Clicking task:', {
-                      taskId: task.id,
-                      taskTitle: task.title,
-                      isInCurrentSelection,
-                      isInExistingSelection,
-                      isChecked,
-                      localSelectedItems,
-                      selectedItems,
-                      existingSelectedIds: Array.from(existingSelectedIds)
-                    });
                     handleItemToggle(task.id, 'TASK', task.subtasks || []);
                   }}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
