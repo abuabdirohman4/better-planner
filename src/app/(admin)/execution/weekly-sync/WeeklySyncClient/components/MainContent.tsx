@@ -67,7 +67,7 @@ export function MainContent({
         />
       </div>
 
-      {/* Kolom 3 Goal Mingguan */}
+      {/* Kolom 3 Quest Week */}
       <MemoizedWeeklySyncTable
         year={year}
         quarter={quarter}

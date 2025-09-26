@@ -17,12 +17,14 @@ export interface GoalRowProps {
   goal: WeeklyGoal | undefined;
   progress: ProgressData;
   onSlotClick: (slotNumber: number) => void;
+  showCompletedTasks: boolean;
 }
 
 export interface HorizontalGoalDisplayProps {
   items: GoalItem[];
   onClick: () => void;
   slotNumber: number;
+  showCompletedTasks: boolean;
 }
 
 export interface ProgressIndicatorProps {

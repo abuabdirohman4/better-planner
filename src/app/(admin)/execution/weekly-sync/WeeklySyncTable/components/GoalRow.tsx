@@ -6,7 +6,7 @@ import HorizontalGoalDisplay from './HorizontalGoalDisplay';
 import ProgressIndicator from './ProgressIndicator';
 import type { GoalRowProps } from '../types';
 
-export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: GoalRowProps) {
+export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showCompletedTasks }: GoalRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
@@ -105,11 +105,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: Goa
                 }`}
               >
                 <div className="pt-2">
-                  <HorizontalGoalDisplay
-                    items={goal.items}
-                    onClick={() => onSlotClick(slotNumber)}
-                    slotNumber={slotNumber}
-                  />
+                        <HorizontalGoalDisplay
+                          items={goal.items}
+                          onClick={() => onSlotClick(slotNumber)}
+                          slotNumber={slotNumber}
+                          showCompletedTasks={showCompletedTasks}
+                        />
                 </div>
               </div>
             </div>
@@ -129,11 +130,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick }: Goa
       {/* Desktop Layout - Side by Side */}
       <td className={`py-4 hidden md:table-cell ${goal && goal.items.length > 0 ? 'px-4' : 'px-7'}`}>
         {goal && goal.items.length > 0 ? (
-          <HorizontalGoalDisplay
-            items={goal.items}
-            onClick={() => onSlotClick(slotNumber)}
-            slotNumber={slotNumber}
-          />
+                        <HorizontalGoalDisplay
+                          items={goal.items}
+                          onClick={() => onSlotClick(slotNumber)}
+                          slotNumber={slotNumber}
+                          showCompletedTasks={showCompletedTasks}
+                        />
         ) : (
           <Button
             size="sm"

@@ -8,7 +8,7 @@ export default function ProgressIndicator({ progress, slotNumber }: ProgressIndi
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600 dark:text-gray-400">Progress Goal {slotNumber}</span>
+        <span className="text-gray-600 dark:text-gray-400">Quest {slotNumber}</span>
         <span className="font-semibold">{progress.percentage}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
