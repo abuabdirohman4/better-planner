@@ -16,9 +16,10 @@ interface TaskProps {
   milestoneNumber: number;
   onOpenSubtask?: (task: Task) => void;
   activeSubTask: Task | null;
+  showCompletedTasks: boolean;
 }
 
-export default function Task({ milestone, milestoneNumber, onOpenSubtask, activeSubTask }: TaskProps) {
+export default function Task({ milestone, milestoneNumber, onOpenSubtask, activeSubTask, showCompletedTasks }: TaskProps) {
   const {
     // State
     tasks,
@@ -41,12 +42,17 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     fetchTasks();
   }, [fetchTasks]);
 
+  // Filter tasks based on showCompletedTasks state
+  const filteredTasks = showCompletedTasks 
+    ? tasks 
+    : tasks.filter(task => task.status !== 'DONE');
+
   return (
     <div className="rounded-lg mb-2">
       <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
       <div className="space-y-2 mb-2">
         {Array.from({ length: 3 }).map((_, idx) => {
-            const task = tasks.find(t => t.display_order === idx + 1);
+            const task = filteredTasks.find(t => t.display_order === idx + 1);
             if (task) {
               return (
                 <TaskItem

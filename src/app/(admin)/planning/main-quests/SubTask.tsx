@@ -87,7 +87,7 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
   };
 }
 
-export default function SubTask({ task, onBack, milestoneId }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; }) {
+export default function SubTask({ task, onBack, milestoneId, showCompletedTasks }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; showCompletedTasks: boolean; }) {
   const { subtasks, setSubtasks, loadingSubtasks, fetchSubtasks } = useSubtaskManagement(task.id);
   const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
   const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, subtasks, setSubtasks);
@@ -119,6 +119,11 @@ export default function SubTask({ task, onBack, milestoneId }: { task: { id: str
     handleBulkPasteEmpty(e, handleSubtaskEnter);
   };
 
+  // Filter subtasks based on showCompletedTasks state
+  const filteredSubtasks = showCompletedTasks 
+    ? subtasks 
+    : subtasks.filter(subtask => subtask.status !== 'DONE');
+
   return (
     <div className="flex-1 mx-auto">
       <ComponentCard 
@@ -129,7 +134,7 @@ export default function SubTask({ task, onBack, milestoneId }: { task: { id: str
         onClose={onBack}
       >
         <SubtaskList
-          subtasks={subtasks}
+          subtasks={filteredSubtasks}
           loadingSubtasks={loadingSubtasks}
           newSubtaskTitle={newSubtaskTitle}
           setNewSubtaskTitle={setNewSubtaskTitle}

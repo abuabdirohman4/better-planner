@@ -21,9 +21,10 @@ interface MilestoneProps {
   questId: string;
   activeSubTask: Task | null;
   onOpenSubtask: (task: Task) => void;
+  showCompletedTasks: boolean;
 }
 
-export default function Milestone({ questId, activeSubTask, onOpenSubtask }: MilestoneProps) {
+export default function Milestone({ questId, activeSubTask, onOpenSubtask, showCompletedTasks }: MilestoneProps) {
   const {
     // State
     milestones,
@@ -94,6 +95,7 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask }: Mil
                 milestoneNumber={activeMilestoneIdx + 1}
                 onOpenSubtask={onOpenSubtask}
                 activeSubTask={activeSubTask}
+                showCompletedTasks={showCompletedTasks}
               />
             )
           })()

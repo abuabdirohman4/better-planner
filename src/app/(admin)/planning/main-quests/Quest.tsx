@@ -20,7 +20,7 @@ interface QuestProps {
   motivation?: string;
 }
 
-export default function Quest({ quest }: { quest: QuestProps }) {
+export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps; showCompletedTasks: boolean }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [showSubTask, setShowSubTask] = useState(false);
@@ -132,6 +132,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
             questId={quest.id}
             activeSubTask={activeSubTask}
             onOpenSubtask={setActiveSubTask}
+            showCompletedTasks={showCompletedTasks}
           />
         </ComponentCard>
       </div>
@@ -145,6 +146,7 @@ export default function Quest({ quest }: { quest: QuestProps }) {
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
             milestoneId=""
+            showCompletedTasks={showCompletedTasks}
           />
         )}
       </div>
