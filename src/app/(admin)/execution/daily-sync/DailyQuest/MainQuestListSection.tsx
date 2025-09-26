@@ -18,11 +18,11 @@ const MainQuestListSection = ({
   forceRefreshTaskId, 
   showAddQuestButton 
 }: TaskColumnProps) => {
-  const { showCompletedTasks, toggleShowCompletedTasks } = useUIPreferencesStore();
+  const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
 
-  // Filter items based on showCompletedTasks state
-  const filteredItems = showCompletedTasks 
+  // Filter items based on showCompletedMainQuest state
+  const filteredItems = showCompletedMainQuest 
     ? items 
     : items.filter(item => item.status !== 'DONE');
 
@@ -34,10 +34,10 @@ const MainQuestListSection = ({
         {/* Toggle Show/Hide Completed Button */}
         <div className="relative mr-9" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
           <button
-            onClick={toggleShowCompletedTasks}
+            onClick={toggleShowCompletedMainQuest}
             className="mt-0.5 p-1.25 text-gray-500 rounded rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
           >
-            {showCompletedTasks ? (
+            {showCompletedMainQuest ? (
               <EyeIcon className="w-5 h-5" />
             ) : (
               <EyeCloseIcon className="w-5 h-5" />
@@ -45,13 +45,12 @@ const MainQuestListSection = ({
           </button>
           
           {/* Custom Tooltip with Arrow */}
-          {isHovering && (
+          {/* {isHovering && (
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap z-20 shadow-lg">
-              {showCompletedTasks ? 'Hide completed' : 'Show completed'}
-              {/* Arrow pointing down */}
+              {showCompletedMainQuest ? 'Hide completed' : 'Show completed'}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -73,7 +72,7 @@ const MainQuestListSection = ({
         {filteredItems.length === 0 ? (
           <div className="text-center text-gray-500 dark:text-gray-400">
             <p className="mb-6 py-8">
-              {showCompletedTasks 
+              {showCompletedMainQuest 
                 ? 'Tidak ada main quest hari ini' 
                 : 'Tidak ada main quest yang belum selesai'
               }

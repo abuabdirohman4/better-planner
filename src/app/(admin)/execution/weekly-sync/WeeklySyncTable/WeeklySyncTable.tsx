@@ -24,8 +24,8 @@ export default function WeeklySyncTable({
   // 🚀 OPTIMIZED: Use client-side progress calculation
   const clientProgress = useWeeklyGoalsProgress(goals);
   
-  // Get showCompletedTasks state from store
-  const { showCompletedTasks, toggleShowCompletedTasks } = useUIPreferencesStore();
+  // Get showCompletedTasks state from store - gunakan state yang terpisah untuk weekly sync
+  const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -95,10 +95,10 @@ export default function WeeklySyncTable({
             {/* Toggle Show/Hide Completed Button */}
             <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
               <button
-                onClick={toggleShowCompletedTasks}
+                onClick={toggleShowCompletedMainQuest}
                 className="p-1.5 text-gray-500 rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
               >
-                {showCompletedTasks ? (
+                {showCompletedMainQuest ? (
                   <EyeIcon className="w-5 h-5" />
                 ) : (
                   <EyeCloseIcon className="w-5 h-5" />
@@ -108,7 +108,7 @@ export default function WeeklySyncTable({
               {/* Custom Tooltip with Arrow */}
               {isHovering && (
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap z-20 shadow-lg">
-                  {showCompletedTasks ? 'Hide completed' : 'Show completed'}
+                  {showCompletedMainQuest ? 'Hide completed' : 'Show completed'}
                   {/* Arrow pointing down */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
                 </div>
@@ -130,7 +130,7 @@ export default function WeeklySyncTable({
                   goal={goal}
                   progress={progress}
                   onSlotClick={handleSlotClick}
-                  showCompletedTasks={showCompletedTasks}
+                  showCompletedTasks={showCompletedMainQuest}
                 />
               );
             })}

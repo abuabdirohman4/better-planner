@@ -16,8 +16,8 @@ export default function MainQuestsClient() {
   const [activeTab, setActiveTab] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   
-  // UI Preferences untuk hide/show completed tasks
-  const { showCompletedTasks, toggleShowCompletedTasks } = useUIPreferencesStore();
+  // UI Preferences untuk hide/show completed tasks - gunakan state yang terpisah untuk planning
+  const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
 
   if (isLoading) {
     return (
@@ -46,10 +46,10 @@ export default function MainQuestsClient() {
             {/* Toggle Show/Hide Completed Button */}
             <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
               <button
-                onClick={toggleShowCompletedTasks}
+                onClick={toggleShowCompletedMainQuest}
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                {showCompletedTasks ? (
+                {showCompletedMainQuest ? (
                   <EyeIcon className="w-5 h-5" />
                 ) : (
                   <EyeCloseIcon className="w-5 h-5" />
@@ -59,7 +59,7 @@ export default function MainQuestsClient() {
               {/* Tooltip */}
               {isHovering && (
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-full mt-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-sm rounded-lg shadow-lg z-50 whitespace-nowrap">
-                  {showCompletedTasks ? 'Sembunyikan task selesai' : 'Tampilkan task selesai'}
+                  {showCompletedMainQuest ? 'Sembunyikan task selesai' : 'Tampilkan task selesai'}
                   {/* Arrow pointing down */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
                 </div>
@@ -90,7 +90,7 @@ export default function MainQuestsClient() {
         <div className="mt-6">
           {quests.map((quest, idx) => (
             <div key={quest.id} style={{ display: activeTab === idx ? 'block' : 'none' }}>
-              <Quest quest={quest} showCompletedTasks={showCompletedTasks} />
+              <Quest quest={quest} showCompletedTasks={showCompletedMainQuest} />
             </div>
           ))}
         </div>

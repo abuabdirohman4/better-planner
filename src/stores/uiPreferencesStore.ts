@@ -2,9 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface UIPreferencesState {
-  showCompletedTasks: boolean;
-  setShowCompletedTasks: (show: boolean) => void;
-  toggleShowCompletedTasks: () => void;
+  // Separate show/hide completed tasks for main quest and side quest
+  showCompletedMainQuest: boolean;
+  showCompletedSideQuest: boolean;
+  setShowCompletedMainQuest: (show: boolean) => void;
+  setShowCompletedSideQuest: (show: boolean) => void;
+  toggleShowCompletedMainQuest: () => void;
+  toggleShowCompletedSideQuest: () => void;
   
   // Card collapse states
   cardCollapsed: {
@@ -21,11 +25,17 @@ interface UIPreferencesState {
 export const useUIPreferencesStore = create<UIPreferencesState>()(
   persist(
     (set) => ({
-      showCompletedTasks: true, // Default to show completed tasks
-      setShowCompletedTasks: (show: boolean) => 
-        set({ showCompletedTasks: show }),
-      toggleShowCompletedTasks: () => 
-        set((state) => ({ showCompletedTasks: !state.showCompletedTasks })),
+      // Separate show/hide completed tasks for main quest and side quest
+      showCompletedMainQuest: true, // Default to show completed main quest tasks
+      showCompletedSideQuest: true, // Default to show completed side quest tasks
+      setShowCompletedMainQuest: (show: boolean) => 
+        set({ showCompletedMainQuest: show }),
+      setShowCompletedSideQuest: (show: boolean) => 
+        set({ showCompletedSideQuest: show }),
+      toggleShowCompletedMainQuest: () => 
+        set((state) => ({ showCompletedMainQuest: !state.showCompletedMainQuest })),
+      toggleShowCompletedSideQuest: () => 
+        set((state) => ({ showCompletedSideQuest: !state.showCompletedSideQuest })),
       
       // Card collapse states - all cards start expanded (false = not collapsed)
       cardCollapsed: {
@@ -52,9 +62,10 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
     }),
     {
       name: 'ui-preferences-storage', // unique name for localStorage key
-      // Persist both showCompletedTasks and cardCollapsed states
+      // Persist both show completed states and cardCollapsed states
       partialize: (state) => ({ 
-        showCompletedTasks: state.showCompletedTasks,
+        showCompletedMainQuest: state.showCompletedMainQuest,
+        showCompletedSideQuest: state.showCompletedSideQuest,
         cardCollapsed: state.cardCollapsed,
       }),
     }

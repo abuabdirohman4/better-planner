@@ -129,7 +129,7 @@ export default function AudioPermissionPrompt({ onPermissionGranted, onSkip }: A
           </button>
           
           <p className="text-gray-500 text-xs leading-relaxed mb-4 bg-gray-50 p-3 rounded-lg">
-            <strong>Note:</strong> Even without browser permission, you can still use focus sounds by open <strong>Sound Settings</strong> and choose any sound. The sound will then play normally for the rest of your session.
+            <strong>Note:</strong> Even without browser permission, you can still use focus sounds by open <strong>Sound Settings</strong> and choose any sound or start any quest. The sound will then play normally for the rest of your session.
           </p>
         </div>
       </div>

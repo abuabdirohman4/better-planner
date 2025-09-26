@@ -1,4 +1,4 @@
-import { useState, useTransition, useRef, useEffect } from 'react';
+import { useState, useTransition, useRef, useEffect, FormEvent } from 'react';
 import TaskItemCard from './components/TaskItemCard';
 import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
@@ -6,7 +6,7 @@ import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
-const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => {
+const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -18,7 +18,7 @@ const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => 
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     
@@ -60,7 +60,7 @@ const SideQuestForm: React.FC<SideQuestFormProps> = ({ onSubmit, onCancel }) => 
 };
 
 // Main SideQuestListSection component
-const SideQuestListSection: React.FC<TaskColumnProps> = ({ 
+const SideQuestListSection = ({ 
   title, 
   items, 
   onStatusChange, 
@@ -74,13 +74,13 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
   refreshSessionKey, 
   forceRefreshTaskId, 
   showAddQuestButton 
-}) => {
+}: TaskColumnProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const { showCompletedTasks, toggleShowCompletedTasks } = useUIPreferencesStore();
+  const { showCompletedSideQuest, toggleShowCompletedSideQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
 
-  // Filter items based on showCompletedTasks state
-  const filteredItems = showCompletedTasks 
+  // Filter items based on showCompletedSideQuest state
+  const filteredItems = showCompletedSideQuest 
     ? items 
     : items.filter(item => item.status !== 'DONE');
 
@@ -99,10 +99,10 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
         {/* Toggle Show/Hide Completed Button */}
         <div className="relative mr-8" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
           <button
-            onClick={toggleShowCompletedTasks}
+            onClick={toggleShowCompletedSideQuest}
             className="mt-0.5 p-1.25 text-gray-500 rounded rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
           >
-            {showCompletedTasks ? (
+            {showCompletedSideQuest ? (
               <EyeIcon className="w-5 h-5" />
             ) : (
               <EyeCloseIcon className="w-5 h-5" />
@@ -110,13 +110,12 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
           </button>
           
           {/* Custom Tooltip with Arrow */}
-          {isHovering && (
+          {/* {isHovering && (
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-0 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap z-20 shadow-lg">
               {showCompletedTasks ? 'Hide completed' : 'Show completed'}
-              {/* Arrow pointing down */}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -135,26 +134,6 @@ const SideQuestListSection: React.FC<TaskColumnProps> = ({
             forceRefreshTaskId={forceRefreshTaskId}
           />
         ))}
-        {filteredItems.length === 0 ? (
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="mb-6 py-8">
-              {showCompletedTasks 
-                ? 'Tidak ada side quest hari ini' 
-                : 'Tidak ada side quest yang belum selesai'
-              }
-            </p>
-            {onAddSideQuest ? (
-              <div className="border-t border-gray-200 pt-4">
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-                >
-                  Tambah Side Quest
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
 
         {showAddForm && onAddSideQuest ? (
           <SideQuestForm

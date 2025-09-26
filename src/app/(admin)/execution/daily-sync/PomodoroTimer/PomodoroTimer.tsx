@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import { useState, useEffect, SVGProps } from 'react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
@@ -58,12 +58,12 @@ function CircularTimer({
   );
 }
 
-const PlayIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const PlayIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 48 48" fill="none" {...props}>
     <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
   </svg>
 );
-const PauseIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const PauseIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 48 48" fill="none" {...props}>
     <rect x="17" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
     <rect x="27" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -97,41 +97,41 @@ export default function PomodoroTimer() {
   const [audioPermissionChecked, setAudioPermissionChecked] = useState(false);
 
   // Check audio permission on component mount (only once)
-  React.useEffect(() => {
-    const checkPermission = async () => {
-      try {
-        // Force refresh settings from database first
-        await loadSettings();
+  // useEffect(() => {
+  //   const checkPermission = async () => {
+  //     try {
+  //       // Force refresh settings from database first
+  //       await loadSettings();
         
-        // Get fresh settings after refresh
-        const freshSettings = useSoundStore.getState().settings;
+  //       // Get fresh settings after refresh
+  //       const freshSettings = useSoundStore.getState().settings;
         
-        // Check if user wants to use focus sound (only this needs browser permission)
-        const wantsFocusSound = freshSettings.focusSoundId !== 'none';
+  //       // Check if user wants to use focus sound (only this needs browser permission)
+  //       const wantsFocusSound = freshSettings.focusSoundId !== 'none';
         
-        // Only check permission if user wants to use focus sound (background audio)
-        if (wantsFocusSound) {
-          const hasPermission = await checkAudioPermission();
+  //       // Only check permission if user wants to use focus sound (background audio)
+  //       if (wantsFocusSound) {
+  //         const hasPermission = await checkAudioPermission();
           
-          if (!hasPermission) {
-            setShowAudioPermissionPrompt(true);
-          }
-        } else {
-          // Force hide prompt if user doesn't want focus sound
-          setShowAudioPermissionPrompt(false);
-        }
-        setAudioPermissionChecked(true);
-      } catch (error) {
-        console.error('Error checking audio permission:', error);
-        setAudioPermissionChecked(true);
-      }
-    };
+  //         if (!hasPermission) {
+  //           setShowAudioPermissionPrompt(true);
+  //         }
+  //       } else {
+  //         // Force hide prompt if user doesn't want focus sound
+  //         setShowAudioPermissionPrompt(false);
+  //       }
+  //       setAudioPermissionChecked(true);
+  //     } catch (error) {
+  //       console.error('Error checking audio permission:', error);
+  //       setAudioPermissionChecked(true);
+  //     }
+  //   };
 
-    // Only check once when component mounts
-    if (!audioPermissionChecked) {
-      checkPermission();
-    }
-  }, [settings.focusSoundId, audioPermissionChecked, loadSettings]); // Add loadSettings dependency
+  //   // Only check once when component mounts
+  //   if (!audioPermissionChecked) {
+  //     checkPermission();
+  //   }
+  // }, [settings.focusSoundId, audioPermissionChecked, loadSettings]); // Add loadSettings dependency
 
   const handleAudioPermissionGranted = () => {
     setShowAudioPermissionPrompt(false);
