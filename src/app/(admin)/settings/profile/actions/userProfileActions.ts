@@ -8,6 +8,7 @@ export interface SoundSettings {
   soundId: string;
   volume: number;
   taskCompletionSoundId: string;
+  focusSoundId: string;
 }
 
 export interface UserProfile {
@@ -21,7 +22,8 @@ export interface UserProfile {
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'children',
   volume: 0.5,
-  taskCompletionSoundId: 'pop-up-notify'
+  taskCompletionSoundId: 'none',
+  focusSoundId: 'none'
 };
 
 /**
@@ -45,13 +47,16 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     if (error) {
       if (error.code === 'PGRST116') {
         // No profile found, return null (will create on first update)
+        console.log('🎵 getUserProfile - No profile found');
         return null;
       }
       throw error;
     }
 
+    console.log('🎵 getUserProfile - Profile found:', data);
     return data;
   } catch (error) {
+    console.error('🎵 getUserProfile error:', error);
     handleApiError(error, 'memuat profil user');
     return null;
   }
@@ -62,6 +67,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
  */
 export async function updateSoundSettings(settings: Partial<SoundSettings>): Promise<void> {
   try {
+    console.log('🎵 updateSoundSettings called with:', settings);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -78,6 +84,7 @@ export async function updateSoundSettings(settings: Partial<SoundSettings>): Pro
 
     const currentSoundSettings = existingProfile?.sound_settings || DEFAULT_SOUND_SETTINGS;
     const updatedSoundSettings = { ...currentSoundSettings, ...settings };
+    
 
     if (existingProfile) {
       // Update existing profile
@@ -121,8 +128,12 @@ export async function updateSoundSettings(settings: Partial<SoundSettings>): Pro
 export async function getSoundSettings(): Promise<SoundSettings> {
   try {
     const profile = await getUserProfile();
-    return profile?.sound_settings || DEFAULT_SOUND_SETTINGS;
+    const settings = profile?.sound_settings || DEFAULT_SOUND_SETTINGS;
+    console.log('🎵 getSoundSettings - profile:', profile);
+    console.log('🎵 getSoundSettings - settings:', settings);
+    return settings;
   } catch (error) {
+    console.error('🎵 getSoundSettings error:', error);
     handleApiError(error, 'memuat pengaturan suara');
     return DEFAULT_SOUND_SETTINGS;
   }

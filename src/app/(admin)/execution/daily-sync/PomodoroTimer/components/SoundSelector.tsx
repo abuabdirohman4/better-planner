@@ -12,8 +12,10 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   const { 
     settings, 
     taskCompletionSettings, 
+    focusSettings,
     updateSettings, 
     updateTaskCompletionSettings, 
+    updateFocusSettings,
     isLoading, 
     loadSettings 
   } = useSoundStore();
@@ -48,10 +50,17 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
     await playPreview(soundId);
   };
 
+  const handleFocusSoundSelect = async (soundId: string) => {
+    await updateFocusSettings({ soundId });
+    // Auto-play sound when selected
+    await playPreview(soundId);
+  };
+
   const handleVolumeChange = (volume: number) => {
     const volumeValue = volume / 100;
     updateSettings({ volume: volumeValue });
     updateTaskCompletionSettings({ volume: volumeValue });
+    updateFocusSettings({ volume: volumeValue });
   };
 
   const playPreview = async (soundId: string) => {
@@ -69,9 +78,17 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
       // Use appropriate volume based on sound type
       const volume = COMPLETION_SOUND_OPTIONS.some(option => option.id === soundId) 
         ? taskCompletionSettings.volume 
+        : FOCUS_SOUND_OPTIONS.some(option => option.id === soundId)
+        ? focusSettings.volume
         : settings.volume;
       
-      await playSound(soundId, volume);
+      // For focus sound, use playFocusSoundLoop instead of playSound
+      if (FOCUS_SOUND_OPTIONS.some(option => option.id === soundId)) {
+        const { playFocusSoundLoop } = await import('@/lib/soundUtils');
+        await playFocusSoundLoop(soundId, volume);
+      } else {
+        await playSound(soundId, volume);
+      }
     } catch (error) {
       console.error('Error playing preview:', error);
     } finally {
@@ -208,9 +225,9 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
                   {FOCUS_SOUND_OPTIONS.map((option) => (
                     <button
                       key={`focus-${option.id}`}
-                      onClick={() => handleSoundSelect(option.id)}
+                      onClick={() => handleFocusSoundSelect(option.id)}
                       className={`flex items-center space-x-2 px-3 py-2 rounded-full border transition-colors ${
-                        settings.soundId === option.id
+                        focusSettings.soundId === option.id
                           ? 'border-yellow-400 bg-yellow-100 dark:bg-yellow-900/20'
                           : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}

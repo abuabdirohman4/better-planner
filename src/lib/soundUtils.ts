@@ -143,6 +143,117 @@ async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {
 // Global audio context and source management
 let globalAudioContext: AudioContext | null = null;
 let currentAudioSource: AudioBufferSourceNode | null = null;
+let focusSoundInterval: NodeJS.Timeout | null = null;
+let audioContextInitialized = false;
+
+// Check if audio permission is granted
+export async function checkAudioPermission(): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const testAudio = new Audio();
+      testAudio.volume = 0.01; // Very quiet test
+      testAudio.muted = true; // Mute to avoid actual sound
+      
+      // Set timeout to prevent hanging
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 3000); // 3 second timeout
+      
+      // Use promise-based approach
+      const playPromise = testAudio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            clearTimeout(timeout);
+            testAudio.pause();
+            resolve(true);
+          })
+          .catch((error) => {
+            clearTimeout(timeout);
+            resolve(false);
+          });
+      } else {
+        // Fallback for older browsers
+        clearTimeout(timeout);
+        resolve(true);
+      }
+    } catch (error) {
+      resolve(false);
+    }
+  });
+}
+
+// Open browser permission settings
+export function openAudioPermissionSettings(): void {
+  const userAgent = navigator.userAgent.toLowerCase();
+  
+  try {
+    if (userAgent.includes('chrome')) {
+      // Chrome - try to open settings, fallback to general settings
+      try {
+        window.open('chrome://settings/content/sound', '_blank');
+      } catch (error) {
+        window.open('chrome://settings/', '_blank');
+      }
+    } else if (userAgent.includes('firefox')) {
+      // Firefox
+      window.open('about:preferences#privacy', '_blank');
+    } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+      // Safari
+      window.open('x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone', '_blank');
+    } else if (userAgent.includes('edge')) {
+      // Edge - try to open settings, fallback to general settings
+      try {
+        window.open('edge://settings/content/sound', '_blank');
+      } catch (error) {
+        window.open('edge://settings/', '_blank');
+      }
+    } else {
+      // Generic fallback - try Chrome settings first
+      try {
+        window.open('chrome://settings/content/sound', '_blank');
+      } catch (error) {
+        alert('Please manually open your browser settings and enable audio permissions for this site.');
+      }
+    }
+  } catch (error) {
+    console.error('Error opening browser settings:', error);
+    // Ultimate fallback - show instructions
+    alert('Please manually open your browser settings and enable audio permissions for this site.');
+  }
+}
+
+// Initialize AudioContext with user interaction
+export function initializeAudioContext(): Promise<void> {
+  return new Promise((resolve) => {
+    if (audioContextInitialized && globalAudioContext && globalAudioContext.state === 'running') {
+      resolve();
+      return;
+    }
+
+    const initAudio = async () => {
+      try {
+        if (!globalAudioContext) {
+          globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        
+        if (globalAudioContext.state === 'suspended') {
+          await globalAudioContext.resume();
+        }
+        
+        audioContextInitialized = true;
+        resolve();
+      } catch (error) {
+        console.error('Failed to initialize AudioContext:', error);
+        resolve(); // Continue anyway
+      }
+    };
+
+    // Try to initialize immediately
+    initAudio();
+  });
+}
 
 // Stop current playing sound
 export function stopCurrentSound(): void {
@@ -154,6 +265,12 @@ export function stopCurrentSound(): void {
     } catch (error) {
       // Source might already be stopped
     }
+  }
+  
+  // Stop focus sound loop
+  if (focusSoundInterval) {
+    clearInterval(focusSoundInterval);
+    focusSoundInterval = null;
   }
 }
 
@@ -256,6 +373,97 @@ export async function playTimerCompleteSound(
 // Get sound option by ID
 export function getSoundOption(soundId: string): SoundOption | undefined {
   return TIMER_SOUND_OPTIONS.find(option => option.id === soundId);
+}
+
+// Play focus sound in loop (for ticking clock during Pomodoro timer)
+export async function playFocusSoundLoop(soundId: string, volume: number = 0.5): Promise<void> {
+  try {
+    // Stop any currently playing sound and focus loop
+    stopCurrentSound();
+
+    // Handle "No Sound" option
+    if (soundId === 'none') {
+      return; // Silent - no sound played
+    }
+
+    // Initialize AudioContext first
+    await initializeAudioContext();
+    
+    if (!globalAudioContext) {
+      console.warn('Web Audio API not supported, falling back to system sound');
+      return;
+    }
+
+    // Resume audio context if suspended (required for user interaction)
+    if (globalAudioContext.state === 'suspended') {
+      try {
+        await globalAudioContext.resume();
+      } catch (error) {
+        console.warn('Failed to resume AudioContext:', error);
+        // Try to create new context
+        globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+    }
+
+    // Find sound option in focus sound options
+    const soundOption = FOCUS_SOUND_OPTIONS.find(option => option.id === soundId);
+    if (!soundOption) {
+      throw new Error(`Focus sound option not found: ${soundId}`);
+    }
+
+    if (soundOption.type === 'custom' && soundOption.filePath) {
+      // Load custom audio file
+      const buffer = await loadCustomAudio(soundOption.filePath);
+      
+      // Play sound in loop every 1 second for ticking clock
+      const playTick = () => {
+        if (focusSoundInterval) { // Check if still playing
+          const source = globalAudioContext!.createBufferSource();
+          const gainNode = globalAudioContext!.createGain();
+          
+          source.buffer = buffer;
+          gainNode.gain.value = volume;
+          
+          source.connect(gainNode);
+          gainNode.connect(globalAudioContext!.destination);
+          
+          source.start();
+        }
+      };
+      
+      // Start the loop
+      focusSoundInterval = setInterval(playTick, 1000); // Every 1 second
+      
+    } else {
+      throw new Error(`Unsupported focus sound type: ${soundOption.type}`);
+    }
+    
+  } catch (error) {
+    console.error('Error playing focus sound loop:', error);
+    
+    // Try fallback with HTML5 Audio
+    try {
+      const soundOption = FOCUS_SOUND_OPTIONS.find(option => option.id === soundId);
+      
+      if (soundOption && soundOption.filePath) {
+        const playTick = () => {
+          if (focusSoundInterval) { // Check if still playing
+            const audio = new Audio();
+            audio.src = soundOption.filePath;
+            audio.volume = volume;
+            audio.play().catch(fallbackError => {
+              console.error('HTML5 Audio fallback failed:', fallbackError);
+            });
+          }
+        };
+        
+        // Start the loop
+        focusSoundInterval = setInterval(playTick, 1000); // Every 1 second
+      }
+    } catch (fallbackError) {
+      console.error('HTML5 Audio fallback error:', fallbackError);
+    }
+  }
 }
 
 // Default sound settings

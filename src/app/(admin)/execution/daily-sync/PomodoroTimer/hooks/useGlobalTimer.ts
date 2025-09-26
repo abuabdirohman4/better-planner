@@ -8,10 +8,12 @@ import { useTimer } from '@/stores/timerStore';
  * 
  * ✅ MOBILE FIX: Background timer recovery untuk handphone yang dikunci
  */
+// Global interval reference to prevent multiple instances
+let globalIntervalRef: NodeJS.Timeout | null = null;
+
 export function useGlobalTimer() {
   const { timerState, incrementSeconds, secondsElapsed, activeTask, startTime } = useTimer();
   const lastActiveTimeRef = useRef<number>(Date.now());
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ✅ MOBILE FIX: Background timer recovery
   useEffect(() => {
@@ -49,24 +51,24 @@ export function useGlobalTimer() {
   }, [timerState]);
 
   useEffect(() => {
-    // Clear existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    // Clear existing global interval
+    if (globalIntervalRef) {
+      clearInterval(globalIntervalRef);
+      globalIntervalRef = null;
     }
 
     if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
-      intervalRef.current = setInterval(() => {
+      globalIntervalRef = setInterval(() => {
         incrementSeconds();
         lastActiveTimeRef.current = Date.now(); // Update last active time
       }, 1000);
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (globalIntervalRef) {
+        clearInterval(globalIntervalRef);
+        globalIntervalRef = null;
       }
     };
-  }, [timerState, incrementSeconds]); // Include incrementSeconds in deps
+  }, [timerState]); // Remove incrementSeconds from deps to prevent multiple intervals
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { playTimerCompleteSound } from '@/lib/soundUtils';
+import { playTimerCompleteSound, playSound, stopCurrentSound, playFocusSoundLoop } from '@/lib/soundUtils';
 import { useSoundStore } from './soundStore';
 
 export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
@@ -31,6 +31,7 @@ interface TimerStoreState {
   lastSessionComplete: SessionCompleteData | null;
   startTime: string | null;
   isProcessingCompletion: boolean;
+  focusSoundPlaying: boolean;
   startFocusSession: (task: Task) => void;
   startBreak: (type: 'SHORT' | 'LONG') => void;
   pauseTimer: () => void;
@@ -47,6 +48,8 @@ interface TimerStoreState {
     currentDuration: number;
     status: string;
   }) => void;
+  startFocusSound: () => Promise<void>;
+  stopFocusSound: () => void;
   completeTimerFromDatabase: (sessionData: {
     taskId: string;
     taskTitle: string;
@@ -72,30 +75,53 @@ export const useTimerStore = create<TimerStoreState>()(
       lastSessionComplete: null,
       startTime: null,
       isProcessingCompletion: false,
+      focusSoundPlaying: false,
 
-      startFocusSession: (task: Task) => set({
-        activeTask: task,
-        timerState: 'FOCUSING',
-        secondsElapsed: 0,
-        breakType: null,
-        startTime: new Date().toISOString(),
-      }),
+      startFocusSession: (task: Task) => {
+        set({
+          activeTask: task,
+          timerState: 'FOCUSING',
+          secondsElapsed: 0,
+          breakType: null,
+          startTime: new Date().toISOString(),
+        });
+        // Start focus sound
+        get().startFocusSound().catch(console.error);
+      },
 
-      startBreak: (type: 'SHORT' | 'LONG') => set({
-        timerState: 'BREAK',
-        breakType: type,
-        secondsElapsed: 0,
-        startTime: new Date().toISOString(),
-      }),
+      startBreak: (type: 'SHORT' | 'LONG') => {
+        // Stop focus sound when starting break
+        get().stopFocusSound();
+        set({
+          timerState: 'BREAK',
+          breakType: type,
+          secondsElapsed: 0,
+          startTime: new Date().toISOString(),
+        });
+      },
 
-      pauseTimer: () => set({ timerState: 'PAUSED' }),
+      pauseTimer: () => {
+        set({ timerState: 'PAUSED' });
+        // Stop focus sound when pausing
+        get().stopFocusSound();
+      },
 
-      resumeTimer: () => set((state) => ({
-        timerState: state.breakType ? 'BREAK' : 'FOCUSING'
-      })),
+      resumeTimer: () => {
+        const state = get();
+        const newState = state.breakType ? 'BREAK' : 'FOCUSING';
+        set({ timerState: newState });
+        
+        // Start focus sound when resuming focus session
+        if (newState === 'FOCUSING') {
+          get().startFocusSound().catch(console.error);
+        }
+      },
 
       stopTimer: () => {
         const state = get();
+        // Stop focus sound when stopping timer
+        get().stopFocusSound();
+        
         if (state.timerState === 'FOCUSING' && state.activeTask && state.secondsElapsed > 0) {
           const now = new Date();
           const endTime = now.toISOString();
@@ -127,12 +153,16 @@ export const useTimerStore = create<TimerStoreState>()(
         }
       },
 
-      resetTimer: () => set({
-        timerState: 'IDLE',
-        secondsElapsed: 0,
-        breakType: null,
-        activeTask: null,
-      }),
+      resetTimer: () => {
+        // Stop focus sound when resetting timer
+        get().stopFocusSound();
+        set({
+          timerState: 'IDLE',
+          secondsElapsed: 0,
+          breakType: null,
+          activeTask: null,
+        });
+      },
 
       setLastSessionComplete: (data: SessionCompleteData | null) => set({ lastSessionComplete: data }),
 
@@ -154,6 +184,9 @@ export const useTimerStore = create<TimerStoreState>()(
             const endTime = now.toISOString();
             // Use actual startTime from store, not calculated
             const startTime = state.startTime || new Date(now.getTime() - focusDuration * 1000).toISOString();
+            
+            // Stop focus sound when timer completes
+            get().stopFocusSound();
             
             // Play completion sound
             const soundSettings = useSoundStore.getState().settings;
@@ -193,12 +226,16 @@ export const useTimerStore = create<TimerStoreState>()(
             breakType: null,
           };
         } else if (state.timerState === 'BREAK' && state.breakType === 'SHORT' && newSeconds >= SHORT_BREAK_DURATION) {
+          // Stop focus sound when short break completes
+          get().stopFocusSound();
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
             secondsElapsed: 0,
           };
         } else if (state.timerState === 'BREAK' && state.breakType === 'LONG' && newSeconds >= LONG_BREAK_DURATION) {
+          // Stop focus sound when long break completes
+          get().stopFocusSound();
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
@@ -209,34 +246,91 @@ export const useTimerStore = create<TimerStoreState>()(
         return { secondsElapsed: newSeconds };
       }),
 
-      resumeFromDatabase: (sessionData) => set({
-        activeTask: {
-          id: sessionData.taskId,
-          title: sessionData.taskTitle,
-          item_type: 'MAIN_QUEST'
-        },
-        timerState: sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING',
-        secondsElapsed: sessionData.currentDuration,
-        startTime: sessionData.startTime,
-        breakType: null,
-      }),
-
-      completeTimerFromDatabase: (sessionData) => set({
-        lastSessionComplete: {
-          taskId: sessionData.taskId,
-          taskTitle: sessionData.taskTitle,
-          type: 'FOCUS',
+      resumeFromDatabase: (sessionData) => {
+        const timerState = sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING';
+        set({
+          activeTask: {
+            id: sessionData.taskId,
+            title: sessionData.taskTitle,
+            item_type: 'MAIN_QUEST'
+          },
+          timerState,
+          secondsElapsed: sessionData.currentDuration,
           startTime: sessionData.startTime,
-          endTime: new Date().toISOString(), // ✅ Add endTime
-          duration: sessionData.duration,
-          completed: true
-        },
-        timerState: 'IDLE' as TimerState,
-        secondsElapsed: 0,
-        activeTask: null,
-        startTime: null,
-        breakType: null,
-      }),
+          breakType: null,
+        });
+        
+        // Start focus sound when resuming focus session from database
+        if (timerState === 'FOCUSING') {
+          get().startFocusSound().catch(console.error);
+        }
+      },
+
+      completeTimerFromDatabase: (sessionData) => {
+        // Stop focus sound when completing timer from database
+        get().stopFocusSound();
+        set({
+          lastSessionComplete: {
+            taskId: sessionData.taskId,
+            taskTitle: sessionData.taskTitle,
+            type: 'FOCUS',
+            startTime: sessionData.startTime,
+            endTime: new Date().toISOString(), // ✅ Add endTime
+            duration: sessionData.duration,
+            completed: true
+          },
+          timerState: 'IDLE' as TimerState,
+          secondsElapsed: 0,
+          activeTask: null,
+          startTime: null,
+          breakType: null,
+        });
+      },
+
+      startFocusSound: async () => {
+        console.log('🎵 startFocusSound called');
+        
+        if (get().focusSoundPlaying) {
+          console.log('🎵 Focus sound already playing, skipping');
+          return;
+        }
+        
+        try {
+          // Load fresh settings from server
+          const { getSoundSettings } = await import('@/app/(admin)/settings/profile/actions/userProfileActions');
+          const serverSettings = await getSoundSettings();
+          
+          console.log('🎵 Fresh focus sound settings from server:', {
+            focusSoundId: serverSettings.focusSoundId,
+            volume: serverSettings.volume
+          });
+          
+          if (serverSettings.focusSoundId !== 'none') {
+            console.log('🎵 Starting focus sound with fresh settings');
+            set({ focusSoundPlaying: true });
+            // Play focus sound in loop for ticking clock
+            await playFocusSoundLoop(serverSettings.focusSoundId, serverSettings.volume);
+          } else {
+            console.log('🎵 Focus sound disabled in server settings');
+          }
+        } catch (error) {
+          console.error('🎵 Error loading focus sound settings:', error);
+          // Fallback to local settings
+          const { focusSettings } = useSoundStore.getState();
+          if (focusSettings.soundId !== 'none') {
+            console.log('🎵 Fallback to local focus sound settings:', focusSettings);
+            set({ focusSoundPlaying: true });
+            await playFocusSoundLoop(focusSettings.soundId, focusSettings.volume);
+          }
+        }
+      },
+
+      stopFocusSound: () => {
+        if (get().focusSoundPlaying) {
+          set({ focusSoundPlaying: false });
+          stopCurrentSound();
+        }
+      },
     }),
     {
       name: 'timer-storage',

@@ -3,9 +3,13 @@ import React, { useState } from 'react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
+import { useSoundStore } from '@/stores/soundStore';
 import { useTimerPersistence } from './hooks/useTimerPersistence';
+import { useGlobalTimer } from './hooks/useGlobalTimer';
 import SoundSelector from './components/SoundSelector';
 import Spinner from '@/components/ui/spinner/Spinner';
+import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
+import { checkAudioPermission, initializeAudioContext } from '@/lib/soundUtils';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
@@ -82,7 +86,69 @@ export default function PomodoroTimer() {
   // Initialize timer persistence
   const { isOnline, isRecovering } = useTimerPersistence();
   
+  // Initialize global timer (this handles the actual timer counting and focus sound)
+  useGlobalTimer();
+  
+  // Get sound settings to check if user wants audio
+  const { focusSettings, settings, loadSettings } = useSoundStore();
+  
   const [showSoundSelector, setShowSoundSelector] = useState(false);
+  const [showAudioPermissionPrompt, setShowAudioPermissionPrompt] = useState(false);
+  const [audioPermissionChecked, setAudioPermissionChecked] = useState(false);
+
+  // Check audio permission on component mount (only once)
+  React.useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        // Force refresh settings from database first
+        await loadSettings();
+        
+        // Get fresh settings after refresh
+        const freshSettings = useSoundStore.getState().settings;
+        
+        // Check if user wants to use focus sound (only this needs browser permission)
+        const wantsFocusSound = freshSettings.focusSoundId !== 'none';
+        console.log('wantsFocusSound', wantsFocusSound);
+        
+        console.log('🎵 PomodoroTimer audio check:', {
+          settingsFocusSoundId: freshSettings.focusSoundId,
+          wantsFocusSound,
+          showAudioPermissionPrompt
+        });
+        
+        // Only check permission if user wants to use focus sound (background audio)
+        if (wantsFocusSound) {
+          const hasPermission = await checkAudioPermission();
+          
+          if (!hasPermission) {
+            setShowAudioPermissionPrompt(true);
+          }
+        } else {
+          // Force hide prompt if user doesn't want focus sound
+          setShowAudioPermissionPrompt(false);
+        }
+        setAudioPermissionChecked(true);
+      } catch (error) {
+        console.error('Error checking audio permission:', error);
+        setAudioPermissionChecked(true);
+      }
+    };
+
+    // Only check once when component mounts
+    if (!audioPermissionChecked) {
+      checkPermission();
+    }
+  }, [settings.focusSoundId, audioPermissionChecked, loadSettings]); // Add loadSettings dependency
+
+  const handleAudioPermissionGranted = () => {
+    setShowAudioPermissionPrompt(false);
+    // Initialize audio context after permission granted
+    initializeAudioContext().catch(console.error);
+  };
+
+  const handleSkipAudioPermission = () => {
+    setShowAudioPermissionPrompt(false);
+  };
 
   // Helper to get total seconds for progress
   const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
@@ -122,6 +188,13 @@ export default function PomodoroTimer() {
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
+      {/* Audio Permission Prompt */}
+      {showAudioPermissionPrompt && (
+        <AudioPermissionPrompt
+          onPermissionGranted={handleAudioPermissionGranted}
+          onSkip={handleSkipAudioPermission}
+        />
+      )}
       <div className="absolute right-[68px] top-[24px]">
         {/* Sound Settings */}
         <button

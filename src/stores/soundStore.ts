@@ -6,15 +6,18 @@ export interface SoundSettings {
   soundId: string;
   volume: number;
   taskCompletionSoundId: string;
+  focusSoundId: string;
 }
 
 
 interface SoundStoreState {
   settings: SoundSettings;
   taskCompletionSettings: { soundId: string; volume: number };
+  focusSettings: { soundId: string; volume: number };
   isLoading: boolean;
   updateSettings: (settings: Partial<SoundSettings>) => Promise<void>;
   updateTaskCompletionSettings: (settings: Partial<{ soundId: string; volume: number }>) => Promise<void>;
+  updateFocusSettings: (settings: Partial<{ soundId: string; volume: number }>) => Promise<void>;
   resetSettings: () => Promise<void>;
   loadSettings: () => Promise<void>;
 }
@@ -22,9 +25,9 @@ interface SoundStoreState {
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'children',
   volume: 0.5,
-  taskCompletionSoundId: 'pop-up-notify'
+  taskCompletionSoundId: 'none',
+  focusSoundId: 'none'
 };
-
 
 export const useSoundStore = create<SoundStoreState>()(
   persist(
@@ -32,6 +35,10 @@ export const useSoundStore = create<SoundStoreState>()(
       settings: DEFAULT_SOUND_SETTINGS,
       taskCompletionSettings: {
         soundId: DEFAULT_SOUND_SETTINGS.taskCompletionSoundId,
+        volume: DEFAULT_SOUND_SETTINGS.volume
+      },
+      focusSettings: {
+        soundId: DEFAULT_SOUND_SETTINGS.focusSoundId,
         volume: DEFAULT_SOUND_SETTINGS.volume
       },
       isLoading: false,
@@ -47,6 +54,11 @@ export const useSoundStore = create<SoundStoreState>()(
           
           // Sync to server
           await updateSoundSettings(newSettings);
+          
+          // Re-sync from server to ensure consistency (with small delay)
+          setTimeout(async () => {
+            await get().loadSettings();
+          }, 100);
         } catch (error) {
           console.error('Failed to update sound settings:', error);
           // Revert local state on error
@@ -70,11 +82,52 @@ export const useSoundStore = create<SoundStoreState>()(
           if (newSettings.soundId) {
             await updateSoundSettings({ taskCompletionSoundId: newSettings.soundId });
           }
+          
+          // Re-sync from server to ensure consistency (with small delay)
+          setTimeout(async () => {
+            await get().loadSettings();
+          }, 100);
         } catch (error) {
           console.error('Failed to update task completion sound settings:', error);
           // Revert local state on error
           const currentSettings = get().taskCompletionSettings;
           set({ taskCompletionSettings: { ...currentSettings } });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      
+      updateFocusSettings: async (newSettings) => {
+        set({ isLoading: true });
+        
+        try {
+          // Update local state immediately (optimistic update)
+          set((state) => ({
+            focusSettings: { ...state.focusSettings, ...newSettings }
+          }));
+          
+          // Sync focus sound settings to server via main settings
+          const updateData: any = {};
+          if (newSettings.soundId !== undefined) {
+            updateData.focusSoundId = newSettings.soundId;
+          }
+          if (newSettings.volume !== undefined) {
+            updateData.volume = newSettings.volume;
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            await updateSoundSettings(updateData);
+          }
+          
+          // Re-sync from server to ensure consistency (with small delay)
+          setTimeout(async () => {
+            await get().loadSettings();
+          }, 100);
+        } catch (error) {
+          console.error('Failed to update focus sound settings:', error);
+          // Revert local state on error
+          const currentSettings = get().focusSettings;
+          set({ focusSettings: { ...currentSettings } });
         } finally {
           set({ isLoading: false });
         }
@@ -89,6 +142,10 @@ export const useSoundStore = create<SoundStoreState>()(
             settings: DEFAULT_SOUND_SETTINGS,
             taskCompletionSettings: {
               soundId: DEFAULT_SOUND_SETTINGS.taskCompletionSoundId,
+              volume: DEFAULT_SOUND_SETTINGS.volume
+            },
+            focusSettings: {
+              soundId: DEFAULT_SOUND_SETTINGS.focusSoundId,
               volume: DEFAULT_SOUND_SETTINGS.volume
             }
           });
@@ -113,6 +170,10 @@ export const useSoundStore = create<SoundStoreState>()(
             taskCompletionSettings: { 
               soundId: serverSettings.taskCompletionSoundId,
               volume: serverSettings.volume 
+            },
+            focusSettings: {
+              soundId: serverSettings.focusSoundId,
+              volume: serverSettings.volume
             }
           });
         } catch (error) {
