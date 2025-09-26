@@ -82,12 +82,9 @@ export default function WeeklySyncTable({
 
   return (
     <>
-      <ComponentCard 
-        title=""
-        className="mb-6"
-      >
+      <ComponentCard title="" classNameHeader="!p-0">
         {/* Custom Header with Toggle Button */}
-        <div className="flex items-center justify-between mb-4 pt-8">
+        <div className="flex items-center justify-between my-4">
           <div className="flex-1"></div>
           <h2 className="text-center text-xl font-extrabold text-gray-900 dark:text-gray-100">
             3 Quest Week {props.weekNumber}

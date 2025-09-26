@@ -102,74 +102,92 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
   return (
     <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 md:p-4 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700" onClick={onClick}>
       {/* Task Items */}
-      <div className="space-y-3 space-x-3">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 ${sortedQuestIds.length > 0 ? '' : 'justify-center'}`}>
         {sortedQuestIds.length > 0 ? (
           sortedQuestIds.map((questId, questIndex) => {
             const questItems = groupedItems[questId];
             const colorClass = questColors[(slotNumber-1)%questColors.length];
             
             return (
-              questItems.map((item) => (
+              questItems.map((item, itemIndex) => (
                 <div
                   key={item.id}
-                  className={`inline-flex items-center space-x-2 rounded-lg px-3 py-2 text-sm transition-all duration-300 transform hover:scale-105 ${
+                  className={`group relative flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 rounded-xl px-3 py-3 text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
                     item.status === 'DONE' 
-                      ? 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 opacity-75' 
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-lg'
+                      ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border border-gray-200 dark:border-gray-600 opacity-75' 
+                      : 'bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 shadow-md hover:shadow-xl'
                   }`}
                 >
-                  {/* Custom Checkbox dengan animation */}
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-                    item.status === 'DONE' 
-                      ? 'bg-blue-600 border-blue-600 scale-110' 
-                      : 'border-gray-300 dark:border-gray-500 hover:border-blue-400'
-                  }`}>
-                    {item.status === 'DONE' && (
-                      <svg 
-                        className="w-2.5 h-2.5 text-white animate-pulse" 
-                        fill="currentColor" 
-                        viewBox="0 0 20 20"
-                      >
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
+                  {/* Top row: Checkbox + Label */}
+                  <div className="flex items-center space-x-2">
+                    {/* Custom Checkbox dengan animation */}
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                      item.status === 'DONE' 
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 shadow-lg' 
+                        : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    }`}>
+                      {item.status === 'DONE' && (
+                        <svg 
+                          className="w-3 h-3 text-white drop-shadow-sm" 
+                          fill="currentColor" 
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    
+                    {/* Label dengan hover effect */}
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>
+                      {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
+                    </span>
                   </div>
                   
-                  {/* Label dengan hover effect */}
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors duration-200 ${colorClass}`}>
-                    {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
-                  </span>
-                  
-                  {/* Text dengan better typography */}
-                  <span className={`text-sm font-medium leading-relaxed transition-colors duration-200 ${
-                    item.status === 'DONE' 
-                      ? 'text-gray-500 dark:text-gray-400 line-through' 
-                      : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {item.title}
-                  </span>
+                  {/* Bottom row: Text */}
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-semibold leading-relaxed transition-colors duration-200 block ${
+                      item.status === 'DONE' 
+                        ? 'text-gray-500 dark:text-gray-400 line-through' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {item.title}
+                    </span>
+                  </div>
                 </div>
               ))
             );
           })
         ) : (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-4">
-            <p className="text-sm">
+          <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium mb-1">
               {showCompletedTasks 
                 ? 'Tidak ada task di goal slot ini' 
                 : 'Tidak ada task yang belum selesai'
               }
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Klik untuk menambahkan task
             </p>
           </div>
         )}
       </div>
       
       {/* Edit hint dengan styling yang lebih subtle */}
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-          Klik untuk mengedit
-        </p>
-      </div>
+      {sortedQuestIds.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-center space-x-2 text-xs text-gray-400 dark:text-gray-500">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            <span>Klik untuk mengedit</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

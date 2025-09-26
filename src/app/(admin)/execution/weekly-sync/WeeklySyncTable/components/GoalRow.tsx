@@ -104,7 +104,7 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
                     : 'max-h-0 opacity-0 transform -translate-y-2'
                 }`}
               >
-                <div className="pt-2">
+                <div className="pt-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
                   <HorizontalGoalDisplay
                     items={goal.items}
                     onClick={() => onSlotClick(slotNumber)}
@@ -127,30 +127,66 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
         </div>
       </td>
       
-      {/* Desktop Layout - Side by Side */}
-      <td className={`py-4 hidden md:table-cell ${goal && goal.items.length > 0 ? 'px-4' : 'px-7'}`}>
-        {goal && goal.items.length > 0 ? (
-          <HorizontalGoalDisplay
-            items={goal.items}
-            onClick={() => onSlotClick(slotNumber)}
-            slotNumber={slotNumber}
-            showCompletedTasks={showCompletedTasks}
-          />
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onSlotClick(slotNumber)}
-            className="w-full justify-start"
-          >
-            + Tetapkan Fokus
-          </Button>
-        )}
-      </td>
-      
-      {/* Desktop Progress Indicator */}
-      <td className="py-4 px-4 w-32 hidden md:table-cell">
-        <ProgressIndicator progress={progress} slotNumber={slotNumber} />
+      {/* Desktop Layout - Progress Bar Above + Collapsible Goals */}
+      <td className="py-4 px-4 hidden md:table-cell" colSpan={2}>
+        <div className="space-y-4">
+          {/* Progress Indicator - Above Goals */}
+          <div className="w-full">
+            <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
+          </div>
+
+          {/* Collapsible Focus Selector */}
+          {goal && goal.items.length > 0 ? (
+            <div className="space-y-2">
+              {/* Toggle Button */}
+              <button
+                onClick={toggleExpanded}
+                className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out hover:shadow-sm active:scale-98"
+              >
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {isExpanded ? 'Sembunyikan' : 'Tampilkan'} Task ({goal.items.length})
+                </span>
+                <svg
+                  className={`w-4 h-4 text-gray-500 transition-all duration-300 ease-in-out ${
+                    isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Collapsible Content */}
+              <div 
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isExpanded 
+                    ? 'max-h-96 opacity-100 transform translate-y-0' 
+                    : 'max-h-0 opacity-0 transform -translate-y-2'
+                }`}
+              >
+                <div className="pt-2 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
+                  <HorizontalGoalDisplay
+                    items={goal.items}
+                    onClick={() => onSlotClick(slotNumber)}
+                    slotNumber={slotNumber}
+                    showCompletedTasks={showCompletedTasks}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onSlotClick(slotNumber)}
+              className="w-full justify-start"
+            >
+              + Tetapkan Fokus
+            </Button>
+          )}
+        </div>
       </td>
     </tr>
   );
