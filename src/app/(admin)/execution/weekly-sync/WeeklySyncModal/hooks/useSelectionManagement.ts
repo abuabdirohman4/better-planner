@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import type { SelectedItem, HierarchicalItem, Quest } from '../../WeeklySyncClient/types';
 
 export function useSelectionManagement(initialSelectedItems: SelectedItem[], existingSelectedIds: Set<string> = new Set()) {
@@ -26,17 +27,19 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     subtasks: HierarchicalItem[] = [],
     parentTaskId?: string
   ) => {
-    // Check for hierarchy conflicts before toggling
+    // STRICT HIERARCHY RULE: Prevent conflicts before toggling
     if (itemType === 'TASK') {
       // Check if any subtasks of this task exist in existingSelectedIds
       const conflictingSubtasks = subtasks.filter(st => existingSelectedIds.has(st.id));
       if (conflictingSubtasks.length > 0) {
-        // For now, just log warning. Could show toast or prevent selection.
+        toast.error(`Tidak bisa memilih parent task karena ada ${conflictingSubtasks.length} subtask yang sudah dipilih di slot lain`);
+        return; // Prevent selection
       }
     } else if (itemType === 'SUBTASK' && parentTaskId) {
       // Check if parent task exists in existingSelectedIds
       if (existingSelectedIds.has(parentTaskId)) {
-        // For now, just log warning. Could show toast or prevent selection.
+        toast.error('Tidak bisa memilih subtask karena parent task sudah dipilih di slot lain');
+        return; // Prevent selection
       }
     }
     setSelectedItems(prev => {

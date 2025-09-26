@@ -62,7 +62,7 @@ export default function WeeklySyncModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-opacity-30 backdrop-blur-[32px] flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="relative max-w-4xl mx-4 max-h-[90vh] w-full shadow-2xl border rounded-3xl bg-white p-6 dark:bg-gray-900 lg:p-10 flex flex-col">
         <ModalHeader onClose={onClose} />
 

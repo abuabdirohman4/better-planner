@@ -29,7 +29,9 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
           const parentTaskSelected = selectedItems.some(item => item.id === taskId && item.type === 'TASK');
           const isInCurrentSelection = selectedItems.some(item => item.id === subtask.id && (item.type === 'SUBTASK' || item.type === 'TASK'));
           const isInExistingSelection = existingSelectedIds.has(subtask.id);
+          const isParentSelectedElsewhere = existingSelectedIds.has(taskId);
           const isChecked = isInCurrentSelection || isInExistingSelection || parentTaskSelected;
+          const isDisabled = isParentSelectedElsewhere || parentTaskSelected || isInExistingSelection;
           
           return (
             <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
@@ -40,11 +42,22 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
                   onChange={() => {
                     handleItemToggle(subtask.id, 'SUBTASK', [], taskId);
                   }}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  disabled={parentTaskSelected}
+                  className={`w-4 h-4 text-blue-600 rounded focus:ring-blue-500 ${
+                    isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isDisabled}
                 />
-                <span className="text-sm text-gray-800 dark:text-gray-200">
+                <span className={`text-sm ${
+                  isDisabled 
+                    ? 'text-gray-400 dark:text-gray-500' 
+                    : 'text-gray-800 dark:text-gray-200'
+                }`}>
                   {subtask.title}
+                  {/* {isParentSelectedElsewhere && (
+                    <span className="ml-2 text-xs text-red-500 dark:text-red-400">
+                      (Selected)
+                    </span>
+                  )} */}
                 </span>
               </div>
             </div>

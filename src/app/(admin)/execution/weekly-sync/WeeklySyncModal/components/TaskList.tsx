@@ -44,8 +44,11 @@ export const TaskList: React.FC<TaskListProps> = ({
           const isInExistingSelection = existingSelectedIds.has(task.id);
           const isChecked = isInCurrentSelection || isInExistingSelection;
           
+          // Check if any subtasks are selected elsewhere (for hierarchy conflict prevention)
+          const hasConflictingSubtasks = task.subtasks?.some((subtask: any) => existingSelectedIds.has(subtask.id));
+          
           return (
-            <div key={task.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+            <div key={task.id} className="border-l-2 border-gray-00 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-2 py-1">
                 <input
                   type="checkbox"
@@ -53,11 +56,26 @@ export const TaskList: React.FC<TaskListProps> = ({
                   onChange={() => {
                     handleItemToggle(task.id, 'TASK', task.subtasks || []);
                   }}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className={`w-4 h-4 text-blue-600 rounded focus:ring-blue-500 ${
+                    hasConflictingSubtasks ? 'opacity-100 cursor-not-allowed' : ''
+                  }`}
+                  disabled={hasConflictingSubtasks}
                 />
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                {task.title}
-              </span>
+                <div className="flex items-center space-x-1">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {task.title}
+                  </span>
+                  {/* {task.subtasks && task.subtasks.length > 0 && (
+                    <span className={`text-xs ${
+                      hasConflictingSubtasks 
+                        ? 'text-red-500 dark:text-red-400' 
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      ({task.subtasks.length} subtasks)
+                      {hasConflictingSubtasks && ' - Konflik!'}
+                    </span>
+                  )} */}
+                </div>
               {task.subtasks && task.subtasks.length > 0 ? (
                 <button
                   onClick={() => toggleExpanded(task.id)}
