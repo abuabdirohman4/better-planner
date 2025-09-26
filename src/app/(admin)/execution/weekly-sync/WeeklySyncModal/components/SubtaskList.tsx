@@ -11,7 +11,13 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
 }) => {
   const expanded = expandedItems.has(taskId);
   // Show all subtasks that are not done, including already selected ones
-  const filteredSubtasks = subtasks.filter((subtask: any) => subtask.status !== 'DONE');
+  // Also filter out subtasks with empty or null titles
+  const filteredSubtasks = subtasks.filter((subtask: any) => {
+    const hasValidTitle = subtask.title && subtask.title.trim() !== '';
+    const isNotDone = subtask.status !== 'DONE';
+    
+    return hasValidTitle && isNotDone;
+  });
   
   return (
     <div

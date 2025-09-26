@@ -14,12 +14,14 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   const expanded = expandedItems.has(milestoneId);
   // Show all tasks that are not done, OR are already selected (even if DONE)
+  // Also filter out tasks with empty or null titles
   const filteredTasks = tasks.filter((task: any) => {
+    const hasValidTitle = task.title && task.title.trim() !== '';
     const isNotDone = task.status !== 'DONE';
     const isAlreadySelected = selectedItems.some(item => item.id === task.id && item.type === 'TASK');
     const isInExistingSelection = existingSelectedIds.has(task.id);
     
-    return isNotDone || isAlreadySelected || isInExistingSelection;
+    return hasValidTitle && (isNotDone || isAlreadySelected || isInExistingSelection);
   });
   
   

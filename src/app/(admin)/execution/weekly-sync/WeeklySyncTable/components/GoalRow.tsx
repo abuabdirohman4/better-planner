@@ -105,12 +105,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
                 }`}
               >
                 <div className="pt-2">
-                        <HorizontalGoalDisplay
-                          items={goal.items}
-                          onClick={() => onSlotClick(slotNumber)}
-                          slotNumber={slotNumber}
-                          showCompletedTasks={showCompletedTasks}
-                        />
+                  <HorizontalGoalDisplay
+                    items={goal.items}
+                    onClick={() => onSlotClick(slotNumber)}
+                    slotNumber={slotNumber}
+                    showCompletedTasks={showCompletedTasks}
+                  />
                 </div>
               </div>
             </div>
@@ -130,12 +130,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
       {/* Desktop Layout - Side by Side */}
       <td className={`py-4 hidden md:table-cell ${goal && goal.items.length > 0 ? 'px-4' : 'px-7'}`}>
         {goal && goal.items.length > 0 ? (
-                        <HorizontalGoalDisplay
-                          items={goal.items}
-                          onClick={() => onSlotClick(slotNumber)}
-                          slotNumber={slotNumber}
-                          showCompletedTasks={showCompletedTasks}
-                        />
+          <HorizontalGoalDisplay
+            items={goal.items}
+            onClick={() => onSlotClick(slotNumber)}
+            slotNumber={slotNumber}
+            showCompletedTasks={showCompletedTasks}
+          />
         ) : (
           <Button
             size="sm"

@@ -92,6 +92,10 @@ export default function WeeklySyncModal({
               
               {hierarchicalData
                 .filter(quest => {
+                  // Filter out quests with empty or null titles
+                  const hasValidTitle = quest.title && quest.title.trim() !== '';
+                  if (!hasValidTitle) return false;
+                  
                   // Show all quests that have milestones, regardless of selection status
                   const allMilestones = quest.milestones || [];
                   if (allMilestones.length === 0) return false;

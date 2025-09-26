@@ -15,7 +15,11 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
 }) => {
   const expanded = expandedItems.has(questId);
   // Show all milestones, including those with already selected tasks
-  const filteredMilestones = milestones;
+  // Also filter out milestones with empty or null titles
+  const filteredMilestones = milestones.filter((milestone: any) => {
+    const hasValidTitle = milestone.title && milestone.title.trim() !== '';
+    return hasValidTitle;
+  });
   
   
   if (filteredMilestones.length === 0) return null;
