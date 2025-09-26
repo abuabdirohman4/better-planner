@@ -3,6 +3,7 @@ import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
 import { TaskCardProps } from '../types';
+import { playSound } from '@/lib/soundUtils';
 
 const TaskItemCard = ({ 
   item, 
@@ -124,26 +125,35 @@ const TaskItemCard = ({
               <Spinner size={16} colorClass="border-brand-500" />
             ) : (
               <button
-              type="button"
-              disabled={isUpdatingStatus}
-              onClick={async () => {
-                const newStatus = isCompleted ? 'TODO' : 'DONE';
-                
-                // Optimistic update - update UI immediately
-                setOptimisticStatus(newStatus);
-                setIsUpdatingStatus(true);
-                
-                try {
-                  await onStatusChange(item.id, newStatus);
-                  // Clear optimistic status after successful update
-                  setOptimisticStatus(null);
-                } catch (error) {
-                  // Revert optimistic update on error
-                  setOptimisticStatus(null);
-                  console.error('Error updating status:', error);
-                } finally {
-                  setIsUpdatingStatus(false);
-                }
+                type="button"
+                disabled={isUpdatingStatus}
+                onClick={async () => {
+                  const newStatus = isCompleted ? 'TODO' : 'DONE';
+                  
+                  // Play completion sound when marking as DONE
+                  if (newStatus === 'DONE') {
+                    try {
+                      await playSound('pop-up-notify', 0.7); // 70% volume
+                    } catch (error) {
+                      console.warn('Failed to play completion sound:', error);
+                    }
+                  }
+                  
+                  // Optimistic update - update UI immediately
+                  setOptimisticStatus(newStatus);
+                  setIsUpdatingStatus(true);
+                  
+                  try {
+                    await onStatusChange(item.id, newStatus);
+                    // Clear optimistic status after successful update
+                    setOptimisticStatus(null);
+                  } catch (error) {
+                    // Revert optimistic update on error
+                    setOptimisticStatus(null);
+                    console.error('Error updating status:', error);
+                  } finally {
+                    setIsUpdatingStatus(false);
+                  }
               }}
               className={`w-8 h-8 rounded focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors border border-gray-300 ${
                 isCompleted

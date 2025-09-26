@@ -12,8 +12,8 @@ export interface SoundOption {
   filePath: string; // Path untuk custom audio files
 }
 
-// Custom sound options using WAV files
-export const SOUND_OPTIONS: SoundOption[] = [
+// Timer sound options using WAV files (for Pomodoro timer)
+export const TIMER_SOUND_OPTIONS: SoundOption[] = [
   {
     id: 'none',
     name: 'No Sound',
@@ -71,6 +71,29 @@ export const SOUND_OPTIONS: SoundOption[] = [
     filePath: '/audio/forecast.WAV'
   }
 ];
+
+// Task completion sound options (for task completion notifications)
+export const COMPLETION_SOUND_OPTIONS: SoundOption[] = [
+  {
+    id: 'smooth-notify',
+    name: 'Smooth Notify',
+    type: 'custom',
+    description: 'Smooth notification alert',
+    emoji: '🔔',
+    filePath: '/audio/smooth-notify-alert-toast-warn.wav'
+  },
+  {
+    id: 'pop-up-notify',
+    name: 'Pop Up Notify',
+    type: 'custom',
+    description: 'Pop up notification alert',
+    emoji: '🔔',
+    filePath: '/audio/pop-up-notify-smooth-modern.wav'
+  }
+];
+
+// Backward compatibility - keep SOUND_OPTIONS for timer
+export const SOUND_OPTIONS = TIMER_SOUND_OPTIONS;
 
 // Load custom audio file
 async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {

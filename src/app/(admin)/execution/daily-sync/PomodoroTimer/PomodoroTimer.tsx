@@ -154,8 +154,9 @@ export default function PomodoroTimer() {
       )}
       
       {/* Timer lingkaran dan kontrol play/pause */}
-      <div className="flex gap-5">
-        <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center mx-auto">
+      <div className="flex items-center gap-6">
+        {/* Timer Circle - Fixed position di kiri */}
+        <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
           {activeTask ? (
             <CircularTimer progress={progress} size={90} stroke={5} />
           ) : (
@@ -182,20 +183,27 @@ export default function PomodoroTimer() {
           )}
         </div>
 
-        <div>
-          {/* Judul dan subjudul */}
-          {activeTask ? <div className="text-base text-gray-500 dark:text-gray-300 my-3 text-center font-medium">{activeTask.title}</div> : null}
+        {/* Right side content - Task title dan button */}
+        <div className="flex-1 flex flex-col justify-center gap-3 min-w-0">
+          {/* Task Title */}
+          {activeTask && (
+            <div className="text-left text-base text-gray-500 dark:text-gray-300 font-medium break-words">
+              {activeTask.title}
+            </div>
+          )}
 
-          {/* Tombol Stop */}
+          {/* Stop Button */}
           {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
-            <Button
-              variant="outline"
-              size="xs"
-              className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-              onClick={stopTimer}
-            >
-              Stop
-            </Button>
+            <div className="flex justify-start">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                onClick={stopTimer}
+              >
+                Stop
+              </Button>
+            </div>
           )}
         </div>
       </div>
