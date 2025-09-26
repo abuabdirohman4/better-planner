@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Spinner from '@/components/ui/spinner/Spinner';
+import Button from '@/components/ui/button/Button';
+import Tooltip from '@/components/ui/tooltip/Tooltip';
 
 interface OneMinuteJournalModalProps {
   isOpen: boolean;
@@ -36,6 +38,27 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
       setIsSaving(false);
     }
   }, [isOpen, taskTitle, duration]);
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+        if (!isSaving && whatDone.trim()) {
+          handleSave();
+        }
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, isSaving, whatDone]);
 
   const handleSave = async () => {
     if (!whatDone.trim()) {
@@ -107,35 +130,6 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
         <div className="mb-2">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h2 className="text-2xl font-bold text-gray-900">One Minute Journal</h2>
-            <div className="relative mb-3">
-              <button
-                type="button"
-                className="w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition-colors"
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-                onClick={() => setShowTooltip(!showTooltip)}
-              >
-                <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              
-              {/* Tooltip */}
-              {showTooltip && (
-                <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
-                  <div className="space-y-1">
-                    <p className="font-medium mb-1">Tips One Minute Journal:</p>
-                    <ul className="space-y-1">
-                      <li>• Jujur dan spesifik dalam menjawab</li>
-                      <li>• Fokus pada pembelajaran dan insight</li>
-                      <li>• Bisa diisi singkat atau detail sesuai kebutuhan</li>
-                    </ul>
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                </div>
-              )}
-            </div>
           </div>
           <h4 className="text-center text-gray-700 mb-4">Jurnalkan jawaban atas pertanyaan berikut setiap kali selesai menjalani Sesi Fokus.</h4>
           {taskTitle && (
@@ -188,21 +182,19 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-          <button
+          <Button
             onClick={handleSkip}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            variant="outline"
             disabled={isSaving}
+            className="px-4 py-2"
           >
             Lewati
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSave}
-            className={`flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors ${
-              isSaving || !whatDone.trim()
-                ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
-                : 'bg-brand-500 text-white hover:bg-brand-600'
-            }`}
+            variant="primary"
             disabled={isSaving || !whatDone.trim()}
+            className="px-4 py-2"
           >
             {isSaving ? (
               <>
@@ -212,7 +204,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
             ) : (
               'Simpan'
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

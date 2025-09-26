@@ -46,7 +46,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Kelola Rencana Harian</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pilih Main Quest</h2>
           <p className="text-gray-600 mb-2">
             Tugas yang sudah tercentang adalah yang sudah ada di rencana harian. Anda bisa menambah atau menghapus tugas sesuai kebutuhan.
           </p>
