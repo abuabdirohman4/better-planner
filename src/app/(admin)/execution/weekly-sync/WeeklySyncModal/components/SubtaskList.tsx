@@ -27,13 +27,29 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
       <div className="ml-2 space-y-2">
         {filteredSubtasks.map((subtask: any) => {
           const parentTaskSelected = selectedItems.some(item => item.id === taskId && item.type === 'TASK');
+          const isInCurrentSelection = selectedItems.some(item => item.id === subtask.id && (item.type === 'SUBTASK' || item.type === 'TASK'));
+          const isInExistingSelection = existingSelectedIds.has(subtask.id);
+          const isChecked = isInCurrentSelection || isInExistingSelection || parentTaskSelected;
+          
           return (
             <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-2 py-1">
                 <input
                   type="checkbox"
-                  checked={selectedItems.some(item => item.id === subtask.id && (item.type === 'SUBTASK' || item.type === 'TASK')) || existingSelectedIds.has(subtask.id) || parentTaskSelected}
-                  onChange={() => handleItemToggle(subtask.id, 'SUBTASK', [], taskId)}
+                  checked={isChecked}
+                  onChange={() => {
+                    console.log('🖱️ Clicking subtask:', {
+                      subtaskId: subtask.id,
+                      subtaskTitle: subtask.title,
+                      isInCurrentSelection,
+                      isInExistingSelection,
+                      parentTaskSelected,
+                      isChecked,
+                      selectedItems,
+                      existingSelectedIds: Array.from(existingSelectedIds)
+                    });
+                    handleItemToggle(subtask.id, 'SUBTASK', [], taskId);
+                  }}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   disabled={parentTaskSelected}
                 />

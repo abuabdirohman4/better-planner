@@ -34,11 +34,15 @@ export async function setWeeklyGoalItems(data: {
   goalSlot: number;
   items: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not found');
-
+  console.log('🚀 setWeeklyGoalItems called with data:', data);
+  
   try {
+    const supabase = await createClient();
+    console.log('✅ Supabase client created');
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('✅ User authenticated:', user?.id);
+    if (!user) throw new Error('User not found');
     // First, check if weekly goal already exists for this slot
     const { data: existingGoal, error: checkError } = await supabase
       .from('weekly_goals')
@@ -86,18 +90,28 @@ export async function setWeeklyGoalItems(data: {
     }
 
     // Second, delete all existing goal items for this slot
+    console.log('🗑️ Deleting existing goal items for weekly_goal_id:', weeklyGoal.id);
     const { error: deleteError } = await supabase
       .from('weekly_goal_items')
       .delete()
       .eq('weekly_goal_id', weeklyGoal.id);
 
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error('❌ Error deleting existing goal items:', deleteError);
+      throw deleteError;
+    }
+    console.log('✅ Successfully deleted existing goal items');
 
     if (data.items.length > 0) {
       // Remove duplicates from items array
       const uniqueItems = data.items.filter((item, index, self) => 
         index === self.findIndex(t => t.id === item.id)
       );
+
+      console.log('📝 Inserting new goal items:', {
+        uniqueItems: uniqueItems.map(item => ({ id: item.id, type: item.type })),
+        weeklyGoalId: weeklyGoal.id
+      });
 
       const goalItemsData = uniqueItems.map(item => ({
         weekly_goal_id: weeklyGoal.id,
@@ -110,13 +124,18 @@ export async function setWeeklyGoalItems(data: {
         .insert(goalItemsData);
 
       if (insertError) {
+        console.error('❌ Error inserting new goal items:', insertError);
         // If unique constraint violation, ignore it (item already exists)
         if (insertError.code === '23505') {
           console.log('Some items already exist in this weekly goal, skipping duplicates');
         } else {
           throw insertError;
         }
+      } else {
+        console.log('✅ Successfully inserted new goal items');
       }
+    } else {
+      console.log('📝 No items to insert, keeping empty goal');
     }
 
     revalidatePath('/execution/weekly-sync');

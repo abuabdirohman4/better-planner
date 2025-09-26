@@ -30,7 +30,8 @@ export default function WeeklySyncModal({
     setSelectedItems, 
     handleItemToggle, 
     handleSelectAll, 
-    handleClearAll 
+    handleClearAll,
+    cleanupSelectedItems
   } = useSelectionManagement(initialSelectedItems, existingSelectedIds);
 
   // Debug log untuk modal
@@ -45,6 +46,8 @@ export default function WeeklySyncModal({
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Just save the current selectedItems without aggressive cleanup
+      // User should manually uncheck items they don't want
       await onSave(selectedItems);
       onClose();
     } catch (error) {
