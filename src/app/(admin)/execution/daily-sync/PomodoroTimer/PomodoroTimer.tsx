@@ -108,13 +108,6 @@ export default function PomodoroTimer() {
         
         // Check if user wants to use focus sound (only this needs browser permission)
         const wantsFocusSound = freshSettings.focusSoundId !== 'none';
-        console.log('wantsFocusSound', wantsFocusSound);
-        
-        console.log('🎵 PomodoroTimer audio check:', {
-          settingsFocusSoundId: freshSettings.focusSoundId,
-          wantsFocusSound,
-          showAudioPermissionPrompt
-        });
         
         // Only check permission if user wants to use focus sound (background audio)
         if (wantsFocusSound) {
