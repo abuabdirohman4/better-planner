@@ -41,7 +41,7 @@ const CollapsibleCard = ({
         className={`border-b rounded-b-lg border-gray-200 transition-all duration-500 ease-in-out overflow-hidden ${
           isCollapsed ? 'max-h-16' : 'max-h-[2000px]'
         }`}
-        style={{transition: 'max-height 0.75s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.75s ease-in-out'}}
+        style={{transition: 'max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease-in-out'}}
       >
         <div className={`transition-transform duration-300 ease-in-out`}>
           {children}

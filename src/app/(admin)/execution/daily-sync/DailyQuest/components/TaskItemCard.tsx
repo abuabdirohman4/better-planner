@@ -92,7 +92,7 @@ const TaskItemCard = ({
             </button>
           ) : null}
           <h4 className={`font-medium text-sm leading-tight ${
-            isVisuallyDisabled 
+            isCompleted 
               ? 'text-gray-500 dark:text-gray-500 line-through' 
               : 'text-gray-900 dark:text-gray-100'
           }`}>
