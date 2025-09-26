@@ -7,6 +7,7 @@ import { handleApiError } from '@/lib/errorUtils';
 export interface SoundSettings {
   soundId: string;
   volume: number;
+  taskCompletionSoundId: string;
 }
 
 export interface UserProfile {
@@ -19,7 +20,8 @@ export interface UserProfile {
 
 const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'children',
-  volume: 0.5
+  volume: 0.5,
+  taskCompletionSoundId: 'pop-up-notify'
 };
 
 /**
@@ -125,6 +127,7 @@ export async function getSoundSettings(): Promise<SoundSettings> {
     return DEFAULT_SOUND_SETTINGS;
   }
 }
+
 
 /**
  * Reset sound settings to default

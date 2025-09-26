@@ -75,6 +75,14 @@ export const TIMER_SOUND_OPTIONS: SoundOption[] = [
 // Task completion sound options (for task completion notifications)
 export const COMPLETION_SOUND_OPTIONS: SoundOption[] = [
   {
+    id: 'none',
+    name: 'No Sound',
+    type: 'custom',
+    description: 'Silent - no task completion sound',
+    emoji: '🔇',
+    filePath: ''
+  },
+  {
     id: 'smooth-notify',
     name: 'Smooth Notify',
     type: 'custom',
@@ -87,49 +95,97 @@ export const COMPLETION_SOUND_OPTIONS: SoundOption[] = [
     name: 'Pop Up Notify',
     type: 'custom',
     description: 'Pop up notification alert',
-    emoji: '🔔',
+    emoji: '🎉',
     filePath: '/audio/pop-up-notify-smooth-modern.wav'
   }
 ];
 
-// Backward compatibility - keep SOUND_OPTIONS for timer
-export const SOUND_OPTIONS = TIMER_SOUND_OPTIONS;
+// Focus sound options (for background ticking during Pomodoro timer)
+export const FOCUS_SOUND_OPTIONS: SoundOption[] = [
+  {
+    id: 'none',
+    name: 'No Sound',
+    type: 'custom',
+    description: 'Silent - no focus background sound',
+    emoji: '🔇',
+    filePath: ''
+  },
+  {
+    id: 'ticking-clock',
+    name: 'Ticking Clock',
+    type: 'custom',
+    description: 'Classic ticking clock sound',
+    emoji: '🕐',
+    filePath: '/audio/ticking-clock.wav'
+  }
+];
 
 // Load custom audio file
 async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {
   try {
     const response = await fetch(filePath);
+    
     if (!response.ok) {
-      throw new Error(`Failed to load audio file: ${response.statusText}`);
+      throw new Error(`Failed to load audio file: ${response.status} ${response.statusText}`);
     }
     
     const arrayBuffer = await response.arrayBuffer();
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return await audioContext.decodeAudioData(arrayBuffer);
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    return audioBuffer;
   } catch (error) {
     console.error('Error loading custom audio:', error);
     throw error;
   }
 }
 
+// Global audio context and source management
+let globalAudioContext: AudioContext | null = null;
+let currentAudioSource: AudioBufferSourceNode | null = null;
+
+// Stop current playing sound
+export function stopCurrentSound(): void {
+  if (currentAudioSource) {
+    try {
+      currentAudioSource.stop();
+      currentAudioSource.disconnect();
+      currentAudioSource = null;
+    } catch (error) {
+      // Source might already be stopped
+    }
+  }
+}
+
 // Play sound function
 export async function playSound(soundId: string, volume: number = 0.5): Promise<void> {
   try {
+    // Stop any currently playing sound
+    stopCurrentSound();
+
     // Handle "No Sound" option
     if (soundId === 'none') {
       return; // Silent - no sound played
     }
 
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // Create or reuse audio context
+    if (!globalAudioContext) {
+      globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
     
-    if (!audioContext) {
+    if (!globalAudioContext) {
       console.warn('Web Audio API not supported, falling back to system sound');
       // Fallback to system beep
       return;
     }
 
-    // Find sound option
-    const soundOption = SOUND_OPTIONS.find(option => option.id === soundId);
+    // Resume audio context if suspended (required for user interaction)
+    if (globalAudioContext.state === 'suspended') {
+      await globalAudioContext.resume();
+    }
+
+    // Find sound option in all sound categories
+    const soundOption = [...TIMER_SOUND_OPTIONS, ...COMPLETION_SOUND_OPTIONS, ...FOCUS_SOUND_OPTIONS].find(option => option.id === soundId);
     if (!soundOption) {
       throw new Error(`Sound option not found: ${soundId}`);
     }
@@ -143,19 +199,44 @@ export async function playSound(soundId: string, volume: number = 0.5): Promise<
       throw new Error(`Unsupported sound type: ${soundOption.type}`);
     }
 
-    const source = audioContext.createBufferSource();
-    const gainNode = audioContext.createGain();
+    const source = globalAudioContext.createBufferSource();
+    const gainNode = globalAudioContext.createGain();
     
     source.buffer = buffer;
     gainNode.gain.value = volume;
     
     source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(globalAudioContext.destination);
+    
+    // Store reference to current source for stopping
+    currentAudioSource = source;
+    
+    // Clean up reference when sound ends
+    source.onended = () => {
+      currentAudioSource = null;
+    };
     
     source.start();
   } catch (error) {
     console.error('Error playing sound:', error);
-    // Fallback to system notification
+    
+    // Try fallback with HTML5 Audio
+    try {
+      const audio = new Audio();
+      const soundOption = [...TIMER_SOUND_OPTIONS, ...COMPLETION_SOUND_OPTIONS, ...FOCUS_SOUND_OPTIONS].find(option => option.id === soundId);
+      
+      if (soundOption && soundOption.filePath) {
+        audio.src = soundOption.filePath;
+        audio.volume = volume;
+        audio.play().catch(fallbackError => {
+          console.error('HTML5 Audio fallback failed:', fallbackError);
+        });
+      }
+    } catch (fallbackError) {
+      console.error('HTML5 Audio fallback error:', fallbackError);
+    }
+    
+    // Final fallback to system notification
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Timer Complete!');
     }
@@ -174,7 +255,7 @@ export async function playTimerCompleteSound(
 
 // Get sound option by ID
 export function getSoundOption(soundId: string): SoundOption | undefined {
-  return SOUND_OPTIONS.find(option => option.id === soundId);
+  return TIMER_SOUND_OPTIONS.find(option => option.id === soundId);
 }
 
 // Default sound settings
