@@ -85,7 +85,7 @@ export default function AudioPermissionPrompt({ onPermissionGranted, onSkip }: A
                   <p className="font-medium">Follow these steps manually:</p>
                   <ol className="list-decimal list-inside space-y-1 ml-2">
                     <li>Click the lock icon in your browser's address bar</li>
-                    <li>Set "Sound" to "Allow"</li>
+                    <li>Set "Sound" & "Notifications" to "Allow"</li>
                     <li>Refresh this page</li>
                   </ol>
                 </div>
