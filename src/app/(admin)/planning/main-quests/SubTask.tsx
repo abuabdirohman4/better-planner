@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import debounce from 'lodash/debounce';
 import ComponentCard from '@/components/common/ComponentCard';
-import CustomToast from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 import { addTask } from './actions/taskActions';
 import { useSubtaskManagement } from './SubTask/hooks/useSubtaskManagement';
 import { useSubtaskState } from './SubTask/hooks/useSubtaskState';
@@ -39,12 +39,12 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
       if (res && res.task) {
         setNewSubtaskTitle('');
         fetchSubtasks();
-        CustomToast.success(res.message || 'Sub-tugas berhasil ditambahkan');
+        toast.success(res.message || 'Sub-tugas berhasil ditambahkan');
       } else {
-        CustomToast.error('Gagal menambah sub-tugas');
+        toast.error('Gagal menambah sub-tugas');
       }
     } catch {
-      CustomToast.error('Gagal menambah sub-tugas');
+      toast.error('Gagal menambah sub-tugas');
     } finally {
       setNewSubtaskLoading(false);
     }

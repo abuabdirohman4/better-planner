@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/button/Button';
 import VisionSkeleton from '@/components/ui/skeleton/VisionSkeleton';
-import { showSuccessToast, showErrorToast } from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 
 import { upsertVision } from './actions';
 import { LIFE_AREAS } from './constants';
@@ -57,9 +57,9 @@ export default function VisionForm() {
 
       // Invalidate cache and show success toast
       await mutate();
-      showSuccessToast('Data visi berhasil disimpan!');
+      toast.success('Data visi berhasil disimpan!');
     } catch {
-      showErrorToast('Gagal menyimpan data', 'Terjadi kesalahan saat menyimpan data');
+      toast.error('Gagal menyimpan data');
     } finally {
       setIsSubmitting(false);
     }

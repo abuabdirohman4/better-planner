@@ -76,7 +76,7 @@ try {
   return result;
 } catch (error) {
   const errorInfo = handleApiError(error, 'memuat data');
-  CustomToast.error(`Gagal ${errorInfo.context}`, errorInfo.message);
+  toast.error(`Gagal ${errorInfo.context}`, errorInfo.message);
   throw error;
 }
 

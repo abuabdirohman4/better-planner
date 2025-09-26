@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import CustomToast from '@/components/ui/toast/CustomToast';
 import { getHierarchicalData } from '../../actions/hierarchicalDataActions';
 import type { Quest } from '../../WeeklySyncClient/types';
+import { toast } from 'sonner';
 
 export function useHierarchicalData(year: number, quarter: number, isOpen: boolean) {
   const [hierarchicalData, setHierarchicalData] = useState<Quest[]>([]);
@@ -14,7 +14,7 @@ export function useHierarchicalData(year: number, quarter: number, isOpen: boole
       setHierarchicalData(data);
     } catch (error) {
       console.error('Error loading hierarchical data:', error);
-      CustomToast.error('Gagal memuat data hierarkis');
+      toast.error('Gagal memuat data hierarkis');
     } finally {
       setDataLoading(false);
     }

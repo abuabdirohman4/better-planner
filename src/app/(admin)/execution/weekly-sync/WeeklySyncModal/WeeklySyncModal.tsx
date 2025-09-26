@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-import CustomToast from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 import { useQuarterStore } from '@/stores/quarterStore';
 
 import type { WeeklyFocusModalProps } from './types';
@@ -49,7 +49,7 @@ export default function WeeklySyncModal({
       onClose();
     } catch (error) {
       console.error('Error saving weekly focus:', error);
-      CustomToast.error('Gagal menyimpan fokus mingguan');
+      toast.error('Gagal menyimpan fokus mingguan');
     } finally {
       setLoading(false);
     }

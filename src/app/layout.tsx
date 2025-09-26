@@ -8,11 +8,17 @@ import PreloadProvider from '@/components/common/PreloadProvider';
 import PWAComponents from '@/components/PWA';
 import SplashScreen from '@/components/PWA/SplashScreen';
 import SWRProvider from '@/components/common/SWRProvider';
-// Note: SidebarProvider and ThemeProvider are no longer needed with Zustand
 
 const outfit = Outfit({
   subsets: ["latin"],
 });
+
+const toastConfig = {
+  success: '!bg-blue-500 !text-white !border-blue-500',
+  error: '!bg-red-500 !text-white !border-red-500',
+  info: '!bg-blue-500 !text-white !border-blue-500',
+  warning: '!bg-yellow-500 !text-white !border-yellow-500',
+};
 
 export const metadata: Metadata = {
   title: "Better Planner",
@@ -72,7 +78,9 @@ export default function RootLayout({
             </SplashScreen>
             <Toaster
               position="top-right"
-              richColors
+              toastOptions={{
+                classNames: toastConfig
+              }}
             />
           </PreloadProvider>
         </SWRProvider>

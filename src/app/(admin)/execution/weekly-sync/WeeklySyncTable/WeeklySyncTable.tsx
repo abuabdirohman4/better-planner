@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
-import CustomToast from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActions';
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
@@ -35,7 +35,7 @@ export default function WeeklySyncTable({
         const goal = goals.find(goal => goal.goal_slot === selectedSlot);
         if (goal) {
           await removeWeeklyGoal(goal.id);
-          CustomToast.success('Goal mingguan berhasil dihapus!');
+          toast.success('Goal mingguan berhasil dihapus!');
         }
       } else {
         await setWeeklyGoalItems({
@@ -45,7 +45,7 @@ export default function WeeklySyncTable({
           goalSlot: selectedSlot,
           items: selectedItems
         });
-        CustomToast.success('Goal mingguan berhasil disimpan!');
+        toast.success('Goal mingguan berhasil disimpan!');
       }
       
       // FIXED: Always refresh goals after any operation
@@ -54,7 +54,7 @@ export default function WeeklySyncTable({
       }
     } catch (error) {
       console.error('Error saving weekly goal:', error);
-      CustomToast.error('Gagal menyimpan goal mingguan');
+      toast.error('Gagal menyimpan goal mingguan');
     }
   };
 

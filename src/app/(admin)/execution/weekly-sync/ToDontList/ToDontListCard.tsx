@@ -6,7 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import React, { useEffect, useState, useRef, forwardRef } from "react";
 
 import ComponentCard from "@/components/common/ComponentCard";
-import CustomToast from "@/components/ui/toast/CustomToast";
+import { toast } from 'sonner';
 
 import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "../actions/weeklyRulesActions";
 import type { ToDontListCardProps, Rule } from "./types";
@@ -51,7 +51,7 @@ function useNewRuleManagement(year: number, quarter: number, weekNumber: number,
       // FIXED: Always refresh after successful operation
       onRefresh();
     } else {
-      CustomToast.error("Gagal", res.message);
+      toast.error(`Gagal ${res.message}`);
     }
     setNewRuleLoading(false);
   };
@@ -90,7 +90,7 @@ function useNewRuleManagement(year: number, quarter: number, weekNumber: number,
       // FIXED: Always refresh after successful operation
       onRefresh();
     } else {
-      CustomToast.error("Gagal menambah aturan", res.message);
+      toast.error(`Gagal menambah aturan ${res.message}`);
     }
     setLoadingInsertAt(null);
   };
@@ -121,7 +121,7 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
       // FIXED: Always refresh after successful update
       onRefresh();
     } else {
-      CustomToast.error("Gagal", res.message);
+      toast.error(`Gagal ${res.message}`);
     }
     setEditingId(null);
     setEditingText("");
@@ -133,7 +133,7 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
       // FIXED: Always refresh after successful deletion
       onRefresh();
     } else {
-      CustomToast.error("Gagal", res.message);
+      toast.error(`Gagal ${res.message}`);
       // Still refresh even on error to ensure UI consistency
       onRefresh();
     }
@@ -151,7 +151,7 @@ function useRuleOperations(rules: Rule[], onRefresh: () => void) {
       // FIXED: Always refresh after successful reorder
       onRefresh();
     } else {
-      CustomToast.error("Gagal update urutan", res.message);
+      toast.error(`Gagal update urutan ${res.message}`);
       // Still refresh even on error to ensure UI consistency
       onRefresh();
     }

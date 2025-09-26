@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
-import CustomToast from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 import { useSidebar } from '@/stores/sidebarStore';
 import { useQuarter } from "./hooks/useQuarter";
 
@@ -175,10 +175,10 @@ function useQuestOperations(year: number, quarter: number, quests: Quest[], init
       if (newQuests.length > 0) {
         await addMultipleQuests(newQuests.map(q => ({ title: q.title, label: q.label })), year, quarter);
       }
-      CustomToast.success("Quest berhasil disimpan/diupdate!");
+      toast.success("Quest berhasil disimpan/diupdate!");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan quest.";
-      CustomToast.error(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -199,11 +199,11 @@ function useQuestOperations(year: number, quarter: number, quests: Quest[], init
         .filter((q): q is { id: string; title: string; priority_score: number } => typeof q.id === 'string');
       const result = await finalizeQuests(pairwiseResults, questsWithScore, year, quarter);
       localStorage.removeItem(localKey);
-      CustomToast.success(result?.message || "Prioritas berhasil ditentukan dan 3 Main Quest telah ditetapkan!");
+      toast.success(result?.message || "Prioritas berhasil ditentukan dan 3 Main Quest telah ditetapkan!");
       if (result?.url) router.push(result.url);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Gagal commit main quest.";
-      CustomToast.error(errorMsg);
+      toast.error(errorMsg);
     }
   };
 

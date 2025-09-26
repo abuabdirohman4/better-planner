@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { addTask, updateTaskStatus, deleteTask } from '../../actions/taskActions';
-import CustomToast from '@/components/ui/toast/CustomToast';
+import { toast } from 'sonner';
 
 interface Subtask {
   id: string;
@@ -69,12 +69,12 @@ export function useSubtaskCRUD(
         return idxBaru !== -1 ? idxBaru : null;
       } else {
         setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== tempId));
-        CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
+        toast.error('Gagal membuat tugas baru. Coba lagi.');
         return null;
       }
     } catch {
       setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== tempId));
-      CustomToast.error('Gagal membuat tugas baru. Coba lagi.');
+      toast.error('Gagal membuat tugas baru. Coba lagi.');
       return null;
     }
   }, [taskId, milestoneId, subtasks, setSubtasks]);
@@ -86,11 +86,11 @@ export function useSubtaskCRUD(
       const res = await updateTaskStatus(subtask.id, newStatus);
       if (!res) {
         setSubtasks((prev: Subtask[]) => prev.map((st: Subtask) => st.id === subtask.id ? { ...st, status: subtask.status } : st));
-        CustomToast.error('Gagal update status');
+        toast.error('Gagal update status');
       }
     } catch {
       setSubtasks((prev: Subtask[]) => prev.map((st: Subtask) => st.id === subtask.id ? { ...st, status: subtask.status } : st));
-      CustomToast.error('Gagal update status');
+      toast.error('Gagal update status');
     }
   }, [setSubtasks]);
 
@@ -106,11 +106,11 @@ export function useSubtaskCRUD(
     try {
       // Hapus dari database
       await deleteTask(id);
-      CustomToast.success('Subtask berhasil dihapus');
+      toast.success('Subtask berhasil dihapus');
     } catch (error) {
       // Jika gagal, kembalikan ke state semula
       console.error('Failed to delete subtask:', error);
-      CustomToast.error('Gagal menghapus subtask');
+      toast.error('Gagal menghapus subtask');
       // Note: State sudah dihapus di atas, jadi tidak perlu rollback
     }
     
