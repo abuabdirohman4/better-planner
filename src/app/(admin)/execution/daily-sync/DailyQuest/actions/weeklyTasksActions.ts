@@ -86,14 +86,18 @@ export async function getTasksForWeek(year: number, weekNumber: number, selected
       })
     );
 
-    // Remove duplicates based on item_id and goal_slot combination
+    // Remove duplicates based on item_id only (not goal_slot combination)
+    // This ensures each task appears only once in the daily sync list
     let uniqueItems = itemsWithDetails.reduce((acc, item) => {
-      const key = `${item.id}-${item.goal_slot}`;
-      if (!acc.find(existing => `${existing.id}-${existing.goal_slot}` === key)) {
+      if (!acc.find(existing => existing.id === item.id)) {
         acc.push(item);
       }
       return acc;
     }, [] as typeof itemsWithDetails);
+
+    // Filter out completed tasks (only show TODO tasks)
+    // This ensures consistency with weekly sync which also filters by task status
+    uniqueItems = uniqueItems.filter(item => item.status === 'TODO');
 
     // Filter out tasks that were completed in previous days within the current week
     if (selectedDate) {

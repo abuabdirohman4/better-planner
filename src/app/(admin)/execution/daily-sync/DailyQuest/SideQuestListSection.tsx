@@ -76,8 +76,8 @@ const SideQuestListSection = ({
   showAddQuestButton 
 }: TaskColumnProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const { showCompletedSideQuest, toggleShowCompletedSideQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
+  const {showCompletedSideQuest, toggleShowCompletedSideQuest} = useUIPreferencesStore();
 
   // Filter items based on showCompletedSideQuest state
   const filteredItems = showCompletedSideQuest 
@@ -134,6 +134,17 @@ const SideQuestListSection = ({
             forceRefreshTaskId={forceRefreshTaskId}
           />
         ))}
+
+        {filteredItems.length === 0 ? (
+          <div className="text-center text-gray-500 dark:text-gray-400">
+            <p className="mb-6 py-8">
+              {showCompletedSideQuest 
+                ? 'Tidak ada side quest hari ini' 
+                : 'Tidak ada side quest yang belum selesai'
+              }
+            </p>
+          </div>
+        ) : null}
 
         {showAddForm && onAddSideQuest ? (
           <SideQuestForm
