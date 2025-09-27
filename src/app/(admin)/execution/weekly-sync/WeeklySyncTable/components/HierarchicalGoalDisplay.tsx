@@ -1,0 +1,183 @@
+"use client";
+
+import React, { useState } from 'react';
+import type { GoalItem } from '../../WeeklySyncClient/types';
+import type { HorizontalGoalDisplayProps } from '../types';
+
+const questColors = [
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
+  'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300 border border-green-200 dark:border-green-700',
+  'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 border border-orange-200 dark:border-orange-700',
+];
+
+export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks }: HorizontalGoalDisplayProps) {
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Filter items based on showCompletedTasks state
+  const filteredItems = showCompletedTasks 
+    ? items 
+    : items.filter(item => item.status !== 'DONE');
+
+  // Build hierarchical structure
+  const buildHierarchy = (items: GoalItem[]) => {
+    const hierarchy: { [key: string]: any } = {};
+    const rootItems: GoalItem[] = [];
+    
+    // First, identify root items (items without parent_task_id)
+    items.forEach(item => {
+      if (!item.parent_task_id) {
+        rootItems.push(item);
+      }
+    });
+
+    // Build hierarchy for each root item
+    rootItems.forEach(rootItem => {
+      const children = items.filter(item => item.parent_task_id === rootItem.item_id);
+      
+      hierarchy[rootItem.item_id] = {
+        ...rootItem,
+        children: children.length > 0 ? children : [],
+        isExpanded: expandedItems.has(rootItem.item_id)
+      };
+    });
+
+    return hierarchy;
+  };
+
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderItem = (item: any, level: number = 0, isChild: boolean = false) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.has(item.item_id);
+    const colorClass = questColors[(slotNumber-1)%questColors.length];
+    
+    return (
+      <div key={item.id} className="space-y-1">
+        <div
+          className={`group relative flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+            level > 0 ? 'ml-4 border-l-2 border-gray-200 dark:border-gray-600' : ''
+          } ${
+            item.status === 'DONE' 
+              ? 'opacity-75' 
+              : ''
+          }`}
+          style={{ marginLeft: `${level * 16}px` }}
+        >
+          {/* Expand/Collapse Button */}
+          {hasChildren && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpanded(item.item_id);
+              }}
+              className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+              <svg
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  isExpanded ? 'rotate-90' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+          
+          {/* Spacer for items without children */}
+          {!hasChildren && <div className="w-4 h-4" />}
+
+          {/* Checkbox */}
+          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+            item.status === 'DONE' 
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
+              : 'border-gray-300 dark:border-gray-500'
+          }`}>
+            {item.status === 'DONE' && (
+              <svg 
+                className="w-2.5 h-2.5 text-white" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+          
+          {/* Quest Label */}
+          {level === 0 && (
+            <span className={`px-2 py-1 rounded-full text-xs font-bold ${colorClass}`}>
+              {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
+            </span>
+          )}
+          
+          {/* Task Title */}
+          <span className={`flex-1 text-sm font-medium ${
+            item.status === 'DONE' 
+              ? 'text-gray-500 dark:text-gray-400 line-through' 
+              : 'text-gray-900 dark:text-white'
+          }`}>
+            {item.title}
+          </span>
+          
+          {/* Children Count Indicator */}
+          {hasChildren && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              ({item.children.length})
+            </span>
+          )}
+        </div>
+        
+        {/* Render Children */}
+        {hasChildren && isExpanded && (
+          <div className="space-y-1">
+            {item.children.map((child: any) => 
+              renderItem(child, level + 1, true)
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const hierarchy = buildHierarchy(filteredItems);
+  const rootItems = Object.values(hierarchy);
+
+  return (
+    <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      {rootItems.length > 0 ? (
+        <div className="space-y-2">
+          {rootItems.map((item: any) => renderItem(item))}
+        </div>
+      ) : (
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+          <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium mb-1">
+            {showCompletedTasks 
+              ? 'Tidak ada task di goal slot ini' 
+              : 'Tidak ada task yang belum selesai'
+            }
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Klik untuk menambahkan task
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

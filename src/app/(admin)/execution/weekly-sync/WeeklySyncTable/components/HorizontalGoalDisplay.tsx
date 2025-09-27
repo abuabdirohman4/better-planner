@@ -100,7 +100,7 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
   });
 
   return (
-    <div className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 md:p-4 rounded-lg transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700" onClick={onClick}>
+    <div className="md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       {/* Task Items */}
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 ${sortedQuestIds.length > 0 ? '' : 'justify-center'}`}>
         {sortedQuestIds.length > 0 ? (
@@ -178,16 +178,6 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
       </div>
       
       {/* Edit hint dengan styling yang lebih subtle */}
-      {sortedQuestIds.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-center space-x-2 text-xs text-gray-400 dark:text-gray-500">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            <span>Klik untuk mengedit</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
