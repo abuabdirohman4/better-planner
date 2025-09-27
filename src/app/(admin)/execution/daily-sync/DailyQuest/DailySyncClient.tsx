@@ -118,6 +118,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         onSave={handleSaveSelection}
         isLoading={modalLoading}
         savingLoading={savingLoading}
+        completedTodayCount={groupedItems.MAIN_QUEST?.filter((item: any) => item.status === 'DONE').length || 0}
       />
     </div>
   );

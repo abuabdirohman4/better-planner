@@ -11,7 +11,8 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   onTaskToggle, 
   onSave, 
   isLoading,
-  savingLoading = false
+  savingLoading = false,
+  completedTodayCount = 0
 }) => {
   const groupByGoalSlot = (tasks: any[]) => {
     const groups: Record<number, any[]> = {};
@@ -46,16 +47,21 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pilih Main Quest</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Main Quest</h2>
           <p className="text-gray-600 mb-2">
-            Tugas yang sudah tercentang adalah yang sudah ada di rencana harian. Anda bisa menambah atau menghapus tugas sesuai kebutuhan.
+            Quest yang sudah tercentang adalah yang sudah ada atau akan ditambahkan di rencana harian dan belum diselesaikan. <br></br> Quest yang sudah diselesaikan tidak akan muncul lagi di daftar.
           </p>
-          <p className="text-gray-500 text-sm mb-2">
-            💡 Tugas yang sudah selesai di hari sebelumnya tidak akan muncul di pilihan untuk menghindari duplikasi.
+          <p className="text-gray-700 font-medium">
+            Selected : {selectedCount} Quest
           </p>
-          <p className="text-blue-600 font-medium">
-            {selectedCount} tugas dipilih
-          </p>
+
+          {completedTodayCount > 0 && (
+            <>
+              <p className="text-gray-700 font-medium">
+                Done : {completedTodayCount} Quest
+              </p>
+            </>
+          )}
         </div>
 
         {isLoading ? (
@@ -124,7 +130,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
             variant="outline"
             size="md"
           >
-            Batal
+            Cancel
           </Button>
           <Button
             onClick={onSave}
@@ -133,7 +139,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
             variant="primary"
             size="md"
           >
-            Pilih ({selectedCount} Quest)
+            Submit
           </Button>
         </div>
       </div>

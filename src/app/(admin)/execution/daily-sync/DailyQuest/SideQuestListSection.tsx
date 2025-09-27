@@ -153,14 +153,14 @@ const SideQuestListSection = ({
           />
         ) : null}
         
-        {/* Tombol Tambah Quest di dalam card Side Quest - hanya muncul jika ada task */}
+        {/* Tombol Add Quest di dalam card Side Quest - hanya muncul jika ada task */}
         {onAddSideQuest ? (
           <div className="flex justify-center mt-6">
             <button 
               className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
               onClick={() => setShowAddForm(!showAddForm)}
             >
-              Tambah Quest
+              Add Quest
             </button>
           </div>
         ) : null}

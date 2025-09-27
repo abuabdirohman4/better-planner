@@ -68,6 +68,7 @@ export interface TaskSelectionModalProps {
   onSave: () => void;
   isLoading: boolean; // Loading untuk konten (skeleton)
   savingLoading?: boolean; // Loading untuk button (spinner)
+  completedTodayCount?: number; // Jumlah tugas yang sudah selesai hari ini
 }
 
 export interface WeeklyTaskItem {
