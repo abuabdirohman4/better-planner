@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { handleApiError } from '@/lib/errorUtils';
 
 export async function setDailyPlan(date: string, selectedItems: { item_id: string; item_type: string }[]) {
   const supabase = await createClient();
@@ -84,29 +85,31 @@ export async function updateDailyPlanItemAndTaskStatus(
   taskId: string, 
   status: 'TODO' | 'IN_PROGRESS' | 'DONE'
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
-
   try {
-    // Update both tables in parallel
-    const [dailyPlanResult, taskResult] = await Promise.all([
-      supabase
-        .from('daily_plan_items')
-        .update({ status })
-        .eq('id', dailyPlanItemId),
-      supabase
-        .from('tasks')
-        .update({ status })
-        .eq('id', taskId)
-    ]);
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-    if (dailyPlanResult.error) throw dailyPlanResult.error;
-    if (taskResult.error) throw taskResult.error;
+    const { data, error } = await supabase.rpc('update_task_and_daily_plan_status', {
+      p_task_id: taskId,
+      p_status: status,
+      p_user_id: user.id,
+      p_goal_slot: null, // Not used for daily sync
+      p_date: new Date().toISOString().split('T')[0],
+      p_daily_plan_item_id: dailyPlanItemId
+    });
+
+    if (error) {
+      throw error;
+    }
+
     revalidatePath('/execution/daily-sync');
-    return { success: true };
+    return data;
   } catch (error) {
-    console.error('Error updating status:', error);
+    console.error("Error in updateDailyPlanItemAndTaskStatus:", error);
     throw error;
   }
 }

@@ -3,6 +3,7 @@
 import React from 'react';
 import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
+import { useWeeklyTaskManagement } from '../../hooks/useWeeklyTaskManagement';
 
 const questColors = [
   'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
@@ -11,6 +12,7 @@ const questColors = [
 ];
 
 export default function HorizontalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks }: HorizontalGoalDisplayProps) {
+  const { toggleTaskStatus, isTaskLoading } = useWeeklyTaskManagement();
   // Filter items based on showCompletedTasks state
   const filteredItems = showCompletedTasks 
     ? items 
@@ -120,13 +122,22 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                 >
                   {/* Top row: Checkbox + Label */}
                   <div className="flex items-center space-x-2">
-                    {/* Custom Checkbox dengan animation */}
-                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
-                      item.status === 'DONE' 
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 shadow-lg' 
-                        : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                    }`}>
-                      {item.status === 'DONE' && (
+                    {/* Interactive Checkbox */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTaskStatus(item.item_id, slotNumber, item.status);
+                      }}
+                      disabled={isTaskLoading(item.item_id)}
+                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                        item.status === 'DONE' 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 shadow-lg' 
+                          : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                      } ${isTaskLoading(item.item_id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      {isTaskLoading(item.item_id) ? (
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                      ) : item.status === 'DONE' ? (
                         <svg 
                           className="w-3 h-3 text-white drop-shadow-sm" 
                           fill="currentColor" 
@@ -134,8 +145,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                         >
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
-                      )}
-                    </div>
+                      ) : null}
+                    </button>
                     
                     {/* Label dengan hover effect */}
                     <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>

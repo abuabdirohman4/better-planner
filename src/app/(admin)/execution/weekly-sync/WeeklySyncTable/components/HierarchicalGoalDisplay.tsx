@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
+import { useWeeklyTaskManagement } from '../../hooks/useWeeklyTaskManagement';
 
 const questColors = [
   'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
@@ -12,6 +13,7 @@ const questColors = [
 
 export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks }: HorizontalGoalDisplayProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const { toggleTaskStatus, isTaskLoading } = useWeeklyTaskManagement();
 
   // Filter items based on showCompletedTasks state
   const filteredItems = showCompletedTasks 
@@ -98,13 +100,22 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           {/* Spacer for items without children */}
           {!hasChildren && <div className="w-4 h-4" />}
 
-          {/* Checkbox */}
-          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-            item.status === 'DONE' 
-              ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
-              : 'border-gray-300 dark:border-gray-500'
-          }`}>
-            {item.status === 'DONE' && (
+          {/* Interactive Checkbox */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTaskStatus(item.item_id, slotNumber, item.status);
+            }}
+            disabled={isTaskLoading(item.item_id)}
+            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+              item.status === 'DONE' 
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
+                : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+            } ${isTaskLoading(item.item_id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {isTaskLoading(item.item_id) ? (
+              <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+            ) : item.status === 'DONE' ? (
               <svg 
                 className="w-2.5 h-2.5 text-white" 
                 fill="currentColor" 
@@ -112,8 +123,8 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
               >
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-            )}
-          </div>
+            ) : null}
+          </button>
           
           {/* Quest Label */}
           {level === 0 && (
