@@ -149,9 +149,9 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                     </button>
                     
                     {/* Label dengan hover effect */}
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>
+                    {/* <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>
                       {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
-                    </span>
+                    </span> */}
                   </div>
                   
                   {/* Bottom row: Text */}

@@ -55,7 +55,6 @@ export default function TaskItem({
       await onEdit(task.id, editValue.trim());
       setHasChanges(false);
     } catch (error) {
-      console.error('Failed to save task:', error);
     } finally {
       setIsSaving(false);
     }

@@ -35,7 +35,7 @@ interface SubtaskListProps {
   setFocusSubtaskId: (id: string | null) => void;
   draftTitles: Record<string, string>;
   handleDraftTitleChange: (id: string, val: string, immediate?: boolean) => void;
-  handleDeleteSubtask: (id: string, idx: number) => void;
+  handleDeleteSubtask: (id: string, idx: number) => Promise<void>;
   handleDragEnd: (event: DragEndEvent) => void;
 }
 

@@ -46,7 +46,6 @@ export function useMilestoneState(questId: string) {
       fetchMilestones();
       setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
     } catch (error) {
-      console.error('Failed to save milestone:', error);
     } finally {
       setNewMilestoneLoading(l => l.map((v, i) => i === idx ? false : v));
     }
@@ -60,7 +59,6 @@ export function useMilestoneState(questId: string) {
       setMilestoneChanges(prev => ({ ...prev, [id]: false }));
       fetchMilestones();
     } catch (error) {
-      console.error('Failed to save milestone:', error);
     } finally {
       setMilestoneLoading(prev => ({ ...prev, [id]: false }));
     }

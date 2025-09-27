@@ -7,6 +7,7 @@ import { updateQuestMotivation } from './actions/questActions';
 
 import Milestone from './Milestone';
 import SubTask from './SubTask';
+import { useMilestones } from './hooks/useMainQuestsSWR';
 
 interface Task {
   id: string;
@@ -49,7 +50,6 @@ export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps
       await updateQuestMotivation(quest.id, motivationValue);
       setHasChanges(false);
     } catch (error) {
-      console.error('Failed to save motivation:', error);
     } finally {
       setIsSaving(false);
     }

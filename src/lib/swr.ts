@@ -45,7 +45,10 @@ export const questKeys = {
   all: ['quests'] as const,
   lists: () => [...questKeys.all, 'list'] as const,
   list: (year: number, quarter: number) => [...questKeys.lists(), year, quarter] as const,
-  mainQuests: (year: number, quarter: number) => [...questKeys.all, 'main-quests', year, quarter] as const,
+  mainQuests: (year: number, quarter: number) => {
+    const key = [...questKeys.all, 'main-quests', year, quarter] as const;
+    return key;
+  },
   details: () => [...questKeys.all, 'detail'] as const,
   detail: (id: string) => [...questKeys.details(), id] as const,
 };
@@ -70,6 +73,8 @@ export const taskKeys = {
   list: (milestoneId: string) => [...taskKeys.lists(), milestoneId] as const,
   details: () => [...taskKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
+  mainQuests: (milestoneId: string) => [...taskKeys.all, 'main-quests', milestoneId] as const,
+  subtasks: (taskId: string) => [...taskKeys.all, 'subtasks', taskId] as const,
 };
 
 /**

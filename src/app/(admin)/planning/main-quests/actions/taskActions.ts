@@ -12,7 +12,11 @@ export async function getTasksForMilestone(milestoneId: string) {
     .eq('milestone_id', milestoneId)
     .is('parent_task_id', null)
     .order('display_order', { ascending: true });
-  if (error) return [];
+  
+  if (error) {
+    return [];
+  }
+  
   
   // Jika ada task tanpa display_order, perbaiki otomatis
   const tasksToUpdate = data?.filter(task => !task.display_order || task.display_order === 0);

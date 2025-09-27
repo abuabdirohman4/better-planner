@@ -15,28 +15,30 @@ export function useSubtaskOperations(
   taskId: string,
   _milestoneId: string,
   subtasks: Subtask[],
-  setSubtasks: React.Dispatch<React.SetStateAction<Subtask[]>>,
+  refetchSubtasks: () => void,
   draftTitles: Record<string, string>,
   setDraftTitles: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   focusSubtaskId: string | null,
   setFocusSubtaskId: (id: string | null) => void,
-  handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<number | null>,
+  handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<{ newIndex: number | null; newSubtaskId?: string } | null>,
   handleCheck: (subtask: Subtask) => void,
-  handleDeleteSubtask: (id: string, idx: number) => Promise<number>
+  handleDeleteSubtask: (id: string, idx: number) => Promise<{ newIndex: number; newFocusId?: string }>
 ) {
   const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
     try {
       await updateTask(id, val);
-      setSubtasks((subtasks: Subtask[]) => subtasks.map((st: Subtask) => st.id === id ? { ...st, title: val } : st));
+      // 🔧 FIX: Refetch data instead of optimistic updates
+      refetchSubtasks();
     } catch {}
-  }, 1000), [setSubtasks]);
+  }, 1000), [refetchSubtasks]);
 
   const updateTaskImmediate = useCallback(async (id: string, val: string) => {
     try {
       await updateTask(id, val);
-      setSubtasks((subtasks: Subtask[]) => subtasks.map((st: Subtask) => st.id === id ? { ...st, title: val } : st));
+      // 🔧 FIX: Refetch data instead of optimistic updates
+      refetchSubtasks();
     } catch {}
-  }, [setSubtasks]);
+  }, [refetchSubtasks]);
 
   const handleDraftTitleChange = useCallback((id: string, val: string, immediate = false) => {
     setDraftTitles(draft => ({ ...draft, [id]: val }));
@@ -48,23 +50,22 @@ export function useSubtaskOperations(
   }, [setDraftTitles, updateTaskImmediate, debouncedUpdateTask]);
 
   const handleDeleteSubtaskWithFocus = useCallback(async (id: string, idx: number) => {
-    const newFocusId = await handleDeleteSubtask(id, idx);
+    const result = await handleDeleteSubtask(id, idx);
+    
+    // 🔧 FIX: Clear draft title for deleted subtask
     setDraftTitles(draft => {
       const newDraft = { ...draft };
       delete newDraft[id];
       return newDraft;
     });
-    if (newFocusId !== -1 && newFocusId >= 0 && newFocusId < subtasks.length) {
-      setFocusSubtaskId(subtasks[newFocusId].id);
+    
+    // 🔧 FIX: Focus on the appropriate subtask after deletion
+    if (result.newFocusId) {
+      setFocusSubtaskId(result.newFocusId);
     } else {
       setFocusSubtaskId(null);
     }
-    // Validasi UUID format untuk Supabase
-    if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) return;
-    try {
-      await deleteTask(id);
-    } catch {}
-  }, [handleDeleteSubtask, setDraftTitles, setFocusSubtaskId, subtasks]);
+  }, [handleDeleteSubtask, setDraftTitles, setFocusSubtaskId]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -85,16 +86,17 @@ export function useSubtaskOperations(
       const next = newSubtasks[newIndex + 1].display_order;
       newOrder = (prev + next) / 2;
     }
-    newSubtasks[newIndex] = { ...newSubtasks[newIndex], display_order: newOrder };
-    setSubtasks(() => newSubtasks);
+    
     try {
       await updateTaskDisplayOrder(newSubtasks[newIndex].id, newOrder);
+      // 🔧 FIX: Refetch data instead of optimistic updates
+      refetchSubtasks();
     } catch {}
-  }, [subtasks, setSubtasks]);
+  }, [subtasks, refetchSubtasks]);
 
   const handleSubtaskEnterWithFocus = useCallback(async (idx: number, title: string = '', subtasksOverride?: Subtask[]): Promise<number> => {
     const result = await handleSubtaskEnter(idx, title, subtasksOverride);
-    return typeof result === 'number' ? result : -1;
+    return result?.newIndex ?? -1;
   }, [handleSubtaskEnter]);
 
   return {

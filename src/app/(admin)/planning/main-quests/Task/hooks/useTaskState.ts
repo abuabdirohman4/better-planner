@@ -46,7 +46,6 @@ export function useTaskState(milestoneId: string) {
       fetchTasks();
       setNewTaskInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
     } catch (error) {
-      console.error('Failed to save task:', error);
     } finally {
       setNewTaskLoading(l => l.map((v, i) => i === idx ? false : v));
     }
@@ -59,7 +58,6 @@ export function useTaskState(milestoneId: string) {
       // Update local state
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, title: newTitle.trim() } : t));
     } catch (error) {
-      console.error('Failed to update task:', error);
     }
   }, []);
 

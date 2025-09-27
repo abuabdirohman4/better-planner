@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useTaskState } from './Task/hooks/useTaskState';
+import { useTasks } from './hooks/useMainQuestsSWR';
 import TaskItem from './Task/components/TaskItem';
 import { TaskItemSkeleton } from '@/components/ui/skeleton';
 
@@ -21,38 +21,52 @@ interface TaskProps {
 
 export default function Task({ milestone, milestoneNumber, onOpenSubtask, activeSubTask, showCompletedTasks }: TaskProps) {
   const {
-    // State
     tasks,
-    loadingTasks,
-    newTaskInputs,
-    setNewTaskInputs,
-    newTaskLoading,
-    activeTaskIdx,
-    setActiveTaskIdx,
-    
-    // Actions
-    fetchTasks,
-    handleSaveTask,
-    handleTaskEdit,
-    handleNavigateUp,
-    handleNavigateDown,
-  } = useTaskState(milestone.id);
+    isLoading: loadingTasks,
+    mutate: refetchTasks,
+  } = useTasks(milestone.id);
+  
 
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  // For now, keep the old state management for task editing
+  // TODO: Migrate task editing to use SWR and RPC
+  const [newTaskInputs, setNewTaskInputs] = React.useState(['', '', '']);
+  const [newTaskLoading, setNewTaskLoading] = React.useState([false, false, false]);
+  const [activeTaskIdx, setActiveTaskIdx] = React.useState(0);
+
+  // Import task actions for editing
+  const { handleSaveTask, handleTaskEdit, handleNavigateUp, handleNavigateDown } = React.useMemo(() => {
+    // This is a temporary solution - we'll migrate these to RPC later
+    return {
+      handleSaveTask: async (idx: number) => {
+        // Placeholder - will be implemented with RPC
+      },
+      handleTaskEdit: async (taskId: string, newTitle: string) => {
+        // Placeholder - will be implemented with RPC
+      },
+      handleNavigateUp: (currentIdx: number) => {
+        if (currentIdx > 0) {
+          setActiveTaskIdx(currentIdx - 1);
+        }
+      },
+      handleNavigateDown: (currentIdx: number) => {
+        if (currentIdx < 2) {
+          setActiveTaskIdx(currentIdx + 1);
+        }
+      },
+    };
+  }, []);
 
   // Filter tasks based on showCompletedTasks state
   const filteredTasks = showCompletedTasks 
     ? tasks 
-    : tasks.filter(task => task.status !== 'DONE');
+    : tasks.filter((task: any) => task.status !== 'DONE');
 
   return (
     <div className="rounded-lg mb-2">
       <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
       <div className="space-y-2 mb-2">
         {Array.from({ length: 3 }).map((_, idx) => {
-            const task = filteredTasks.find(t => t.display_order === idx + 1);
+            const task = filteredTasks.find((t: any) => t.display_order === idx + 1);
             if (task) {
               return (
                 <TaskItem

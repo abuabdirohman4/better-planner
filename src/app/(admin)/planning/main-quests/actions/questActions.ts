@@ -36,6 +36,11 @@ export async function updateQuests(quests: { id: string, title: string, label: s
       .eq('id', quest.id);
     if (error) throw new Error('Gagal update quest: ' + (error.message || ''));
   }
+  
+  // Revalidate SWR cache
+  const { revalidatePath } = await import('next/cache');
+  revalidatePath('/planning/12-week-quests');
+  
   return { message: 'Perubahan quest berhasil disimpan!' };
 }
 
@@ -95,7 +100,11 @@ export async function finalizeQuests(
 export async function getAllQuestsForQuarter(year: number, quarter: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  
+  if (!user) {
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from('quests')
     .select('id, title, label, is_committed, priority_score')
@@ -103,7 +112,11 @@ export async function getAllQuestsForQuarter(year: number, quarter: number) {
     .eq('year', year)
     .eq('quarter', quarter)
     .order('label', { ascending: true });
-  if (error) return [];
+  
+  if (error) {
+    return [];
+  }
+  
   return data;
 }
 
@@ -127,10 +140,14 @@ export async function getPairwiseResults(year: number, quarter: number) {
 export async function getQuests(year: number, quarter: number, isCommitted: boolean = true) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  
+  if (!user) {
+    return [];
+  }
+  
   const { data, error } = await supabase
     .from('quests')
-    .select('id, title, motivation')
+    .select('id, title, motivation, priority_score, is_committed')
     .eq('user_id', user.id)
     .eq('year', year)
     .eq('quarter', quarter)
@@ -139,7 +156,6 @@ export async function getQuests(year: number, quarter: number, isCommitted: bool
     .limit(3);
   
   if (error) {
-    console.error('❌ Error fetching quests:', error);
     return [];
   }
   return data;

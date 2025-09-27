@@ -16,7 +16,6 @@ export async function getMilestonesForQuest(questId: string) {
     .single();
   
   if (questError) {
-    console.error('❌ Quest not found:', questError);
     return [];
   }
   
@@ -27,7 +26,6 @@ export async function getMilestonesForQuest(questId: string) {
     .order('display_order', { ascending: true });
   
   if (error) {
-    console.error('❌ Error fetching milestones:', error);
     return [];
   }
   

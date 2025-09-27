@@ -127,11 +127,11 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           </button>
           
           {/* Quest Label */}
-          {level === 0 && (
+          {/* {level === 0 && (
             <span className={`px-2 py-1 rounded-full text-xs font-bold ${colorClass}`}>
               {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
             </span>
-          )}
+          )} */}
           
           {/* Task Title */}
           <span className={`flex-1 text-sm font-medium ${

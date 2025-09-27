@@ -13,45 +13,47 @@ export function useSubtaskCRUD(
   taskId: string, 
   milestoneId: string, 
   subtasks: Subtask[], 
-  setSubtasks: React.Dispatch<React.SetStateAction<Subtask[]>>
+  refetchSubtasks: () => void
 ) {
   const handleSubtaskEnter = useCallback(async (
     idx: number,
     title: string = '',
     subtasksOverride?: Subtask[]
-  ): Promise<number | null> => {
+  ): Promise<{ newIndex: number | null; newSubtaskId?: string } | null> => {
     const subtasksArr = subtasksOverride ?? subtasks;
     let newOrder = 1.0;
+    
     if (subtasksArr.length === 0) {
+      // Jika tidak ada subtask, mulai dengan order 1
       newOrder = 1.0;
-    } else if (idx >= subtasksArr.length - 1) {
-      const lastOrder = subtasksArr.length;
-      newOrder = lastOrder + 1.0;
+    } else if (idx >= subtasksArr.length) {
+      // Jika insert di akhir (idx >= length), ambil order terakhir + 1
+      const lastSubtask = subtasksArr[subtasksArr.length - 1];
+      newOrder = lastSubtask.display_order + 1.0;
+    } else if (idx === 0) {
+      // Jika insert di awal (idx = 0), insert sebelum subtask pertama
+      const firstSubtask = subtasksArr[0];
+      newOrder = firstSubtask.display_order - 1.0;
     } else {
-      const prevOrder = subtasksArr[idx]?.display_order ?? 0;
-      const nextOrder = subtasksArr[idx + 1]?.display_order;
-      if (nextOrder !== undefined) {
-        newOrder = (prevOrder + nextOrder) / 2;
+      // Jika insert di tengah (0 < idx < length), hitung order di antara prev dan next
+      const prevSubtask = subtasksArr[idx - 1]; // Subtask sebelum posisi insert
+      const nextSubtask = subtasksArr[idx];     // Subtask di posisi insert
+      
+      if (prevSubtask && nextSubtask) {
+        // Insert di antara prev dan next
+        newOrder = (prevSubtask.display_order + nextSubtask.display_order) / 2;
+      } else if (prevSubtask) {
+        // Hanya ada prev, insert setelahnya
+        newOrder = prevSubtask.display_order + 1.0;
+      } else if (nextSubtask) {
+        // Hanya ada next, insert sebelumnya
+        newOrder = nextSubtask.display_order - 1.0;
       } else {
-        newOrder = prevOrder + 1.0;
+        // Fallback
+        newOrder = 1.0;
       }
     }
-    const tempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
-    const optimisticSubtask: Subtask = {
-      id: tempId,
-      title: title,
-      status: 'TODO' as const,
-      display_order: newOrder,
-    };
-    setSubtasks((prev: Subtask[]) => {
-      const arr = [...prev];
-      if (idx >= arr.length - 1) {
-        arr.push(optimisticSubtask);
-      } else {
-        arr.splice(idx + 1, 0, optimisticSubtask);
-      }
-      return arr;
-    });
+    
     try {
       const formData = new FormData();
       formData.append('parent_task_id', taskId);
@@ -60,65 +62,79 @@ export function useSubtaskCRUD(
       formData.append('display_order', String(newOrder));
       const res = await addTask(formData);
       if (res && res.task) {
-        setSubtasks((prev: Subtask[]) => {
-          const arr = prev.map((st: Subtask) => st.id === tempId ? (res.task as Subtask) : st);
-          return arr;
-        });
-        // Cari index subtask baru di subtasks
-        const idxBaru = (subtasksOverride ?? subtasks).findIndex(st => st.id === tempId);
-        return idxBaru !== -1 ? idxBaru : null;
+        // 🔧 FIX: Refetch data instead of optimistic updates
+        refetchSubtasks();
+        toast.success('Subtask berhasil ditambahkan');
+        return { 
+          newIndex: idx + 1, // Return next index
+          newSubtaskId: res.task.id // Return new subtask ID for focus
+        };
       } else {
-        setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== tempId));
         toast.error('Gagal membuat tugas baru. Coba lagi.');
         return null;
       }
     } catch {
-      setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== tempId));
       toast.error('Gagal membuat tugas baru. Coba lagi.');
       return null;
     }
-  }, [taskId, milestoneId, subtasks, setSubtasks]);
+  }, [taskId, milestoneId, subtasks, refetchSubtasks]);
 
   const handleCheck = useCallback(async (subtask: Subtask) => {
     const newStatus = subtask.status === 'DONE' ? 'TODO' : 'DONE';
-    setSubtasks((prev: Subtask[]) => prev.map((st: Subtask) => st.id === subtask.id ? { ...st, status: newStatus } : st));
     try {
       const res = await updateTaskStatus(subtask.id, newStatus);
-      if (!res) {
-        setSubtasks((prev: Subtask[]) => prev.map((st: Subtask) => st.id === subtask.id ? { ...st, status: subtask.status } : st));
+      if (res) {
+        // 🔧 FIX: Refetch data instead of optimistic updates
+        refetchSubtasks();
+        toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+      } else {
         toast.error('Gagal update status');
       }
     } catch {
-      setSubtasks((prev: Subtask[]) => prev.map((st: Subtask) => st.id === subtask.id ? { ...st, status: subtask.status } : st));
       toast.error('Gagal update status');
     }
-  }, [setSubtasks]);
+  }, [refetchSubtasks]);
 
-  const handleDeleteSubtask = useCallback(async (id: string, idx: number): Promise<number> => {
-    // Optimistic update - hapus dari UI dulu
-    setSubtasks((prev: Subtask[]) => prev.filter((st: Subtask) => st.id !== id));
-    
+  const handleDeleteSubtask = useCallback(async (id: string, idx: number): Promise<{ newIndex: number; newFocusId?: string }> => {
     // Validasi UUID format untuk Supabase
     if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      return idx > 0 ? idx - 1 : -1;
+      return { newIndex: idx > 0 ? idx - 1 : -1 };
     }
+    
+    // 🔧 FIX: Find the subtask to focus after deletion
+    // Find the current subtask in the array to get its position
+    const currentSubtaskIndex = subtasks.findIndex(st => st.id === id);
+    let newFocusId: string | undefined;
+    
+    if (currentSubtaskIndex > 0) {
+      // Focus on the subtask above
+      const subtaskAbove = subtasks[currentSubtaskIndex - 1];
+      newFocusId = subtaskAbove?.id;
+    } else if (currentSubtaskIndex < subtasks.length - 1) {
+      // If deleting the first subtask, focus on the next one
+      const subtaskBelow = subtasks[currentSubtaskIndex + 1];
+      newFocusId = subtaskBelow?.id;
+    }
+    // If deleting the only subtask, newFocusId will be undefined (no focus)
     
     try {
       // Hapus dari database
       await deleteTask(id);
       toast.success('Subtask berhasil dihapus');
+      
+      // 🔧 FIX: Refetch after a short delay to allow focus to happen
+      setTimeout(() => {
+        refetchSubtasks();
+      }, 100);
     } catch (error) {
-      // Jika gagal, kembalikan ke state semula
-      console.error('Failed to delete subtask:', error);
       toast.error('Gagal menghapus subtask');
-      // Note: State sudah dihapus di atas, jadi tidak perlu rollback
     }
     
-    if (idx > 0) {
-      return idx - 1;
-    }
-    return -1;
-  }, [setSubtasks]);
+    return { 
+      newIndex: idx > 0 ? idx - 1 : -1,
+      newFocusId
+    };
+  }, [refetchSubtasks, subtasks]);
 
   return {
     handleSubtaskEnter,

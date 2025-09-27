@@ -3,7 +3,7 @@ import debounce from 'lodash/debounce';
 import ComponentCard from '@/components/common/ComponentCard';
 import { toast } from 'sonner';
 import { addTask } from './actions/taskActions';
-import { useSubtaskManagement } from './SubTask/hooks/useSubtaskManagement';
+import { useSubtasks } from './hooks/useMainQuestsSWR';
 import { useSubtaskState } from './SubTask/hooks/useSubtaskState';
 import { useSubtaskCRUD } from './SubTask/hooks/useSubtaskCRUD';
 import { useSubtaskOperations } from './SubTask/hooks/useSubtaskOperations';
@@ -48,13 +48,13 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     } finally {
       setNewSubtaskLoading(false);
     }
-  }, 500), [taskId, milestoneId, subtasks, fetchSubtasks]);
+  }, 500), [taskId, milestoneId, subtasks, fetchSubtasks]); // 🔧 FIX: Keep subtasks dependency but it should be stable
 
   useEffect(() => {
     if (newSubtaskTitle) debouncedInsertNewSubtask(newSubtaskTitle);
   }, [newSubtaskTitle, debouncedInsertNewSubtask]);
 
-  const handleBulkPasteEmpty = async (e: React.ClipboardEvent, handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<number | null>) => {
+  const handleBulkPasteEmpty = async (e: React.ClipboardEvent, handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<{ newIndex: number | null; newSubtaskId?: string } | null>) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').filter(line => line.trim());
     
@@ -67,13 +67,13 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     const localSubtasks = subtasks.map(st => ({ ...st }));
     for (let i = 1; i < lines.length; i++) {
       const idx = localSubtasks.length - 1;
-      const newOrder = await handleSubtaskEnter(idx, lines[i], localSubtasks);
-      if (newOrder !== null) {
+      const result = await handleSubtaskEnter(idx, lines[i], localSubtasks);
+      if (result && result.newIndex !== null) {
         localSubtasks.push({
           id: `dummy-${i}`,
           title: lines[i],
           status: 'TODO' as const,
-          display_order: newOrder,
+          display_order: result.newIndex,
         });
       }
     }
@@ -88,14 +88,27 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
 }
 
 export default function SubTask({ task, onBack, milestoneId, showCompletedTasks }: { task: { id: string; title: string; status: 'TODO' | 'DONE' }; onBack: () => void; milestoneId: string; showCompletedTasks: boolean; }) {
-  const { subtasks, setSubtasks, loadingSubtasks, fetchSubtasks } = useSubtaskManagement(task.id);
+  const { subtasks, isLoading: loadingSubtasks, mutate: refetchSubtasks } = useSubtasks(task.id);
+  
+  // 🔧 FIX: Use subtasks directly instead of localSubtasks to avoid infinite loop
+  const displaySubtasks = subtasks || [];
+
+  // For now, keep the old state management for subtask editing
+  // TODO: Migrate subtask editing to use SWR and RPC
   const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
-  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, subtasks, setSubtasks);
+  
+  // 🔧 FIX: Create wrapper function for refetchSubtasks to match expected type
+  const handleRefetchSubtasks = () => {
+    refetchSubtasks();
+  };
+
+  // 🔧 FIX: Use refetchSubtasks to refresh data after CRUD operations
+  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, displaySubtasks, handleRefetchSubtasks);
   const { handleDraftTitleChange, handleDeleteSubtask, handleDragEnd, handleSubtaskEnterWithFocus } = useSubtaskOperations(
     task.id, 
     milestoneId, 
-    subtasks, 
-    setSubtasks, 
+    displaySubtasks, 
+    handleRefetchSubtasks, // 🔧 FIX: Use refetchSubtasks to refresh data after operations
     draftTitles, 
     setDraftTitles, 
     focusSubtaskId, 
@@ -104,16 +117,14 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
     handleCheck, 
     handleDeleteSubtaskCRUD
   );
-  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, subtasks, fetchSubtasks);
+  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, subtasks || [], refetchSubtasks);
 
+  // Reset local state when task changes
   useEffect(() => {
-    if (focusSubtaskId) {
-      const idx = subtasks.findIndex(st => st.id === focusSubtaskId);
-      if (idx !== -1) {
-        // Focus logic can be added here if needed
-      }
-    }
-  }, [focusSubtaskId, subtasks]);
+    setDraftTitles({});
+    setFocusSubtaskId(null);
+    setNewSubtaskTitle('');
+  }, [task.id, setDraftTitles, setFocusSubtaskId, setNewSubtaskTitle]);
 
   const handleBulkPasteEmptyWrapper = (e: React.ClipboardEvent) => {
     handleBulkPasteEmpty(e, handleSubtaskEnter);
@@ -121,8 +132,13 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
 
   // Filter subtasks based on showCompletedTasks state
   const filteredSubtasks = showCompletedTasks 
-    ? subtasks 
-    : subtasks.filter(subtask => subtask.status !== 'DONE');
+    ? displaySubtasks 
+    : displaySubtasks.filter((subtask: any) => subtask.status !== 'DONE');
+
+  // 🔧 FIX: Create a function to get original index for filtered subtasks
+  const getOriginalIndex = (subtask: any) => {
+    return displaySubtasks.findIndex(st => st.id === subtask.id);
+  };
 
   return (
     <div className="flex-1 mx-auto">
@@ -140,7 +156,36 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
           setNewSubtaskTitle={setNewSubtaskTitle}
           newSubtaskLoading={newSubtaskLoading}
           handleBulkPasteEmpty={handleBulkPasteEmptyWrapper}
-          handleSubtaskEnter={handleSubtaskEnter}
+          handleSubtaskEnter={async (idx: number, title?: string) => {
+            // 🔧 FIX: Handle out of bounds case
+            if (idx >= filteredSubtasks.length) {
+              // If idx is out of bounds, insert at the end
+              const lastSubtask = filteredSubtasks[filteredSubtasks.length - 1];
+              const originalIdx = getOriginalIndex(lastSubtask) + 1;
+              const result = await handleSubtaskEnter(originalIdx, title);
+              
+              // 🔧 FIX: Focus on the newly created subtask
+              if (result && result.newSubtaskId) {
+                setFocusSubtaskId(result.newSubtaskId);
+              }
+              return result;
+            }
+            
+            // Normal case: convert filtered index to original index
+            const subtask = filteredSubtasks[idx];
+            if (!subtask) {
+              return Promise.resolve(null);
+            }
+            
+            const originalIdx = getOriginalIndex(subtask);
+            const result = await handleSubtaskEnter(originalIdx, title);
+            
+            // 🔧 FIX: Focus on the newly created subtask
+            if (result && result.newSubtaskId) {
+              setFocusSubtaskId(result.newSubtaskId);
+            }
+            return result;
+          }}
           handleSubtaskEnterWithOverride={handleSubtaskEnterWithFocus}
           handleCheck={handleCheck}
           focusSubtaskId={focusSubtaskId}

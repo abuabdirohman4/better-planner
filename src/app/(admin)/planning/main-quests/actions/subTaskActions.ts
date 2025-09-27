@@ -10,6 +10,10 @@ export async function getSubtasksForTask(parent_task_id: string) {
     .select('id, title, status, display_order, parent_task_id, milestone_id')
     .eq('parent_task_id', parent_task_id)
     .order('display_order', { ascending: true });
-  if (error) return [];
+  
+  if (error) {
+    return [];
+  }
+  
   return data;
 }

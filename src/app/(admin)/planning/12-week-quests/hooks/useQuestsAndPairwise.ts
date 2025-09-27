@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 import { getAllQuestsForQuarter, getPairwiseResults } from '@/app/(admin)/planning/main-quests/actions/questActions';
 
@@ -7,13 +7,15 @@ import { getAllQuestsForQuarter, getPairwiseResults } from '@/app/(admin)/planni
  * ✅ OPTIMIZED: Single SWR hook for both data types
  */
 export function useQuestsAndPairwise(year: number, quarter: number) {
+  const swrKey = ['quests-and-pairwise-optimized', year, quarter];
+  
   const { 
     data = { quests: [], pairwiseResults: {} }, 
     error, 
     isLoading,
     mutate 
   } = useSWR(
-    ['quests-and-pairwise-optimized', year, quarter],
+    swrKey,
     async () => {
       // ✅ BATCH API CALLS - Get both data types in parallel
       const [quests, pairwiseResults] = await Promise.all([
@@ -24,13 +26,15 @@ export function useQuestsAndPairwise(year: number, quarter: number) {
       return { quests, pairwiseResults };
     },
     {
-      revalidateOnFocus: false, // ✅ Disabled aggressive revalidation
-      revalidateIfStale: false, // ✅ Disabled stale revalidation
-      dedupingInterval: 10 * 60 * 1000, // ✅ 10 minutes - longer cache
-      errorRetryCount: 1, // ✅ Reduced retry count
+      revalidateOnFocus: true, // ✅ Enable revalidation on focus
+      revalidateIfStale: true, // ✅ Enable revalidation if stale
+      dedupingInterval: 30 * 1000, // ✅ 30 seconds - shorter cache
+      errorRetryCount: 3, // ✅ Standard retry count
       keepPreviousData: true, // Keep previous data while revalidating
+      refreshInterval: 0, // No automatic refresh
     }
   );
+
 
   return {
     quests: data.quests,

@@ -8,11 +8,11 @@ import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 
 import Quest from './Quest';
-import { useQuestState } from "./Quest/hooks/useQuestState";
+import { useMainQuests } from './hooks/useMainQuestsSWR';
 
 export default function MainQuestsClient() {
   const { year, quarter } = useQuarterStore();
-  const { quests, isLoading } = useQuestState(year, quarter);
+  const { quests, isLoading } = useMainQuests(year, quarter);
   const [activeTab, setActiveTab] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   

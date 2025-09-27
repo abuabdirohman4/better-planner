@@ -111,7 +111,8 @@ export default function SubtaskInput({
           } else if (e.key === 'Enter') {
             e.preventDefault();
             onDraftTitleChange(e.currentTarget.value, true);
-            handleSubtaskEnter(idx, '');
+            // 🔧 FIX: Insert new subtask after current subtask (idx + 1)
+            handleSubtaskEnter(idx + 1, '');
           } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (idx > 0) {
