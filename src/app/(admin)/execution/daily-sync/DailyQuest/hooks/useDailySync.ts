@@ -17,8 +17,8 @@ export function useTasksForWeek(year: number, weekNumber: number, selectedDate?:
     dailySyncKeys.tasksForWeek(year, weekNumber, selectedDate),
     () => getTasksForWeek(year, weekNumber, selectedDate),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false, // Disable to prevent revalidate when toast appears
+      revalidateIfStale: false, // Disable to prevent revalidate after optimistic updates
       revalidateOnReconnect: true,
       dedupingInterval: 2 * 60 * 1000,
       errorRetryCount: 3,

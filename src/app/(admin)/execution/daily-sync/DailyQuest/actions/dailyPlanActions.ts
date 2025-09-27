@@ -72,7 +72,7 @@ export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, 
 
     if (error) throw error;
 
-    revalidatePath('/execution/daily-sync');
+    // No need to revalidate since optimistic update already handles UI
     return { success: true };
   } catch (error) {
     console.error('Error updating focus duration:', error);
@@ -106,7 +106,7 @@ export async function updateDailyPlanItemAndTaskStatus(
       throw error;
     }
 
-    revalidatePath('/execution/daily-sync');
+    // No need to revalidate since optimistic update already handles UI
     return data;
   } catch (error) {
     console.error("Error in updateDailyPlanItemAndTaskStatus:", error);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useTaskSession } from '../hooks/useTaskSession';
@@ -26,9 +26,9 @@ const TaskItemCard = ({
     forceRefreshTaskId
   );
   
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [isUpdatingFocus, setIsUpdatingFocus] = useState(false);
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+  const [optimisticFocusDuration, setOptimisticFocusDuration] = useState<number | null>(null);
+
 
   // Get active task from timer store
   const { activeTask, timerState } = useTimerStore();
@@ -100,60 +100,58 @@ const TaskItemCard = ({
           </h4>
         </div>
         <div className="flex items-center space-x-2">
-          {/* Dropdown untuk durasi fokus dengan loading indicator */}
+          {/* Dropdown untuk durasi fokus */}
           <div className="relative">
-            {isUpdatingFocus ? (
-              <Spinner size={16} colorClass="border-blue-500" className="mr-2" />
-            ) : (
-              <div className="relative">
-                <select
-                    value={item.focus_duration || 25}
-                    disabled={isUpdatingFocus}
-                     onChange={async (e) => {
-                       try {
-                         setIsUpdatingFocus(true);
-                         await onFocusDurationChange(item.id, parseInt(e.target.value));
-                       } finally {
-                         setIsUpdatingFocus(false);
-                       }
-                     }}
+                 <select
+                       value={optimisticFocusDuration || item.focus_duration || 25}
+                       onChange={async (e) => {
+                         const newDuration = parseInt(e.target.value);
+                         
+                         // Optimistic update - update UI immediately
+                         setOptimisticFocusDuration(newDuration);
+                         
+                         try {
+                           await onFocusDurationChange(item.id, newDuration);
+                           
+                           // Clear optimistic state after successful update
+                           setOptimisticFocusDuration(null);
+                         } catch (error) {
+                           // Revert optimistic update on error
+                           setOptimisticFocusDuration(null);
+                           console.error('Error updating focus duration:', error);
+                         }
+                       }}
                   className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
                     isVisuallyDisabled
                       ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
                       : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {/* Testing option - only show in development */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
-                  )}
-                  <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
-                  <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
-                  <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
-                </select>
-                {/* Custom dropdown arrow */}
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg 
-                    className="w-3 h-3 text-gray-400 dark:text-gray-500" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            )}
+            >
+              {/* Testing option - only show in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
+              )}
+              <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
+              <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
+              <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
+            </select>
+            {/* Custom dropdown arrow */}
+            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg 
+                className="w-3 h-3 text-gray-400 dark:text-gray-500" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
           
-          {/* Custom Checkbox untuk status dengan loading indicator */}
+          {/* Custom Checkbox untuk status */}
           <div className="flex items-center">
-            {isUpdatingStatus ? (
-              <Spinner size={16} colorClass="border-brand-500" />
-            ) : (
-              <button
-                type="button"
-                disabled={isUpdatingStatus}
+            <button
+              type="button"
                 onClick={async () => {
                   const newStatus = isCompleted ? 'TODO' : 'DONE';
                   
@@ -168,7 +166,6 @@ const TaskItemCard = ({
                   
                   // Optimistic update - update UI immediately
                   setOptimisticStatus(newStatus);
-                  setIsUpdatingStatus(true);
                   
                   try {
                     await onStatusChange(item.id, newStatus);
@@ -178,11 +175,9 @@ const TaskItemCard = ({
                     // Revert optimistic update on error
                     setOptimisticStatus(null);
                     console.error('Error updating status:', error);
-                  } finally {
-                    setIsUpdatingStatus(false);
                   }
               }}
-              className={`w-8 h-8 rounded focus:ring-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors border border-gray-300 ${
+              className={`w-8 h-8 rounded focus:ring-2 cursor-pointer flex items-center justify-center transition-colors border border-gray-300 ${
                 isVisuallyDisabled
                   ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
                   : ''
@@ -201,8 +196,7 @@ const TaskItemCard = ({
                   />
                 </svg>
               )}
-              </button>
-            )}
+            </button>
           </div>
         </div>
       </div>

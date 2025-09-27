@@ -103,8 +103,8 @@ export function useDailyPlanManagement(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
     () => getDailyPlan(selectedDate),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false, // Disable to prevent revalidate when toast appears
+      revalidateIfStale: false, // Disable to prevent revalidate after optimistic updates
       revalidateOnReconnect: true,
       dedupingInterval: 2 * 60 * 1000,
       errorRetryCount: 3,
@@ -204,10 +204,8 @@ export function useDailyPlanManagement(
       if (selectedItems.length === 0) return;
       
       await setDailyPlan(selectedDate, selectedItems);
-      // Trigger refresh of optimized data instead of individual API call
-      if (mutate) {
-        await mutate();
-      }
+      // No need to mutate since optimistic update already handles UI
+      // The data is already consistent after API call
       setShowModal(false);
     } catch (err) {
       console.error('Error saving daily plan:', err);
@@ -228,10 +226,8 @@ export function useDailyPlanManagement(
       // Update both daily_plan_items and tasks status
       await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
       
-      // Trigger refresh of optimized data instead of individual API call
-      if (mutate) {
-        await mutate();
-      }
+      // Force re-fetch from database to get updated data
+      await mutateDailyPlan();
       
       // Show success toast
       const statusText = status === 'DONE' ? 'Selesai' : status === 'IN_PROGRESS' ? 'Sedang Dikerjakan' : 'Belum Dimulai';
@@ -249,10 +245,8 @@ export function useDailyPlanManagement(
       formData.append('title', title);
       formData.append('date', selectedDate);
       await addSideQuest(formData);
-      // Trigger refresh of optimized data instead of individual API call
-      if (mutate) {
-        await mutate();
-      }
+      // No need to mutate since optimistic update already handles UI
+      // The data is already consistent after API call
     } catch (err) {
       console.error('Error adding side quest:', err);
       throw err; // Re-throw error so it can be caught by the calling function
@@ -262,10 +256,9 @@ export function useDailyPlanManagement(
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
     try {
       await updateDailyPlanItemFocusDuration(itemId, duration);
-      // Trigger refresh of optimized data instead of individual API call
-      if (mutate) {
-        await mutate();
-      }
+      
+      // Force re-fetch from database to get updated data
+      await mutateDailyPlan();
       
       // Show success toast
       toast.success(`Durasi fokus diubah menjadi: ${duration} menit`);
@@ -289,10 +282,8 @@ export function useDailyPlanManagement(
         throw error;
       }
 
-      // Trigger refresh of optimized data
-      if (mutate) {
-        await mutate();
-      }
+      // No need to mutate since optimistic update already handles UI
+      // The data is already consistent after API call
     } catch (err) {
       console.error('Error updating session target:', err);
       toast.error('Gagal mengubah target sesi. Silakan coba lagi.');
