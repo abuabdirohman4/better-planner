@@ -4,6 +4,9 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   /* config options here */
   
+  // External packages for server components
+  serverExternalPackages: ['@supabase/supabase-js'],
+  
   // Bundle optimization
   webpack(config) {
     config.module.rules.push({
@@ -49,7 +52,11 @@ const pwaConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development", // Disable in development to avoid GenerateSW warnings
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /client-reference-manifest\.js$/,
+    /server\/app\/.*\/page_client-reference-manifest\.js$/
+  ],
   runtimeCaching: [
     // Static assets caching
     {

@@ -25,19 +25,14 @@ export async function middleware(request: NextRequest) {
     const publicRoutes = ['/', '/signin', '/signup']
     const isPublicRoute = publicRoutes.includes(pathname)
     
-    // Special handling for root path - always allow access to landing page
-    if (pathname === '/') {
-      return NextResponse.next()
+    // Jika user sudah login dan mencoba mengakses halaman signin/signup atau root, redirect ke dashboard
+    if (session && (pathname === '/signin' || pathname === '/signup' || pathname === '/')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     
     // Jika user tidak login dan mencoba mengakses halaman yang memerlukan auth, redirect ke signin
     if (!session && !isPublicRoute) {
       return NextResponse.redirect(new URL('/signin', request.url))
-    }
-
-    // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke dashboard
-    if (session && (pathname === '/signin' || pathname === '/signup' || pathname === '/')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return response
