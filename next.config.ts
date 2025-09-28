@@ -7,12 +7,24 @@ const nextConfig: NextConfig = {
   // External packages for server components
   serverExternalPackages: ['@supabase/supabase-js'],
   
+  // Experimental features to fix client reference issues
+  experimental: {
+    esmExternals: 'loose',
+  },
+  
   // Bundle optimization
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
+    
+    // Fix for client reference manifest issues
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+    };
     
     return config;
   },
