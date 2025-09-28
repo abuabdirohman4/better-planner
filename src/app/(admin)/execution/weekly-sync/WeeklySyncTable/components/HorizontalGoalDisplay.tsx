@@ -101,27 +101,28 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
     return bPriority - aPriority;
   });
 
+  // <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+  // {/* Task Items - Horizontal Layout */}
   return (
-    <div className="md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-      {/* Task Items */}
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 ${sortedQuestIds.length > 0 ? '' : 'justify-center'}`}>
+      <div className="flex flex-wrap">
         {sortedQuestIds.length > 0 ? (
           sortedQuestIds.map((questId, questIndex) => {
             const questItems = groupedItems[questId];
             const colorClass = questColors[(slotNumber-1)%questColors.length];
             
             return (
-              questItems.map((item, itemIndex) => (
-                <div
+              questItems.map((item) => (
+                <span
                   key={item.id}
-                  className={`group relative flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 rounded-xl px-3 py-3 text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
-                    item.status === 'DONE' 
-                      ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border border-gray-200 dark:border-gray-600 opacity-75' 
-                      : 'bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 shadow-md hover:shadow-xl'
-                  }`}
+                  className="group relative flex items-center space-x-3 rounded-lg p-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  // className={`group relative flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 rounded-xl px-3 py-3 text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
+                  //   item.status === 'DONE' 
+                  //     ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border border-gray-200 dark:border-gray-600 opacity-75' 
+                  //     : 'bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 shadow-md hover:shadow-xl'
+                  // }`}
                 >
                   {/* Top row: Checkbox + Label */}
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2"> */}
                     {/* Interactive Checkbox */}
                     <button
                       onClick={(e) => {
@@ -129,7 +130,7 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                         toggleTaskStatus(item.item_id, slotNumber, item.status);
                       }}
                       disabled={isTaskLoading(item.item_id)}
-                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                      className={`mr-2 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
                         item.status === 'DONE' 
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 shadow-lg' 
                           : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
@@ -152,19 +153,19 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                     {/* <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>
                       {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
                     </span> */}
-                  </div>
+                  {/* </div> */}
                   
                   {/* Bottom row: Text */}
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-sm font-semibold leading-relaxed transition-colors duration-200 block ${
+                  {/* <div className="flex-1 min-w-0"> */}
+                    <span className={`flex-1 text-sm font-medium ${
                       item.status === 'DONE' 
                         ? 'text-gray-500 dark:text-gray-400 line-through' 
                         : 'text-gray-900 dark:text-white'
                     }`}>
                       {item.title}
                     </span>
-                  </div>
-                </div>
+                  {/* </div> */}
+                </span>
               ))
             );
           })
@@ -187,8 +188,7 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
           </div>
         )}
       </div>
-      
-      {/* Edit hint dengan styling yang lebih subtle */}
-    </div>
-  );
+    );
+    // {/* Edit hint dengan styling yang lebih subtle */}
+    // </div>
 }

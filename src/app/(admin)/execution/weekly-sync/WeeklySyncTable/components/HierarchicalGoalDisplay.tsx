@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
 import { useWeeklyTaskManagement } from '../../hooks/useWeeklyTaskManagement';
@@ -12,8 +12,45 @@ const questColors = [
 ];
 
 export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks }: HorizontalGoalDisplayProps) {
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  // Initialize state with data from localStorage
+  const getInitialExpandedItems = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set<string>();
+    
+    try {
+      const expandedKey = `hierarchical-expanded-slot-${slotNumber}`;
+      const saved = localStorage.getItem(expandedKey);
+      if (saved) {
+        const expandedArray: string[] = JSON.parse(saved);
+        return new Set(expandedArray);
+      }
+    } catch (error) {
+      console.warn('Failed to load initial expanded state:', error);
+    }
+    return new Set<string>();
+  };
+
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(getInitialExpandedItems);
   const { toggleTaskStatus, isTaskLoading } = useWeeklyTaskManagement();
+  const isInitialLoad = useRef(true);
+  
+  // Cookie key untuk menyimpan expanded state
+  const expandedKey = `hierarchical-expanded-slot-${slotNumber}`;
+
+  // Save expanded state to localStorage whenever it changes (but not on initial load)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return; // Skip saving during initial load
+    }
+    
+    try {
+      const expandedArray = Array.from(expandedItems);
+      localStorage.setItem(expandedKey, JSON.stringify(expandedArray));
+    } catch (error) {
+      console.warn('Failed to save expanded state to localStorage:', error);
+    }
+  }, [expandedItems, expandedKey]);
 
   // Filter items based on showCompletedTasks state
   const filteredItems = showCompletedTasks 
@@ -65,15 +102,15 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
     
     return (
       <div key={item.id} className="space-y-1">
+        {/* border-l-2 border-gray-00 dark:border-gray-700 pl-4 */}
         <div
-          className={`group relative flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-            level > 0 ? 'ml-4 border-l-2 border-gray-200 dark:border-gray-600' : ''
+          className={`group relative flex items-center space-x-3 py-1 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+            level > 0 ? 'ml-9 border-l-2 border-gray-200 dark:border-gray-600' : ''
           } ${
             item.status === 'DONE' 
               ? 'opacity-75' 
               : ''
           }`}
-          style={{ marginLeft: `${level * 16}px` }}
         >
           {/* Expand/Collapse Button */}
           {hasChildren && (
@@ -98,7 +135,7 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           )}
           
           {/* Spacer for items without children */}
-          {!hasChildren && <div className="w-4 h-4" />}
+          {!hasChildren && <div className="w-2 h-2" />}
 
           {/* Interactive Checkbox */}
           <button
@@ -166,7 +203,8 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
   const rootItems = Object.values(hierarchy);
 
   return (
-    <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <>
+    {/* <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700"> */}
       {rootItems.length > 0 ? (
         <div className="space-y-2">
           {rootItems.map((item: any) => renderItem(item))}
@@ -189,6 +227,7 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           </p>
         </div>
       )}
-    </div>
+    {/* </div> */}
+    </>
   );
 }
