@@ -69,16 +69,27 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
       }
     });
 
-    // Build hierarchy for each root item
-    rootItems.forEach(rootItem => {
-      const children = items.filter(item => item.parent_task_id === rootItem.item_id);
-      
-      hierarchy[rootItem.item_id] = {
-        ...rootItem,
-        children: children.length > 0 ? children : [],
-        isExpanded: expandedItems.has(rootItem.item_id)
-      };
-    });
+    // If no root items found (all items are subtasks), treat all items as root
+    if (rootItems.length === 0) {
+      items.forEach(item => {
+        hierarchy[item.item_id] = {
+          ...item,
+          children: [],
+          isExpanded: expandedItems.has(item.item_id)
+        };
+      });
+    } else {
+      // Build hierarchy for each root item
+      rootItems.forEach(rootItem => {
+        const children = items.filter(item => item.parent_task_id === rootItem.item_id);
+        
+        hierarchy[rootItem.item_id] = {
+          ...rootItem,
+          children: children.length > 0 ? children : [],
+          isExpanded: expandedItems.has(rootItem.item_id)
+        };
+      });
+    }
 
     return hierarchy;
   };

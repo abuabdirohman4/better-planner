@@ -252,7 +252,7 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
               {/* Progress Indicator */}
               <div className="flex-shrink-0">
                 <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
-                <p className="my-3 text-center">
+                <p className="mt-2 mb-3 text-center text-sm">
                   {progress.completed}/{progress.total} completed
                 </p>
               </div>
@@ -312,7 +312,7 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
                 {/* Progress Indicator */}
                 <div className="flex-shrink-0">
                   <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
-                  <p className="mt-3 text-center">
+                  <p className="mt-2 text-center text-sm">
                     {progress.completed}/{progress.total} completed
                   </p>
                 </div>

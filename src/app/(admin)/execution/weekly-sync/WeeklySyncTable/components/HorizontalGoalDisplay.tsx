@@ -122,17 +122,17 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                         toggleTaskStatus(item.item_id, slotNumber, item.status);
                       }}
                       disabled={isTaskLoading(item.item_id)}
-                      className={`mr-2 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                         item.status === 'DONE' 
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 shadow-lg' 
+                          ? 'opacity-75 bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
                           : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                       } ${isTaskLoading(item.item_id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       {isTaskLoading(item.item_id) ? (
-                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
                       ) : item.status === 'DONE' ? (
                         <svg 
-                          className="w-3 h-3 text-white drop-shadow-sm" 
+                          className="w-2.5 h-2.5 text-white" 
                           fill="currentColor" 
                           viewBox="0 0 20 20"
                         >
@@ -141,10 +141,10 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                       ) : null}
                     </button>
                   
-                  {/* Bottom row: Text */}
+                    {/* Bottom row: Text */}
                     <span className={`flex-1 text-sm font-medium ${
                       item.status === 'DONE' 
-                        ? 'text-gray-500 dark:text-gray-400 line-through' 
+                        ? 'opacity-75 text-gray-500 dark:text-gray-400 line-through' 
                         : 'text-gray-900 dark:text-white'
                     }`}>
                       {item.title}
