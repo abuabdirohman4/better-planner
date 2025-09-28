@@ -21,13 +21,22 @@ export async function middleware(request: NextRequest) {
     const { supabase, response } = createClient(request)
     const { data: { session } } = await supabase.auth.getSession()
 
-    // Jika user tidak login dan tidak berada di halaman auth, redirect ke signin
-    if (!session && pathname !== '/signin' && pathname !== '/signup') {
+    // Define public routes that don't require authentication
+    const publicRoutes = ['/', '/signin', '/signup']
+    const isPublicRoute = publicRoutes.includes(pathname)
+    
+    // Special handling for root path - always allow access to landing page
+    if (pathname === '/') {
+      return NextResponse.next()
+    }
+    
+    // Jika user tidak login dan mencoba mengakses halaman yang memerlukan auth, redirect ke signin
+    if (!session && !isPublicRoute) {
       return NextResponse.redirect(new URL('/signin', request.url))
     }
 
     // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke dashboard
-    if (session && (pathname === '/signin' || pathname === '/signup')) {
+    if (session && (pathname === '/signin' || pathname === '/signup' || pathname === '/')) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
