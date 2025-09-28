@@ -1,7 +1,7 @@
 // Auto-save logic for timer persistence
 
 import { useEffect, useCallback } from 'react';
-import { useTimer } from '@/stores/timerStore';
+import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { saveTimerSession, getActiveTimerSession } from '../../actions/timerSessionActions';
 import { getClientDeviceId } from '../deviceUtils';
 import { getGlobalState, setGlobalLastSaveTime, setGlobalIsSaving } from '../globalState';
@@ -89,6 +89,17 @@ export function useAutoSave() {
       const saveInterval = isDevelopment ? 5000 : 30000; // 5s dev, 30s prod
       
       const interval = setInterval(() => {
+        // ✅ CRITICAL: Calculate actual elapsed time for accurate sync
+        const now = new Date();
+        const startTimeDate = new Date(startTime);
+        const actualElapsedSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
+        
+        // Only save if there's a significant difference (more than 2 seconds)
+        if (Math.abs(actualElapsedSeconds - secondsElapsed) > 2) {
+          // Update local timer state with correct time
+          useTimerStore.getState().incrementSeconds();
+        }
+        
         debouncedSave();
       }, saveInterval);
       
@@ -96,7 +107,7 @@ export function useAutoSave() {
         clearInterval(interval);
       };
     }
-  }, [timerState, activeTask, startTime, debouncedSave]);
+  }, [timerState, activeTask, startTime, secondsElapsed, debouncedSave]);
 
   return { debouncedSave };
 }

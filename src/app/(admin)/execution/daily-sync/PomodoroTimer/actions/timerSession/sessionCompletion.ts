@@ -24,6 +24,22 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       throw sessionError;
     }
 
+    // ✅ CRITICAL: Validate and correct session duration before completion
+    const now = new Date();
+    const startTime = new Date(session.start_time);
+    const actualElapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+    
+    // Update session with correct duration if there's a significant difference
+    if (Math.abs(actualElapsedSeconds - session.current_duration_seconds) > 5) {
+      await supabase
+        .from('timer_sessions')
+        .update({ 
+          current_duration_seconds: actualElapsedSeconds,
+          updated_at: now.toISOString()
+        })
+        .eq('id', sessionId);
+    }
+
     // ✅ FIX: Check if activity log already exists to prevent duplicates
     const { data: existingLog } = await supabase
       .from('activity_logs')
@@ -34,11 +50,11 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       .maybeSingle();
 
     if (!existingLog) {
-      // ✅ FIX: Calculate actual elapsed time instead of using timer's internal duration
+      // ✅ CRITICAL FIX: Always calculate actual elapsed time from database timestamps
       const endTime = new Date().toISOString();
-      const startTime = new Date(session.start_time);
+      const startTimeDate = new Date(session.start_time);
       const endTimeDate = new Date(endTime);
-      const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTime.getTime()) / 1000);
+      const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
       const actualDurationMinutes = Math.max(1, Math.round(actualDurationSeconds / 60));
       
       // Only create activity log if it doesn't exist
