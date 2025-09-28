@@ -17,10 +17,10 @@ export function useTasksForWeek(year: number, weekNumber: number, selectedDate?:
     dailySyncKeys.tasksForWeek(year, weekNumber, selectedDate),
     () => getTasksForWeek(year, weekNumber, selectedDate),
     {
-      revalidateOnFocus: false, // Disable to prevent revalidate when toast appears
-      revalidateIfStale: false, // Disable to prevent revalidate after optimistic updates
+      revalidateOnFocus: true, // ✅ ENABLED - Allow revalidation on focus for fresh data
+      revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data
       revalidateOnReconnect: true,
-      dedupingInterval: 2 * 60 * 1000,
+      dedupingInterval: 30 * 1000, // ✅ REDUCED - 30 seconds for fresher data
       errorRetryCount: 3,
     }
   );

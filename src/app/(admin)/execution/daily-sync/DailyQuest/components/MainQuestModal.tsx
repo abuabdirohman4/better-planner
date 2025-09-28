@@ -65,8 +65,32 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Skeleton className="w-8 h-8 rounded" />
+          <div className="space-y-6">
+            {/* Skeleton for 2-3 goal slot groups */}
+            {Array.from({ length: 1 }).map((_, groupIndex) => (
+              <div key={`skeleton-group-${groupIndex}`} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                {/* Goal slot title skeleton */}
+                <Skeleton className="h-6 w-48 mb-4" />
+                
+                {/* Task items skeleton */}
+                <div className="space-y-3">
+                  {Array.from({ length: 3 + (groupIndex % 3) }).map((_, taskIndex) => (
+                    <div key={`skeleton-task-${taskIndex}`} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
+                      {/* Checkbox skeleton */}
+                      <Skeleton className="w-4 h-4 rounded" />
+                      
+                      {/* Task content skeleton */}
+                      <div className="flex-1">
+                        {/* Task title skeleton */}
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        {/* Task subtitle skeleton */}
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="space-y-6">

@@ -248,9 +248,38 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
     <div className="bg-white dark:bg-gray-800 flex flex-col" style={{ height: dynamicHeight }}>
       <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">Memuat aktivitas...</div>
+          <div className="space-y-4">
+            {/* Skeleton for 3 summary cards */}
+            {Array.from({ length: 1 }).map((_, index) => (
+              <div key={`skeleton-${index}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800 animate-pulse">
+                {/* Task title skeleton */}
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                
+                {/* Sessions and duration skeleton */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                </div>
+                
+                {/* Session list skeleton */}
+                <div className="space-y-1 ml-2">
+                  {Array.from({ length: 2 + (index % 3) }).map((_, sessionIndex) => (
+                    <div key={`session-${sessionIndex}`} className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-9"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-6"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                      </div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : summary.length === 0 ? (
-          <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-8">
+          <div className="text-gray-500 dark:text-gray-400 text-center py-8">
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (

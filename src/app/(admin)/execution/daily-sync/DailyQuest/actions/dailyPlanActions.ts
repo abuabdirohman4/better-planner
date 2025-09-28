@@ -51,7 +51,10 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
       await supabase.from('daily_plan_items').insert(itemsToInsert);
     }
 
+    // ✅ CRITICAL: Revalidate all daily sync related paths
     revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
     return { success: true };
   } catch (error) {
     console.error('Error setting daily plan:', error);
@@ -72,7 +75,10 @@ export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, 
 
     if (error) throw error;
 
-    // No need to revalidate since optimistic update already handles UI
+    // ✅ CRITICAL: Revalidate daily sync paths to ensure UI updates
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
     return { success: true };
   } catch (error) {
     console.error('Error updating focus duration:', error);
@@ -106,7 +112,10 @@ export async function updateDailyPlanItemAndTaskStatus(
       throw error;
     }
 
-    // No need to revalidate since optimistic update already handles UI
+    // ✅ CRITICAL: Revalidate daily sync paths to ensure UI updates
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
     return data;
   } catch (error) {
     console.error("Error in updateDailyPlanItemAndTaskStatus:", error);

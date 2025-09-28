@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus } from '../actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
-import useSWR from 'swr';
+import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';
 
@@ -103,10 +103,10 @@ export function useDailyPlanManagement(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
     () => getDailyPlan(selectedDate),
     {
-      revalidateOnFocus: false, // Disable to prevent revalidate when toast appears
-      revalidateIfStale: false, // Disable to prevent revalidate after optimistic updates
+      revalidateOnFocus: true, // ✅ ENABLED - Allow revalidation on focus for fresh data
+      revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data
       revalidateOnReconnect: true,
-      dedupingInterval: 2 * 60 * 1000,
+      dedupingInterval: 30 * 1000, // ✅ REDUCED - 30 seconds for fresher data
       errorRetryCount: 3,
     }
   );
@@ -122,9 +122,19 @@ export function useDailyPlanManagement(
   const loading = dailyPlanLoading || tasksLoading;
   const error = dailyPlanError || tasksError;
   
-  // Simple mutate function that refreshes both
+  // Enhanced mutate function that refreshes both and invalidates related caches
   const mutate = async () => {
-    await Promise.all([mutateDailyPlan(), mutateTasks()]);
+    await Promise.all([
+      mutateDailyPlan(),
+      mutateTasks(),
+      // ✅ CRITICAL: Invalidate all related caches for cross-tab synchronization
+      globalMutate((key) => {
+        if (Array.isArray(key) && key[0] === 'daily-sync') {
+          return true; // Invalidate all daily-sync related caches
+        }
+        return false;
+      })
+    ]);
   };
 
   // For now, we'll use empty completed sessions
@@ -134,6 +144,16 @@ export function useDailyPlanManagement(
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false); // Loading untuk konten (skeleton)
   const [savingLoading, setSavingLoading] = useState(false); // Loading untuk button (spinner)
+
+  // ✅ CRITICAL: Periodic revalidation for cross-environment synchronization
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Revalidate every 30 seconds to catch changes from other tabs/environments
+      mutate();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [mutate]);
 
   const getCurrentDailyPlanSelections = () => {
     if (!dailyPlan?.daily_plan_items) return {};
@@ -204,8 +224,13 @@ export function useDailyPlanManagement(
       if (selectedItems.length === 0) return;
       
       await setDailyPlan(selectedDate, selectedItems);
-      // No need to mutate since optimistic update already handles UI
-      // The data is already consistent after API call
+      
+      // ✅ CRITICAL: Force re-fetch both daily plan and weekly tasks to ensure UI updates
+      await Promise.all([
+        mutateDailyPlan(),
+        mutateTasks()
+      ]);
+      
       setShowModal(false);
     } catch (err) {
       console.error('Error saving daily plan:', err);
@@ -245,8 +270,9 @@ export function useDailyPlanManagement(
       formData.append('title', title);
       formData.append('date', selectedDate);
       await addSideQuest(formData);
-      // No need to mutate since optimistic update already handles UI
-      // The data is already consistent after API call
+      
+      // ✅ CRITICAL: Force re-fetch daily plan to show new side quest
+      await mutateDailyPlan();
     } catch (err) {
       console.error('Error adding side quest:', err);
       throw err; // Re-throw error so it can be caught by the calling function
@@ -282,8 +308,8 @@ export function useDailyPlanManagement(
         throw error;
       }
 
-      // No need to mutate since optimistic update already handles UI
-      // The data is already consistent after API call
+      // ✅ CRITICAL: Force re-fetch daily plan to show updated target
+      await mutateDailyPlan();
     } catch (err) {
       console.error('Error updating session target:', err);
       toast.error('Gagal mengubah target sesi. Silakan coba lagi.');

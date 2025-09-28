@@ -21,8 +21,10 @@ export async function logActivity(formData: FormData) {
     throw new Error('Missing required fields');
   }
 
-  // Kalkulasi durasi dinamis (dibulatkan, minimal 1 menit)
-  const durationInSeconds = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000;
+  // ✅ FIX: Calculate actual elapsed time with proper rounding
+  const startTimeDate = new Date(startTime);
+  const endTimeDate = new Date(endTime);
+  const durationInSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
   const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
 
   try {

@@ -34,6 +34,13 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       .maybeSingle();
 
     if (!existingLog) {
+      // ✅ FIX: Calculate actual elapsed time instead of using timer's internal duration
+      const endTime = new Date().toISOString();
+      const startTime = new Date(session.start_time);
+      const endTimeDate = new Date(endTime);
+      const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTime.getTime()) / 1000);
+      const actualDurationMinutes = Math.max(1, Math.round(actualDurationSeconds / 60));
+      
       // Only create activity log if it doesn't exist
       const { error: logError } = await supabase
         .from('activity_logs')
@@ -42,8 +49,8 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
           task_id: session.task_id,
           type: session.session_type,
           start_time: session.start_time,
-          end_time: new Date().toISOString(),
-          duration_minutes: Math.round(session.current_duration_seconds / 60),
+          end_time: endTime,
+          duration_minutes: actualDurationMinutes,
           local_date: new Date().toISOString().slice(0, 10)
         });
 
