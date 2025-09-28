@@ -101,10 +101,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
     return bPriority - aPriority;
   });
 
-  // <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-  // {/* Task Items - Horizontal Layout */}
   return (
-      <div className="flex flex-wrap">
+      <>
         {sortedQuestIds.length > 0 ? (
           sortedQuestIds.map((questId, questIndex) => {
             const questItems = groupedItems[questId];
@@ -115,14 +113,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                 <span
                   key={item.id}
                   className="group relative flex items-center space-x-3 rounded-lg p-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  // className={`group relative flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 rounded-xl px-3 py-3 text-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
-                  //   item.status === 'DONE' 
-                  //     ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border border-gray-200 dark:border-gray-600 opacity-75' 
-                  //     : 'bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 shadow-md hover:shadow-xl'
-                  // }`}
                 >
                   {/* Top row: Checkbox + Label */}
-                  {/* <div className="flex items-center space-x-2"> */}
                     {/* Interactive Checkbox */}
                     <button
                       onClick={(e) => {
@@ -148,15 +140,8 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                         </svg>
                       ) : null}
                     </button>
-                    
-                    {/* Label dengan hover effect */}
-                    {/* <span className={`px-2 py-1 rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${colorClass}`}>
-                      {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
-                    </span> */}
-                  {/* </div> */}
                   
                   {/* Bottom row: Text */}
-                  {/* <div className="flex-1 min-w-0"> */}
                     <span className={`flex-1 text-sm font-medium ${
                       item.status === 'DONE' 
                         ? 'text-gray-500 dark:text-gray-400 line-through' 
@@ -164,7 +149,6 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
                     }`}>
                       {item.title}
                     </span>
-                  {/* </div> */}
                 </span>
               ))
             );
@@ -183,12 +167,10 @@ export default function HorizontalGoalDisplay({ items, onClick, slotNumber, show
               }
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              Klik untuk menambahkan task
+              Klik edit untuk menambahkan task
             </p>
           </div>
         )}
-      </div>
+      </>
     );
-    // {/* Edit hint dengan styling yang lebih subtle */}
-    // </div>
 }

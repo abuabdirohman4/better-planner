@@ -7,8 +7,6 @@ import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActi
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
 import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
-import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
-import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklySyncTable({ 
@@ -19,13 +17,9 @@ export default function WeeklySyncTable({
 }: WeeklyGoalsTableProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   
   // 🚀 OPTIMIZED: Use client-side progress calculation
   const clientProgress = useWeeklyGoalsProgress(goals);
-  
-  // Get showCompletedTasks state from store - gunakan state yang terpisah untuk weekly sync
-  const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -83,36 +77,11 @@ export default function WeeklySyncTable({
   return (
     <>
       <ComponentCard title="" classNameHeader="!p-0">
-        {/* Custom Header with Toggle Button */}
-        <div className="flex items-center justify-between my-4">
-          <div className="flex-1"></div>
+        {/* Custom Header */}
+        <div className="flex items-center justify-center my-4">
           <h2 className="text-center text-xl font-extrabold text-gray-900 dark:text-gray-100">
             3 Quest Week {props.weekNumber}
           </h2>
-          <div className="flex-1 flex justify-end">
-            {/* Toggle Show/Hide Completed Button */}
-            <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-              <button
-                onClick={toggleShowCompletedMainQuest}
-                className="p-1.5 text-gray-500 rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
-              >
-                {showCompletedMainQuest ? (
-                  <EyeIcon className="w-5 h-5" />
-                ) : (
-                  <EyeCloseIcon className="w-5 h-5" />
-                )}
-              </button>
-              
-              {/* Custom Tooltip with Arrow */}
-              {isHovering && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap z-20 shadow-lg">
-                  {showCompletedMainQuest ? 'Hide completed' : 'Show completed'}
-                  {/* Arrow pointing down */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
         <table className="w-full">
           <tbody>
@@ -128,7 +97,7 @@ export default function WeeklySyncTable({
                   goal={goal}
                   progress={progress}
                   onSlotClick={handleSlotClick}
-                  showCompletedTasks={showCompletedMainQuest}
+                  showCompletedTasks={true}
                 />
               );
             })}

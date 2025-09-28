@@ -11,9 +11,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isHierarchicalView, setIsHierarchicalView] = useState(true);
+  const [showCompletedTasksSlot, setShowCompletedTasksSlot] = useState(showCompletedTasks);
+  const [isHovering, setIsHovering] = useState(false);
   
   // Cookie key untuk menyimpan state
   const cookieKey = `weekly-goal-slot-${slotNumber}-expanded`;
+  const showCompletedKey = `weekly-goal-slot-${slotNumber}-show-completed`;
   
   // Set client flag untuk SSR compatibility
   useEffect(() => {
@@ -28,7 +31,12 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
     if (savedState !== null) {
       setIsExpanded(savedState === 'true');
     }
-  }, [cookieKey, isClient]);
+    
+    const savedShowCompleted = getCookie(showCompletedKey);
+    if (savedShowCompleted !== null) {
+      setShowCompletedTasksSlot(savedShowCompleted === 'true');
+    }
+  }, [cookieKey, showCompletedKey, isClient]);
   
   // Save state ke cookies saat state berubah (hanya di client)
   useEffect(() => {
@@ -37,8 +45,19 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
     setCookie(cookieKey, isExpanded.toString(), 7); // Expire dalam 7 hari
   }, [isExpanded, cookieKey, isClient]);
   
+  // Save showCompletedTasks state ke cookies
+  useEffect(() => {
+    if (!isClient) return;
+    
+    setCookie(showCompletedKey, showCompletedTasksSlot.toString(), 7); // Expire dalam 7 hari
+  }, [showCompletedTasksSlot, showCompletedKey, isClient]);
+  
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
+  };
+  
+  const toggleShowCompletedTasks = () => {
+    setShowCompletedTasksSlot(!showCompletedTasksSlot);
   };
   
   // Helper functions untuk cookies
@@ -68,96 +87,97 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
   const renderGoalContent = () => {
     if (goal && goal.items.length > 0) {
       return (
-        <div>
-          {/* Toggle Button */}
-          <button
-            onClick={toggleExpanded}
-            className={`w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-t-lg border border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out hover:shadow-sm active:scale-98 ${isExpanded ? 'rounded-t-lg border-b-0' : 'rounded-lg'}`}
-          >
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {isExpanded ? 'Hide' : 'Show'} Task ({goal.items.length})
-            </span>
-            <svg
-              className={`w-4 h-4 text-gray-500 transition-all duration-300 ease-in-out ${
-                isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          
-          {/* Collapsible Content */}
-          <div 
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              isExpanded 
-                ? 'max-h-96 opacity-100 transform translate-y-0' 
-                : 'max-h-0 opacity-0 transform -translate-y-2'
-            }`}
-          >
-            <div className="space-y-3">
-              <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
-                <div className="p-4 rounded-b-lg border border-gray-200 border-t-0 dark:border-gray-700">
-                  {/* View Mode Toggle and Edit Button - Now inside collapsible content */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setIsHierarchicalView(true)}
-                        className={`px-3 py-1 text-xs rounded-full transition-all duration-200 ${
-                          isHierarchicalView 
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' 
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        Tree
-                      </button>
-                      <button
-                        onClick={() => setIsHierarchicalView(false)}
-                        className={`px-3 py-1 text-xs rounded-full transition-all duration-200 ${
-                          !isHierarchicalView 
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' 
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        Grid
-                      </button>
-                    </div>
-                    
-                    {/* Edit Button */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onSlotClick(slotNumber)}
-                      className="flex items-center space-x-2"
+        <div className="space-y-3">
+          <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              {/* View Mode Toggle and Edit Button */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setIsHierarchicalView(true)}
+                    className={`px-3 py-1 text-xs rounded-full transition-all duration-200 ${
+                      isHierarchicalView 
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' 
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Tree
+                  </button>
+                  <button
+                    onClick={() => setIsHierarchicalView(false)}
+                    className={`px-3 py-1 text-xs rounded-full transition-all duration-200 ${
+                      !isHierarchicalView 
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' 
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Grid
+                  </button>
+                </div>
+                
+                {/* Eye Icon and Edit Button */}
+                <div className="flex items-center space-x-2">
+                  {/* Eye Icon for Show/Hide Completed Tasks */}
+                  <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleShowCompletedTasks();
+                      }}
+                      className="p-1.5 text-gray-500 rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span>Edit</span>
-                    </Button>
+                      {showCompletedTasksSlot ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                        </svg>
+                      )}
+                    </button>
+                    
+                    {/* Custom Tooltip with Arrow */}
+                    {isHovering && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap z-20 shadow-lg">
+                        {showCompletedTasksSlot ? 'Hide completed' : 'Show completed'}
+                        {/* Arrow pointing down */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-800"></div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Task Display */}
-                  {isHierarchicalView ? (
-                    <HierarchicalGoalDisplay
-                      items={goal.items}
-                      onClick={() => onSlotClick(slotNumber)}
-                      slotNumber={slotNumber}
-                      showCompletedTasks={showCompletedTasks}
-                    />
-                  ) : (
-                    <HorizontalGoalDisplay
-                      items={goal.items}
-                      onClick={() => onSlotClick(slotNumber)}
-                      slotNumber={slotNumber}
-                      showCompletedTasks={showCompletedTasks}
-                    />
-                  )}
+                  
+                  {/* Edit Button */}
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => onSlotClick(slotNumber)}
+                    className="flex items-center"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Edit</span>
+                  </Button>
                 </div>
               </div>
-            </div>
+
+              {/* Task Display */}
+              {isHierarchicalView ? (
+                <HierarchicalGoalDisplay
+                  items={goal.items}
+                  onClick={() => onSlotClick(slotNumber)}
+                  slotNumber={slotNumber}
+                  showCompletedTasks={showCompletedTasksSlot}
+                />
+              ) : (
+                <HorizontalGoalDisplay
+                  items={goal.items}
+                  onClick={() => onSlotClick(slotNumber)}
+                  slotNumber={slotNumber}
+                  showCompletedTasks={showCompletedTasksSlot}
+                />
+              )}
           </div>
         </div>
       );
@@ -193,29 +213,112 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
 
   return (
     <tr className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-      {/* Mobile Layout - Collapsible */}
+      {/* Mobile Layout - Collapsible Card */}
       <td className="p-4 md:hidden">
-        <div className="space-y-3">
-          {/* Progress Indicator */}
-          <div className="w-full">
-            <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
-          </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+          {/* Card Header with Collapse Button */}
+          <button
+            onClick={toggleExpanded}
+            className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out"
+          >
+            <div className="flex-1 text-left">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Weekly Quest {slotNumber}
+              </h3>
+            </div>
+            <div className="flex items-center">
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-all duration-300 ease-in-out ${
+                  isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
 
-          {/* Goal Content */}
-          {renderGoalContent()}
+          {/* Collapsible Goal Content */}
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              isExpanded 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'max-h-0 opacity-0 transform -translate-y-2'
+            }`}
+          >
+            <div className="px-4 py-4">
+              {/* Progress Indicator */}
+              <div className="flex-shrink-0">
+                <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
+                <p className="my-3 text-center">
+                  {progress.completed}/{progress.total} completed
+                </p>
+              </div>
+
+              {/* Goal Content */}
+              <div className="flex-1">
+                {renderGoalContent()}
+              </div>
+            </div>
+          </div>
         </div>
       </td>
       
-      {/* Desktop Layout - Progress Bar Above + Collapsible Goals */}
+      {/* Desktop Layout - Collapsible Card */}
       <td className="py-4 px-4 hidden md:table-cell" colSpan={2}>
-        <div className="space-y-4">
-          {/* Progress Indicator - Above Goals */}
-          <div className="w-full">
-            <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
-          </div>
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+          {/* Card Header with Collapse Button */}
+          <button
+            onClick={toggleExpanded}
+            className="w-full flex items-center justify-between px-7 py-4 bg-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out"
+          >
+            <div className="flex-1 text-left">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Weekly Quest {slotNumber}
+              </h3>
+            </div>
+            <div className="flex items-center">
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-all duration-300 ease-in-out ${
+                  isExpanded ? 'rotate-180 scale-110' : 'rotate-0 scale-100'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
 
-          {/* Goal Content */}
-          {renderGoalContent()}
+          {/* Collapsible Goal Content */}
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              isExpanded 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'max-h-0 opacity-0 transform -translate-y-2'
+            }`}
+          >
+            <div className="px-6 py-4">
+              {/* Progress Indicator and Goal Content - Side by side */}
+              <div className="flex items-center space-x-6">
+                {/* Goal Content */}
+                <div className="flex-1">
+                  {renderGoalContent()}
+                </div>
+                
+                {/* Progress Indicator */}
+                <div className="flex-shrink-0">
+                  <ProgressIndicator progress={progress} slotNumber={slotNumber}/>
+                  <p className="mt-3 text-center">
+                    {progress.completed}/{progress.total} completed
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </td>
     </tr>

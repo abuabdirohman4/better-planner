@@ -122,8 +122,8 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
               className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
               <svg
-                className={`w-3 h-3 transition-transform duration-200 ${
-                  isExpanded ? 'rotate-90' : ''
+                className={`w-3 h-3 transition-all duration-300 ease-in-out ${
+                  isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
                 }`}
                 fill="none"
                 stroke="currentColor"
@@ -163,13 +163,6 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
             ) : null}
           </button>
           
-          {/* Quest Label */}
-          {/* {level === 0 && (
-            <span className={`px-2 py-1 rounded-full text-xs font-bold ${colorClass}`}>
-              {['Q1','Q2','Q3'][slotNumber-1] || 'MAIN_QUEST'}
-            </span>
-          )} */}
-          
           {/* Task Title */}
           <span className={`flex-1 text-sm font-medium ${
             item.status === 'DONE' 
@@ -187,12 +180,20 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           )}
         </div>
         
-        {/* Render Children */}
-        {hasChildren && isExpanded && (
-          <div className="space-y-1">
-            {item.children.map((child: any) => 
-              renderItem(child, level + 1, true)
-            )}
+        {/* Render Children with Smooth Animation */}
+        {hasChildren && (
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              isExpanded 
+                ? 'max-h-96 opacity-100 transform translate-y-0' 
+                : 'max-h-0 opacity-0 transform -translate-y-2'
+            }`}
+          >
+            <div className="space-y-1">
+              {item.children.map((child: any) => 
+                renderItem(child, level + 1, true)
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -204,15 +205,14 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
 
   return (
     <>
-    {/* <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700"> */}
       {rootItems.length > 0 ? (
         <div className="space-y-2">
           {rootItems.map((item: any) => renderItem(item))}
         </div>
       ) : (
         <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-          <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
@@ -223,11 +223,10 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
             }
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Klik untuk menambahkan task
+            Klik edit untuk menambahkan task
           </p>
         </div>
       )}
-    {/* </div> */}
     </>
   );
 }
