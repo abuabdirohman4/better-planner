@@ -10,6 +10,7 @@ import SoundSelector from './components/SoundSelector';
 import Spinner from '@/components/ui/spinner/Spinner';
 import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
 import { checkAudioPermission, initializeAudioContext } from '@/lib/soundUtils';
+import { isTimerDisabled, getTimerDevStatusMessage } from '@/lib/timerDevUtils';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
@@ -88,6 +89,10 @@ export default function PomodoroTimer() {
   
   // Initialize global timer (this handles the actual timer counting and focus sound)
   useGlobalTimer();
+  
+  // ✅ DEV CONTROL: Check if timer is disabled in development
+  const timerDisabled = isTimerDisabled();
+  const devStatusMessage = getTimerDevStatusMessage();
   
   // Get sound settings to check if user wants audio
   const { focusSettings, settings, loadSettings } = useSoundStore();
@@ -203,6 +208,11 @@ export default function PomodoroTimer() {
       </div>
 
       {/* Status indicators */}
+      {timerDisabled && devStatusMessage && (
+        <div className="mb-2 text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 rounded px-3 py-2">
+          🚧 {devStatusMessage}
+        </div>
+      )}
       {isRecovering && (
         <div className="mb-2 flex items-center justify-center space-x-2 text-xs text-blue-500">
           <Spinner size={14} className="mr-2" /> Recovering timer session...

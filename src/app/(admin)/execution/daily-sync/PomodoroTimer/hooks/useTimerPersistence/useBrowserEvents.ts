@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession } from '../../actions/timerSessionActions';
 import { getGlobalState } from '../globalState';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 interface UseBrowserEventsProps {
   debouncedSave: () => Promise<void>;
@@ -18,6 +19,11 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
 
   // Browser tab detection untuk handle multi-browser access
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't handle browser events if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     const { recoveryInProgress, recoveryCompleted } = getGlobalState();
     
     const handleVisibilityChange = () => {

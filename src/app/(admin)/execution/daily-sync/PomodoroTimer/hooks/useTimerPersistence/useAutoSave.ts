@@ -5,6 +5,7 @@ import { useTimer } from '@/stores/timerStore';
 import { saveTimerSession, getActiveTimerSession } from '../../actions/timerSessionActions';
 import { getClientDeviceId } from '../deviceUtils';
 import { getGlobalState, setGlobalLastSaveTime, setGlobalIsSaving } from '../globalState';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useAutoSave() {
   const { 
@@ -17,6 +18,11 @@ export function useAutoSave() {
 
   // Debounced save function with global state
   const debouncedSave = useCallback(async () => {
+    // ✅ DEV CONTROL: Don't save if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     const { isSaving } = getGlobalState();
     
     if (isSaving || !activeTask || !startTime) {
@@ -70,6 +76,11 @@ export function useAutoSave() {
 
   // Auto-save dengan interval berdasarkan environment
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't auto-save if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     const { recoveryInProgress, recoveryCompleted } = getGlobalState();
     
     if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {

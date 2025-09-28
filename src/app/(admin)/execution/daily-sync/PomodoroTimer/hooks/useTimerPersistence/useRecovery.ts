@@ -4,12 +4,18 @@ import { useEffect, useState } from 'react';
 import { useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
 import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from '../globalState';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useRecovery() {
   const [isRecovering, setIsRecovering] = useState(getGlobalState().recoveryInProgress);
 
   // Recovery on app load
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't recover if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     const recoverSession = async () => {
       const { recoveryInProgress, recoveryCompleted } = getGlobalState();
       

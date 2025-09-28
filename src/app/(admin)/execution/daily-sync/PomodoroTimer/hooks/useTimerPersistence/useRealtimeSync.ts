@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTimer } from '@/stores/timerStore';
 import { useTimerStore } from '@/stores/timerStore';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useRealtimeSync() {
   const { activeTask } = useTimer();
@@ -21,6 +22,11 @@ export function useRealtimeSync() {
 
   // Subscribe to timer_sessions changes
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't sync if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     if (!user?.id) return;
 
     const supabase = createClient();
@@ -88,6 +94,11 @@ export function useRealtimeSync() {
 
   // Subscribe to activity_logs changes
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't sync if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      return;
+    }
+    
     if (!user?.id || !activeTask) return;
 
     const supabase = createClient();

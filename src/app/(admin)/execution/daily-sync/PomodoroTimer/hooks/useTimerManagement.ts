@@ -5,6 +5,7 @@ import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
 import { createClient } from '@/lib/supabase/client';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useTimerManagement(selectedDateStr: string, openJournalModal: (data: {
   activityId?: string;
@@ -43,6 +44,12 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
     startTime: string;
     endTime: string;
   }) => {
+    // ✅ DEV CONTROL: Don't complete session if timer is disabled in development
+    if (!isTimerEnabledInDev()) {
+      console.log('⏸️ Session completion disabled in development mode');
+      return;
+    }
+    
     // ✅ Set loading state
     setProcessingCompletion(true);
     

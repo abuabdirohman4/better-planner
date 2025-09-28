@@ -10,6 +10,7 @@ import { useOnlineStatus } from './useTimerPersistence/useOnlineStatus';
 import { useBrowserEvents } from './useTimerPersistence/useBrowserEvents';
 import { useRealtimeSync } from './useTimerPersistence/useRealtimeSync';
 import { useTimerActions } from './useTimerPersistence/useTimerActions';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useTimerPersistence() {
   const { 
@@ -18,7 +19,10 @@ export function useTimerPersistence() {
     startTime
   } = useTimer();
 
-  // Initialize all sub-hooks
+  // ✅ DEV CONTROL: Check if timer is enabled in development
+  const isTimerEnabled = isTimerEnabledInDev();
+
+  // Initialize all sub-hooks only if timer is enabled
   const { debouncedSave } = useAutoSave();
   const { isRecovering } = useRecovery();
   const { isOnline } = useOnlineStatus();
@@ -28,21 +32,26 @@ export function useTimerPersistence() {
     handleTimerResume 
   } = useTimerActions();
 
-  // Setup browser events
+  // Setup browser events only if timer is enabled
   useBrowserEvents({ debouncedSave });
 
-  // Setup real-time sync
+  // Setup real-time sync only if timer is enabled
   useRealtimeSync();
 
+  // ✅ DEV CONTROL: Only run timer logic if enabled
   // Clear timer state when stopped
   useEffect(() => {
+    if (!isTimerEnabled) return;
+    
     if (timerState === 'IDLE' && activeTask && startTime) {
       useTimerStore.getState().stopTimer();
     }
-  }, [timerState, activeTask, startTime]);
+  }, [timerState, activeTask, startTime, isTimerEnabled]);
 
   // Validate session during recovery
   useEffect(() => {
+    if (!isTimerEnabled) return;
+    
     const { recoveryCompleted, recoveryInProgress } = getGlobalState();
     
     if (recoveryCompleted && !isRecovering && timerState === 'FOCUSING' && activeTask && startTime && recoveryInProgress) {
@@ -58,10 +67,12 @@ export function useTimerPersistence() {
       };
       checkSession();
     }
-  }, [isRecovering, timerState, activeTask, startTime]);
+  }, [isRecovering, timerState, activeTask, startTime, isTimerEnabled]);
 
   // Save on page visibility change
   useEffect(() => {
+    if (!isTimerEnabled) return;
+    
     const { recoveryInProgress, recoveryCompleted } = getGlobalState();
     
     const handleVisibilityChange = () => {
@@ -72,7 +83,7 @@ export function useTimerPersistence() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [timerState, activeTask, startTime, debouncedSave]);
+  }, [timerState, activeTask, startTime, debouncedSave, isTimerEnabled]);
 
   return {
     isOnline,

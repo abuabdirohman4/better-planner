@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTimer } from '@/stores/timerStore';
+import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 /**
  * Global Timer Hook - Singleton pattern
@@ -51,6 +52,16 @@ export function useGlobalTimer() {
   }, [timerState]);
 
   useEffect(() => {
+    // ✅ DEV CONTROL: Don't run timer if disabled in development
+    if (!isTimerEnabledInDev()) {
+      // Clear any existing interval
+      if (globalIntervalRef) {
+        clearInterval(globalIntervalRef);
+        globalIntervalRef = null;
+      }
+      return;
+    }
+    
     // Clear existing global interval
     if (globalIntervalRef) {
       clearInterval(globalIntervalRef);
