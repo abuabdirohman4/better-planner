@@ -1,7 +1,5 @@
 import { Metadata } from "next";
-
-import ConditionalContent from "@/components/landing/ConditionalContent";
-import LandingPageContent from "@/components/landing/LandingPageContent";
+import LandingPageClient from "@/components/landing/LandingPageClient";
 
 export const metadata: Metadata = {
   title: "Better Planner - Transform Your Goals Into Achievements",
@@ -21,9 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
-  return (
-    <ConditionalContent>
-      <LandingPageContent />
-    </ConditionalContent>
-  );
+  return <LandingPageClient />;
 }

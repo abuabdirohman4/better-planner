@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-interface ConditionalContentProps {
-  children: React.ReactNode;
-}
+import LandingPageContent from "./LandingPageContent";
 
-export default function ConditionalContent({ children }: ConditionalContentProps) {
+export default function LandingPageClient() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -59,5 +57,5 @@ export default function ConditionalContent({ children }: ConditionalContentProps
   }
 
   // If user is not logged in, show the landing page content
-  return <>{children}</>;
+  return <LandingPageContent />;
 }
