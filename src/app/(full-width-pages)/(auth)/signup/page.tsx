@@ -26,7 +26,7 @@ export default async function SignUp({ searchParams }: { searchParams?: Promise<
               Enter your email and password to sign up!
             </p>
           </div>
-          <div>
+          {/* <div>
             <GoogleSignInButton />
           </div>
           <div className="relative py-3 sm:py-5">
@@ -38,7 +38,7 @@ export default async function SignUp({ searchParams }: { searchParams?: Promise<
                 Or
               </span>
             </div>
-          </div>
+          </div> */}
           <SignUpForm error={message} defaultEmail={defaultEmail} />
           <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">

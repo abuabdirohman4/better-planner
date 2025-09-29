@@ -39,10 +39,10 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
             }`}>
               {message}
             </div> : null}
-          <div>
+          {/* <div>
             <GoogleSignInButton />
-          </div>
-          <div className="relative py-3 sm:py-5">
+          </div> */}
+          {/* <div className="relative py-3 sm:py-5">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200 dark:border-gray-800" />
             </div>
@@ -51,7 +51,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
                 Or
               </span>
             </div>
-          </div>
+          </div> */}
           <SignInForm />
           <div className="mt-5">
             <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
