@@ -5,4 +5,3 @@ export { useRankingCalculation, type RankedQuest } from './useRankingCalculation
 export { useQuestOperations } from './useQuestOperations';
 export { useQuestsAndPairwise } from './useQuestsAndPairwise';
 export { useQuestHistory, type QuestHistoryItem } from './useQuestHistory';
-export { useQuarter, type QuarterData } from './useQuarter';

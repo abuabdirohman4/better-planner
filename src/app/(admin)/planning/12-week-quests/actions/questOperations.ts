@@ -120,7 +120,8 @@ export async function finalizeQuests(
         user_id: user.id,
         year,
         quarter,
-        results: pairwiseResults,
+        results_json: pairwiseResults,
+        is_finalized: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {
@@ -131,24 +132,8 @@ export async function finalizeQuests(
       throw pairwiseError;
     }
 
-    // Get top 3 quests and mark them as main quests
-    const sortedQuests = questsWithScore.sort((a, b) => b.priority_score - a.priority_score);
-    const top3Quests = sortedQuests.slice(0, 3);
-
-    for (const quest of top3Quests) {
-      const { error } = await supabase
-        .from('quests')
-        .update({ 
-          is_main_quest: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', quest.id)
-        .eq('user_id', user.id);
-
-      if (error) {
-        throw error;
-      }
-    }
+    // Note: Main quest marking removed as is_main_quest column doesn't exist in database
+    // Priority scores are already saved above
 
     revalidatePath('/planning/12-week-quests');
     revalidatePath('/planning/main-quests');
@@ -218,7 +203,7 @@ export async function getPairwiseResults(
 
     const { data, error } = await supabase
       .from('pairwise_results')
-      .select('results')
+      .select('results_json')
       .eq('user_id', user.id)
       .eq('year', year)
       .eq('quarter', quarter)
@@ -232,7 +217,7 @@ export async function getPairwiseResults(
       throw error;
     }
 
-    return data?.results || {};
+    return data?.results_json || {};
   } catch (error) {
     handleApiError(error, 'memuat data');
     return {};

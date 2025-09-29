@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { getWeekOfYear, getQuarterFromWeek, formatQParam } from "@/lib/quarterUtils";
+import { useQuarterStore } from "@/stores/quarterStore";
 
 // Komponen ini adalah client-only redirector untuk halaman 12 Week Quests.
 // - Mengecek apakah URL sudah mengandung param ?q=YYYY-Qn.
@@ -13,18 +14,37 @@ import { getWeekOfYear, getQuarterFromWeek, formatQParam } from "@/lib/quarterUt
 export default function TwelveWeekGoalsRedirector() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { year, quarter } = useQuarterStore();
   
   useEffect(() => {
     const qParam = searchParams.get('q');
     if (!qParam) {
-      const now = new Date();
-      const year = now.getFullYear();
-      const week = getWeekOfYear(now);
-      const quarter = getQuarterFromWeek(week);
+      // Use quarter store instead of current date
       const qParamValue = formatQParam(year, quarter);
+      console.log(`🔄 TwelveWeekGoalsRedirector - Redirecting to: ${qParamValue}`);
       router.replace(`/planning/12-week-quests?q=${qParamValue}`);
+    } else {
+      // Parse URL param and update quarter store if different
+      const urlQuarter = parseInt(qParam.split('-Q')[1]);
+      const urlYear = parseInt(qParam.split('-Q')[0]);
+      
+      if (urlQuarter !== quarter || urlYear !== year) {
+        console.log(`🔄 TwelveWeekGoalsRedirector - Updating quarter store: Q${urlQuarter} ${urlYear}`);
+        useQuarterStore.getState().setQuarter(urlYear, urlQuarter);
+      }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, year, quarter]);
+
+  // Sync URL when quarter store changes
+  useEffect(() => {
+    const qParam = searchParams.get('q');
+    const expectedQParam = formatQParam(year, quarter);
+    
+    if (qParam !== expectedQParam) {
+      console.log(`🔄 TwelveWeekGoalsRedirector - Syncing URL: ${qParam} → ${expectedQParam}`);
+      router.replace(`/planning/12-week-quests?q=${expectedQParam}`);
+    }
+  }, [year, quarter, searchParams, router]);
   
   return null;
 } 

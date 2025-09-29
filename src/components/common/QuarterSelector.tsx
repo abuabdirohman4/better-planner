@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -9,27 +10,40 @@ import {
   getPrevQuarter, 
   getNextQuarter,
   getQuarterString,
-  generateQuarterOptions
+  generateQuarterOptions,
+  formatQParam
 } from "@/lib/quarterUtils";
 import { useQuarterStore } from "@/stores/quarterStore";
 
 const QuarterSelector: React.FC = () => {
   const { year, quarter, setQuarter } = useQuarterStore();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const options = useMemo(() => generateQuarterOptions({ year, quarter }), [year, quarter]);
+
+  const updateURL = (newYear: number, newQuarter: number) => {
+    const qParam = formatQParam(newYear, newQuarter);
+    const currentPath = window.location.pathname;
+    const newURL = `${currentPath}?q=${qParam}`;
+    router.replace(newURL);
+  };
 
   const handlePrev = () => {
     const prev = getPrevQuarter(year, quarter);
     setQuarter(prev.year, prev.quarter);
+    updateURL(prev.year, prev.quarter);
   };
   
   const handleNext = () => {
     const next = getNextQuarter(year, quarter);
     setQuarter(next.year, next.quarter);
+    updateURL(next.year, next.quarter);
   };
   
   const handleSelect = (y: number, q: number) => {
     setQuarter(y, q);
+    updateURL(y, q);
     setIsOpen(false);
   };
 

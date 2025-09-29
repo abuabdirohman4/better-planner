@@ -4,7 +4,6 @@ import Button from '@/components/ui/button/Button';
 import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
 import { useSidebar } from '@/stores/sidebarStore';
 import { 
-  useQuarter, 
   useQuestState, 
   usePairwiseComparison, 
   useRankingCalculation, 
@@ -13,6 +12,7 @@ import {
   type Quest,
   type RankedQuest 
 } from "./hooks";
+import { useQuarterStore } from "@/stores/quarterStore";
 import QuestHistorySelector from "./components/QuestHistorySelector";
 
 // Component for quest input
@@ -252,7 +252,9 @@ export default function TwelveWeekGoalsUI({
   loading?: boolean 
 }) {
   const { isExpanded } = useSidebar();
-  const { year, quarter } = useQuarter();
+  const { year, quarter } = useQuarterStore();
+  console.log('year', year);
+  console.log('quarter', quarter);
 
   // Use separated hooks
   const { 
