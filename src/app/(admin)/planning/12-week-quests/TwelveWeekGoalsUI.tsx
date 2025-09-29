@@ -68,6 +68,9 @@ export default function TwelveWeekGoalsUI({
     hasQuestHistory 
   } = useQuestHistory(year, quarter);
 
+  // Quest history state - MUST be before conditional return
+  const [showQuestHistory, setShowQuestHistory] = useState(false);
+
   if (loading) {
     return <TwelveWeekGoalsSkeleton />;
   }
@@ -86,9 +89,6 @@ export default function TwelveWeekGoalsUI({
     }
   };
 
-  // Quest history state
-  const [showQuestHistory, setShowQuestHistory] = useState(false);
-
   const handleImportQuests = (importedQuests: Quest[]) => {
     importQuests(importedQuests);
     setShowQuestHistory(false);
@@ -104,6 +104,7 @@ export default function TwelveWeekGoalsUI({
         onSave={handleSaveWithValidation}
         onShowHistory={() => setShowQuestHistory(true)}
         hasQuestHistory={hasQuestHistory}
+        isLoadingHistory={isLoadingHistory}
       />
       <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
         <PairwiseMatrix
