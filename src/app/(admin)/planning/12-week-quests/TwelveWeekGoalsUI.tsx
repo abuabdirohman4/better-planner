@@ -1,214 +1,16 @@
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
-import { toast } from 'sonner';
 import { useSidebar } from '@/stores/sidebarStore';
-import { useQuarter } from "./hooks/useQuarter";
-
-import { addMultipleQuests, updateQuests, finalizeQuests } from "../main-quests/actions/questActions";
-
-const QUEST_LABELS = [
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
-];
-
-interface Quest {
-  id?: string;
-  label: string;
-  title: string;
-}
-
-interface RankedQuest extends Quest {
-  score: number;
-}
-
-// Custom hook for quest state management
-function useQuestState(initialQuests: { id?: string, title: string, label?: string }[]) {
-  const [quests, setQuests] = useState<Quest[]>(
-    QUEST_LABELS.map(label => ({ label, title: "" }))
-  );
-  const [highlightEmpty, setHighlightEmpty] = useState(false);
-
-  useEffect(() => {
-    if (initialQuests && initialQuests.length > 0) {
-      const padded = QUEST_LABELS.map((label) => {
-        const q = initialQuests.find(q => q.label === label);
-        return q ? { id: q.id, label: label, title: q.title } : { label, title: "" };
-      });
-      setQuests(padded);
-    } else {
-      // Only reset if we don't have any quests with titles
-      setQuests(prev => {
-        const hasTitles = prev.some(q => q.title.trim() !== "");
-        if (hasTitles) {
-          return prev; // Keep existing data
-        }
-        return QUEST_LABELS.map(label => ({ label, title: "" }));
-      });
-    }
-  }, [initialQuests]);
-
-  const handleQuestTitleChange = (idx: number, value: string) => {
-    setQuests(qs => {
-      const next = [...qs];
-      next[idx] = { ...next[idx], title: value };
-      return next;
-    });
-    setHighlightEmpty(false);
-  };
-
-  return {
-    quests,
-    setQuests,
-    highlightEmpty,
-    setHighlightEmpty,
-    handleQuestTitleChange
-  };
-}
-
-// Custom hook for pairwise comparison management
-function usePairwiseComparison(year: number, quarter: number, initialPairwiseResults: { [key: string]: string }) {
-  const localKey = `better-planner-pairwise-${year}-Q${quarter}`;
-  const [pairwiseResults, setPairwiseResults] = useState<{ [key: string]: string }>({});
-
-  useEffect(() => {
-    // Prioritize server data over localStorage
-    if (initialPairwiseResults && Object.keys(initialPairwiseResults).length > 0) {
-      setPairwiseResults(initialPairwiseResults);
-    } else {
-      // Fallback to localStorage only if no server data
-      try {
-        const saved = localStorage.getItem(localKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && Object.keys(parsed).length > 0) {
-            setPairwiseResults(parsed);
-          }
-        }
-      } catch {
-        // Ignore localStorage errors
-      }
-    }
-  }, [initialPairwiseResults, localKey]);
-
-  useEffect(() => {
-    // Only save to localStorage if we have data and it's different from server data
-    if (Object.keys(pairwiseResults).length > 0) {
-      try {
-        localStorage.setItem(localKey, JSON.stringify(pairwiseResults));
-      } catch {
-        // Ignore localStorage errors
-      }
-    }
-  }, [pairwiseResults, localKey]);
-
-  const handlePairwiseClick = (row: number, col: number, winner: 'row' | 'col', quests: Quest[]) => {
-    const key = `${quests[row].label}-${quests[col].label}`;
-    setPairwiseResults(prev => ({
-      ...prev,
-      [key]: winner === 'row' ? quests[row].label : quests[col].label
-    }));
-  };
-
-  const handleReset = () => {
-    setPairwiseResults({});
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(localKey);
-    }
-  };
-
-  return {
-    pairwiseResults,
-    setPairwiseResults,
-    handlePairwiseClick,
-    handleReset,
-    localKey
-  };
-}
-
-// Custom hook for ranking calculation
-function useRankingCalculation(quests: Quest[], pairwiseResults: { [key: string]: string }, initialQuests: { id?: string, title: string, label?: string }[]) {
-  const [ranking, setRanking] = useState<RankedQuest[] | null>(null);
-
-  useEffect(() => {
-    const filledQuests = quests.filter(q => q.title.trim() !== "");
-    if (filledQuests.length < 2) {
-      setRanking(null);
-      return;
-    }
-    
-    const scores: { [label: string]: number } = {};
-    quests.forEach(q => { scores[q.label] = 0; });
-    
-    Object.values(pairwiseResults).forEach(winner => {
-      if (scores[winner] !== undefined) scores[winner] += 1;
-    });
-    
-    const result = quests.map((q) => {
-      const initial = initialQuests.find(init => init.label === q.label);
-      return {
-        ...q,
-        score: scores[q.label] || 0,
-        id: initial?.id,
-      };
-    }).sort((a, b) => b.score - a.score);
-    
-    setRanking(result);
-  }, [quests, pairwiseResults, initialQuests]);
-
-  return { ranking };
-}
-
-// Custom hook for quest operations
-function useQuestOperations(year: number, quarter: number, quests: Quest[], initialQuests: { id?: string, title: string, label?: string }[]) {
-  const router = useRouter();
-
-  const handleSaveQuests = async () => {
-    const questsWithId = quests.filter(q => q.id);
-    const newQuests = quests.filter(q => !q.id && q.title.trim() !== "");
-    try {
-      if (questsWithId.length > 0) {
-        await updateQuests(questsWithId.map(q => ({ id: q.id!, title: q.title, label: q.label })));
-      }
-      if (newQuests.length > 0) {
-        await addMultipleQuests(newQuests.map(q => ({ title: q.title, label: q.label })), year, quarter);
-      }
-      toast.success("Quest berhasil disimpan/diupdate!");
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan quest.";
-      toast.error(errorMsg);
-    }
-  };
-
-  const handleCommit = async (pairwiseResults: { [key: string]: string }, ranking: RankedQuest[] | null, localKey: string) => {
-    if (!ranking) return;
-    try {
-      const scores: { [label: string]: number } = {};
-      quests.forEach(q => { scores[q.label] = 0; });
-      Object.values(pairwiseResults).forEach(winner => {
-        if (scores[winner] !== undefined) scores[winner] += 1;
-      });
-      const questsWithScore = quests
-        .map((q, idx) => ({
-          id: initialQuests[idx]?.id,
-          title: q.title,
-          priority_score: scores[q.label] || 0,
-        }))
-        .filter((q): q is { id: string; title: string; priority_score: number } => typeof q.id === 'string');
-      const result = await finalizeQuests(pairwiseResults, questsWithScore, year, quarter);
-      localStorage.removeItem(localKey);
-      toast.success(result?.message || "Prioritas berhasil ditentukan dan 3 Main Quest telah ditetapkan!");
-      if (result?.url) router.push(result.url);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Gagal commit main quest.";
-      toast.error(errorMsg);
-    }
-  };
-
-  return { handleSaveQuests, handleCommit };
-}
+import { 
+  useQuarter, 
+  useQuestState, 
+  usePairwiseComparison, 
+  useRankingCalculation, 
+  useQuestOperations,
+  type Quest,
+  type RankedQuest 
+} from "./hooks";
 
 // Component for quest input
 function QuestInput({ quest, idx, ranking, highlightEmpty, onQuestChange }: {
@@ -411,27 +213,64 @@ function ActionButtons({ onReset, onCommit }: { onReset: () => void; onCommit: (
   );
 }
 
-export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseResults = {}, loading = false }: { initialQuests?: { id?: string, title: string, label?: string }[], initialPairwiseResults?: { [key: string]: string }, loading?: boolean }) {
+export default function TwelveWeekGoalsUI({ 
+  initialQuests = [], 
+  initialPairwiseResults = {}, 
+  loading = false 
+}: { 
+  initialQuests?: { id?: string, title: string, label?: string }[], 
+  initialPairwiseResults?: { [key: string]: string }, 
+  loading?: boolean 
+}) {
   const { isExpanded } = useSidebar();
   const { year, quarter } = useQuarter();
 
-  const { quests, highlightEmpty, handleQuestTitleChange } = useQuestState(initialQuests);
-  const { pairwiseResults, handlePairwiseClick, handleReset, localKey } = usePairwiseComparison(year, quarter, initialPairwiseResults);
-  const { ranking } = useRankingCalculation(quests, pairwiseResults, initialQuests);
-  const { handleSaveQuests, handleCommit } = useQuestOperations(year, quarter, quests, initialQuests);
+  // Use separated hooks
+  const { 
+    quests, 
+    highlightEmpty, 
+    handleQuestTitleChange,
+    validateQuests,
+    getFilledQuests,
+    QUEST_LABELS
+  } = useQuestState(initialQuests);
+  
+  const { 
+    pairwiseResults, 
+    handlePairwiseClick, 
+    handleReset, 
+    localKey,
+    getCompletionPercentage
+  } = usePairwiseComparison(quests, year, quarter, initialPairwiseResults);
+  
+  const { 
+    ranking,
+    getTopQuests,
+    getQuestRank,
+    isQuestInTopThree
+  } = useRankingCalculation(quests, pairwiseResults, initialQuests);
+  
+  const { 
+    handleSaveQuests, 
+    handleCommit 
+  } = useQuestOperations(year, quarter, quests, initialQuests);
 
   if (loading) {
-    return (
-        <TwelveWeekGoalsSkeleton />
-    );
+    return <TwelveWeekGoalsSkeleton />;
   }
 
   const handlePairwiseClickWithQuests = (row: number, col: number, winner: 'row' | 'col') => {
-    handlePairwiseClick(row, col, winner, quests);
+    handlePairwiseClick(row, col, winner);
   };
 
   const handleCommitWithParams = () => {
     handleCommit(pairwiseResults, ranking, localKey);
+  };
+
+  const handleSaveWithValidation = () => {
+    if (validateQuests()) {
+      handleSaveQuests();
+    }
   };
 
   return (
@@ -441,7 +280,7 @@ export default function TwelveWeekGoalsUI({ initialQuests = [], initialPairwiseR
         ranking={ranking}
         highlightEmpty={highlightEmpty}
         onQuestChange={handleQuestTitleChange}
-        onSave={handleSaveQuests}
+        onSave={handleSaveWithValidation}
       />
       <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
         <PairwiseMatrix

@@ -1,6 +1,6 @@
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 
-import { getAllQuestsForQuarter, getPairwiseResults } from '@/app/(admin)/planning/main-quests/actions/questActions';
+import { getAllQuestsForQuarter, getPairwiseResults } from '../actions';
 
 /**
  * Custom hook for fetching both quests and pairwise results
