@@ -253,8 +253,6 @@ export default function TwelveWeekGoalsUI({
 }) {
   const { isExpanded } = useSidebar();
   const { year, quarter } = useQuarterStore();
-  console.log('year', year);
-  console.log('quarter', quarter);
 
   // Use separated hooks
   const { 

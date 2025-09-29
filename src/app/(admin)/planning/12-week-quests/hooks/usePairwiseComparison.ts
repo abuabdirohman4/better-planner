@@ -45,7 +45,6 @@ export function usePairwiseComparison(quests: Quest[], year: number, quarter: nu
   const handlePairwiseClick = (row: number, col: number, winner: 'row' | 'col') => {
     // Ensure quests array is valid before accessing elements
     if (row < 0 || row >= quests.length || col < 0 || col >= quests.length) {
-      console.error("Invalid row or column index for quests array.");
       return;
     }
     

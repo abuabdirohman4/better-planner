@@ -21,7 +21,6 @@ export default function TwelveWeekGoalsRedirector() {
     if (!qParam) {
       // Use quarter store instead of current date
       const qParamValue = formatQParam(year, quarter);
-      console.log(`🔄 TwelveWeekGoalsRedirector - Redirecting to: ${qParamValue}`);
       router.replace(`/planning/12-week-quests?q=${qParamValue}`);
     } else {
       // Parse URL param and update quarter store if different
@@ -29,7 +28,6 @@ export default function TwelveWeekGoalsRedirector() {
       const urlYear = parseInt(qParam.split('-Q')[0]);
       
       if (urlQuarter !== quarter || urlYear !== year) {
-        console.log(`🔄 TwelveWeekGoalsRedirector - Updating quarter store: Q${urlQuarter} ${urlYear}`);
         useQuarterStore.getState().setQuarter(urlYear, urlQuarter);
       }
     }
@@ -41,7 +39,6 @@ export default function TwelveWeekGoalsRedirector() {
     const expectedQParam = formatQParam(year, quarter);
     
     if (qParam !== expectedQParam) {
-      console.log(`🔄 TwelveWeekGoalsRedirector - Syncing URL: ${qParam} → ${expectedQParam}`);
       router.replace(`/planning/12-week-quests?q=${expectedQParam}`);
     }
   }, [year, quarter, searchParams, router]);

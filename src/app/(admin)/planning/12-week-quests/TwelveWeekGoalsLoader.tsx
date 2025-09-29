@@ -27,7 +27,7 @@ export default function TwelveWeekGoalsLoader() {
   })();
 
   if (error) {
-    console.error('Error loading data:', error);
+    // Error handling can be added here if needed
   }
   
   return (

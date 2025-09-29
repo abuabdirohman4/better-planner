@@ -62,7 +62,6 @@ export function useQuestHistory(currentYear: number, currentQuarter: number) {
         setQuestHistory(history);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Gagal memuat riwayat quest');
-        console.error('Error fetching quest history:', err);
       } finally {
         setIsLoading(false);
       }
