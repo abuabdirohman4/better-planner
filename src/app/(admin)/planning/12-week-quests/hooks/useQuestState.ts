@@ -39,7 +39,7 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
         return QUEST_LABELS.map(label => ({ label, title: "" }));
       });
     }
-  }, [initialQuests]);
+  }, [initialQuests?.length, initialQuests?.map(q => `${q.id}-${q.title}`).join(',')]);
 
   const handleQuestTitleChange = (idx: number, value: string) => {
     setQuests(qs => {
@@ -61,6 +61,34 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
 
   const getFilledQuests = () => quests.filter(q => q.title.trim() !== "");
 
+  const importQuests = (importedQuests: Quest[]) => {
+    // Map imported quests to current quest structure
+    // Only replace quests that have matching labels, keep others unchanged
+    setQuests(prev => {
+      const newQuests = [...prev];
+      
+      importedQuests.forEach(imported => {
+        const index = newQuests.findIndex(q => q.label === imported.label);
+        if (index !== -1) {
+          newQuests[index] = {
+            id: imported.id,
+            label: imported.label,
+            title: imported.title
+          };
+        }
+      });
+      
+      return newQuests;
+    });
+    
+    setHighlightEmpty(false);
+  };
+
+  const clearAllQuests = () => {
+    setQuests(QUEST_LABELS.map(label => ({ label, title: "" })));
+    setHighlightEmpty(false);
+  };
+
   return {
     quests,
     setQuests,
@@ -69,6 +97,8 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
     handleQuestTitleChange,
     validateQuests,
     getFilledQuests,
+    importQuests,
+    clearAllQuests,
     QUEST_LABELS
   };
 }

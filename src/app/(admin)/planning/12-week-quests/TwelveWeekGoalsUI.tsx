@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import TwelveWeekGoalsSkeleton from "@/components/ui/skeleton/TwelveWeekGoalsSkeleton";
@@ -8,9 +9,11 @@ import {
   usePairwiseComparison, 
   useRankingCalculation, 
   useQuestOperations,
+  useQuestHistory,
   type Quest,
   type RankedQuest 
 } from "./hooks";
+import QuestHistorySelector from "./components/QuestHistorySelector";
 
 // Component for quest input
 function QuestInput({ quest, idx, ranking, highlightEmpty, onQuestChange }: {
@@ -53,12 +56,22 @@ function QuestInput({ quest, idx, ranking, highlightEmpty, onQuestChange }: {
 }
 
 // Component for quest input section
-function QuestInputSection({ quests, ranking, highlightEmpty, onQuestChange, onSave }: {
+function QuestInputSection({ 
+  quests, 
+  ranking, 
+  highlightEmpty, 
+  onQuestChange, 
+  onSave, 
+  onShowHistory, 
+  hasQuestHistory 
+}: {
   quests: Quest[];
   ranking: RankedQuest[] | null;
   highlightEmpty: boolean;
   onQuestChange: (idx: number, value: string) => void;
   onSave: () => void;
+  onShowHistory: () => void;
+  hasQuestHistory: boolean;
 }) {
   return (
     <div className="w-full md:w-1/3 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-8 flex flex-col justify-between">
@@ -76,6 +89,22 @@ function QuestInputSection({ quests, ranking, highlightEmpty, onQuestChange, onS
           ))}
         </div>
       </ComponentCard>
+      
+      {/* Quest History Button */}
+      {hasQuestHistory && (
+        <div className="mt-4 mx-10">
+          <Button
+            type="button"
+            size="md"
+            variant="outline"
+            onClick={onShowHistory}
+            className="w-full"
+          >
+            📋 Gunakan Quest Sebelumnya
+          </Button>
+        </div>
+      )}
+      
       <div className="mt-2 mx-10 flex">
         <Button
           type="button"
@@ -232,6 +261,8 @@ export default function TwelveWeekGoalsUI({
     handleQuestTitleChange,
     validateQuests,
     getFilledQuests,
+    importQuests,
+    clearAllQuests,
     QUEST_LABELS
   } = useQuestState(initialQuests);
   
@@ -255,6 +286,13 @@ export default function TwelveWeekGoalsUI({
     handleCommit 
   } = useQuestOperations(year, quarter, quests, initialQuests);
 
+  // Quest history hook
+  const { 
+    questHistory, 
+    isLoading: isLoadingHistory, 
+    hasQuestHistory 
+  } = useQuestHistory(year, quarter);
+
   if (loading) {
     return <TwelveWeekGoalsSkeleton />;
   }
@@ -273,6 +311,14 @@ export default function TwelveWeekGoalsUI({
     }
   };
 
+  // Quest history state
+  const [showQuestHistory, setShowQuestHistory] = useState(false);
+
+  const handleImportQuests = (importedQuests: Quest[]) => {
+    importQuests(importedQuests);
+    setShowQuestHistory(false);
+  };
+
   return (
     <div className="w-full max-w-none bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row">
       <QuestInputSection
@@ -281,6 +327,8 @@ export default function TwelveWeekGoalsUI({
         highlightEmpty={highlightEmpty}
         onQuestChange={handleQuestTitleChange}
         onSave={handleSaveWithValidation}
+        onShowHistory={() => setShowQuestHistory(true)}
+        hasQuestHistory={hasQuestHistory}
       />
       <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
         <PairwiseMatrix
@@ -291,6 +339,16 @@ export default function TwelveWeekGoalsUI({
         />
         <ActionButtons onReset={handleReset} onCommit={handleCommitWithParams} />
       </div>
+      
+      {/* Quest History Modal */}
+      {showQuestHistory && (
+        <QuestHistorySelector
+          questHistory={questHistory}
+          isLoading={isLoadingHistory}
+          onSelectQuests={handleImportQuests}
+          onClose={() => setShowQuestHistory(false)}
+        />
+      )}
     </div>
   );
 } 
