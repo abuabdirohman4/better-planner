@@ -5,9 +5,11 @@ interface ActionButtonsProps {
   onReset: () => void;
   onCommit: () => void;
   isSubmitting?: boolean;
+  hasUnsavedChanges?: boolean;
+  hasAnyPairwiseComparisons?: boolean;
 }
 
-export default function ActionButtons({ onReset, onCommit, isSubmitting = false }: ActionButtonsProps) {
+export default function ActionButtons({ onReset, onCommit, isSubmitting = false, hasUnsavedChanges = false, hasAnyPairwiseComparisons = false }: ActionButtonsProps) {
   return (
     <div className="mt-2 mx-10 flex gap-2">
       <Button
@@ -16,6 +18,7 @@ export default function ActionButtons({ onReset, onCommit, isSubmitting = false 
         variant="outline"
         onClick={onReset}
         className="w-full"
+        disabled={hasUnsavedChanges || !hasAnyPairwiseComparisons}
       >
         Reset
       </Button>
@@ -25,7 +28,7 @@ export default function ActionButtons({ onReset, onCommit, isSubmitting = false 
         variant="primary"
         className="w-full"
         onClick={onCommit}
-        disabled={isSubmitting}
+        disabled={isSubmitting || hasUnsavedChanges || !hasAnyPairwiseComparisons}
       >
         {isSubmitting ? (
           <div className="flex items-center justify-center space-x-2">

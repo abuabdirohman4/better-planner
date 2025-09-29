@@ -27,6 +27,8 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
     QUEST_LABELS.map(label => ({ label, title: "", type: 'PERSONAL' as const }))
   );
   const [highlightEmpty, setHighlightEmpty] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedState, setLastSavedState] = useState<Quest[]>([]);
 
   useEffect(() => {
     if (initialQuests && initialQuests.length > 0) {
@@ -35,6 +37,8 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
         return q ? { id: q.id, label: label, title: q.title, type: 'PERSONAL' as const } : { label, title: "", type: 'PERSONAL' as const };
       });
       setQuests(padded);
+      setLastSavedState(padded); // Set initial saved state
+      setHasUnsavedChanges(false);
     } else {
       // Only reset if we don't have any quests with titles
       setQuests(prev => {
@@ -42,7 +46,10 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
         if (hasTitles) {
           return prev; // Keep existing data
         }
-        return QUEST_LABELS.map(label => ({ label, title: "", type: 'PERSONAL' as const }));
+        const emptyQuests = QUEST_LABELS.map(label => ({ label, title: "", type: 'PERSONAL' as const }));
+        setLastSavedState(emptyQuests);
+        setHasUnsavedChanges(false);
+        return emptyQuests;
       });
     }
   }, [initialQuests?.length, initialQuests?.map(q => `${q.id}-${q.title}`).join(',')]);
@@ -59,6 +66,16 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
       return next;
     });
     setHighlightEmpty(false);
+    
+    // Check if there are unsaved changes
+    setQuests(prev => {
+      const hasChanges = prev.some((quest, index) => {
+        const savedQuest = lastSavedState[index];
+        return !savedQuest || quest.title !== savedQuest.title;
+      });
+      setHasUnsavedChanges(hasChanges);
+      return prev;
+    });
   };
 
   const validateQuests = () => {
@@ -111,12 +128,41 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
       return newQuests;
     });
     
+    // Mark as having unsaved changes after import
+    setQuests(prev => {
+      const hasChanges = prev.some((quest, index) => {
+        const savedQuest = lastSavedState[index];
+        return !savedQuest || quest.title !== savedQuest.title;
+      });
+      setHasUnsavedChanges(hasChanges);
+      return prev;
+    });
+    
     setHighlightEmpty(false);
   };
 
   const clearAllQuests = () => {
-    setQuests(QUEST_LABELS.map(label => ({ label, title: "", type: 'PERSONAL' as const })));
+    const emptyQuests = QUEST_LABELS.map(label => ({ label, title: "", type: 'PERSONAL' as const }));
+    setQuests(emptyQuests);
+    setLastSavedState(emptyQuests);
+    setHasUnsavedChanges(false);
     setHighlightEmpty(false);
+  };
+
+  // Mark current state as saved
+  const markAsSaved = () => {
+    setLastSavedState([...quests]);
+    setHasUnsavedChanges(false);
+  };
+
+  // Check if there are any new quest inputs (not just changes to existing ones)
+  const hasNewQuestInputs = () => {
+    return quests.some(quest => quest.title.trim() !== "" && !quest.id);
+  };
+
+  // Check if there are any quest inputs at all
+  const hasAnyQuestInputs = () => {
+    return quests.some(quest => quest.title.trim() !== "");
   };
 
   return {
@@ -129,6 +175,10 @@ export function useQuestState(initialQuests: { id?: string, title: string, label
     getFilledQuests,
     importQuests,
     clearAllQuests,
+    hasUnsavedChanges,
+    markAsSaved,
+    hasNewQuestInputs,
+    hasAnyQuestInputs,
     QUEST_LABELS
   };
 }

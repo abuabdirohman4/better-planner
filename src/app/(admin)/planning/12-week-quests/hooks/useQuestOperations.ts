@@ -15,7 +15,8 @@ export function useQuestOperations(
   quarter: number, 
   quests: Quest[], 
   initialQuests: { id?: string, title: string, label?: string }[],
-  setQuests?: (quests: Quest[]) => void
+  setQuests?: (quests: Quest[]) => void,
+  markPairwiseAsSaved?: () => void
 ) {
   const router = useRouter();
 
@@ -89,6 +90,9 @@ export function useQuestOperations(
         if (typeof window !== 'undefined') {
           localStorage.removeItem(localKey);
         }
+        
+        // Mark pairwise as saved after successful commit
+        markPairwiseAsSaved?.();
         
         toast.success(result.message);
         

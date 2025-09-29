@@ -27,15 +27,6 @@ export async function saveQuests(
     const filledQuests = quests.filter(q => q.title.trim() !== "");
     const questsWithId = filledQuests.filter(q => q.id);
     const newQuests = filledQuests.filter(q => !q.id);
-    
-    // Debug logging
-    console.log('🔍 saveQuests Debug:', {
-      totalQuests: quests.length,
-      filledQuests: filledQuests.length,
-      questsWithId: questsWithId.length,
-      newQuests: newQuests.length,
-      quests: quests.map(q => ({ label: q.label, title: q.title, id: q.id }))
-    });
 
     // Update existing quests
     if (questsWithId.length > 0) {
@@ -90,7 +81,6 @@ export async function saveQuests(
       }
 
       insertedQuests = insertedData || [];
-      console.log('✅ New quests created:', insertedQuests);
     }
 
     // Delete empty quests (quests that exist in DB but are now empty in the form)

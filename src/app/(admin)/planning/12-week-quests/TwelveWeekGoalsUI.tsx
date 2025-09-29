@@ -40,6 +40,10 @@ export default function TwelveWeekGoalsUI({
     getFilledQuests,
     importQuests,
     clearAllQuests,
+    hasUnsavedChanges,
+    markAsSaved,
+    hasNewQuestInputs,
+    hasAnyQuestInputs,
     QUEST_LABELS
   } = useQuestState(initialQuests);
   
@@ -48,7 +52,10 @@ export default function TwelveWeekGoalsUI({
     handlePairwiseClick, 
     handleReset, 
     localKey,
-    getCompletionPercentage
+    getCompletionPercentage,
+    hasPairwiseChanges,
+    hasAnyPairwiseComparisons,
+    markPairwiseAsSaved
   } = usePairwiseComparison(quests, year, quarter, initialPairwiseResults);
   
   const { 
@@ -61,7 +68,7 @@ export default function TwelveWeekGoalsUI({
   const { 
     handleSaveQuests, 
     handleCommit 
-  } = useQuestOperations(year, quarter, quests, initialQuests, setQuests);
+  } = useQuestOperations(year, quarter, quests, initialQuests, setQuests, markPairwiseAsSaved);
 
   // Quest history hook
   const { 
@@ -105,6 +112,7 @@ export default function TwelveWeekGoalsUI({
       setIsSaving(true);
       try {
         await handleSaveQuests();
+        markAsSaved(); // Mark changes as saved after successful save
       } finally {
         setIsSaving(false);
       }
@@ -171,6 +179,9 @@ export default function TwelveWeekGoalsUI({
         onEditToggle={handleEditToggle}
         editingQuests={editingQuests}
         isSaving={isSaving}
+        hasNewInputs={hasNewQuestInputs()}
+        hasAnyInputs={hasAnyQuestInputs()}
+        hasUnsavedChanges={hasUnsavedChanges}
       />
       <div className="w-full md:w-2/3 pb-6 md:pb-8 flex flex-col">
         <PairwiseMatrix
@@ -178,8 +189,15 @@ export default function TwelveWeekGoalsUI({
           pairwiseResults={pairwiseResults}
           onPairwiseClick={handlePairwiseClickWithQuests}
           isExpanded={isExpanded}
+          hasAnyComparisons={hasAnyPairwiseComparisons()}
         />
-        <ActionButtons onReset={handleReset} onCommit={handleCommitWithParams} isSubmitting={isSubmitting} />
+        <ActionButtons 
+          onReset={handleReset} 
+          onCommit={handleCommitWithParams} 
+          isSubmitting={isSubmitting}
+          hasUnsavedChanges={hasUnsavedChanges}
+          hasAnyPairwiseComparisons={hasAnyPairwiseComparisons()}
+        />
       </div>
       
       {/* Quest History Modal */}
