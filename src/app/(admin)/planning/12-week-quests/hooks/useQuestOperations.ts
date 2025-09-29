@@ -65,20 +65,19 @@ export function useQuestOperations(
     }
 
     try {
-      // Calculate scores for all quests
-      const scores: { [label: string]: number } = {};
-      quests.forEach(q => { scores[q.label] = 0; });
-      Object.values(pairwiseResults).forEach(winner => {
-        if (scores[winner] !== undefined) scores[winner] += 1;
-      });
-
-      // Prepare quests with scores for finalization
+      // Use the ranking data instead of recalculating scores
+      // The ranking already has the correct scores calculated
       const questsWithScore = quests
-        .map((q, idx) => ({
-          id: initialQuests[idx]?.id,
-          title: q.title,
-          priority_score: scores[q.label] || 0,
-        }))
+        .map((q, idx) => {
+          const initial = initialQuests.find(init => init.label === q.label);
+          // Find the quest in ranking to get the correct score
+          const rankedQuest = ranking.find(r => r.label === q.label);
+          return {
+            id: initial?.id,
+            title: q.title,
+            priority_score: rankedQuest?.score || 0,
+          };
+        })
         .filter((q): q is { id: string; title: string; priority_score: number } => 
           typeof q.id === 'string'
         );
