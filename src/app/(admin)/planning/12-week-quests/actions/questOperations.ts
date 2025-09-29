@@ -14,7 +14,7 @@ export async function saveQuests(
   quests: Quest[], 
   year: number, 
   quarter: number
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; insertedQuests?: any[] }> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -23,8 +23,19 @@ export async function saveQuests(
       throw new Error('User not authenticated');
     }
 
-    const questsWithId = quests.filter(q => q.id);
-    const newQuests = quests.filter(q => !q.id && q.title.trim() !== "");
+    // Filter quests that have titles (filled quests)
+    const filledQuests = quests.filter(q => q.title.trim() !== "");
+    const questsWithId = filledQuests.filter(q => q.id);
+    const newQuests = filledQuests.filter(q => !q.id);
+    
+    // Debug logging
+    console.log('🔍 saveQuests Debug:', {
+      totalQuests: quests.length,
+      filledQuests: filledQuests.length,
+      questsWithId: questsWithId.length,
+      newQuests: newQuests.length,
+      quests: quests.map(q => ({ label: q.label, title: q.title, id: q.id }))
+    });
 
     // Update existing quests
     if (questsWithId.length > 0) {
@@ -33,6 +44,12 @@ export async function saveQuests(
           .from('quests')
           .update({ 
             title: quest.title,
+            type: quest.type || 'PERSONAL',
+            // Continuity tracking fields
+            source_quest_id: quest.source_quest_id || null,
+            is_continuation: quest.is_continuation || false,
+            continuation_strategy: quest.continuation_strategy || null,
+            continuation_date: quest.continuation_date || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', quest.id)
@@ -45,30 +62,62 @@ export async function saveQuests(
     }
 
     // Create new quests
+    let insertedQuests: any[] = [];
     if (newQuests.length > 0) {
       const questsToInsert = newQuests.map(q => ({
         title: q.title,
         label: q.label,
+        type: 'PERSONAL', // Default to PERSONAL for 12-week quests
         year,
         quarter,
         user_id: user.id,
+        // Continuity tracking fields
+        source_quest_id: q.source_quest_id || null,
+        is_continuation: q.is_continuation || false,
+        continuation_strategy: q.continuation_strategy || null,
+        continuation_date: q.continuation_date || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }));
 
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('quests')
-        .insert(questsToInsert);
+        .insert(questsToInsert)
+        .select('id, title, label');
 
       if (error) {
         throw error;
+      }
+
+      insertedQuests = insertedData || [];
+      console.log('✅ New quests created:', insertedQuests);
+    }
+
+    // Delete empty quests (quests that exist in DB but are now empty in the form)
+    const emptyQuests = quests.filter(q => !q.title.trim() && q.id);
+    if (emptyQuests.length > 0) {
+      const emptyQuestIds = emptyQuests.map(q => q.id).filter(Boolean);
+      
+      if (emptyQuestIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('quests')
+          .delete()
+          .in('id', emptyQuestIds)
+          .eq('user_id', user.id);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        console.log('🗑️ Empty quests deleted:', emptyQuestIds);
       }
     }
 
     revalidatePath('/planning/12-week-quests');
     return { 
       success: true, 
-      message: "Quest berhasil disimpan/diupdate!" 
+      message: "Quest berhasil disimpan!",
+      insertedQuests
     };
   } catch (error) {
     const errorInfo = handleApiError(error, 'menyimpan data');
@@ -103,6 +152,7 @@ export async function finalizeQuests(
         .from('quests')
         .update({ 
           priority_score: quest.priority_score,
+          type: 'PERSONAL', // Ensure type is set for 12-week quests
           updated_at: new Date().toISOString()
         })
         .eq('id', quest.id)

@@ -32,14 +32,18 @@ export function useRankingCalculation(
       if (scores[winner] !== undefined) scores[winner] += 1;
     });
     
-    const result = quests.map((q) => {
-      const initial = initialQuests.find(init => init.label === q.label);
-      return {
-        ...q,
-        score: scores[q.label] || 0,
-        id: initial?.id,
-      };
-    }).sort((a, b) => b.score - a.score);
+    // Only rank quests that have titles
+    const result = quests
+      .filter(q => q.title.trim() !== "")
+      .map((q) => {
+        const initial = initialQuests.find(init => init.label === q.label);
+        return {
+          ...q,
+          score: scores[q.label] || 0,
+          id: initial?.id,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
     
     setRanking(result);
   }, [quests, pairwiseResults, initialQuests]);

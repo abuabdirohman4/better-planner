@@ -3,6 +3,7 @@
 import useSWR from 'swr';
 import { getAllQuestsForQuarter } from "../actions";
 import type { Quest } from "./useQuestState";
+import type { QuestWithContinuity } from "@/types/questContinuity";
 
 export interface QuestHistoryItem {
   year: number;

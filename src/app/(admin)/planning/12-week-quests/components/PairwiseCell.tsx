@@ -24,11 +24,13 @@ export default function PairwiseCell({
   if (i < j) {
     const key = `${rowQ.label}-${colQ.label}`;
     const winner = pairwiseResults[key];
+    const canCompare = rowQ.title.trim() && colQ.title.trim();
+    
     return (
       <td className="border px-1 py-1 text-center">
         {winner ? (
           <span className="font-bold text-[16px] text-brand-400">{winner}</span>
-        ) : (
+        ) : canCompare ? (
           <div className="flex gap-1 justify-center">
             <Button
               type="button"
@@ -49,6 +51,8 @@ export default function PairwiseCell({
               {colQ.label}
             </Button>
           </div>
+        ) : (
+          <span className="text-gray-400 text-xs">-</span>
         )}
       </td>
     );

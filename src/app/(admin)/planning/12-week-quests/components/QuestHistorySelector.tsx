@@ -11,13 +11,15 @@ interface QuestHistorySelectorProps {
   isLoading: boolean;
   onSelectQuests: (quests: Quest[]) => void;
   onClose: () => void;
+  availableSlots?: number;
 }
 
 export default function QuestHistorySelector({
   questHistory,
   isLoading,
   onSelectQuests,
-  onClose
+  onClose,
+  availableSlots = 10
 }: QuestHistorySelectorProps) {
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [selectedQuests, setSelectedQuests] = useState<Set<string>>(new Set());
@@ -34,6 +36,13 @@ export default function QuestHistorySelector({
       const questsToImport = historyItem.quests.filter(quest => 
         selectedQuests.has(quest.label)
       );
+      
+      // Check if we have enough available slots
+      if (questsToImport.length > availableSlots) {
+        // This should be handled by parent component, but just in case
+        return;
+      }
+      
       onSelectQuests(questsToImport);
       onClose();
     }
@@ -116,9 +125,14 @@ export default function QuestHistorySelector({
     <div className="fixed inset-0 bg-black/40 bg-opacity-300 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Pilih Quest dari Quarter Sebelumnya
-          </h3>
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Pilih Quest dari Quarter Sebelumnya
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              Slot kosong tersedia: {availableSlots} quest
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -179,6 +193,7 @@ export default function QuestHistorySelector({
                       <button
                         onClick={handleSelectAll}
                         className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                        disabled={selectedQuests.size >= availableSlots}
                       >
                         Pilih Semua
                       </button>
@@ -206,7 +221,8 @@ export default function QuestHistorySelector({
                           type="checkbox"
                           checked={selectedQuests.has(quest.label)}
                           onChange={(e) => handleQuestToggle(quest.label, e)}
-                          className="w-4 h-4 text-blue-600 mr-3 cursor-pointer"
+                          disabled={!selectedQuests.has(quest.label) && selectedQuests.size >= availableSlots}
+                          className="w-4 h-4 text-blue-600 mr-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <div 
                           className="flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"

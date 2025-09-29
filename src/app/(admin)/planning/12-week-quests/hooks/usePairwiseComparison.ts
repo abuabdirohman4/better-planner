@@ -48,6 +48,11 @@ export function usePairwiseComparison(quests: Quest[], year: number, quarter: nu
       return;
     }
     
+    // Only allow comparison if both quests have titles
+    if (!quests[row].title.trim() || !quests[col].title.trim()) {
+      return;
+    }
+    
     const key = `${quests[row].label}-${quests[col].label}`;
     setPairwiseResults(prev => ({
       ...prev,

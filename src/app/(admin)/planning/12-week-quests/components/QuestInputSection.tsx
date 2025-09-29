@@ -1,5 +1,6 @@
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
+import Spinner from '@/components/ui/spinner/Spinner';
 import type { Quest, RankedQuest } from "../hooks";
 import QuestInput from './QuestInput';
 
@@ -12,6 +13,10 @@ interface QuestInputSectionProps {
   onShowHistory: () => void;
   hasQuestHistory: boolean;
   isLoadingHistory?: boolean;
+  importedQuests?: Set<number>;
+  onEditToggle?: (idx: number) => void;
+  editingQuests?: Set<number>;
+  isSaving?: boolean;
 }
 
 export default function QuestInputSection({ 
@@ -22,7 +27,11 @@ export default function QuestInputSection({
   onSave, 
   onShowHistory, 
   hasQuestHistory,
-  isLoadingHistory = false
+  isLoadingHistory = false,
+  importedQuests = new Set(),
+  onEditToggle,
+  editingQuests = new Set(),
+  isSaving = false
 }: QuestInputSectionProps) {
   return (
     <div className="w-full md:w-1/3 md:border-r border-gray-200 dark:border-gray-700 pb-6 md:pb-8 flex flex-col justify-between">
@@ -36,6 +45,9 @@ export default function QuestInputSection({
               ranking={ranking}
               highlightEmpty={highlightEmpty}
               onQuestChange={onQuestChange}
+              isImported={importedQuests.has(idx)}
+              onEditToggle={onEditToggle}
+              isEditing={editingQuests.has(idx)}
             />
           ))}
         </div>
@@ -72,8 +84,16 @@ export default function QuestInputSection({
           variant="primary"
           onClick={onSave}
           className="w-full"
+          disabled={isSaving}
         >
-          Simpan
+          {isSaving ? (
+            <div className="flex items-center justify-center space-x-2">
+              <Spinner size={16} />
+              <span>Saving...</span>
+            </div>
+          ) : (
+            'Save'
+          )}
         </Button>
       </div>
     </div>

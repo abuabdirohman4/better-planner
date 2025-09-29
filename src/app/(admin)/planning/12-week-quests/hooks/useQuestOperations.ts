@@ -14,7 +14,8 @@ export function useQuestOperations(
   year: number, 
   quarter: number, 
   quests: Quest[], 
-  initialQuests: { id?: string, title: string, label?: string }[]
+  initialQuests: { id?: string, title: string, label?: string }[],
+  setQuests?: (quests: Quest[]) => void
 ) {
   const router = useRouter();
 
@@ -23,6 +24,25 @@ export function useQuestOperations(
       const result = await saveQuests(quests, year, quarter);
       
       if (result.success) {
+        // Update quest state with new IDs from database
+        if (result.insertedQuests && result.insertedQuests.length > 0 && setQuests) {
+          const updatedQuests = quests.map(quest => {
+            // Find matching inserted quest by label and title
+            const insertedQuest = result.insertedQuests!.find(
+              inserted => inserted.label === quest.label && inserted.title === quest.title
+            );
+            
+            if (insertedQuest && !quest.id) {
+              // Update quest with new ID from database
+              return { ...quest, id: insertedQuest.id };
+            }
+            
+            return quest;
+          });
+          
+          setQuests(updatedQuests);
+        }
+        
         toast.success(result.message);
       } else {
         toast.error(result.message);
