@@ -79,11 +79,10 @@ export function useMilestones(questId: string) {
 export function useTasks(milestoneId: string) {
   const swrKey = milestoneId ? taskKeys.mainQuests(milestoneId) : null;
   
-  
   const { 
     data: tasks = [], 
     error, 
-    isLoading,
+    isLoading: swrIsLoading,
     mutate 
   } = useSWR(
     swrKey,
@@ -97,6 +96,8 @@ export function useTasks(milestoneId: string) {
     }
   );
 
+  // Custom loading logic: only show loading during initial fetch, not for empty results
+  const isLoading = swrIsLoading;
 
   return {
     tasks,

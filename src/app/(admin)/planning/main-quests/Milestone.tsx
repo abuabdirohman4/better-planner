@@ -4,6 +4,7 @@ import { useMilestones } from './hooks/useMainQuestsSWR';
 import MilestoneBar from './Milestone/components/MilestoneBar';
 import Task from './Task';
 import { TaskItemSkeleton, MilestoneItemSkeleton } from '@/components/ui/skeleton';
+import { addMilestone, updateMilestone } from './actions/milestoneActions';
 
 interface Task {
   id: string;
@@ -43,19 +44,52 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
 
   // Import milestone actions for editing
   const { handleSaveNewMilestone, handleSaveMilestone, handleMilestoneChange } = React.useMemo(() => {
-    // This is a temporary solution - we'll migrate these to RPC later
     return {
       handleSaveNewMilestone: async (idx: number) => {
-        // Placeholder - will be implemented with RPC
+        const val = newMilestoneInputs[idx];
+        if (!val.trim()) return;
+
+        setNewMilestoneLoading(l => l.map((v, i) => i === idx ? true : v));
+        try {
+          const formData = new FormData();
+          formData.append('quest_id', questId);
+          formData.append('title', val.trim());
+          formData.append('display_order', String(idx + 1));
+          
+          // Use the imported addMilestone function
+          await addMilestone(formData);
+          
+          // Refetch milestones using SWR mutate
+          refetchMilestones();
+          setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? '' : v));
+        } catch (error) {
+          console.error('Failed to save milestone:', error);
+          // You can add toast notification here if needed
+        } finally {
+          setNewMilestoneLoading(l => l.map((v, i) => i === idx ? false : v));
+        }
       },
       handleSaveMilestone: async (id: string, val: string) => {
-        // Placeholder - will be implemented with RPC
+        setMilestoneLoading(prev => ({ ...prev, [id]: true }));
+        try {
+          // Use the imported updateMilestone function
+          await updateMilestone(id, val);
+          
+          // Refetch milestones using SWR mutate
+          refetchMilestones();
+          setMilestoneChanges(prev => ({ ...prev, [id]: false }));
+        } catch (error) {
+          console.error('Failed to update milestone:', error);
+          // You can add toast notification here if needed
+        } finally {
+          setMilestoneLoading(prev => ({ ...prev, [id]: false }));
+        }
       },
       handleMilestoneChange: (id: string, newTitle: string) => {
-        // Placeholder - will be implemented with RPC
+        setMilestoneChanges(prev => ({ ...prev, [id]: true }));
       },
     };
-  }, []);
+  }, [questId, newMilestoneInputs, refetchMilestones]);
 
   return (
     <>

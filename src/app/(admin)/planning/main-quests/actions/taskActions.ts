@@ -5,41 +5,52 @@ import { createClient } from '@/lib/supabase/server';
 
 // Ambil semua tasks untuk milestone tertentu
 export async function getTasksForMilestone(milestoneId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('id, title, status, display_order')
-    .eq('milestone_id', milestoneId)
-    .is('parent_task_id', null)
-    .order('display_order', { ascending: true });
-  
-  if (error) {
-    return [];
-  }
-  
-  
-  // Jika ada task tanpa display_order, perbaiki otomatis
-  const tasksToUpdate = data?.filter(task => !task.display_order || task.display_order === 0);
-  if (tasksToUpdate && tasksToUpdate.length > 0) {
-    for (let i = 0; i < tasksToUpdate.length; i++) {
-      const task = tasksToUpdate[i];
-      const newOrder = i + 1;
-      await supabase
-        .from('tasks')
-        .update({ display_order: newOrder })
-        .eq('id', task.id);
-    }
-    // Fetch ulang data setelah update
-    const { data: updatedData } = await supabase
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
       .from('tasks')
       .select('id, title, status, display_order')
       .eq('milestone_id', milestoneId)
       .is('parent_task_id', null)
       .order('display_order', { ascending: true });
-    return updatedData || [];
-  }
+    
+    if (error) {
+      console.error('Error fetching tasks for milestone:', error);
+      throw new Error(`Failed to fetch tasks: ${error.message}`);
+    }
   
-  return data;
+    // Jika ada task tanpa display_order, perbaiki otomatis
+    const tasksToUpdate = data?.filter(task => !task.display_order || task.display_order === 0);
+    if (tasksToUpdate && tasksToUpdate.length > 0) {
+      for (let i = 0; i < tasksToUpdate.length; i++) {
+        const task = tasksToUpdate[i];
+        const newOrder = i + 1;
+        await supabase
+          .from('tasks')
+          .update({ display_order: newOrder })
+          .eq('id', task.id);
+      }
+      // Fetch ulang data setelah update
+      const { data: updatedData } = await supabase
+        .from('tasks')
+        .select('id, title, status, display_order')
+        .eq('milestone_id', milestoneId)
+        .is('parent_task_id', null)
+        .order('display_order', { ascending: true });
+      return updatedData || [];
+    }
+    
+    const result = data || [];
+    console.log('getTasksForMilestone returning:', {
+      milestoneId,
+      resultCount: result.length,
+      result: result
+    });
+    return result;
+  } catch (error) {
+    console.error('Error in getTasksForMilestone:', error);
+    throw error;
+  }
 }
 
 // Tambah task baru ke milestone

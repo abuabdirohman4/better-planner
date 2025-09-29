@@ -41,28 +41,50 @@ export async function addMilestone(formData: FormData) {
   
   if (!quest_id || !title) throw new Error('quest_id dan title wajib diisi');
   
+  // Validasi quest_id exists dan user memiliki akses
+  const { data: quest, error: questError } = await supabase
+    .from('quests')
+    .select('id, user_id')
+    .eq('id', quest_id)
+    .single();
+  
+  if (questError || !quest) {
+    throw new Error('Quest tidak ditemukan atau tidak memiliki akses');
+  }
+  
   // Gunakan display_order yang dikirim dari frontend, atau hitung otomatis jika tidak ada
   let order = 1;
   if (display_order) {
     order = parseInt(display_order.toString());
   } else {
     // Fallback: hitung display_order terakhir
-    const { data: last } = await supabase
+    const { data: last, error: lastError } = await supabase
       .from('milestones')
       .select('display_order')
       .eq('quest_id', quest_id)
       .order('display_order', { ascending: false })
       .limit(1)
       .single();
+    
+    if (lastError && lastError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error fetching last milestone order:', lastError);
+    }
+    
     order = last && last.display_order ? last.display_order + 1 : 1;
   }
   
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('milestones')
-    .insert({ quest_id, title, display_order: order });
-  if (error) throw new Error('Gagal menambah milestone: ' + (error.message || ''));
+    .insert({ quest_id, title, display_order: order })
+    .select('id, title, display_order')
+    .single();
+    
+  if (error) {
+    throw new Error('Gagal menambah milestone: ' + (error.message || 'Unknown error'));
+  }
+  
   revalidatePath('/planning/main-quests');
-  return { message: 'Milestone berhasil ditambahkan!' };
+  return { message: 'Milestone berhasil ditambahkan!', milestone: data };
 }
 
 // Edit milestone
