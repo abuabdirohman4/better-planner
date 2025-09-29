@@ -146,13 +146,22 @@ export async function finalizeQuests(
       throw new Error('User not authenticated');
     }
 
-    // Update quests with priority scores
+    // Sort quests by priority score to get top 3
+    const sortedQuests = questsWithScore.sort((a, b) => b.priority_score - a.priority_score);
+    const top3Quests = sortedQuests.slice(0, 3);
+    
+    console.log('🏆 Top 3 quests:', top3Quests.map(q => ({ title: q.title, score: q.priority_score })));
+
+    // Update quests with priority scores and mark top 3 as main quests
     for (const quest of questsWithScore) {
+      const isTop3 = top3Quests.some(top => top.id === quest.id);
+      
       const { error } = await supabase
         .from('quests')
         .update({ 
           priority_score: quest.priority_score,
           type: 'PERSONAL', // Ensure type is set for 12-week quests
+          is_committed: isTop3, // Only mark top 3 as committed
           updated_at: new Date().toISOString()
         })
         .eq('id', quest.id)
@@ -188,9 +197,11 @@ export async function finalizeQuests(
     revalidatePath('/planning/12-week-quests');
     revalidatePath('/planning/main-quests');
 
+    const top3Titles = top3Quests.map(q => q.title).join(', ');
+    
     return { 
       success: true, 
-      message: "Prioritas berhasil ditentukan dan 3 Main Quest telah ditetapkan!",
+      message: `Prioritas berhasil ditentukan! Top 3 quest: ${top3Titles}`,
       url: '/planning/main-quests'
     };
   } catch (error) {

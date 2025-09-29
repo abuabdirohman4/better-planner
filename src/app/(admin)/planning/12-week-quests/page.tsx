@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import TwelveWeekGoalsLoader from "./TwelveWeekGoalsLoader";
 import TwelveWeekGoalsRedirector from './TwelveWeekGoalsRedirector';
+import TwelveWeekGoalsSkeleton from '@/components/ui/skeleton/TwelveWeekGoalsSkeleton';
 
 export const metadata = {
   title: "12 Week Quests | Better Planner",
@@ -15,7 +16,7 @@ export default function Page() {
         <TwelveWeekGoalsRedirector />
       </Suspense>
       <div className="max-w-none w-full">
-        <Suspense fallback={<div className="p-8 text-center">Loading 12 Week Quests...</div>}>
+        <Suspense fallback={<TwelveWeekGoalsSkeleton />}>
           <TwelveWeekGoalsLoader />
         </Suspense>
       </div>

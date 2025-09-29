@@ -92,7 +92,11 @@ export default function TwelveWeekGoalsUI({
     try {
       await handleCommit(pairwiseResults, ranking, localKey);
     } finally {
-      setIsSubmitting(false);
+      // Don't set isSubmitting to false immediately if redirecting
+      // Let the redirect handle the loading state
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 2000);
     }
   };
 

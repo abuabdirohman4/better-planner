@@ -93,7 +93,10 @@ export function useQuestOperations(
         toast.success(result.message);
         
         if (result.url) {
-          router.push(result.url);
+          // Delay redirect to show loading message
+          setTimeout(() => {
+            router.push(result.url!);
+          }, 1500);
         }
       } else {
         toast.error(result.message);
