@@ -4,6 +4,7 @@ import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
+import { isMac, isModifierKeyPressed, isDesktop } from '@/lib/utils';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
 const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
@@ -18,7 +19,39 @@ const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
     }
   }, []);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  // Keyboard shortcut handler for Cmd+Enter (Mac) and Ctrl+Enter (Windows/Linux) - Desktop only
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle keyboard shortcuts on desktop
+      if (!isDesktop()) return;
+      
+      // Check if the target is our input field
+      if (document.activeElement !== inputRef.current) return;
+      
+      // Check for Enter key
+      if (event.key === 'Enter') {
+        // Check for Cmd key on Mac or Ctrl key on Windows/Linux
+        if (isModifierKeyPressed(event)) {
+          event.preventDefault();
+          
+          // Only submit if there's content and not pending
+          if (newTaskTitle.trim() && !isPending) {
+            handleSubmit(event as any);
+          }
+        }
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [newTaskTitle, isPending]);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement> | KeyboardEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     
@@ -27,6 +60,9 @@ const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
       setNewTaskTitle('');
     });
   };
+
+  // Detect if user is on Mac for keyboard shortcut hint
+  const isMacUser = isMac();
 
   return (
     <form onSubmit={handleSubmit} className="mb-4">
@@ -54,6 +90,14 @@ const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
         >
           Batal
         </button>
+      </div>
+      {/* Keyboard shortcut hint - Desktop only */}
+      <div className="hidden md:block mt-2 text-xs text-gray-500 dark:text-gray-400">
+        Tekan <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
+          {isMacUser ? '⌘' : 'Ctrl'}
+        </kbd> + <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
+          Enter
+        </kbd> untuk submit cepat
       </div>
     </form>
   );
