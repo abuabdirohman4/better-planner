@@ -133,7 +133,7 @@ export default function WorkQuestsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>

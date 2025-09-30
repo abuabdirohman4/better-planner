@@ -32,6 +32,8 @@ function PageTitle() {
         return 'Weekly Sync';
       case '/analytics':
         return 'Analytics';
+      case '/work-quests':
+        return 'Work Quests';
       default:
         return 'Better Planner';
     }

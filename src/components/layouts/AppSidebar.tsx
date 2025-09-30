@@ -44,11 +44,6 @@ const executionNav: NavItem[] = [
     name: "Weekly Sync",
     path: "/execution/weekly-sync",
   },
-  {
-    icon: <TaskIcon />,
-    name: "Work Quests",
-    path: "/work-quests",
-  },
 ];
 
 const planningNav: NavItem[] = [
@@ -77,6 +72,14 @@ const planningNav: NavItem[] = [
   //   name: "Best Week",
   //   path: "/planning/best-week",
   // },
+];
+
+const questsNav: NavItem[] = [
+  {
+    icon: <TaskIcon />,
+    name: "Work Quests",
+    path: "/work-quests",
+  },
 ];
 
 const trackingNav: NavItem[] = [
@@ -441,6 +444,22 @@ function SidebarContent({
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Planning</div>
             <MenuItems 
               navItems={planningNav} 
+              menuType="main"
+              isExpanded={isExpanded}
+              isHovered={isHovered}
+              isMobileOpen={isMobileOpen}
+              openSubmenu={openSubmenu}
+              subMenuHeight={subMenuHeight}
+              subMenuRefs={subMenuRefs}
+              handleSubmenuToggle={handleSubmenuToggle}
+              isActive={isActive}
+            />
+          </div>
+          {/* QUEST */}
+          <div className="mb-2">
+            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quests</div>
+            <MenuItems 
+              navItems={questsNav} 
               menuType="main"
               isExpanded={isExpanded}
               isHovered={isHovered}
