@@ -41,11 +41,6 @@ export async function getTasksForMilestone(milestoneId: string) {
     }
     
     const result = data || [];
-    console.log('getTasksForMilestone returning:', {
-      milestoneId,
-      resultCount: result.length,
-      result: result
-    });
     return result;
   } catch (error) {
     console.error('Error in getTasksForMilestone:', error);

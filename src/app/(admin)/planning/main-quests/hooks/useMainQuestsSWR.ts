@@ -123,11 +123,11 @@ export function useSubtasks(taskId: string) {
     swrKey,
     () => getSubtasksForTask(taskId),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false,    // 🔧 FIX: Disable focus revalidation
+      revalidateIfStale: false,    // 🔧 FIX: Disable stale revalidation
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000,
-      errorRetryCount: 3,
+      dedupingInterval: 60 * 1000, // 🔧 FIX: Increase cache time to 60 seconds
+      errorRetryCount: 2,          // 🔧 FIX: Reduce retry count
     }
   );
 

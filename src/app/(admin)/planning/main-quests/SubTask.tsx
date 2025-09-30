@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import debounce from 'lodash/debounce';
 import ComponentCard from '@/components/common/ComponentCard';
 import { toast } from 'sonner';
@@ -48,7 +48,7 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     } finally {
       setNewSubtaskLoading(false);
     }
-  }, 500), [taskId, milestoneId, subtasks, fetchSubtasks]); // 🔧 FIX: Keep subtasks dependency but it should be stable
+  }, 500), [taskId, milestoneId, fetchSubtasks]); // 🔧 FIX: Remove subtasks dependency to prevent recreation
 
   useEffect(() => {
     if (newSubtaskTitle) debouncedInsertNewSubtask(newSubtaskTitle);
@@ -97,17 +97,20 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
   // TODO: Migrate subtask editing to use SWR and RPC
   const { focusSubtaskId, setFocusSubtaskId, draftTitles, setDraftTitles } = useSubtaskState();
   
-  // 🔧 FIX: Create wrapper function for refetchSubtasks to match expected type
-  const handleRefetchSubtasks = () => {
+  // 🔧 FIX: Create stable wrapper function for refetchSubtasks
+  const handleRefetchSubtasks = useCallback(() => {
     refetchSubtasks();
-  };
+  }, [refetchSubtasks]);
+
+  // 🔧 FIX: Memoize displaySubtasks to prevent unnecessary re-renders
+  const stableDisplaySubtasks = useMemo(() => displaySubtasks, [displaySubtasks]);
 
   // 🔧 FIX: Use refetchSubtasks to refresh data after CRUD operations
-  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, displaySubtasks, handleRefetchSubtasks);
+  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, stableDisplaySubtasks, handleRefetchSubtasks);
   const { handleDraftTitleChange, handleDeleteSubtask, handleDragEnd, handleSubtaskEnterWithFocus } = useSubtaskOperations(
     task.id, 
     milestoneId, 
-    displaySubtasks, 
+    stableDisplaySubtasks, 
     handleRefetchSubtasks, // 🔧 FIX: Use refetchSubtasks to refresh data after operations
     draftTitles, 
     setDraftTitles, 
@@ -117,13 +120,17 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
     handleCheck, 
     handleDeleteSubtaskCRUD
   );
-  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, subtasks || [], refetchSubtasks);
+  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, stableDisplaySubtasks, refetchSubtasks);
 
-  // Reset local state when task changes
+  // 🔧 FIX: Only reset state when task.id actually changes, not on every render
+  const prevTaskId = useRef<string | null>(null);
   useEffect(() => {
-    setDraftTitles({});
-    setFocusSubtaskId(null);
-    setNewSubtaskTitle('');
+    if (prevTaskId.current !== task.id) {
+      setDraftTitles({});
+      setFocusSubtaskId(null);
+      setNewSubtaskTitle('');
+      prevTaskId.current = task.id;
+    }
   }, [task.id, setDraftTitles, setFocusSubtaskId, setNewSubtaskTitle]);
 
   const handleBulkPasteEmptyWrapper = (e: React.ClipboardEvent) => {

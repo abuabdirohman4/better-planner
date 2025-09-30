@@ -77,14 +77,14 @@ export function useSubtaskCRUD(
       toast.error('Gagal membuat tugas baru. Coba lagi.');
       return null;
     }
-  }, [taskId, milestoneId, subtasks, refetchSubtasks]);
+  }, [taskId, milestoneId, refetchSubtasks]); // 🔧 FIX: Remove subtasks dependency
 
   const handleCheck = useCallback(async (subtask: Subtask) => {
     const newStatus = subtask.status === 'DONE' ? 'TODO' : 'DONE';
     try {
       const res = await updateTaskStatus(subtask.id, newStatus);
       if (res) {
-        // 🔧 FIX: Refetch data instead of optimistic updates
+        // 🔧 FIX: Only refetch on success for status changes (important for UI)
         refetchSubtasks();
         toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
       } else {
@@ -92,6 +92,8 @@ export function useSubtaskCRUD(
       }
     } catch {
       toast.error('Gagal update status');
+      // Refetch on error to ensure data consistency
+      refetchSubtasks();
     }
   }, [refetchSubtasks]);
 
@@ -122,19 +124,19 @@ export function useSubtaskCRUD(
       await deleteTask(id);
       toast.success('Subtask berhasil dihapus');
       
-      // 🔧 FIX: Refetch after a short delay to allow focus to happen
-      setTimeout(() => {
-        refetchSubtasks();
-      }, 100);
+      // 🔧 FIX: Refetch immediately for delete operations (critical for UI)
+      refetchSubtasks();
     } catch (error) {
       toast.error('Gagal menghapus subtask');
+      // Refetch on error to ensure data consistency
+      refetchSubtasks();
     }
     
     return { 
       newIndex: idx > 0 ? idx - 1 : -1,
       newFocusId
     };
-  }, [refetchSubtasks, subtasks]);
+  }, [refetchSubtasks]); // 🔧 FIX: Remove subtasks dependency
 
   return {
     handleSubtaskEnter,

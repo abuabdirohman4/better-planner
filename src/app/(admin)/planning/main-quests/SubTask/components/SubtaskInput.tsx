@@ -43,7 +43,13 @@ export default function SubtaskInput({
   
   useEffect(() => {
     if (shouldFocus && inputRef.current) {
-      inputRef.current.focus();
+      // 🔧 FIX: Add small delay to prevent focus glitch during rapid changes
+      const timer = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 10);
+      return () => clearTimeout(timer);
     }
   }, [shouldFocus]);
 
@@ -91,7 +97,7 @@ export default function SubtaskInput({
       <input
         className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
         value={draftTitle}
-        onChange={e => onDraftTitleChange(e.target.value)}
+        onChange={e => onDraftTitleChange(e.target.value, false)}
         onPaste={(e) => handlePaste(e)}
         onFocus={() => {
           setEditSubtaskId(subtask.id);
@@ -99,7 +105,10 @@ export default function SubtaskInput({
         }}
         onBlur={e => {
           const next = e.relatedTarget as HTMLElement | null;
-          onDraftTitleChange(e.target.value, true);
+          // 🔧 FIX: Only save if there are actual changes, not on every focus change
+          if (e.target.value.trim() !== (subtask.title || '').trim()) {
+            onDraftTitleChange(e.target.value, true);
+          }
           if (!next || next.tagName !== 'INPUT') {
             clearFocusSubtaskId();
           }

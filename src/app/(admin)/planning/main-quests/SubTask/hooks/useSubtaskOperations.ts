@@ -27,27 +27,39 @@ export function useSubtaskOperations(
   const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
     try {
       await updateTask(id, val);
-      // 🔧 FIX: Refetch data instead of optimistic updates
+      // 🔧 FIX: Only refetch if there's an error or for critical updates
+      // refetchSubtasks(); // Disabled to reduce requests
+    } catch {
+      // Only refetch on error to get fresh data
       refetchSubtasks();
-    } catch {}
+    }
   }, 1000), [refetchSubtasks]);
 
   const updateTaskImmediate = useCallback(async (id: string, val: string) => {
     try {
       await updateTask(id, val);
-      // 🔧 FIX: Refetch data instead of optimistic updates
+      // 🔧 FIX: Only refetch for immediate updates (like Enter key)
       refetchSubtasks();
-    } catch {}
+    } catch {
+      refetchSubtasks();
+    }
   }, [refetchSubtasks]);
 
   const handleDraftTitleChange = useCallback((id: string, val: string, immediate = false) => {
     setDraftTitles(draft => ({ ...draft, [id]: val }));
-    if (immediate) {
-      updateTaskImmediate(id, val);
-    } else {
-      debouncedUpdateTask(id, val);
+    
+    // 🔧 FIX: Only make API calls if there are actual changes
+    const currentSubtask = subtasks.find(st => st.id === id);
+    const hasChanges = currentSubtask && val.trim() !== (currentSubtask.title || '').trim();
+    
+    if (hasChanges) {
+      if (immediate) {
+        updateTaskImmediate(id, val);
+      } else {
+        debouncedUpdateTask(id, val);
+      }
     }
-  }, [setDraftTitles, updateTaskImmediate, debouncedUpdateTask]);
+  }, [setDraftTitles, updateTaskImmediate, debouncedUpdateTask, subtasks]);
 
   const handleDeleteSubtaskWithFocus = useCallback(async (id: string, idx: number) => {
     const result = await handleDeleteSubtask(id, idx);
