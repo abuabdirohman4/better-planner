@@ -133,16 +133,13 @@ export default function WorkQuestsPage() {
   }
 
   return (
-    <div className="mx-auto">
-      <div className="mb-8">
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Work <span className="text-brand-600">Quests</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Kelola project dan task untuk pekerjaan Anda
-            </p>
           </div>
           <Button
             onClick={() => setIsFormOpen(true)}

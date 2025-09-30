@@ -33,6 +33,7 @@ export interface WorkQuestTaskFormData {
 
 // Legacy interfaces for backward compatibility
 export interface WorkQuestFormData extends WorkQuestProjectFormData {
+  description?: string;
   subtasks: WorkQuestSubtaskFormData[];
 }
 

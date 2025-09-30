@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { WorkQuestTaskFormProps } from "../types";
 import Button from "@/components/ui/button/Button";
 
@@ -12,17 +12,38 @@ const TaskForm: React.FC<WorkQuestTaskFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
   });
+  const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         title: initialData.title,
-        description: initialData.description || "",
       });
     }
+    // Auto-focus input when form opens
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, [initialData]);
+
+  // Handle click outside to cancel
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        onCancel();
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup event listener when component unmounts
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onCancel]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -41,64 +62,53 @@ const TaskForm: React.FC<WorkQuestTaskFormProps> = ({
 
     await onSubmit({
       title: formData.title.trim(),
-      description: formData.description.trim() || undefined,
     });
+
+    // Clear form and focus input for next task
+    setFormData({ title: "" });
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Task Title */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Nama Task *
-        </label>
+    <form ref={formRef} onSubmit={handleSubmit} className="flex items-center space-x-3">
+      {/* Task Title Input */}
+      <div className="flex-1">
         <input
+          ref={inputRef}
           type="text"
           name="title"
           value={formData.title}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-          placeholder="Masukkan nama task"
+          onKeyDown={handleKeyDown}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+          placeholder="Masukkan task..."
           required
         />
       </div>
 
-      {/* Task Description */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Deskripsi Task
-        </label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleInputChange}
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-          placeholder="Masukkan deskripsi task (opsional)"
-        />
-      </div>
-
-
       {/* Form Actions */}
-      <div className="flex justify-end space-x-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Batal
-        </Button>
+      <div className="flex items-center space-x-2">
         <Button
           type="submit"
           variant="primary"
-          size="sm"
+          size="md"
           disabled={!formData.title.trim()}
           loading={isLoading}
-          loadingText="Saving..."
+          loadingText=""
         >
-          {initialData ? "Perbarui Task" : "Tambah Task"}
+          +
         </Button>
       </div>
     </form>
