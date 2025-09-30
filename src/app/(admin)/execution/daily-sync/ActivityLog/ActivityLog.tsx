@@ -194,15 +194,17 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         // Get Main Quest + Side Quest + Pomodoro Timer
         const mainQuestCard = document.querySelector('.main-quest-card');
         const sideQuestCard = document.querySelector('.side-quest-card');
+        const workQuestCard = document.querySelector('.work-quest-card');
         const pomodoroTimer = document.querySelector('.pomodoro-timer');
-        
+
         // Get viewport height
         const mainQuestHeight = mainQuestCard ? mainQuestCard.getBoundingClientRect().height : 0;
         const sideQuestHeight = sideQuestCard ? sideQuestCard.getBoundingClientRect().height : 0;
+        const workQuestHeight = workQuestCard ? workQuestCard.getBoundingClientRect().height : 0;
         const pomodoroHeight = pomodoroTimer ? pomodoroTimer.getBoundingClientRect().height : 0;
-        
+
         // Calculate heights
-        const finalHeight = (mainQuestHeight + sideQuestHeight) - pomodoroHeight - 100;
+        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight) - pomodoroHeight - 100;
 
         // Set dynamic height based on available space
         setDynamicHeight(`${finalHeight}px`);
