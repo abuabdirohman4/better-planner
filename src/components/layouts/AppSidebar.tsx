@@ -78,7 +78,7 @@ const questsNav: NavItem[] = [
   {
     icon: <TaskIcon />,
     name: "Work Quests",
-    path: "/work-quests",
+    path: "/quests/work-quests",
   },
 ];
 

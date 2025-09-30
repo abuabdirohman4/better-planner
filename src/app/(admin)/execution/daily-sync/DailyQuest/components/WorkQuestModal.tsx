@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useWorkQuests } from "@/app/(admin)/work-quests/hooks/useWorkQuests";
-import { WorkQuest } from "@/app/(admin)/work-quests/types";
+import { useWorkQuests } from "@/app/(admin)/quests/work-quests/hooks/useWorkQuests";
+import { WorkQuest } from "@/app/(admin)/quests/work-quests/types";
 
 interface WorkQuestModalProps {
   isOpen: boolean;
