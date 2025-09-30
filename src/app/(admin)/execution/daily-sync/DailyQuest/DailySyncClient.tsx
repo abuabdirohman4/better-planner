@@ -1,11 +1,13 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useDailyPlanManagement } from './hooks/useDailyPlanManagement';
 import MainQuestListSection from './MainQuestListSection';
 import SideQuestListSection from './SideQuestListSection';
+import WorkQuestListSection from './WorkQuestListSection';
 import MainQuestModal from './components/MainQuestModal';
+import WorkQuestModal from './components/WorkQuestModal';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { DailySyncClientProps } from './types';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
@@ -45,6 +47,12 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleFocusDurationChange
   } = useDailyPlanManagement(year, weekNumber, selectedDate);
 
+  // Work Quest state
+  const [showWorkQuestModal, setShowWorkQuestModal] = useState(false);
+  const [selectedWorkQuests, setSelectedWorkQuests] = useState<string[]>([]);
+  const [workQuestModalLoading, setWorkQuestModalLoading] = useState(false);
+  const [workQuestSavingLoading, setWorkQuestSavingLoading] = useState(false);
+
   // Use hook data
   const effectiveDailyPlan = hookDailyPlan || dailyPlan;
   const effectiveWeeklyTasks = hookWeeklyTasks;
@@ -59,6 +67,34 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   }
 
   const groupedItems = groupItemsByType(effectiveDailyPlan?.daily_plan_items);
+
+  // Work Quest handlers
+  const handleOpenWorkQuestModal = () => {
+    setShowWorkQuestModal(true);
+  };
+
+  const handleWorkQuestToggle = (taskId: string) => {
+    setSelectedWorkQuests(prev => 
+      prev.includes(taskId) 
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const handleWorkQuestSave = async () => {
+    setWorkQuestSavingLoading(true);
+    try {
+      // TODO: Implement work quest selection save logic
+      // This would be similar to handleSaveSelection but for work quests
+      console.log('Selected work quests:', selectedWorkQuests);
+      setShowWorkQuestModal(false);
+      setSelectedWorkQuests([]);
+    } catch (error) {
+      console.error('Failed to save work quest selection:', error);
+    } finally {
+      setWorkQuestSavingLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto relative">
@@ -107,6 +143,29 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             />
           </div>
         </CollapsibleCard>
+
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.workQuest}
+          onToggle={() => toggleCardCollapsed('workQuest')}
+          className="work-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <WorkQuestListSection
+              title="Work Quest"
+              items={groupedItems['WORK_QUEST'] || []}
+              onStatusChange={handleStatusChange}
+              onSelectTasks={handleOpenWorkQuestModal}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
+              showAddQuestButton={true}
+            />
+          </div>
+        </CollapsibleCard>
       </div>
       
       <MainQuestModal
@@ -119,6 +178,16 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         isLoading={modalLoading}
         savingLoading={savingLoading}
         completedTodayCount={groupedItems.MAIN_QUEST?.filter((item: any) => item.status === 'DONE').length || 0}
+      />
+
+      <WorkQuestModal
+        isOpen={showWorkQuestModal}
+        onClose={() => setShowWorkQuestModal(false)}
+        selectedTasks={selectedWorkQuests}
+        onTaskToggle={handleWorkQuestToggle}
+        onSave={handleWorkQuestSave}
+        isLoading={workQuestModalLoading}
+        savingLoading={workQuestSavingLoading}
       />
     </div>
   );

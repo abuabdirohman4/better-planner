@@ -44,6 +44,11 @@ const executionNav: NavItem[] = [
     name: "Weekly Sync",
     path: "/execution/weekly-sync",
   },
+  {
+    icon: <TaskIcon />,
+    name: "Work Quests",
+    path: "/work-quests",
+  },
 ];
 
 const planningNav: NavItem[] = [

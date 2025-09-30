@@ -20,6 +20,17 @@ export type ErrorContext =
   | 'mengupdate brain dump'
   | 'menghapus brain dump'
   | 'memuat data berdasarkan rentang tanggal'
+  | 'memuat work quests'
+  | 'membuat work quest'
+  | 'memperbarui work quest'
+  | 'menghapus work quest'
+  | 'memuat work quest projects'
+  | 'membuat work quest project'
+  | 'memperbarui work quest project'
+  | 'menghapus work quest project'
+  | 'membuat work quest task'
+  | 'memperbarui work quest task'
+  | 'menghapus work quest task'
   | 'unknown';
 
 export interface ErrorInfo {
