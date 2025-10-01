@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useWorkQuests } from "@/app/(admin)/quests/work-quests/hooks/useWorkQuests";
 import { WorkQuest } from "@/app/(admin)/quests/work-quests/types";
 import Button from "@/components/ui/button/Button";
@@ -37,6 +37,45 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
 }) => {
   const { workQuests, isLoading: workQuestsLoading } = useWorkQuests();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Initialize state with data from localStorage
+  const getInitialExpandedItems = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set<string>();
+    
+    try {
+      const expandedKey = 'workquest-modal-expanded';
+      const saved = localStorage.getItem(expandedKey);
+      if (saved) {
+        const expandedArray: string[] = JSON.parse(saved);
+        return new Set(expandedArray);
+      }
+    } catch (error) {
+      console.warn('Failed to load initial expanded state:', error);
+    }
+    return new Set<string>();
+  };
+
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(getInitialExpandedItems);
+  const isInitialLoad = useRef(true);
+  
+  // Cookie key untuk menyimpan expanded state
+  const expandedKey = 'workquest-modal-expanded';
+
+  // Save expanded state to localStorage whenever it changes (but not on initial load)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return; // Skip saving during initial load
+    }
+    
+    try {
+      const expandedArray = Array.from(expandedItems);
+      localStorage.setItem(expandedKey, JSON.stringify(expandedArray));
+    } catch (error) {
+      console.warn('Failed to save expanded state to localStorage:', error);
+    }
+  }, [expandedItems, expandedKey]);
 
   // Convert work quests to hierarchical structure (only TODO tasks)
   const hierarchicalItems: HierarchicalItem[] = workQuests.map(quest => {
@@ -81,6 +120,19 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
     if (childIds.length === 0) return false; // No children = not selected
     const allSelected = childIds.every(childId => selectedTasks.includes(childId));
     return allSelected;
+  };
+
+  // Toggle expanded state
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
   };
 
 
@@ -168,65 +220,106 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredHierarchicalItems.map((project) => (
-                <div key={project.id} className="space-y-2">
-                  {/* Parent Project */}
-                  <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <div className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={areAllChildrenSelected(project.id)}
-                        onChange={() => handleParentToggle(project.id)}
-                        className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                          <span className="mr-2">📁</span>
-                          {project.title}
-                        </h4>
-                        {project.description && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            {project.description}
-                          </p>
+            <div className="space-y-2">
+              {filteredHierarchicalItems.map((project) => {
+                const hasChildren = project.children.length > 0;
+                const isExpanded = expandedItems.has(project.id);
+                
+                return (
+                  <div key={project.id} className="space-y-1">
+                    {/* Parent Project */}
+                    <div className="py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded">
+                      <div className="flex items-center space-x-3">
+                        {/* Expand/Collapse Button */}
+                        {hasChildren && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpanded(project.id);
+                            }}
+                            className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                          >
+                            <svg
+                              className={`w-3 h-3 transition-all duration-400 ease-in-out ${
+                                isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
                         )}
+                        
+                        {/* Spacer for items without children */}
+                        {!hasChildren && <div className="w-4 h-4" />}
+
+                        <input
+                          type="checkbox"
+                          checked={areAllChildrenSelected(project.id)}
+                          onChange={() => handleParentToggle(project.id)}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                            {project.title}
+                            {hasChildren && (
+                              <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">
+                                ({project.children.length})
+                              </span>
+                            )}
+                          </h4>
+                          {project.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {project.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Child Tasks */}
-                  {project.children.length > 0 && (
-                    <div className="ml-6 space-y-2">
-                      {project.children.map((task) => (
-                        <div
-                          key={task.id}
-                          className="border border-gray-100 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          <div className="flex items-start space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedTasks.includes(task.id)}
-                              onChange={() => onTaskToggle(task.id)}
-                              className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                            />
-                            <div className="flex-1">
-                              <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center">
-                                <span className="mr-2">📄</span>
-                                {task.title}
-                              </h5>
-                              {task.description && (
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  {task.description}
-                                </p>
-                              )}
+                    {/* Child Tasks with Smooth Animation */}
+                    {hasChildren && (
+                      <div 
+                        className={`overflow-hidden transition-all duration-400 ease-in-out ${
+                          isExpanded 
+                            ? 'max-h-96 opacity-100 transform translate-y-0' 
+                            : 'max-h-0 opacity-0 transform -translate-y-2'
+                        }`}
+                      >
+                        <div className="ml-9 space-y-1">
+                          {project.children.map((task) => (
+                            <div
+                              key={task.id}
+                              className="py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded border-l-2 border-gray-200 dark:border-gray-600 pl-6"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTasks.includes(task.id)}
+                                  onChange={() => onTaskToggle(task.id)}
+                                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                />
+                                <div className="flex-1">
+                                  <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                    {task.title}
+                                  </h5>
+                                  {task.description && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {task.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
