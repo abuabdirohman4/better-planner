@@ -19,13 +19,10 @@ export interface DailyPlanItem {
 
 export interface DailySyncClientProps {
   year: number;
-  quarter: number;
   weekNumber: number;
   selectedDate: string;
   onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
   dailyPlan: DailyPlan | null;
-  setDailyPlanState: (plan: DailyPlan | null) => void;
-  setDailyPlanAction?: typeof setDailyPlan;
   loading: boolean;
   refreshSessionKey?: Record<string, number>;
   forceRefreshTaskId?: string | null;

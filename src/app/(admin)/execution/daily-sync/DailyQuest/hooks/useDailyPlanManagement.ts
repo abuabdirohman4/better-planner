@@ -67,6 +67,23 @@ async function getDailyPlan(selectedDate: string) {
             .single();
           title = task?.title || '';
           task_status = task?.status || item.status; // Use task status if available
+        } else if (item.item_type === 'WORK_QUEST') {
+          const { data: task } = await supabase
+            .from('tasks')
+            .select('id, title, parent_task_id, status')
+            .eq('id', item.item_id)
+            .single();
+          title = task?.title || '';
+          task_status = task?.status || item.status; // Use task status if available
+          
+          if (task?.parent_task_id) {
+            const { data: project } = await supabase
+              .from('tasks')
+              .select('id, title')
+              .eq('id', task.parent_task_id)
+              .single();
+            quest_title = project?.title || '';
+          }
         }
 
         return {
@@ -140,10 +157,17 @@ export function useDailyPlanManagement(
   // For now, we'll use empty completed sessions
   const completedSessions: Record<string, number> = {};
 
+  // Unified modal state
+  const [modalState, setModalState] = useState({
+    showModal: false,
+    modalType: 'main' as 'main' | 'work',
+    modalLoading: false,
+    savingLoading: false
+  });
+  
+  // Unified selection state - using same structure for both quest types
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
-  const [showModal, setShowModal] = useState(false);
-  const [modalLoading, setModalLoading] = useState(false); // Loading untuk konten (skeleton)
-  const [savingLoading, setSavingLoading] = useState(false); // Loading untuk button (spinner)
+  const [selectedWorkQuests, setSelectedWorkQuests] = useState<string[]>([]);
 
   // ✅ CRITICAL: Periodic revalidation for cross-environment synchronization
   useEffect(() => {
@@ -155,75 +179,111 @@ export function useDailyPlanManagement(
     return () => clearInterval(interval);
   }, [mutate]);
 
-  const getCurrentDailyPlanSelections = () => {
-    if (!dailyPlan?.daily_plan_items) return {};
-    const selections: Record<string, boolean> = {};
-    dailyPlan.daily_plan_items.forEach((item: DailyPlanItem) => {
-      selections[item.item_id] = true;
-    });
-    return selections;
-  };
-
-  const handleOpenModal = async () => {
-    setShowModal(true);
-    setModalLoading(true);
-    const currentSelections = getCurrentDailyPlanSelections();
-    setSelectedTasks(currentSelections);
-    try {
-      // Refresh tasks data if mutate function is available
-      if (mutate) {
-        await mutate();
-      }
-    } catch (err) {
-      console.error('Error loading weekly tasks:', err);
-    } finally {
-      setModalLoading(false);
+  const getCurrentDailyPlanSelections = (questType: 'main' | 'work' = 'main') => {
+    if (!dailyPlan?.daily_plan_items) return questType === 'main' ? {} : [];
+    
+    if (questType === 'main') {
+      const selections: Record<string, boolean> = {};
+      dailyPlan.daily_plan_items.forEach((item: DailyPlanItem) => {
+        if (item.item_type === 'MAIN_QUEST') {
+          selections[item.item_id] = true;
+        }
+      });
+      return selections;
+    } else {
+      return dailyPlan.daily_plan_items
+        .filter((item: DailyPlanItem) => item.item_type === 'WORK_QUEST')
+        .map((item: DailyPlanItem) => item.item_id);
     }
   };
 
-  const handleTaskToggle = (taskId: string) => {
-    setSelectedTasks(prev => ({
-      ...prev,
-      [taskId]: !prev[taskId]
+  const handleOpenModal = async (modalType: 'main' | 'work' = 'main') => {
+    setModalState(prev => ({ 
+      ...prev, 
+      showModal: true, 
+      modalType,
+      modalLoading: modalType === 'main' 
     }));
+    
+    const currentSelections = getCurrentDailyPlanSelections(modalType);
+    
+    if (modalType === 'main') {
+      setSelectedTasks(currentSelections as Record<string, boolean>);
+    } else {
+      setSelectedWorkQuests(currentSelections as string[]);
+    }
+    
+    if (modalType === 'main') {
+      try {
+        // Refresh tasks data if mutate function is available
+        if (mutate) {
+          await mutate();
+        }
+      } catch (err) {
+        console.error('Error loading weekly tasks:', err);
+      } finally {
+        setModalState(prev => ({ ...prev, modalLoading: false }));
+      }
+    }
   };
 
-  const handleSaveSelection = async () => {
-    setSavingLoading(true); // Gunakan savingLoading untuk button
+  const handleTaskToggle = (taskId: string, questType: 'main' | 'work' = 'main') => {
+    if (questType === 'main') {
+      setSelectedTasks(prev => ({
+        ...prev,
+        [taskId]: !prev[taskId]
+      }));
+    } else if (questType === 'work') {
+      setSelectedWorkQuests(prev => 
+        prev.includes(taskId) 
+          ? prev.filter(id => id !== taskId)
+          : [...prev, taskId]
+      );
+    }
+  };
+
+  const handleSaveSelection = async (newItems: { item_id: string; item_type: string }[], preserveOtherTypes: boolean = true) => {
+    setModalState(prev => ({ ...prev, savingLoading: true }));
     
     try {
-      const selectedItems = Object.entries(selectedTasks)
-        .filter(([, selected]) => selected)
-        .map(([taskId]) => {
-          const task = weeklyTasks.find((t: any) => t.id === taskId);
-          // Preserve existing item type or determine from task type
-          const existingItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.item_id === taskId);
-          const itemType = existingItem?.item_type || (task?.type === 'SIDE_QUEST' ? 'SIDE_QUEST' : 'MAIN_QUEST');
-          return {
-            item_id: taskId,
-            item_type: itemType
-          };
-        });
+      let allItems = [...newItems];
 
-      // Also include existing side quests that are not in weeklyTasks
-      const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
-        item.item_type === 'SIDE_QUEST' && 
-        !weeklyTasks.some((t: any) => t.id === item.item_id)
-      ) || [];
+      if (preserveOtherTypes) {
+        // Preserve existing items of other types
+        const existingMainQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+          item.item_type === 'MAIN_QUEST'
+        ) || [];
+        
+        const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+          item.item_type === 'SIDE_QUEST'
+        ) || [];
 
-      // Add existing side quests to selectedItems
-      existingSideQuests.forEach((item: DailyPlanItem) => {
-        if (!selectedItems.some(selected => selected.item_id === item.item_id)) {
-          selectedItems.push({
+        const existingWorkQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+          item.item_type === 'WORK_QUEST'
+        ) || [];
+
+        // Get the types of new items to determine what to preserve
+        const newItemTypes = [...new Set(newItems.map(item => item.item_type))];
+        
+        // Preserve items that are NOT in the new items types
+        const itemsToPreserve = [
+          ...(newItemTypes.includes('MAIN_QUEST') ? [] : existingMainQuests),
+          ...(newItemTypes.includes('SIDE_QUEST') ? [] : existingSideQuests),
+          ...(newItemTypes.includes('WORK_QUEST') ? [] : existingWorkQuests)
+        ];
+
+        allItems = [
+          ...itemsToPreserve.map((item: DailyPlanItem) => ({
             item_id: item.item_id,
             item_type: item.item_type
-          });
-        }
-      });
+          })),
+          ...newItems
+        ];
+      }
       
-      if (selectedItems.length === 0) return;
+      if (allItems.length === 0) return;
       
-      await setDailyPlan(selectedDate, selectedItems);
+      await setDailyPlan(selectedDate, allItems);
       
       // ✅ CRITICAL: Force re-fetch both daily plan and weekly tasks to ensure UI updates
       await Promise.all([
@@ -231,12 +291,12 @@ export function useDailyPlanManagement(
         mutateTasks()
       ]);
       
-      setShowModal(false);
+      setModalState(prev => ({ ...prev, showModal: false }));
     } catch (err) {
-      console.error('Error saving daily plan:', err);
+      console.error('Error saving selection:', err);
       throw err; // Re-throw error so it can be caught by the calling function
     } finally {
-      setSavingLoading(false); // Gunakan savingLoading untuk button
+      setModalState(prev => ({ ...prev, savingLoading: false }));
     }
   };
 
@@ -327,10 +387,10 @@ export function useDailyPlanManagement(
     
     // Business logic
     selectedTasks,
-    showModal,
-    setShowModal,
-    modalLoading, // Loading untuk konten (skeleton)
-    savingLoading, // Loading untuk button (spinner)
+    showModal: modalState.showModal && modalState.modalType === 'main',
+    setShowModal: (show: boolean) => setModalState(prev => ({ ...prev, showModal: show })),
+    modalLoading: modalState.modalLoading,
+    savingLoading: modalState.savingLoading,
     handleOpenModal,
     handleTaskToggle,
     handleSaveSelection,
@@ -338,6 +398,10 @@ export function useDailyPlanManagement(
     handleAddSideQuest,
     handleTargetChange,
     handleFocusDurationChange,
+    
+    // Work Quest state (unified)
+    modalState,
+    selectedWorkQuests,
     
     // Utilities
     mutate

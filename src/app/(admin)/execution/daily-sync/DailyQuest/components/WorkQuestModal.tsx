@@ -76,14 +76,11 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
   // Check if all children are selected
   const areAllChildrenSelected = (parentId: string): boolean => {
     const childIds = getAllChildIds(parentId);
-    return childIds.length > 0 && childIds.every(childId => selectedTasks.includes(childId));
+    if (childIds.length === 0) return false; // No children = not selected
+    const allSelected = childIds.every(childId => selectedTasks.includes(childId));
+    return allSelected;
   };
 
-  // Check if some children are selected (for indeterminate state)
-  const areSomeChildrenSelected = (parentId: string): boolean => {
-    const childIds = getAllChildIds(parentId);
-    return childIds.some(childId => selectedTasks.includes(childId));
-  };
 
   // Handle parent selection (select/deselect all children)
   const handleParentToggle = (parentId: string) => {
@@ -167,11 +164,6 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                           <input
                             type="checkbox"
                             checked={areAllChildrenSelected(project.id)}
-                            ref={(input) => {
-                              if (input) {
-                                input.indeterminate = areSomeChildrenSelected(project.id) && !areAllChildrenSelected(project.id);
-                              }
-                            }}
                             onChange={() => handleParentToggle(project.id)}
                             className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                           />

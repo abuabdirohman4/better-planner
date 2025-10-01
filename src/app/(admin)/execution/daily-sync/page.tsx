@@ -12,8 +12,6 @@ import BrainDumpSection from './BrainDump/BrainDumpSection';
 import ActivityLog from './ActivityLog/ActivityLog';
 import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
 import DailySyncClient from './DailyQuest/DailySyncClient';
-import { setDailyPlan } from './DailyQuest/actions/dailyPlanActions';
-import { DailyPlan } from './DailyQuest/types';
 import { getWeekDates } from '@/lib/dateUtils';
 import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
 import { useJournal } from './Journal/hooks/useJournal';
@@ -40,16 +38,7 @@ export default function DailySyncPage() {
   const selectedDateStr = selectedDate.toISOString().slice(0, 10);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-
   const { loading, initialLoading, dailyPlan, mutate } = useDailyPlanManagement(year, displayWeek, selectedDateStr);
-
-  const handleSetDailyPlanState = (plan: DailyPlan | null) => {
-    // This is a placeholder - the actual state management is handled by SWR
-    // The mutate function will handle the data updates
-    if (mutate) {
-      mutate();
-    }
-  };
 
   // Journal modal hook
   const {
@@ -131,13 +120,10 @@ export default function DailySyncPage() {
                 <div>
                   <DailySyncClient
                     year={year}
-                    quarter={quarter}
                     weekNumber={displayWeek}
                     selectedDate={selectedDateStr}
                     onSetActiveTask={handleSetActiveTask}
                     dailyPlan={dailyPlan}
-                    setDailyPlanState={handleSetDailyPlanState}
-                    setDailyPlanAction={setDailyPlan}
                     loading={loading}
                     refreshSessionKey={{}}
                     forceRefreshTaskId={null}

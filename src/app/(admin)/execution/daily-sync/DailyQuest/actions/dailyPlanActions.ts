@@ -33,8 +33,17 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
       existingItemsMap.set(item.item_id, item);
     });
 
-    // Delete all existing daily_plan_items
-    await supabase.from('daily_plan_items').delete().eq('daily_plan_id', daily_plan_id);
+    // Get the item types from selectedItems to determine what to delete
+    const itemTypesToUpdate = [...new Set(selectedItems.map(item => item.item_type))];
+    
+    // Delete only existing items of the same types as selectedItems
+    if (itemTypesToUpdate.length > 0) {
+      await supabase
+        .from('daily_plan_items')
+        .delete()
+        .eq('daily_plan_id', daily_plan_id)
+        .in('item_type', itemTypesToUpdate);
+    }
 
     // Insert new items with preserved status and type
     if (selectedItems.length > 0) {
