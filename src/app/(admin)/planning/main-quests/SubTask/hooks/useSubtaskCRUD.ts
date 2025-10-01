@@ -62,13 +62,13 @@ export function useSubtaskCRUD(
       formData.append('display_order', String(newOrder));
       const res = await addTask(formData);
       if (res && res.task) {
-        // 🔧 FIX: Refetch data instead of optimistic updates
-        refetchSubtasks();
-        toast.success('Subtask berhasil ditambahkan');
-        return { 
-          newIndex: idx + 1, // Return next index
-          newSubtaskId: res.task.id // Return new subtask ID for focus
-        };
+      // ✅ Refetch data to ensure consistency
+      refetchSubtasks();
+      toast.success('Subtask berhasil ditambahkan');
+      return { 
+        newIndex: idx + 1, // Return next index
+        newSubtaskId: res.task.id // Return new subtask ID for focus
+      };
       } else {
         toast.error('Gagal membuat tugas baru. Coba lagi.');
         return null;
@@ -84,9 +84,9 @@ export function useSubtaskCRUD(
     try {
       const res = await updateTaskStatus(subtask.id, newStatus);
       if (res) {
-        // 🔧 FIX: Only refetch on success for status changes (important for UI)
-        refetchSubtasks();
-        toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+      // ✅ Always refetch on success for status changes (important for UI consistency)
+      refetchSubtasks();
+      toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
       } else {
         toast.error('Gagal update status');
       }
@@ -124,7 +124,7 @@ export function useSubtaskCRUD(
       await deleteTask(id);
       toast.success('Subtask berhasil dihapus');
       
-      // 🔧 FIX: Refetch immediately for delete operations (critical for UI)
+      // ✅ Refetch immediately for delete operations (critical for UI consistency)
       refetchSubtasks();
     } catch (error) {
       toast.error('Gagal menghapus subtask');

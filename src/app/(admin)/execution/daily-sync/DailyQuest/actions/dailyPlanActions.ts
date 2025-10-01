@@ -121,9 +121,11 @@ export async function updateDailyPlanItemAndTaskStatus(
       throw error;
     }
 
-    // ✅ CRITICAL: Revalidate daily sync paths to ensure UI updates
+    // ✅ CRITICAL: Revalidate multiple paths to ensure cross-page synchronization
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
+    revalidatePath('/planning/main-quests');
+    revalidatePath('/execution/weekly-sync');
     
     return data;
   } catch (error) {

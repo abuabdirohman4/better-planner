@@ -132,7 +132,10 @@ export async function addTask(formData: FormData): Promise<{ message: string, ta
     .select('id, title, status, display_order, parent_task_id, milestone_id')
     .single();
   if (error) throw new Error('Gagal menambah task: ' + (error.message || ''));
+  // Revalidate multiple paths to ensure all data is fresh
   revalidatePath('/planning/main-quests');
+  revalidatePath('/execution/weekly-sync');
+  revalidatePath('/execution/daily-sync');
   return { message: 'Task berhasil ditambahkan!', task: data };
 }
 
@@ -144,7 +147,10 @@ export async function updateTaskStatus(taskId: string, newStatus: 'TODO' | 'DONE
     .update({ status: newStatus })
     .eq('id', taskId);
   if (error) throw new Error('Gagal update status task: ' + (error.message || ''));
+  // Revalidate multiple paths to ensure all data is fresh
   revalidatePath('/planning/main-quests');
+  revalidatePath('/execution/weekly-sync');
+  revalidatePath('/execution/daily-sync');
   return { message: 'Status task berhasil diupdate!' };
 }
 
@@ -156,7 +162,10 @@ export async function updateTask(taskId: string, title: string) {
     .update({ title })
     .eq('id', taskId);
   if (error) throw new Error('Gagal update task: ' + (error.message || ''));
+  // Revalidate multiple paths to ensure all data is fresh
   revalidatePath('/planning/main-quests');
+  revalidatePath('/execution/weekly-sync');
+  revalidatePath('/execution/daily-sync');
   return { message: 'Task berhasil diupdate!' };
 }
 
@@ -168,7 +177,10 @@ export async function deleteTask(taskId: string) {
     .delete()
     .eq('id', taskId);
   if (error) throw new Error('Gagal hapus task: ' + (error.message || ''));
+  // Revalidate multiple paths to ensure all data is fresh
   revalidatePath('/planning/main-quests');
+  revalidatePath('/execution/weekly-sync');
+  revalidatePath('/execution/daily-sync');
   return { message: 'Task berhasil dihapus!' };
 }
 

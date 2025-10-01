@@ -145,8 +145,10 @@ export async function updateMainQuestSubtask(
       throw new Error(data.error || 'Failed to update subtask');
     }
 
-    // Revalidate Main Quests page
+    // Revalidate multiple paths to ensure all data is fresh
     revalidatePath('/planning/main-quests');
+    revalidatePath('/execution/weekly-sync'); // Also revalidate weekly sync
+    revalidatePath('/execution/daily-sync');  // Also revalidate daily sync
     
     return {
       success: true,

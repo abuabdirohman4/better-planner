@@ -29,7 +29,10 @@ export async function updateWeeklyTaskStatus(
       throw error;
     }
 
+    // Revalidate multiple paths to ensure cross-page synchronization
     revalidatePath('/execution/weekly-sync');
+    revalidatePath('/planning/main-quests');
+    revalidatePath('/execution/daily-sync');
     return data;
   } catch (error) {
     console.error("Error in updateWeeklyTaskStatus:", error);

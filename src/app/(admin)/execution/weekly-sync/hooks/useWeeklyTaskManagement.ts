@@ -54,8 +54,23 @@ export function useWeeklyTaskManagement() {
       // Call the API
       await updateWeeklyTaskStatus(taskId, goalSlot, newStatus as 'TODO' | 'DONE');
       
-      // No need to revalidate since we already updated optimistically
-      // The data is already consistent
+      // ✅ CRITICAL: Revalidate related caches for cross-page synchronization
+      await mutate(
+        (key) => {
+          if (Array.isArray(key)) {
+            // Invalidate main-quests, daily-sync, and weekly-sync related caches
+            return key[0] === 'main-quests' || 
+                   key[0] === 'daily-sync' || 
+                   key[0] === 'weekly-sync' ||
+                   key[0] === 'quests' ||
+                   key[0] === 'milestones' ||
+                   key[0] === 'tasks';
+          }
+          return false;
+        },
+        undefined,
+        { revalidate: true }
+      );
       
       const statusText = newStatus === 'DONE' ? 'Selesai' : 'Belum Dimulai';
       toast.success(`Status tugas diubah menjadi: ${statusText}`);

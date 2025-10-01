@@ -27,10 +27,10 @@ export function useSubtaskOperations(
   const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
     try {
       await updateTask(id, val);
-      // 🔧 FIX: Only refetch if there's an error or for critical updates
-      // refetchSubtasks(); // Disabled to reduce requests
+      // ✅ Always refetch after successful update to ensure data consistency
+      refetchSubtasks();
     } catch {
-      // Only refetch on error to get fresh data
+      // Refetch on error to get fresh data
       refetchSubtasks();
     }
   }, 1000), [refetchSubtasks]);

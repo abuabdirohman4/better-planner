@@ -146,8 +146,14 @@ export function useDailyPlanManagement(
       mutateTasks(),
       // ✅ CRITICAL: Invalidate all related caches for cross-tab synchronization
       globalMutate((key) => {
-        if (Array.isArray(key) && key[0] === 'daily-sync') {
-          return true; // Invalidate all daily-sync related caches
+        if (Array.isArray(key)) {
+          // Invalidate daily-sync, weekly-sync, and main-quests related caches
+          return key[0] === 'daily-sync' || 
+                 key[0] === 'weekly-sync' || 
+                 key[0] === 'main-quests' ||
+                 key[0] === 'quests' ||
+                 key[0] === 'milestones' ||
+                 key[0] === 'tasks';
         }
         return false;
       })
