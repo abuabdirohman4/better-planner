@@ -42,16 +42,6 @@ export default function WeeklySyncModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 🔍 DEBUG: Log data yang akan disimpan
-      console.log('🔍 WeeklySyncModal handleSave DEBUG:', {
-        selectedItemsCount: selectedItems.length,
-        selectedItems: selectedItems.map(item => ({ id: item.id, type: item.type })),
-        taskItems: selectedItems.filter(item => item.type === 'TASK'),
-        subtaskItems: selectedItems.filter(item => item.type === 'SUBTASK'),
-        milestoneItems: selectedItems.filter(item => item.type === 'MILESTONE'),
-        questItems: selectedItems.filter(item => item.type === 'QUEST')
-      });
-      
       // Just save the current selectedItems without aggressive cleanup
       // User should manually uncheck items they don't want
       await onSave(selectedItems);

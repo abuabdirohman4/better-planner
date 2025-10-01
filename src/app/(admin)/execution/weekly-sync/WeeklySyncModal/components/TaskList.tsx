@@ -19,13 +19,6 @@ export const TaskList: React.FC<TaskListProps> = ({
   useEffect(() => {
     setLocalSelectedItems(selectedItems);
   }, [selectedItems]);
-
-  // Reset local state when modal opens
-  useEffect(() => {
-    if (selectedItems.length === 0) {
-      setLocalSelectedItems([]);
-    }
-  }, [selectedItems]);
   // Show all tasks that are not done, OR are already selected (even if DONE)
   // Also filter out tasks with empty or null titles
   const filteredTasks = tasks.filter((task: any) => {
