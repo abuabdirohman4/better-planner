@@ -10,6 +10,13 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     setSelectedItems(initialSelectedItems);
   }, []); // Empty dependency array - only run on mount
 
+  // Reset selectedItems when modal opens with fresh data
+  useEffect(() => {
+    if (initialSelectedItems.length === 0) {
+      setSelectedItems([]);
+    }
+  }, [initialSelectedItems]);
+
   const handleItemToggle = (
     itemId: string,
     itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK',
