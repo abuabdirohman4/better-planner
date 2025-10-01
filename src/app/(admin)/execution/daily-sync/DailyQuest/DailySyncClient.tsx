@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useDailyPlanManagement } from './hooks/useDailyPlanManagement';
+import { useWorkQuests } from '@/app/(admin)/quests/work-quests/hooks/useWorkQuests';
 import MainQuestListSection from './MainQuestListSection';
 import SideQuestListSection from './SideQuestListSection';
 import WorkQuestListSection from './WorkQuestListSection';
@@ -47,6 +48,9 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleFocusDurationChange
   } = useDailyPlanManagement(year, weekNumber, selectedDate);
 
+  // Get work quests data
+  const { workQuests } = useWorkQuests();
+
   // Work Quest state
   const [showWorkQuestModal, setShowWorkQuestModal] = useState(false);
   const [selectedWorkQuests, setSelectedWorkQuests] = useState<string[]>([]);
@@ -84,9 +88,61 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   const handleWorkQuestSave = async () => {
     setWorkQuestSavingLoading(true);
     try {
-      // TODO: Implement work quest selection save logic
-      // This would be similar to handleSaveSelection but for work quests
-      console.log('Selected work quests:', selectedWorkQuests);
+      // Convert selected work quest task IDs to daily plan items with title
+      const workQuestItems = selectedWorkQuests.map(taskId => {
+        // Find the task in work quests
+        let taskTitle = `Work Quest ${taskId}`;
+        let questTitle = '';
+        
+        for (const quest of workQuests) {
+          const task = quest.tasks?.find(t => t.id === taskId);
+          if (task) {
+            taskTitle = task.title;
+            questTitle = quest.title;
+            break;
+          }
+        }
+        
+        return {
+          item_id: taskId,
+          item_type: 'WORK_QUEST',
+          title: questTitle ? `${questTitle} - ${taskTitle}` : taskTitle
+        };
+      });
+
+      // Preserve existing main quests and side quests
+      const existingMainQuests = effectiveDailyPlan?.daily_plan_items?.filter((item: any) => 
+        item.item_type === 'MAIN_QUEST'
+      ) || [];
+      
+      const existingSideQuests = effectiveDailyPlan?.daily_plan_items?.filter((item: any) => 
+        item.item_type === 'SIDE_QUEST'
+      ) || [];
+
+      // Combine all items: existing main quests + existing side quests + new work quests
+      const allItems = [
+        ...existingMainQuests.map((item: any) => ({
+          item_id: item.item_id,
+          item_type: item.item_type,
+          title: item.title
+        })),
+        ...existingSideQuests.map((item: any) => ({
+          item_id: item.item_id,
+          item_type: item.item_type,
+          title: item.title
+        })),
+        ...workQuestItems
+      ];
+
+      if (allItems.length === 0) return;
+      
+      // Save all items to daily plan
+      if (!setDailyPlanAction) {
+        throw new Error('setDailyPlanAction is not available');
+      }
+      await setDailyPlanAction(selectedDate, allItems);
+      
+      // Close modal and reset selection
       setShowWorkQuestModal(false);
       setSelectedWorkQuests([]);
     } catch (error) {
