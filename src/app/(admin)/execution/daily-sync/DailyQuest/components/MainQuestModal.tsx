@@ -46,24 +46,35 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
     <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Main Quest</h2>
-          <p className="text-gray-600 mb-2">
-            Quest yang sudah tercentang adalah yang sudah ada atau akan ditambahkan di rencana harian dan belum diselesaikan. <br></br> Quest yang sudah diselesaikan tidak akan muncul lagi di daftar.
-          </p>
-          <p className="text-gray-700 font-medium">
-            Selected : {selectedCount} Quest
-          </p>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Main Quest</h2>
+            <p className="text-gray-600 mb-2">
+              Hanya menampilkan task dengan status TODO
+            </p>
+            <p className="text-gray-700 font-medium">
+              Selected : {selectedCount} Quest
+            </p>
 
-          {completedTodayCount > 0 && (
-            <>
-              <p className="text-gray-700 font-medium">
-                Done : {completedTodayCount} Quest
-              </p>
-            </>
-          )}
+            {completedTodayCount > 0 && (
+              <>
+                <p className="text-gray-700 font-medium">
+                  Done : {completedTodayCount} Quest
+                </p>
+              </>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
+        {/* Main Quest List */}
         {isLoading ? (
           <div className="space-y-6">
             {/* Skeleton for 2-3 goal slot groups */}
@@ -93,7 +104,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
             ))}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-96 overflow-y-auto">
             {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => (
               <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
@@ -147,6 +158,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           </div>
         )}
 
+        {/* Actions */}
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
           <Button
             onClick={onClose}
@@ -158,6 +170,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           </Button>
           <Button
             onClick={onSave}
+            disabled={selectedCount === 0}
             loading={savingLoading}
             loadingText="Menyimpan..."
             variant="primary"

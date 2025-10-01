@@ -12,6 +12,7 @@ interface WorkQuestModalProps {
   onSave: () => void;
   isLoading: boolean;
   savingLoading: boolean;
+  completedTodayCount?: number;
 }
 
 interface HierarchicalItem {
@@ -31,7 +32,8 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
   onTaskToggle,
   onSave,
   isLoading,
-  savingLoading
+  savingLoading,
+  completedTodayCount = 0
 }) => {
   const { workQuests, isLoading: workQuestsLoading } = useWorkQuests();
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,151 +108,150 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
 
   if (!isOpen) return null;
 
+  const selectedCount = selectedTasks.length;
+
   return (
     <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        {/* Modal */}
-        {/* <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"> */}
-          <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                  Pilih Work Quest
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Hanya menampilkan task dengan status TODO
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Pilih Work Quest
+            </h2>
+            <p className="text-gray-600 mb-2">
+              Hanya menampilkan task dengan status TODO
+            </p>
+            <p className="text-gray-700 font-medium">
+              Selected : {selectedCount} Quest
+            </p>
+
+            {completedTodayCount > 0 && (
+              <>
+                <p className="text-gray-700 font-medium">
+                  Done : {completedTodayCount} Quest
                 </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+              </>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-            {/* Search */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Cari work quest..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+        {/* Search */}
+        {/* <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Cari work quest..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+          />
+        </div> */}
 
-            {/* Work Quest List */}
-            <div className="max-h-96 overflow-y-auto">
-              {workQuestsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : filteredHierarchicalItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {searchTerm ? 'Tidak ada work quest yang sesuai dengan pencarian' : 'Belum ada work quest'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredHierarchicalItems.map((project) => (
-                    <div key={project.id} className="space-y-2">
-                      {/* Parent Project */}
-                      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <div className="flex items-start space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={areAllChildrenSelected(project.id)}
-                            onChange={() => handleParentToggle(project.id)}
-                            className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                          />
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
-                              <span className="mr-2">📁</span>
-                              {project.title}
-                            </h4>
-                            {project.description && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                {project.description}
-                              </p>
-                            )}
-                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                              {(project.taskCount || 0) > 0 && (
-                                <span className="flex items-center">
-                                  <span className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                                  {project.taskCount} task TODO
-                                </span>
+        {/* Work Quest List */}
+        <div className="max-h-96 overflow-y-auto">
+          {workQuestsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredHierarchicalItems.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
+                {searchTerm ? 'Tidak ada work quest yang sesuai dengan pencarian' : 'Belum ada work quest'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredHierarchicalItems.map((project) => (
+                <div key={project.id} className="space-y-2">
+                  {/* Parent Project */}
+                  <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={areAllChildrenSelected(project.id)}
+                        onChange={() => handleParentToggle(project.id)}
+                        className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                          <span className="mr-2">📁</span>
+                          {project.title}
+                        </h4>
+                        {project.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {project.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Child Tasks */}
+                  {project.children.length > 0 && (
+                    <div className="ml-6 space-y-2">
+                      {project.children.map((task) => (
+                        <div
+                          key={task.id}
+                          className="border border-gray-100 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedTasks.includes(task.id)}
+                              onChange={() => onTaskToggle(task.id)}
+                              className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                            />
+                            <div className="flex-1">
+                              <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center">
+                                <span className="mr-2">📄</span>
+                                {task.title}
+                              </h5>
+                              {task.description && (
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                  {task.description}
+                                </p>
                               )}
                             </div>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Child Tasks */}
-                      {project.children.length > 0 && (
-                        <div className="ml-6 space-y-2">
-                          {project.children.map((task) => (
-                            <div
-                              key={task.id}
-                              className="border border-gray-100 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            >
-                              <div className="flex items-start space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedTasks.includes(task.id)}
-                                  onChange={() => onTaskToggle(task.id)}
-                                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                />
-                                <div className="flex-1">
-                                  <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center">
-                                    <span className="mr-2">📄</span>
-                                    {task.title}
-                                    <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
-                                      TODO
-                                    </span>
-                                  </h5>
-                                  {task.description && (
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                      {task.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+              ))}
             </div>
+          )}
+        </div>
 
-            {/* Actions */}
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onClose}
-              >
-                Batal
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={onSave}
-                disabled={selectedTasks.length === 0}
-                loading={savingLoading}
-                loadingText="Menyimpan..."
-              >
-                Pilih Quest
-              </Button>
-            </div>
-          </div>
-        {/* </div> */}
+        {/* Actions */}
+        <div className="flex justify-end space-x-3 mt-6">
+          <Button
+            onClick={onClose}
+            disabled={savingLoading}
+            variant="outline"
+            size="md"
+          >
+            Batal
+          </Button>
+          <Button
+            onClick={onSave}
+            disabled={selectedTasks.length === 0}
+            loading={savingLoading}
+            loadingText="Menyimpan..."
+            variant="primary"
+            size="md"
+          >
+            Submit
+          </Button>
+        </div>
       </div>
     </div>
   );
