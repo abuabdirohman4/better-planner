@@ -78,8 +78,8 @@ CREATE TABLE "weekly_goal_items" (
   "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   "weekly_goal_id" UUID NOT NULL REFERENCES weekly_goals(id) ON DELETE CASCADE,
   "item_id" UUID NOT NULL, -- ID dari quest, milestone, atau task
-  "item_type" TEXT NOT NULL, -- 'QUEST', 'MILESTONE', atau 'TASK'
-  "created_at" TIMESTAMPTZ DEFAULT now()
+  "created_at" TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(weekly_goal_id, item_id) -- Mencegah duplikasi item dalam 1 weekly goal
 );
 
 -- Tabel Weekly Focuses (Fokus Mingguan - Versi Hierarkis)

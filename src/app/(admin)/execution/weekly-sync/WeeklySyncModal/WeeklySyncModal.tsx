@@ -27,14 +27,10 @@ export default function WeeklySyncModal({
   const { hierarchicalData, dataLoading } = useHierarchicalData(year, quarter, isOpen);
   const { 
     selectedItems, 
-    setSelectedItems, 
     handleItemToggle, 
     handleSelectAll, 
     handleClearAll,
-    cleanupSelectedItems
   } = useSelectionManagement(initialSelectedItems, existingSelectedIds);
-
-  // Debug log untuk modal
 
   const { 
     expandedItems, 

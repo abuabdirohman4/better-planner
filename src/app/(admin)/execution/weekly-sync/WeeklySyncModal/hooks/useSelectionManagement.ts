@@ -10,17 +10,6 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     setSelectedItems(initialSelectedItems);
   }, []); // Empty dependency array - only run on mount
 
-  // Clean up selectedItems by removing items that are not visible in UI
-  // This should be called when items are filtered out due to DONE status
-  const cleanupSelectedItems = (visibleItemIds: Set<string>) => {
-    setSelectedItems(prev => {
-      const cleaned = prev.filter(item => visibleItemIds.has(item.id));
-      return cleaned;
-    });
-  };
-
-
-
   const handleItemToggle = (
     itemId: string,
     itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK',
@@ -91,10 +80,6 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     });
   };
 
-  const isItemSelected = (itemId: string, itemType: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK') => {
-    return selectedItems.some(item => item.id === itemId && item.type === itemType);
-  };
-
   const getAllAvailableItems = (hierarchicalData: Quest[]): SelectedItem[] => {
     const items: SelectedItem[] = [];
     
@@ -128,9 +113,7 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     selectedItems,
     setSelectedItems,
     handleItemToggle,
-    isItemSelected,
     handleSelectAll,
     handleClearAll,
-    cleanupSelectedItems
   };
 }

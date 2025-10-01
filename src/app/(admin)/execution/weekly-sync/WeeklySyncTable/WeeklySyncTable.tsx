@@ -29,7 +29,6 @@ export default function WeeklySyncTable({
   const handleModalSave = async (selectedItems: Array<{ id: string; type: 'QUEST' | 'MILESTONE' | 'TASK' | 'SUBTASK' }>) => {
     if (!selectedSlot) return;
 
-
     try {
       if (selectedItems.length === 0) {
         // Hapus goal mingguan untuk slot ini
