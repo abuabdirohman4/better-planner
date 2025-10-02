@@ -11,6 +11,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
 import { checkAudioPermission, initializeAudioContext } from '@/lib/soundUtils';
 import { isTimerDisabled, getTimerDevStatusMessage } from '@/lib/timerDevUtils';
+import DebugTimer from './components/DebugTimer';
 
 const SHORT_BREAK_DURATION = 5 * 60;
 const LONG_BREAK_DURATION = 15 * 60;
@@ -53,7 +54,7 @@ function CircularTimer({
         strokeDasharray={circumference}
         strokeDashoffset={offset}
         strokeLinecap="round"
-        style={{ transition: "stroke-dashoffset 0.5s linear" }}
+        style={{ transition: "stroke-dashoffset 0.25s ease-out" }}
       />
     </svg>
   );
@@ -283,6 +284,11 @@ export default function PomodoroTimer() {
           )}
         </div>
       </div>
+      
+      {/* Debug Timer - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <DebugTimer />
+      )}
       
       {/* Sound Selector Modal */}
       <SoundSelector
