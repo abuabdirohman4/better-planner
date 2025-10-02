@@ -286,9 +286,9 @@ export default function PomodoroTimer() {
       </div>
       
       {/* Debug Timer - Only show in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && ( */}
         <DebugTimer />
-      )}
+      {/* )} */}
       
       {/* Sound Selector Modal */}
       <SoundSelector
