@@ -47,6 +47,7 @@ export default function DebugTimer() {
   const stopDebugTimer = () => {
     console.log('🐛 Debug Timer: Stopping...');
     setIsDebugRunning(false);
+    setDebugSeconds(0);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
