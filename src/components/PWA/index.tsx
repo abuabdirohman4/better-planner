@@ -19,6 +19,17 @@ export default function PWAComponents() {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
   useEffect(() => {
+    // Register Service Worker for timer notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-timer.js')
+        .then((registration) => {
+          console.log('🔧 Timer Service Worker registered:', registration);
+        })
+        .catch((error) => {
+          console.error('❌ Timer Service Worker registration failed:', error);
+        });
+    }
+
     // Install prompt handler
     const handleBeforeInstallPrompt = (e: Event) => {
       console.log('🔔 beforeinstallprompt event fired');

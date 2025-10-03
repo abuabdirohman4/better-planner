@@ -6,6 +6,7 @@ import { useTimer } from '@/stores/timerStore';
 import { useSoundStore } from '@/stores/soundStore';
 import { useTimerPersistence } from './hooks/useTimerPersistence';
 import { useGlobalTimer } from './hooks/useGlobalTimer';
+import { useBackgroundTimer } from './hooks/useBackgroundTimer';
 import SoundSelector from './components/SoundSelector';
 import Spinner from '@/components/ui/spinner/Spinner';
 import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
@@ -90,6 +91,9 @@ export default function PomodoroTimer() {
   
   // Initialize global timer (this handles the actual timer counting and focus sound)
   useGlobalTimer();
+  
+  // Initialize background timer for notifications and completion handling
+  useBackgroundTimer();
   
   // ✅ DEV CONTROL: Check if timer is disabled in development
   const timerDisabled = isTimerDisabled();

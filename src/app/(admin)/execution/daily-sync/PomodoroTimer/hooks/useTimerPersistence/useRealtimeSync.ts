@@ -64,6 +64,17 @@ export function useRealtimeSync() {
             } else if (session.status === 'FOCUSING' && session.task_id === activeTask?.id) {
               console.log('🔄 Timer session updated on another device - syncing...');
               
+              // Use real-time payload data, only fetch focus_duration if missing
+              let focusDuration = session.focus_duration;
+              if (!focusDuration) {
+                try {
+                  const activeSession = await getActiveTimerSession();
+                  focusDuration = activeSession?.focus_duration;
+                } catch (error) {
+                  console.error('Failed to fetch focus_duration:', error);
+                }
+              }
+              
               // Sync current duration
               useTimerStore.getState().resumeFromDatabase({
                 taskId: session.task_id,
@@ -71,7 +82,7 @@ export function useRealtimeSync() {
                 startTime: session.start_time,
                 currentDuration: session.current_duration_seconds,
                 status: session.status,
-                focus_duration: session.focus_duration
+                focus_duration: focusDuration
               });
             }
           } else if (payload.eventType === 'INSERT') {

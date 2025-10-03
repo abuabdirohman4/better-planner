@@ -52,7 +52,8 @@ export function useAutoSave() {
           targetDuration: (activeTask.focus_duration || 25) * 60,
           currentDuration: secondsElapsed,
           status: timerState,
-          deviceId: deviceId
+          deviceId: deviceId,
+          focusDuration: activeTask.focus_duration
         });
       } else {
         // Session belum ada, buat baru
@@ -64,7 +65,8 @@ export function useAutoSave() {
           targetDuration: (activeTask.focus_duration || 25) * 60,
           currentDuration: secondsElapsed,
           status: timerState,
-          deviceId: deviceId
+          deviceId: deviceId,
+          focusDuration: activeTask.focus_duration
         });
       }
     } catch (error) {

@@ -5,6 +5,7 @@ import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
 import { getGlobalState } from '../globalState';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { useBackgroundTimer } from '../useBackgroundTimer';
 
 interface UseBrowserEventsProps {
   debouncedSave: () => Promise<void>;
@@ -16,6 +17,8 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
     activeTask, 
     startTime 
   } = useTimer();
+  
+  const { scheduleBackgroundCompletion, cancelBackgroundCompletion } = useBackgroundTimer();
 
   // Browser tab detection untuk handle multi-browser access
   useEffect(() => {
@@ -28,12 +31,27 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
     
     const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // Tab tidak aktif - save state
+        // Tab tidak aktif - save state and schedule completion
         if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
           debouncedSave();
+          
+          // Schedule one-shot completion for background timer
+          const targetDuration = (activeTask.focus_duration || 25) * 60;
+          const now = new Date();
+          const startTimeDate = new Date(startTime);
+          const elapsedSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
+          const remainingSeconds = Math.max(0, targetDuration - elapsedSeconds);
+          
+          if (remainingSeconds > 0) {
+            // Schedule background completion with notification
+            scheduleBackgroundCompletion(remainingSeconds);
+            console.log(`⏰ Scheduled background completion in ${remainingSeconds} seconds`);
+          }
         }
       } else {
-        // Tab aktif kembali - sync drift dengan server
+        // Tab aktif kembali - cancel background completion and sync with server
+        cancelBackgroundCompletion();
+        
         if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
           try {
             const activeSession = await getActiveTimerSession();
