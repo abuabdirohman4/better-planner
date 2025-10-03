@@ -9,7 +9,7 @@ import { useTimer } from '@/stores/timerStore';
  * Does NOT sync to database - purely for debugging
  */
 export default function DebugTimer() {
-  const { timerState } = useTimer();
+  const { timerState, secondsElapsed } = useTimer();
   const [debugSeconds, setDebugSeconds] = useState(0);
   const [isDebugRunning, setIsDebugRunning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -106,6 +106,21 @@ export default function DebugTimer() {
           Tab: {document.visibilityState}
         </div>
       </div>
+      
+      {/* Timer accuracy check */}
+      {isDebugRunning && (
+        <div className="mt-2 p-2 bg-yellow-100 rounded text-xs">
+          <div className="font-medium text-yellow-800 mb-1">Timer Accuracy Check:</div>
+          <div className="text-yellow-700">
+            Debug timer: {debugSeconds}s | Main timer: {secondsElapsed}s
+            {Math.abs(debugSeconds - secondsElapsed) > 2 && (
+              <span className="text-red-600 font-bold ml-2">
+                ⚠️ DRIFT DETECTED! ({Math.abs(debugSeconds - secondsElapsed)}s difference)
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

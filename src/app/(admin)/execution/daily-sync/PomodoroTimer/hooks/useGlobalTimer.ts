@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useTimer } from '@/stores/timerStore';
+import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 /**
@@ -70,6 +70,26 @@ export function useGlobalTimer() {
 
     if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
       globalIntervalRef = setInterval(() => {
+        // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
+        if (activeTask && startTime) {
+          const now = new Date();
+          const startTimeDate = new Date(startTime);
+          const elapsedSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
+          const targetDuration = (activeTask.focus_duration || 25) * 60;
+          
+          // If elapsed time >= target duration, complete the timer
+          if (elapsedSeconds >= targetDuration) {
+            useTimerStore.getState().completeTimerFromDatabase({
+              taskId: activeTask.id,
+              taskTitle: activeTask.title,
+              startTime: startTime,
+              duration: targetDuration, // Use target duration, not actual elapsed
+              status: 'COMPLETED'
+            });
+            return; // Don't increment seconds
+          }
+        }
+        
         incrementSeconds();
         lastActiveTimeRef.current = Date.now(); // Update last active time
       }, 1000);
@@ -81,5 +101,5 @@ export function useGlobalTimer() {
         globalIntervalRef = null;
       }
     };
-  }, [timerState]); // Remove incrementSeconds from deps to prevent multiple intervals
+  }, [timerState, activeTask, startTime]); // Add activeTask and startTime to deps for auto-completion check
 }
