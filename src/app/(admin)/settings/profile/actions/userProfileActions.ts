@@ -53,7 +53,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
       throw error;
     }
 
-    console.log('🎵 getUserProfile - Profile found:', data);
     return data;
   } catch (error) {
     console.error('🎵 getUserProfile error:', error);
@@ -67,7 +66,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
  */
 export async function updateSoundSettings(settings: Partial<SoundSettings>): Promise<void> {
   try {
-    console.log('🎵 updateSoundSettings called with:', settings);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -129,8 +127,6 @@ export async function getSoundSettings(): Promise<SoundSettings> {
   try {
     const profile = await getUserProfile();
     const settings = profile?.sound_settings || DEFAULT_SOUND_SETTINGS;
-    console.log('🎵 getSoundSettings - profile:', profile);
-    console.log('🎵 getSoundSettings - settings:', settings);
     return settings;
   } catch (error) {
     console.error('🎵 getSoundSettings error:', error);
