@@ -61,6 +61,7 @@ export function useLiveTimerNotification() {
           taskTitle: activeTask?.title,
           duration: totalDuration,
           remainingSeconds,
+          totalDuration,
           soundId: settings.soundId
         }
       });
@@ -93,7 +94,8 @@ export function useLiveTimerNotification() {
         data: {
           taskTitle: activeTask?.title,
           remainingSeconds,
-          totalDuration
+          totalDuration,
+          duration: totalDuration
         }
       });
     }
@@ -109,10 +111,10 @@ export function useLiveTimerNotification() {
   };
 
   const startNotificationUpdates = () => {
-    // Update notification every 30 seconds
+    // Update notification every 5 seconds for more responsive updates
     updateIntervalRef.current = setInterval(() => {
       updateLiveTimerNotification();
-    }, 30000);
+    }, 5000);
   };
 
   const stopNotificationUpdates = () => {

@@ -73,6 +73,9 @@ function handleTimerStarted(data) {
       startTime: Date.now()
     }
   });
+
+  // Start live countdown in notification
+  startLiveCountdown(data);
 }
 
 // Handle timer updated (every minute)
@@ -108,6 +111,9 @@ function handleTimerUpdated(data) {
       startTime: Date.now()
     }
   });
+
+  // Restart live countdown with updated data
+  startLiveCountdown(data);
 }
 
 // Handle timer completed
@@ -149,6 +155,9 @@ function handleTimerCompleted(data) {
 function handleTimerPaused(data) {
   const { taskTitle, remainingSeconds } = data;
   
+  // Stop live countdown when paused
+  stopLiveCountdown();
+  
   // Update notification to show paused state
   self.registration.showNotification('Timer Paused ⏸️', {
     body: `${taskTitle || 'Focus Session'} - ${formatTime(remainingSeconds)} remaining`,
@@ -181,10 +190,81 @@ function handleTimerPaused(data) {
 
 // Handle timer stopped
 function handleTimerStopped() {
+  // Stop live countdown
+  stopLiveCountdown();
+  
   // Clear the live timer notification
   self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
     notifications.forEach(notification => notification.close());
   });
+}
+
+// Live countdown variables
+let countdownInterval = null;
+let currentTimerData = null;
+
+// Start live countdown in notification
+function startLiveCountdown(data) {
+  // Stop existing countdown
+  stopLiveCountdown();
+  
+  currentTimerData = data;
+  const { taskTitle, remainingSeconds, totalDuration } = data;
+  
+  if (!remainingSeconds || remainingSeconds <= 0) {
+    return;
+  }
+  
+  let secondsLeft = remainingSeconds;
+  
+  // Update notification every second
+  countdownInterval = setInterval(() => {
+    if (secondsLeft <= 0) {
+      stopLiveCountdown();
+      return;
+    }
+    
+    // Update notification with live countdown
+    self.registration.showNotification('Timer Running ⏱️', {
+      body: `${taskTitle || 'Focus Session'} - ${formatTime(secondsLeft)} remaining`,
+      icon: '/images/logo/logo-icon.svg',
+      badge: '/images/logo/logo-icon.svg',
+      tag: 'live-timer',
+      requireInteraction: false,
+      silent: true,
+      actions: [
+        {
+          action: 'pause',
+          title: '⏸️ Pause'
+        },
+        {
+          action: 'stop',
+          title: '⏹️ Stop'
+        },
+        {
+          action: 'view',
+          title: '👁️ View'
+        }
+      ],
+      data: {
+        taskTitle,
+        remainingSeconds: secondsLeft,
+        totalDuration,
+        startTime: Date.now()
+      }
+    });
+    
+    secondsLeft--;
+  }, 1000);
+}
+
+// Stop live countdown
+function stopLiveCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+  currentTimerData = null;
 }
 
 // Handle notification clicks
@@ -216,6 +296,11 @@ self.addEventListener('notificationclick', (event) => {
           });
         });
       });
+      
+      // Restart live countdown after resume
+      if (currentTimerData) {
+        startLiveCountdown(currentTimerData);
+      }
       break;
       
     case 'stop':
