@@ -37,7 +37,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
       setWhatThink('');
       setIsSaving(false);
     }
-  }, [isOpen, taskTitle, duration]);
+  }, [isOpen]); // ✅ FIX: Only reset when modal opens, not when taskTitle or duration changes
 
   // Keyboard shortcut handler
   useEffect(() => {

@@ -51,11 +51,8 @@ export const useJournal = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const deviceInfo = isMobile ? 'Mobile' : 'Desktop';
 
-    console.log(`📱 [${deviceInfo}] Starting journal save for task:`, pendingActivityData.taskId);
-
     if (pendingActivityData.activityId) {
       // Update existing activity log
-      console.log(`📱 [${deviceInfo}] Updating existing activity log:`, pendingActivityData.activityId);
       await updateActivityJournal(
         pendingActivityData.activityId,
         whatDone,
@@ -138,10 +135,50 @@ export const useJournal = () => {
           // Wait a bit before retry
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Retry the save
-          const result = await saveJournal(journalData);
-          setIsRetrying(false);
-          return result;
+          // ✅ FIX: Avoid infinite recursion by calling the logic directly instead of saveJournal
+          try {
+            if (pendingActivityData.activityId) {
+              await updateActivityJournal(
+                pendingActivityData.activityId,
+                whatDone,
+                whatThink
+              );
+            } else {
+              // Re-run the create logic
+              const supabase = await createClient();
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) throw new Error('User not authenticated');
+
+              const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
+              const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
+
+              const { data: newActivity, error: createError } = await supabase
+                .from('activity_logs')
+                .insert({
+                  user_id: user.id,
+                  task_id: pendingActivityData.taskId,
+                  type: 'FOCUS',
+                  start_time: pendingActivityData.startTime,
+                  end_time: pendingActivityData.endTime,
+                  duration_minutes: durationInMinutes,
+                  local_date: pendingActivityData.date,
+                  what_done: whatDone,
+                  what_think: whatThink,
+                })
+                .select()
+                .single();
+
+              if (createError) {
+                throw createError;
+              }
+            }
+            setIsRetrying(false);
+            return;
+          } catch (retryError) {
+            console.error(`📱 [${deviceInfo}] Retry failed:`, retryError);
+            setIsRetrying(false);
+            throw retryError;
+          }
         }
         
         // ✅ MOBILE FIX: Better error message for mobile users
