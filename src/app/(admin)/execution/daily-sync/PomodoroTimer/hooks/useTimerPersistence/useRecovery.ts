@@ -53,7 +53,8 @@ export function useRecovery() {
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
                 currentDuration: result.elapsedSeconds,
-                status: activeSession.status
+                status: activeSession.status,
+                focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
               });
             }
           } catch (error) {
@@ -65,7 +66,8 @@ export function useRecovery() {
               taskTitle: activeSession.task_title,
               startTime: activeSession.start_time,
               currentDuration: currentDuration,
-              status: activeSession.status
+              status: activeSession.status,
+              focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
             });
           }
         }

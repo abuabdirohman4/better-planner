@@ -58,7 +58,8 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
                 currentDuration: result.elapsedSeconds,
-                status: activeSession.status
+                status: activeSession.status,
+                focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
               });
               console.log('🔄 Timer synced with server:', result.elapsedSeconds, 'seconds');
             }

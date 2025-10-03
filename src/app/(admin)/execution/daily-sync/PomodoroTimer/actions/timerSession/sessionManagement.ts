@@ -17,6 +17,7 @@ export async function saveTimerSession(sessionData: {
   currentDuration: number;
   status: string;
   deviceId?: string;
+  focusDuration?: number;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -64,6 +65,7 @@ export async function saveTimerSession(sessionData: {
           current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
           status: sessionData.status,
           device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
+          focus_duration: sessionData.focusDuration,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSession.id)
@@ -89,6 +91,7 @@ export async function saveTimerSession(sessionData: {
           current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
           status: sessionData.status,
           device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
+          focus_duration: sessionData.focusDuration,
           updated_at: new Date().toISOString()
         })
         .select()

@@ -47,6 +47,7 @@ interface TimerStoreState {
     startTime: string;
     currentDuration: number;
     status: string;
+    focus_duration?: number;
   }) => void;
   startFocusSound: () => Promise<void>;
   stopFocusSound: () => void;
@@ -252,7 +253,8 @@ export const useTimerStore = create<TimerStoreState>()(
           activeTask: {
             id: sessionData.taskId,
             title: sessionData.taskTitle,
-            item_type: 'MAIN_QUEST'
+            item_type: 'MAIN_QUEST',
+            focus_duration: sessionData.focus_duration
           },
           timerState,
           secondsElapsed: sessionData.currentDuration,
@@ -266,9 +268,36 @@ export const useTimerStore = create<TimerStoreState>()(
         }
       },
 
-      completeTimerFromDatabase: (sessionData) => {
+      completeTimerFromDatabase: async (sessionData) => {
         // Stop focus sound when completing timer from database
         get().stopFocusSound();
+        
+        // ✅ FIX: Play completion sound when timer completes from database
+        try {
+          // Load fresh settings from server to ensure we have the latest sound settings
+          const { getSoundSettings } = await import('@/app/(admin)/settings/profile/actions/userProfileActions');
+          const serverSettings = await getSoundSettings();
+          if (serverSettings.soundId !== 'none') {
+            console.log('playTimerCompleteSound 1');
+            await playTimerCompleteSound(
+              serverSettings.soundId,
+              serverSettings.volume,
+              sessionData.taskTitle
+            );
+          }
+        } catch (error) {
+          console.error('🎵 Error playing timer completion sound:', error);
+          // Fallback to local settings
+          const soundSettings = useSoundStore.getState().settings;
+          if (soundSettings.soundId !== 'none') {
+            await playTimerCompleteSound(
+              soundSettings.soundId,
+              soundSettings.volume,
+              sessionData.taskTitle
+            ).catch(console.error);
+          }
+        }
+        
         set({
           lastSessionComplete: {
             taskId: sessionData.taskId,

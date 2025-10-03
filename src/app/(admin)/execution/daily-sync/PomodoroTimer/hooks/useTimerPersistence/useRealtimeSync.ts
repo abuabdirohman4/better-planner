@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useTimer } from '@/stores/timerStore';
 import { useTimerStore } from '@/stores/timerStore';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { getActiveTimerSession } from '../../actions/timerSessionActions';
 
 export function useRealtimeSync() {
   const { activeTask } = useTimer();
@@ -69,7 +70,8 @@ export function useRealtimeSync() {
                 taskTitle: session.task_title || 'Unknown Task',
                 startTime: session.start_time,
                 currentDuration: session.current_duration_seconds,
-                status: session.status
+                status: session.status,
+                focus_duration: session.focus_duration
               });
             }
           } else if (payload.eventType === 'INSERT') {
