@@ -19,14 +19,24 @@ export default function PWAComponents() {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
   useEffect(() => {
-    // Register Service Worker for timer notifications
+    // Register Service Workers for timer notifications
     if ('serviceWorker' in navigator) {
+      // Register basic timer service worker
       navigator.serviceWorker.register('/sw-timer.js')
         .then((registration) => {
           console.log('🔧 Timer Service Worker registered:', registration);
         })
         .catch((error) => {
           console.error('❌ Timer Service Worker registration failed:', error);
+        });
+
+      // Register live timer service worker
+      navigator.serviceWorker.register('/sw-timer-live.js')
+        .then((registration) => {
+          console.log('🔧 Live Timer Service Worker registered:', registration);
+        })
+        .catch((error) => {
+          console.error('❌ Live Timer Service Worker registration failed:', error);
         });
     }
 
