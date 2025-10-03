@@ -78,12 +78,14 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       console.log('[completeTimerSession] Activity log already exists, skipping creation');
     }
 
-    // Mark session as completed
+    // Mark session as completed with end_time
+    const endTime = new Date().toISOString();
     const { error: updateError } = await supabase
       .from('timer_sessions')
       .update({ 
         status: 'COMPLETED',
-        updated_at: new Date().toISOString()
+        end_time: endTime,
+        updated_at: endTime
       })
       .eq('id', sessionId);
 
@@ -91,6 +93,21 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       console.error('[completeTimerSession] Update error:', updateError);
       throw updateError;
     }
+
+    // ✅ FIX: Recompute accurate duration from start_time and end_time
+    const startTimeDate = new Date(session.start_time);
+    const endTimeDate = new Date(endTime);
+    const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
+    
+    // Update with accurate duration
+    await supabase
+      .from('timer_sessions')
+      .update({ 
+        current_duration_seconds: actualDurationSeconds
+      })
+      .eq('id', sessionId);
+
+    console.log(`✅ Timer completed: ${actualDurationSeconds}s (target: ${session.target_duration_seconds}s)`);
 
     // ✅ FIX: Check if stop event already exists to prevent duplicates
     const { data: existingStopEvent } = await supabase

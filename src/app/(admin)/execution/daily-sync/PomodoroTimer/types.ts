@@ -17,6 +17,7 @@ export interface TimerSession {
   task_title: string;
   session_type: string;
   start_time: string;
+  end_time?: string; // Optional - only set when timer is completed
   target_duration_seconds: number;
   current_duration_seconds: number;
   status: string;

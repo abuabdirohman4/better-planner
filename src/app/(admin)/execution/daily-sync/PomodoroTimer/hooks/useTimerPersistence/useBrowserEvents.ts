@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
-import { getActiveTimerSession } from '../../actions/timerSessionActions';
+import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
 import { getGlobalState } from '../globalState';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
@@ -26,33 +26,45 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
     
     const { recoveryInProgress, recoveryCompleted } = getGlobalState();
     
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
-        // Tab tidak aktif - pause timer dan save state
+        // Tab tidak aktif - save state
         if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
           debouncedSave();
         }
       } else {
-        // Tab aktif kembali - resume timer jika perlu
-        if (timerState === 'PAUSED' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
-          // Resume timer dari database state
-          const resumeTimer = async () => {
-            try {
-              const activeSession = await getActiveTimerSession();
-              if (activeSession && activeSession.task_id === activeTask.id) {
-                useTimerStore.getState().resumeFromDatabase({
-                  taskId: activeSession.task_id,
-                  taskTitle: activeSession.task_title,
-                  startTime: activeSession.start_time,
-                  currentDuration: activeSession.current_duration_seconds,
-                  status: activeSession.status
-                });
-              }
-            } catch (error) {
-              console.error('❌ Failed to resume timer from database:', error);
+        // Tab aktif kembali - sync drift dengan server
+        if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
+          try {
+            const activeSession = await getActiveTimerSession();
+            if (!activeSession) return;
+            
+            const result = await updateSessionWithActualTime(activeSession.id);
+            
+            if (result.completed) {
+              // Timer selesai - trigger completion
+              useTimerStore.getState().completeTimerFromDatabase({
+                taskId: activeSession.task_id,
+                taskTitle: activeSession.task_title,
+                startTime: activeSession.start_time,
+                duration: result.elapsedSeconds,
+                status: 'COMPLETED'
+              });
+              console.log('⏰ Timer completed while tab was inactive');
+            } else {
+              // Timer masih berjalan - resume dengan waktu yang akurat
+              useTimerStore.getState().resumeFromDatabase({
+                taskId: activeSession.task_id,
+                taskTitle: activeSession.task_title,
+                startTime: activeSession.start_time,
+                currentDuration: result.elapsedSeconds,
+                status: activeSession.status
+              });
+              console.log('🔄 Timer synced with server:', result.elapsedSeconds, 'seconds');
             }
-          };
-          resumeTimer();
+          } catch (error) {
+            console.error('❌ Failed to sync timer with server:', error);
+          }
         }
       }
     };
