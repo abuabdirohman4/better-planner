@@ -49,20 +49,6 @@ function handleTimerCompletion(data) {
       }
     ]
   });
-  
-  // Play sound if specified
-  if (soundId && soundId !== 'none') {
-    // Note: Service Workers can't play audio directly
-    // The main thread will handle audio playback
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'PLAY_COMPLETION_SOUND',
-          data: { soundId }
-        });
-      });
-    });
-  }
 }
 
 // Request notification permission

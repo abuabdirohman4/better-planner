@@ -10,6 +10,8 @@ export function useBackgroundTimer() {
   const { settings } = useSoundStore();
   const notificationPermissionRef = useRef<NotificationPermission>('default');
   const backgroundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const soundPlayedRef = useRef<boolean>(false);
+  const lastCompletionTimeRef = useRef<number>(0);
 
   // Request notification permission when timer starts
   useEffect(() => {
@@ -21,11 +23,27 @@ export function useBackgroundTimer() {
   // Handle timer completion notifications
   useEffect(() => {
     if (timerState === 'IDLE' && activeTask && startTime) {
-      // Timer just completed - show notification and play sound
-      showCompletionNotification();
-      playCompletionSound();
+      // Reset sound flag when timer starts
+      soundPlayedRef.current = false;
+      lastCompletionTimeRef.current = 0;
     }
   }, [timerState, activeTask, startTime]);
+
+  // Listen for Service Worker sound requests (disabled to prevent double sound)
+  // Sound is now handled only by the main timer completion in useGlobalTimer
+  // useEffect(() => {
+  //   const handleServiceWorkerMessage = (event: MessageEvent) => {
+  //     if (event.data?.type === 'PLAY_COMPLETION_SOUND') {
+  //       const { soundId } = event.data.data;
+  //       playCompletionSound(soundId);
+  //     }
+  //   };
+
+  //   navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+  //   return () => {
+  //     navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+  //   };
+  // }, []);
 
   // Cleanup background timeout on unmount
   useEffect(() => {
@@ -82,10 +100,21 @@ export function useBackgroundTimer() {
     }
   };
 
-  const playCompletionSound = async () => {
+  const playCompletionSound = async (soundId?: string) => {
     try {
-      if (settings.soundId && settings.soundId !== 'none') {
-        await playSound(settings.soundId, settings.volume);
+      // Prevent multiple sound plays within 2 seconds
+      const now = Date.now();
+      if (soundPlayedRef.current || (now - lastCompletionTimeRef.current) < 2000) {
+        console.log('🔇 Sound already played recently, skipping...');
+        return;
+      }
+
+      const targetSoundId = soundId || settings.soundId;
+      if (targetSoundId && targetSoundId !== 'none') {
+        soundPlayedRef.current = true;
+        lastCompletionTimeRef.current = now;
+        await playSound(targetSoundId, settings.volume);
+        console.log('🔊 Played completion sound:', targetSoundId);
       }
     } catch (error) {
       console.error('❌ Failed to play completion sound:', error);
@@ -100,9 +129,9 @@ export function useBackgroundTimer() {
 
     if (remainingSeconds > 0) {
       backgroundTimeoutRef.current = setTimeout(async () => {
-        // Timer completed in background
+        // Timer completed in background - only show notification
+        // Sound will be handled by Service Worker or main timer completion
         showCompletionNotification();
-        playCompletionSound();
       }, remainingSeconds * 1000);
     }
   };
