@@ -93,6 +93,19 @@ async function DashboardContent() {
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Main Quests</h3>
               </div>
             </Link> */}
+
+            {/* Work Quests Card */}
+            <Link 
+              href="/quests/work-quests"
+              className="block bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 hover:shadow-xl transition-all"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-green-100 rounded-full flex items-center justify-center mb-3">
+                  <TaskIcon />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Work Quests</h3>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
