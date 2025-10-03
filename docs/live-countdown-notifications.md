@@ -1,50 +1,54 @@
-# Live Countdown Notifications
+# Live Count Up Notifications
 
 ## Overview
 
-Live Countdown Notifications adalah fitur PWA yang menampilkan timer countdown **real-time** di notification HP. Timer di notification akan berjalan setiap detik, memberikan pengalaman yang mirip dengan aplikasi native mobile.
+Live Count Up Notifications adalah fitur PWA yang menampilkan timer count up **real-time** di notification HP. Timer di notification akan berjalan setiap detik dengan format "elapsed / total", memberikan pengalaman yang mirip dengan aplikasi native mobile.
 
 ## Features
 
-### ✅ **Real-Time Countdown**
-- Timer countdown **setiap detik** di notification
+### ✅ **Real-Time Count Up**
+- Timer count up **setiap detik** di notification
+- Format "00:05 / 25:00" (elapsed / total)
 - Update otomatis tanpa perlu buka aplikasi
-- Smooth countdown seperti di aplikasi
+- Smooth count up seperti di aplikasi
 
 ### ✅ **Smart State Management**
-- **Running**: Countdown berjalan setiap detik
-- **Paused**: Countdown berhenti, tampilkan sisa waktu
-- **Resumed**: Countdown dimulai lagi dari sisa waktu
+- **Running**: Count up berjalan setiap detik
+- **Paused**: Count up berhenti, tampilkan progress saat ini
+- **Resumed**: Count up dimulai lagi dari progress saat ini
 - **Stopped**: Notification dihapus
 
 ### ✅ **Interactive Controls**
-- **⏸️ Pause**: Pause timer + stop countdown
-- **▶️ Resume**: Resume timer + start countdown
+- **⏸️ Pause**: Pause timer + stop count up
+- **▶️ Resume**: Resume timer + start count up
 - **⏹️ Stop**: Stop timer + clear notification
 - **👁️ View**: Buka aplikasi
 
 ## Technical Implementation
 
-### 1. Service Worker Live Countdown
+### 1. Service Worker Live Count Up
 ```javascript
-// Start live countdown in notification
+// Start live count up in notification
 function startLiveCountdown(data) {
-  let secondsLeft = remainingSeconds;
+  // Calculate elapsed time (count up)
+  const elapsedSeconds = totalDuration - remainingSeconds;
+  let currentElapsed = elapsedSeconds;
   
   // Update notification every second
   countdownInterval = setInterval(() => {
-    if (secondsLeft <= 0) {
+    // Check if timer should be completed
+    if (currentElapsed >= totalDuration) {
       stopLiveCountdown();
       return;
     }
     
-    // Update notification with live countdown
+    // Update notification with live count up
     self.registration.showNotification('Timer Running ⏱️', {
-      body: `${taskTitle} - ${formatTime(secondsLeft)} remaining`,
+      body: `${taskTitle} - ${formatTime(currentElapsed)} / ${formatTime(totalDuration)}`,
       // ... other options
     });
     
-    secondsLeft--;
+    currentElapsed++;
   }, 1000);
 }
 ```
@@ -78,32 +82,32 @@ useEffect(() => {
 ### **Skenario 1: Timer Berjalan Normal**
 1. User start timer di aplikasi
 2. User minimize aplikasi
-3. **Notification muncul** dengan countdown yang berjalan
-4. **Timer countdown setiap detik** di notification
+3. **Notification muncul** dengan count up yang berjalan
+4. **Timer count up setiap detik** di notification (00:05 / 25:00)
 5. User bisa control timer dari notification
 
 ### **Skenario 2: Timer Pause/Resume**
-1. Timer berjalan di background dengan countdown
+1. Timer berjalan di background dengan count up
 2. User tap **⏸️ Pause** di notification
-3. **Countdown berhenti**, tampilkan "Timer Paused ⏸️"
+3. **Count up berhenti**, tampilkan "Timer Paused ⏸️" dengan progress saat ini
 4. User tap **▶️ Resume** di notification
-5. **Countdown dimulai lagi** dari sisa waktu
+5. **Count up dimulai lagi** dari progress saat ini
 
 ### **Skenario 3: Timer Complete**
-1. Timer countdown sampai 00:00
+1. Timer count up sampai target duration (25:00 / 25:00)
 2. **Notification completion** muncul
 3. **Suara completion** otomatis play
-4. Countdown berhenti otomatis
+4. Count up berhenti otomatis
 
 ## Performance Considerations
 
 ### **Update Frequency**
-- **Live countdown**: Setiap 1 detik (smooth)
+- **Live count up**: Setiap 1 detik (smooth)
 - **Sync updates**: Setiap 5 detik (untuk sinkronisasi)
 - **Battery friendly**: Service Worker efficient
 
 ### **Memory Management**
-- **Auto cleanup**: Countdown berhenti saat timer stop
+- **Auto cleanup**: Count up berhenti saat timer stop
 - **No memory leaks**: Proper interval cleanup
 - **Efficient updates**: Hanya update saat diperlukan
 
@@ -130,21 +134,21 @@ useEffect(() => {
 7. **Test completion** di background
 
 ### **Expected Behavior**
-- ✅ Timer countdown setiap detik di notification
-- ✅ Pause/Resume berfungsi dengan countdown
+- ✅ Timer count up setiap detik di notification (00:05 / 25:00)
+- ✅ Pause/Resume berfungsi dengan count up
 - ✅ Completion notification muncul tepat waktu
 - ✅ Suara completion otomatis play
 - ✅ No memory leaks atau performance issues
 
 ## Troubleshooting
 
-### **Countdown Tidak Berjalan**
+### **Count Up Tidak Berjalan**
 1. Cek Service Worker active
 2. Cek browser support
 3. Cek console untuk errors
 4. Cek notification permission
 
-### **Countdown Tidak Akurat**
+### **Count Up Tidak Akurat**
 1. Cek sync interval (5 detik)
 2. Cek timer state synchronization
 3. Cek background processing
@@ -158,7 +162,7 @@ useEffect(() => {
 
 ### **Planned Features**
 - **Progress bar** di notification
-- **Custom countdown sounds** per detik
+- **Custom count up sounds** per detik
 - **Rich notifications** dengan lebih banyak info
 - **Multiple timer support**
 
@@ -170,9 +174,9 @@ useEffect(() => {
 
 ## Conclusion
 
-Live Countdown Notifications memberikan pengalaman PWA yang **sangat mirip dengan aplikasi native mobile**:
+Live Count Up Notifications memberikan pengalaman PWA yang **sangat mirip dengan aplikasi native mobile**:
 
-- ✅ **Real-time countdown** setiap detik
+- ✅ **Real-time count up** setiap detik (00:05 / 25:00)
 - ✅ **Smooth user experience** tanpa lag
 - ✅ **Full control** dari notification
 - ✅ **Battery efficient** dan reliable

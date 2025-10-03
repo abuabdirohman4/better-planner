@@ -46,7 +46,7 @@ function handleTimerStarted(data) {
   
   // Show persistent notification with timer
   self.registration.showNotification('Timer Running ⏱️', {
-    body: `${taskTitle || 'Focus Session'} - ${formatTime(duration)} remaining`,
+    body: `${taskTitle || 'Focus Session'} - 00:00 / ${formatTime(duration)}`,
     icon: '/images/logo/logo-icon.svg',
     badge: '/images/logo/logo-icon.svg',
     tag: 'live-timer',
@@ -82,9 +82,12 @@ function handleTimerStarted(data) {
 function handleTimerUpdated(data) {
   const { taskTitle, remainingSeconds, totalDuration } = data;
   
+  // Calculate elapsed time for display
+  const elapsedSeconds = totalDuration - remainingSeconds;
+  
   // Update the existing notification
   self.registration.showNotification('Timer Running ⏱️', {
-    body: `${taskTitle || 'Focus Session'} - ${formatTime(remainingSeconds)} remaining`,
+    body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
     icon: '/images/logo/logo-icon.svg',
     badge: '/images/logo/logo-icon.svg',
     tag: 'live-timer',
@@ -107,6 +110,7 @@ function handleTimerUpdated(data) {
     data: {
       taskTitle,
       remainingSeconds,
+      elapsedSeconds,
       totalDuration,
       startTime: Date.now()
     }
@@ -153,14 +157,17 @@ function handleTimerCompleted(data) {
 
 // Handle timer paused
 function handleTimerPaused(data) {
-  const { taskTitle, remainingSeconds } = data;
+  const { taskTitle, remainingSeconds, totalDuration } = data;
   
   // Stop live countdown when paused
   stopLiveCountdown();
   
+  // Calculate elapsed time for display
+  const elapsedSeconds = totalDuration - remainingSeconds;
+  
   // Update notification to show paused state
   self.registration.showNotification('Timer Paused ⏸️', {
-    body: `${taskTitle || 'Focus Session'} - ${formatTime(remainingSeconds)} remaining`,
+    body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
     icon: '/images/logo/logo-icon.svg',
     badge: '/images/logo/logo-icon.svg',
     tag: 'live-timer',
@@ -183,6 +190,8 @@ function handleTimerPaused(data) {
     data: {
       taskTitle,
       remainingSeconds,
+      elapsedSeconds,
+      totalDuration,
       paused: true
     }
   });
@@ -215,18 +224,21 @@ function startLiveCountdown(data) {
     return;
   }
   
-  let secondsLeft = remainingSeconds;
+  // Calculate elapsed time (count up)
+  const elapsedSeconds = totalDuration - remainingSeconds;
+  let currentElapsed = elapsedSeconds;
   
   // Update notification every second
   countdownInterval = setInterval(() => {
-    if (secondsLeft <= 0) {
+    // Check if timer should be completed
+    if (currentElapsed >= totalDuration) {
       stopLiveCountdown();
       return;
     }
     
-    // Update notification with live countdown
+    // Update notification with live count up
     self.registration.showNotification('Timer Running ⏱️', {
-      body: `${taskTitle || 'Focus Session'} - ${formatTime(secondsLeft)} remaining`,
+      body: `${taskTitle || 'Focus Session'} - ${formatTime(currentElapsed)} / ${formatTime(totalDuration)}`,
       icon: '/images/logo/logo-icon.svg',
       badge: '/images/logo/logo-icon.svg',
       tag: 'live-timer',
@@ -248,13 +260,14 @@ function startLiveCountdown(data) {
       ],
       data: {
         taskTitle,
-        remainingSeconds: secondsLeft,
+        elapsedSeconds: currentElapsed,
+        remainingSeconds: totalDuration - currentElapsed,
         totalDuration,
         startTime: Date.now()
       }
     });
     
-    secondsLeft--;
+    currentElapsed++;
   }, 1000);
 }
 
