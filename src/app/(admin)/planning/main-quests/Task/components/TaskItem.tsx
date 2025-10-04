@@ -41,14 +41,13 @@ export default function TaskItem({
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // const [optimisticStatus, setOptimisticStatus] = useState<'TODO' | 'DONE' | null>(null);
+  const [optimisticStatus, setOptimisticStatus] = useState<'TODO' | 'DONE' | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasContent = task.title.trim().length > 0;
   
   // Use optimistic status if available, otherwise use task status
-  // const isCompleted = (optimisticStatus || task.status) === 'DONE';
-  const isCompleted = task.status === 'DONE';
+  const isCompleted = (optimisticStatus || task.status) === 'DONE';
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -79,17 +78,15 @@ export default function TaskItem({
     const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
     
     // Optimistic update - update UI immediately
-    // setOptimisticStatus(newStatus);
+    setOptimisticStatus(newStatus);
     
     try {
       await updateTaskStatus(task.id, newStatus);
-      // Clear optimistic status after successful update
-      // setOptimisticStatus(null);
-      
+      setOptimisticStatus(null);
       onTaskUpdate?.();
     } catch (error) {
       // Revert optimistic update on error
-      // setOptimisticStatus(null);
+      setOptimisticStatus(null);
       console.error('Failed to toggle task status:', error);
     }
   };
