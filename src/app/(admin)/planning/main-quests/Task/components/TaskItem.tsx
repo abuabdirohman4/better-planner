@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { updateTaskStatus } from '../../actions/taskActions';
 import Checkbox from '@/components/form/input/Checkbox';
+import { toast } from 'sonner';
 
 interface Task {
   id: string;
@@ -81,12 +82,15 @@ export default function TaskItem({
     setOptimisticStatus(newStatus);
     
     try {
-      await updateTaskStatus(task.id, newStatus);
-      // setOptimisticStatus(null);
-      onTaskUpdate?.();
+      const res = await updateTaskStatus(task.id, newStatus);
+      if (res) {
+        onTaskUpdate?.();
+        toast.success(`Task ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+      } else {
+        toast.error('Gagal update status');
+      }
     } catch (error) {
       // Revert optimistic update on error
-      // setOptimisticStatus(null);
       console.error('Failed to toggle task status:', error);
     }
   };

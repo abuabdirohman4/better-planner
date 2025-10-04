@@ -84,9 +84,9 @@ export function useSubtaskCRUD(
     try {
       const res = await updateTaskStatus(subtask.id, newStatus);
       if (res) {
-      // ✅ Always refetch on success for status changes (important for UI consistency)
-      refetchSubtasks();
-      toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+        // ✅ Always refetch on success for status changes (important for UI consistency)
+        refetchSubtasks();
+        toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
       } else {
         toast.error('Gagal update status');
       }
