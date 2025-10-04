@@ -43,9 +43,29 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+  
+  // Type-safe form data extraction
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const name = formData.get("name");
+
+  // Validation
+  if (!isNonEmptyString(email) || !isValidEmail(email)) {
+    return redirect("/signup?message=Email tidak valid");
+  }
+
+  if (!isNonEmptyString(password)) {
+    return redirect("/signup?message=Password tidak boleh kosong");
+  }
+
+  if (!isNonEmptyString(name)) {
+    return redirect("/signup?message=Nama tidak boleh kosong");
+  }
+
   const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+    email,
+    password,
+    name,
   };
   
   const result = await supabase.auth.signUp({
@@ -53,6 +73,10 @@ export async function signup(formData: FormData) {
     password: data.password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      data: {
+        full_name: data.name,
+        name: data.name,
+      },
     },
   });
 

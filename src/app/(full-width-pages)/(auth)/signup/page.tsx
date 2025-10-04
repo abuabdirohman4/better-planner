@@ -5,7 +5,7 @@ import SignUpForm from "@/components/auth/SignUpForm.server";
 
 export const metadata: Metadata = {
   title: "SignUp Page | Better Planner",
-  description: "This is SignUp Page Better Planner",
+  description: "Create your Better Planner account with name, email and password",
   // other metadata
 };
 
@@ -23,7 +23,7 @@ export default async function SignUp({ searchParams }: { searchParams?: Promise<
               Sign Up
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign up!
+              Enter your information to sign up!
             </p>
           </div>
           {/* <div>

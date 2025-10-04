@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 
 import { login } from "@/app/(full-width-pages)/(auth)/actions";
 import Label from "@/components/form/Label";
 import Spinner from "@/components/ui/spinner/Spinner";
+import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 
 export default function SignInForm() {
   const [isPending, startTransition] = useTransition();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -31,14 +33,29 @@ export default function SignInForm() {
       </div>
       <div>
         <Label>Password<span className="text-error-500">*</span></Label>
-        <input
-          name="password"
-          type="password"
-          required
-          disabled={isPending}
-          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          placeholder="Enter your password"
-        />
+        <div className="relative">
+          <input
+            name="password"
+            type={showPassword ? "text" : "password"}
+            required
+            disabled={isPending}
+            className="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            placeholder="Enter your password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            disabled={isPending}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeIcon className="w-5 h-5" />
+            ) : (
+              <EyeCloseIcon className="w-5 h-5" />
+            )}
+          </button>
+        </div>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
