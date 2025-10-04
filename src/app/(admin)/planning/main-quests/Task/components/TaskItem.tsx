@@ -82,11 +82,11 @@ export default function TaskItem({
     
     try {
       await updateTaskStatus(task.id, newStatus);
-      setOptimisticStatus(null);
+      // setOptimisticStatus(null);
       onTaskUpdate?.();
     } catch (error) {
       // Revert optimistic update on error
-      setOptimisticStatus(null);
+      // setOptimisticStatus(null);
       console.error('Failed to toggle task status:', error);
     }
   };
