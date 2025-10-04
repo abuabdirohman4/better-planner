@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
-  "theme_color": "#1496F6",
+  "theme_color": "#ffffff",
   "orientation": "portrait-primary",
   "display_override": ["window-controls-overlay"],
   "categories": [
@@ -17,28 +17,16 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/images/logo/logo-icon.png?v=2",
+      "src": "/images/logo/logo-icon.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "/images/logo/logo-icon.png?v=2",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/images/logo/logo-icon.png?v=2",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/images/logo/logo-icon.png?v=2",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "src": "/images/logo/logo-icon.svg",
+      "sizes": "512x512", 
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -49,7 +37,7 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/images/logo/logo-icon.png?v=2",
+          "src": "/images/logo/logo-icon.svg",
           "sizes": "96x96"
         }
       ]
@@ -61,7 +49,7 @@
       "url": "/planning",
       "icons": [
         {
-          "src": "/images/logo/logo-icon.png?v=2",
+          "src": "/images/logo/logo-icon.svg",
           "sizes": "96x96"
         }
       ]
@@ -73,7 +61,7 @@
       "url": "/execution",
       "icons": [
         {
-          "src": "/images/logo/logo-icon.png?v=2",
+          "src": "/images/logo/logo-icon.svg",
           "sizes": "96x96"
         }
       ]
