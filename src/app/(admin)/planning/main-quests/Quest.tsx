@@ -7,6 +7,7 @@ import { updateQuestMotivation } from './actions/questActions';
 
 import Milestone from './Milestone';
 import SubTask from './SubTask';
+import QuestProgressBar from './Quest/components/QuestProgressBar';
 import { useMilestones } from './hooks/useMainQuestsSWR';
 
 interface Task {
@@ -90,6 +91,9 @@ export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps
           : 'mx-auto lg:mx-0 lg:transform lg:translate-x-0'
       }`}>
         <ComponentCard title={quest.title} className='' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
+          {/* Quest Progress Bar */}
+          <QuestProgressBar questId={quest.id}/>
+          
           <label className='block mb-2 font-semibold'>Motivasi terbesar saya untuk mencapai Goal ini :</label>
           <textarea
             className="border rounded mb-0 px-2 py-1 text-sm w-full"

@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { updateTaskStatus } from '../../actions/taskActions';
+import Checkbox from '@/components/form/input/Checkbox';
 
 interface Task {
   id: string;
@@ -36,17 +38,22 @@ export default function TaskItem({
   const [editValue, setEditValue] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const editInputRef = useRef<HTMLInputElement | null>(null);
+
+  const hasContent = task.title.trim().length > 0;
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setEditValue(newValue);
     setHasChanges(newValue.trim() !== task.title);
+    setIsEditing(true);
   };
 
   const handleSave = async () => {
     if (editValue.trim() === task.title) {
       setHasChanges(false);
+      setIsEditing(false);
       return; // No changes
     }
     
@@ -54,9 +61,43 @@ export default function TaskItem({
     try {
       await onEdit(task.id, editValue.trim());
       setHasChanges(false);
+      setIsEditing(false);
     } catch (error) {
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleStatusTask = async (task: Task) => {
+    try {
+      const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
+      await updateTaskStatus(task.id, newStatus);
+    } catch (error) {
+      console.error('Failed to toggle task status:', error);
+    // } finally {
+    }
+  }
+
+  const handleInputFocus = () => {
+    setIsEditing(true);
+    onOpenSubtask?.();
+  };
+
+  const handleInputBlur = () => {
+    if (hasChanges) {
+      handleSave();
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const handleTextClick = () => {
+    if (hasContent) {
+      setIsEditing(true);
+      // Focus the input after a short delay to ensure it's rendered
+      setTimeout(() => {
+        editInputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -72,71 +113,82 @@ export default function TaskItem({
     >
       <div className='flex gap-2 w-full items-center mr-2'>
         {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
-        <input
-          className="border rounded px-2 py-1 text-sm w-full bg-white dark:bg-gray-900 font-medium focus:outline-none transition-all"
-          value={editValue}
-          onChange={handleEditChange}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSave();
-            } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              if (canNavigateUp && onNavigateUp) {
-                onNavigateUp();
-              }
-            } else if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              if (canNavigateDown && onNavigateDown) {
-                onNavigateDown();
-              }
-            }
-          }}
-          onBlur={() => {
-            if (hasChanges) {
-              handleSave();
-            }
-          }}
-          onClick={e => {
-            e.stopPropagation();
-            onOpenSubtask?.();
-          }}
-          onFocus={() => {
-            onOpenSubtask?.();
-          }}
-          ref={editInputRef}
-          data-task-idx={orderNumber ? orderNumber - 1 : 0}
-          placeholder=""
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSave();
-          }}
-          disabled={!hasChanges || isSaving}
-          className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
-          title="Klik untuk menyimpan atau tekan Enter"
-        >
-          {isSaving ? (
-            <>
-              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-              </svg>
-              Editing...
-            </>
-          ) : (
-            <>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </>
-          )}
-        </button>
+        
+        {hasContent && !isEditing ? (
+          <div className="flex items-center justify-between w-full gap-2">
+            <span 
+              className="border rounded px-2 py-1 text-sm flex-1 bg-white dark:bg-gray-900 font-medium cursor-text focus:outline-none transition-all"
+              onClick={handleTextClick}
+            >
+              {task.title}
+            </span>
+            <Checkbox checked={task.status === 'DONE'} onChange={() => handleStatusTask(task)} />
+          </div>
+        ) : (
+          <div className="flex items-center w-full gap-2">
+            <input
+              className="border rounded px-2 py-1 text-sm flex-1 bg-white dark:bg-gray-900 font-medium focus:outline-none transition-all"
+              value={editValue}
+              onChange={handleEditChange}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave();
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  if (canNavigateUp && onNavigateUp) {
+                    onNavigateUp();
+                  }
+                } else if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  if (canNavigateDown && onNavigateDown) {
+                    onNavigateDown();
+                  }
+                }
+              }}
+              onBlur={handleInputBlur}
+              onClick={e => {
+                e.stopPropagation();
+                onOpenSubtask?.();
+              }}
+              onFocus={handleInputFocus}
+              ref={editInputRef}
+              data-task-idx={orderNumber ? orderNumber - 1 : 0}
+              placeholder=""
+            />
+            {isEditing && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSave();
+                  }}
+                  disabled={!hasChanges || isSaving}
+                  className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
+                  title="Klik untuk menyimpan atau tekan Enter"
+                >
+                  {isSaving ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Editing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
