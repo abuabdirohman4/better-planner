@@ -20,20 +20,20 @@ function PageTitle() {
     switch (path) {
       case '/dashboard':
         return 'Dashboard';
+      case '/execution/daily-sync':
+        return 'Daily Sync';
+      case '/execution/weekly-sync':
+        return 'Weekly Sync';
       case '/planning/vision':
         return 'Vision';
       case '/planning/12-week-quests':
         return '12 Week Quests';
       case '/planning/main-quests':
         return 'Main Quests';
-      case '/execution/daily-sync':
-        return 'Daily Sync';
-      case '/execution/weekly-sync':
-        return 'Weekly Sync';
+      case '/quests/work-quests':
+        return 'Work Quests';
       case '/analytics':
         return 'Analytics';
-      case '/work-quests':
-        return 'Work Quests';
       default:
         return 'Better Planner';
     }

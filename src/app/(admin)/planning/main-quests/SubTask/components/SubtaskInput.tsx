@@ -93,7 +93,6 @@ export default function SubtaskInput({
 
   return (
     <div className="flex items-center gap-2 w-full">
-      <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
       <input
         className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${subtask.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
         value={draftTitle}
@@ -139,6 +138,7 @@ export default function SubtaskInput({
         }}
         ref={inputRef}
       />
+      <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
     </div>
   );
 }

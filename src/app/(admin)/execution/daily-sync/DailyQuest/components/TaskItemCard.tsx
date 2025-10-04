@@ -102,30 +102,30 @@ const TaskItemCard = ({
         <div className="flex items-center space-x-2">
           {/* Dropdown untuk durasi fokus */}
           <div className="relative">
-                 <select
-                       value={optimisticFocusDuration || item.focus_duration || 25}
-                       onChange={async (e) => {
-                         const newDuration = parseInt(e.target.value);
-                         
-                         // Optimistic update - update UI immediately
-                         setOptimisticFocusDuration(newDuration);
-                         
-                         try {
-                           await onFocusDurationChange(item.id, newDuration);
-                           
-                           // Clear optimistic state after successful update
-                           setOptimisticFocusDuration(null);
-                         } catch (error) {
-                           // Revert optimistic update on error
-                           setOptimisticFocusDuration(null);
-                           console.error('Error updating focus duration:', error);
-                         }
-                       }}
-                  className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
-                    isVisuallyDisabled
-                      ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+            <select
+              value={optimisticFocusDuration || item.focus_duration || 25}
+              onChange={async (e) => {
+                const newDuration = parseInt(e.target.value);
+                
+                // Optimistic update - update UI immediately
+                setOptimisticFocusDuration(newDuration);
+                
+                try {
+                  await onFocusDurationChange(item.id, newDuration);
+                  
+                  // Clear optimistic state after successful update
+                  setOptimisticFocusDuration(null);
+                } catch (error) {
+                  // Revert optimistic update on error
+                  setOptimisticFocusDuration(null);
+                  console.error('Error updating focus duration:', error);
+                }
+              }}
+              className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
+                isVisuallyDisabled
+                  ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {/* Testing option - only show in development */}
               {process.env.NODE_ENV === 'development' && (
