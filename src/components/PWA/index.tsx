@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -230,10 +231,14 @@ export default function PWAComponents() {
       {showInstallPrompt && !isLandingPage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
           <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="w-12 h-12 bg-gradient-to-r from-brand-400 to-brand-500 rounded-xl flex items-center justify-center">
+              <Image
+                  src="/images/logo/logo-icon.svg"
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  priority
+                />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Install Better Planner</h3>
@@ -243,7 +248,7 @@ export default function PWAComponents() {
           <div className="flex space-x-2">
             <button 
               onClick={handleInstallClick} 
-              className="flex-1 bg-blue-600 text-white text-sm font-medium py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 bg-brand-500 text-white text-sm font-medium py-2.5 px-4 rounded-lg hover:bg-brand-600 transition-colors"
             >
               Install
             </button>
