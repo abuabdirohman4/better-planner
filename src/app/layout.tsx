@@ -31,11 +31,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
-      { url: "/images/logo/logo-icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/images/logo/logo-icon.png?v=2", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.png?v=2", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.png?v=2", sizes: "192x192", type: "image/png" },
     ],
   },
   other: {
@@ -50,7 +50,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#ffffff",
+  themeColor: "#1496F6",
 };
 
 export default function RootLayout({
