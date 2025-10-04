@@ -37,13 +37,13 @@ export default function PWAComponents() {
         });
 
       // Register live timer service worker
-      navigator.serviceWorker.register('/sw-timer-live.js')
-        .then((registration) => {
-          console.log('🔧 Live Timer Service Worker registered:', registration);
-        })
-        .catch((error) => {
-          console.error('❌ Live Timer Service Worker registration failed:', error);
-        });
+      // navigator.serviceWorker.register('/sw-timer-live.js')
+      //   .then((registration) => {
+      //     console.log('🔧 Live Timer Service Worker registered:', registration);
+      //   })
+      //   .catch((error) => {
+      //     console.error('❌ Live Timer Service Worker registration failed:', error);
+      //   });
     }
 
     // Install prompt handler
