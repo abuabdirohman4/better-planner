@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -13,10 +14,14 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function PWAComponents() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
+
+  // Check if we're on the landing page or auth pages
+  const isLandingPage = pathname === '/' || pathname.startsWith('/(full-width-pages)');
 
   useEffect(() => {
     // Register Service Workers for timer notifications
@@ -46,10 +51,13 @@ export default function PWAComponents() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show install prompt after delay
-      setTimeout(() => {
-        setShowInstallPrompt(true);
-      }, 3000);
+      // Only show install prompt if not on landing page
+      if (!isLandingPage) {
+        // Show install prompt after delay
+        setTimeout(() => {
+          setShowInstallPrompt(true);
+        }, 3000);
+      }
     };
 
     // Offline/Online handlers
@@ -185,8 +193,8 @@ export default function PWAComponents() {
     setShowUpdatePrompt(false);
   };
 
-  // Don't show if dismissed this session
-  if (typeof window !== 'undefined' && sessionStorage.getItem('pwa-install-dismissed') === 'true' && showInstallPrompt) {
+  // Don't show if dismissed this session or on landing page
+  if (typeof window !== 'undefined' && (sessionStorage.getItem('pwa-install-dismissed') === 'true' || isLandingPage) && showInstallPrompt) {
     setShowInstallPrompt(false);
   }
 
@@ -200,7 +208,7 @@ export default function PWAComponents() {
       )}
 
       {/* Update Available */}
-      {showUpdatePrompt && (
+      {/* {showUpdatePrompt && (
         <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 px-4 z-50">
           🔄 New version available
           <button 
@@ -216,10 +224,10 @@ export default function PWAComponents() {
             ✕
           </button>
         </div>
-      )}
+      )} */}
 
-      {/* Install Prompt */}
-      {showInstallPrompt && (
+      {/* Install Prompt - Only show on authenticated pages */}
+      {showInstallPrompt && !isLandingPage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
