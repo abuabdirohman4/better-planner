@@ -97,7 +97,7 @@ export default function PomodoroTimer() {
   useBackgroundTimer();
   
   // Initialize live timer notifications for PWA
-  // useLiveTimerNotification();
+  useLiveTimerNotification();
   
   // ✅ DEV CONTROL: Check if timer is disabled in development
   const timerDisabled = isTimerDisabled();

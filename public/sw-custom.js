@@ -1,17 +1,18 @@
-// Service Worker for live timer notifications
-// Shows running timer in notification when app is minimized
+// Custom Service Worker for Better Planner
+// Extends PWA functionality with timer notifications
 
-const CACHE_NAME = 'timer-live-notifications-v1';
+const CACHE_NAME = 'better-planner-v1';
+const TIMER_CACHE_NAME = 'timer-notifications-v1';
 
 // Install event
 self.addEventListener('install', (event) => {
-  console.log('🔧 Live Timer Service Worker installed');
+  console.log('🔧 Better Planner Service Worker installed');
   self.skipWaiting();
 });
 
 // Activate event
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Live Timer Service Worker activated');
+  console.log('🚀 Better Planner Service Worker activated');
   event.waitUntil(self.clients.claim());
 });
 
@@ -20,14 +21,14 @@ self.addEventListener('message', (event) => {
   const { type, data } = event.data;
   
   switch (type) {
+    case 'TIMER_COMPLETED':
+      handleTimerCompletion(data);
+      break;
     case 'TIMER_STARTED':
       handleTimerStarted(data);
       break;
     case 'TIMER_UPDATED':
       handleTimerUpdated(data);
-      break;
-    case 'TIMER_COMPLETED':
-      handleTimerCompleted(data);
       break;
     case 'TIMER_PAUSED':
       handleTimerPaused(data);
@@ -35,10 +36,45 @@ self.addEventListener('message', (event) => {
     case 'TIMER_STOPPED':
       handleTimerStopped();
       break;
+    case 'REQUEST_NOTIFICATION_PERMISSION':
+      requestNotificationPermission();
+      break;
     default:
       console.log('Unknown message type:', type);
   }
 });
+
+// Handle timer completion
+function handleTimerCompletion(data) {
+  const { taskTitle, soundId } = data;
+  
+  // Show notification
+  self.registration.showNotification('Timer Completed! 🎉', {
+    body: `Your ${taskTitle || 'focus session'} is complete!`,
+    icon: '/images/logo/logo-icon.svg',
+    badge: '/images/logo/logo-icon.svg',
+    tag: 'timer-completion',
+    requireInteraction: true,
+    actions: [
+      {
+        action: 'view',
+        title: 'View Results'
+      }
+    ]
+  });
+
+  // Play completion sound
+  if (soundId && soundId !== 'none') {
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'PLAY_COMPLETION_SOUND',
+          data: { soundId }
+        });
+      });
+    });
+  }
+}
 
 // Handle timer started
 function handleTimerStarted(data) {
@@ -120,41 +156,6 @@ function handleTimerUpdated(data) {
   startLiveCountdown(data);
 }
 
-// Handle timer completed
-function handleTimerCompleted(data) {
-  const { taskTitle, soundId } = data;
-  
-  // Show completion notification
-  self.registration.showNotification('Timer Completed! 🎉', {
-    body: `${taskTitle || 'Focus Session'} is complete!`,
-    icon: '/images/logo/logo-icon.svg',
-    badge: '/images/logo/logo-icon.svg',
-    tag: 'timer-completion',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'view',
-        title: 'View Results'
-      }
-    ],
-    data: {
-      url: '/execution/daily-sync'
-    }
-  });
-  
-  // Play completion sound
-  if (soundId && soundId !== 'none') {
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'PLAY_COMPLETION_SOUND',
-          data: { soundId }
-        });
-      });
-    });
-  }
-}
-
 // Handle timer paused
 function handleTimerPaused(data) {
   const { taskTitle, remainingSeconds, totalDuration } = data;
@@ -205,6 +206,19 @@ function handleTimerStopped() {
   // Clear the live timer notification
   self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
     notifications.forEach(notification => notification.close());
+  });
+}
+
+// Request notification permission
+function requestNotificationPermission() {
+  // Service Workers can't request permission directly
+  // The main thread must handle this
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'REQUEST_NOTIFICATION_PERMISSION'
+      });
+    });
   });
 }
 
@@ -359,3 +373,8 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// Cache management
+self.addEventListener('fetch', (event) => {
+  // Let the browser handle the request normally
+  // This is just a placeholder for future caching strategies
+});

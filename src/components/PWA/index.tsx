@@ -25,25 +25,29 @@ export default function PWAComponents() {
   const isLandingPage = pathname === '/' || pathname.startsWith('/(full-width-pages)');
 
   useEffect(() => {
-    // Register Service Workers for timer notifications
+    // Register main PWA Service Worker (handles both PWA and timer functionality)
     if ('serviceWorker' in navigator) {
-      // Register basic timer service worker
-      navigator.serviceWorker.register('/sw-timer.js')
+      // Register custom service worker with integrated timer functionality
+      navigator.serviceWorker.register('/sw-custom.js')
         .then((registration) => {
-          console.log('🔧 Timer Service Worker registered:', registration);
+          console.log('🔧 Main Service Worker registered:', registration);
+          
+          // Check for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker is available
+                  setShowUpdatePrompt(true);
+                }
+              });
+            }
+          });
         })
         .catch((error) => {
-          console.error('❌ Timer Service Worker registration failed:', error);
+          console.error('❌ Service Worker registration failed:', error);
         });
-
-      // Register live timer service worker
-      // navigator.serviceWorker.register('/sw-timer-live.js')
-      //   .then((registration) => {
-      //     console.log('🔧 Live Timer Service Worker registered:', registration);
-      //   })
-      //   .catch((error) => {
-      //     console.error('❌ Live Timer Service Worker registration failed:', error);
-      //   });
     }
 
     // Install prompt handler
@@ -209,7 +213,7 @@ export default function PWAComponents() {
       )}
 
       {/* Update Available */}
-      {/* {showUpdatePrompt && (
+      {showUpdatePrompt && (
         <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 px-4 z-50">
           🔄 New version available
           <button 
@@ -225,7 +229,7 @@ export default function PWAComponents() {
             ✕
           </button>
         </div>
-      )} */}
+      )}
 
       {/* Install Prompt - Only show on authenticated pages */}
       {showInstallPrompt && !isLandingPage && (

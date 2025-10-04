@@ -11,6 +11,7 @@ export async function middleware(request: NextRequest) {
       pathname === '/manifest.json' ||
       pathname === '/sw.js' ||
       pathname === '/sw-dev.js' ||
+      pathname === '/sw-custom.js' ||
       pathname.startsWith('/_next/') ||
       pathname.startsWith('/images/') ||
       pathname === '/favicon.ico'
@@ -56,8 +57,9 @@ export const config = {
      * - manifest.json (PWA manifest)
      * - sw.js (service worker)
      * - sw-dev.js (development service worker)
+     * - sw-custom.js (custom service worker)
      * - workbox-*.js (workbox files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|images/|manifest\.json|sw\.js|sw-dev\.js|workbox-).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images/|manifest\.json|sw\.js|sw-dev\.js|sw-custom\.js|workbox-).*)',
   ],
 } 

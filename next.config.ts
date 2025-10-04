@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
 
 const pwaConfig = withPWA({
   dest: "public",
-  register: true,
+  register: false, // Disable automatic registration - we handle it manually
   skipWaiting: true,
   disable: process.env.NODE_ENV === "development", // Disable in development to avoid GenerateSW warnings
   buildExcludes: [/middleware-manifest\.json$/],
