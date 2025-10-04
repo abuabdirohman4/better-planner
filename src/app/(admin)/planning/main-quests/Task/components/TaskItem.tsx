@@ -129,12 +129,12 @@ export default function TaskItem({
       }}
     >
       <div className='flex gap-2 w-full items-center mr-2'>
-        {orderNumber ? <span className="font-medium text-lg w-6 text-center select-none">{orderNumber}.</span> : null}
+        {orderNumber ? <span className={`font-medium text-lg w-6 text-center select-none ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}>{orderNumber}.</span> : null}
         
         {hasContent && !isEditing ? (
           <div className="flex items-center justify-between w-full gap-2">
             <span 
-              className="border rounded px-2 py-1 text-sm flex-1 bg-white dark:bg-gray-900 font-medium cursor-text focus:outline-none transition-all"
+              className={`border rounded px-2 py-1 text-sm flex-1 bg-white dark:bg-gray-900 font-medium cursor-text focus:outline-none transition-all ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}
               onClick={handleTextClick}
             >
               {task.title}
