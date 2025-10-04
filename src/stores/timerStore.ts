@@ -3,6 +3,11 @@ import { persist } from 'zustand/middleware';
 import { playTimerCompleteSound, playSound, stopCurrentSound, playFocusSoundLoop } from '@/lib/soundUtils';
 import { useSoundStore } from './soundStore';
 
+// Global completion lock to prevent multiple completions
+let completionInProgress = false;
+let lastCompletedTaskId: string | null = null;
+let lastCompletionTime = 0;
+
 export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
 
 export interface Task {
@@ -269,33 +274,54 @@ export const useTimerStore = create<TimerStoreState>()(
       },
 
       completeTimerFromDatabase: async (sessionData) => {
-        // Stop focus sound when completing timer from database
-        get().stopFocusSound();
+        const now = Date.now();
         
-        // ✅ FIX: Play completion sound when timer completes from database
+        // ✅ FIX: Prevent multiple completions for the same task
+        if (completionInProgress || 
+            (lastCompletedTaskId === sessionData.taskId && (now - lastCompletionTime) < 5000)) {
+          console.log('🔇 Timer completion already in progress or recently completed, skipping...');
+          return;
+        }
+        
+        // Set completion lock
+        completionInProgress = true;
+        lastCompletedTaskId = sessionData.taskId;
+        lastCompletionTime = now;
+        
         try {
-          // Load fresh settings from server to ensure we have the latest sound settings
-          const { getSoundSettings } = await import('@/app/(admin)/settings/profile/actions/userProfileActions');
-          const serverSettings = await getSoundSettings();
-          if (serverSettings.soundId !== 'none') {
-            console.log('playTimerCompleteSound 1');
-            await playTimerCompleteSound(
-              serverSettings.soundId,
-              serverSettings.volume,
-              sessionData.taskTitle
-            );
+          // Stop focus sound when completing timer from database
+          get().stopFocusSound();
+          
+          // ✅ FIX: Play completion sound when timer completes from database
+          try {
+            // Load fresh settings from server to ensure we have the latest sound settings
+            const { getSoundSettings } = await import('@/app/(admin)/settings/profile/actions/userProfileActions');
+            const serverSettings = await getSoundSettings();
+            if (serverSettings.soundId !== 'none') {
+              console.log('playTimerCompleteSound 1');
+              await playTimerCompleteSound(
+                serverSettings.soundId,
+                serverSettings.volume,
+                sessionData.taskTitle
+              );
+            }
+          } catch (error) {
+            console.error('🎵 Error playing timer completion sound:', error);
+            // Fallback to local settings
+            const soundSettings = useSoundStore.getState().settings;
+            if (soundSettings.soundId !== 'none') {
+              await playTimerCompleteSound(
+                soundSettings.soundId,
+                soundSettings.volume,
+                sessionData.taskTitle
+              ).catch(console.error);
+            }
           }
-        } catch (error) {
-          console.error('🎵 Error playing timer completion sound:', error);
-          // Fallback to local settings
-          const soundSettings = useSoundStore.getState().settings;
-          if (soundSettings.soundId !== 'none') {
-            await playTimerCompleteSound(
-              soundSettings.soundId,
-              soundSettings.volume,
-              sessionData.taskTitle
-            ).catch(console.error);
-          }
+        } finally {
+          // Release completion lock after 3 seconds
+          setTimeout(() => {
+            completionInProgress = false;
+          }, 3000);
         }
         
         set({

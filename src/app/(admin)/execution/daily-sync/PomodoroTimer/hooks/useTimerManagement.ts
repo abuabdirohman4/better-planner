@@ -70,9 +70,23 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
             if (activeSession) {
               // Get client device ID
               const deviceId = getClientDeviceId();
+              
+              // ✅ FIX: Add completion lock to prevent multiple database completions
+              const completionKey = `${sessionData.taskId}-${sessionData.startTime}`;
+              const lastCompletion = sessionStorage.getItem(`completion-${completionKey}`);
+              const now = Date.now();
+              
+              if (lastCompletion && (now - parseInt(lastCompletion)) < 5000) {
+                console.log('🔇 Database completion already processed recently, skipping...');
+                return;
+              }
+              
               // Complete the timer session (this will create activity log and mark session as completed)
               await completeTimerSession(activeSession.id, deviceId);
               console.log('✅ Timer session completed successfully');
+              
+              // Mark completion in sessionStorage
+              sessionStorage.setItem(`completion-${completionKey}`, now.toString());
               
               // ✅ FIX: Get the activity log ID after creation
               const supabase = await createClient();
