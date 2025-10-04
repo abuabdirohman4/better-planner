@@ -229,7 +229,7 @@ export default function PWAComponents() {
 
       {/* Install Prompt - Only show on authenticated pages */}
       {showInstallPrompt && !isLandingPage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-99">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-brand-400 to-brand-500 rounded-xl flex items-center justify-center">
               <Image
