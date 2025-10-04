@@ -21,6 +21,7 @@ interface TaskItemProps {
   canNavigateDown?: boolean;
   onEdit: (taskId: string, newTitle: string) => void;
   onClearActiveTaskIdx?: () => void;
+  onTaskUpdate?: () => void; // Optional callback for SWR refresh
 }
 
 export default function TaskItem({ 
@@ -33,15 +34,21 @@ export default function TaskItem({
   canNavigateUp = true, 
   canNavigateDown = true,
   onEdit,
-  onClearActiveTaskIdx
+  onClearActiveTaskIdx,
+  onTaskUpdate
 }: TaskItemProps) {
   const [editValue, setEditValue] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  // const [optimisticStatus, setOptimisticStatus] = useState<'TODO' | 'DONE' | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasContent = task.title.trim().length > 0;
+  
+  // Use optimistic status if available, otherwise use task status
+  // const isCompleted = (optimisticStatus || task.status) === 'DONE';
+  const isCompleted = task.status === 'DONE';
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -68,15 +75,24 @@ export default function TaskItem({
     }
   };
 
-  const handleStatusTask = async (task: Task) => {
+  const handleStatusTask = async () => {
+    const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
+    
+    // Optimistic update - update UI immediately
+    // setOptimisticStatus(newStatus);
+    
     try {
-      const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
       await updateTaskStatus(task.id, newStatus);
+      // Clear optimistic status after successful update
+      // setOptimisticStatus(null);
+      
+      onTaskUpdate?.();
     } catch (error) {
+      // Revert optimistic update on error
+      // setOptimisticStatus(null);
       console.error('Failed to toggle task status:', error);
-    // } finally {
     }
-  }
+  };
 
   const handleInputFocus = () => {
     setIsEditing(true);
@@ -122,7 +138,7 @@ export default function TaskItem({
             >
               {task.title}
             </span>
-            <Checkbox checked={task.status === 'DONE'} onChange={() => handleStatusTask(task)} />
+            <Checkbox checked={isCompleted} onChange={handleStatusTask} />
           </div>
         ) : (
           <div className="flex items-center w-full gap-2">

@@ -121,6 +121,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
                   canNavigateDown={idx < 2}
                   onEdit={handleTaskEdit}
                   onClearActiveTaskIdx={() => setActiveTaskIdx(-1)}
+                  onTaskUpdate={refetchTasks}
                 />
               );
             } else {
