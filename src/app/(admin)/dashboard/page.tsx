@@ -29,11 +29,11 @@ async function DashboardContent() {
         <div className="col-span-12">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {/* <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Dashboard
-              </h1>
+              </h1> */}
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Welcome back, {user?.email}
+                Welcome Back
               </p>
             </div>
           </div>
