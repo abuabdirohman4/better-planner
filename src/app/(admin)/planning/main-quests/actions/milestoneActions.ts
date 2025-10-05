@@ -21,7 +21,7 @@ export async function getMilestonesForQuest(questId: string) {
   
   const { data, error } = await supabase
     .from('milestones')
-    .select('id, title, display_order')
+    .select('id, title, display_order, status')
     .eq('quest_id', questId)
     .order('display_order', { ascending: true });
   
@@ -75,8 +75,8 @@ export async function addMilestone(formData: FormData) {
   
   const { data, error } = await supabase
     .from('milestones')
-    .insert({ quest_id, title, display_order: order })
-    .select('id, title, display_order')
+    .insert({ quest_id, title, display_order: order, status: 'TODO' })
+    .select('id, title, display_order, status')
     .single();
     
   if (error) {
@@ -97,6 +97,18 @@ export async function updateMilestone(milestoneId: string, title: string) {
   if (error) throw new Error('Gagal update milestone: ' + (error.message || ''));
   revalidatePath('/planning/main-quests');
   return { message: 'Milestone berhasil diupdate!' };
+}
+
+// Update milestone status
+export async function updateMilestoneStatus(milestoneId: string, newStatus: 'TODO' | 'DONE') {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('milestones')
+    .update({ status: newStatus })
+    .eq('id', milestoneId);
+  if (error) throw new Error('Gagal update status milestone: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Status milestone berhasil diupdate!' };
 }
 
 // Hapus milestone

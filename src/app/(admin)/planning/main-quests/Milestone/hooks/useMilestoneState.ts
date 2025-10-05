@@ -5,6 +5,7 @@ interface Milestone {
   id: string;
   title: string;
   display_order: number;
+  status?: 'TODO' | 'DONE';
 }
 
 export function useMilestoneState(questId: string) {

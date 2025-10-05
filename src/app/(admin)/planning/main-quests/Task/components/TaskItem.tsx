@@ -120,7 +120,7 @@ export default function TaskItem({
 
   return (
     <div 
-      className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${
+      className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 px-2 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${
         active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
       }`}
       onClick={() => {

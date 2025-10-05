@@ -4,7 +4,8 @@ import { useMilestones } from './hooks/useMainQuestsSWR';
 import MilestoneBar from './Milestone/components/MilestoneBar';
 import Task from './Task';
 import { TaskItemSkeleton, MilestoneItemSkeleton } from '@/components/ui/skeleton';
-import { addMilestone, updateMilestone } from './actions/milestoneActions';
+import { addMilestone, updateMilestone, updateMilestoneStatus } from './actions/milestoneActions';
+import { toast } from 'sonner';
 
 interface Task {
   id: string;
@@ -16,6 +17,7 @@ interface Milestone {
   id: string;
   title: string;
   display_order: number;
+  status?: 'TODO' | 'DONE';
 }
 
 interface MilestoneProps {
@@ -42,8 +44,14 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
   const [milestoneChanges, setMilestoneChanges] = React.useState<Record<string, boolean>>({});
   const [activeMilestoneIdx, setActiveMilestoneIdx] = React.useState(0);
 
+  // Clear active milestone callback
+  // const handleClearActiveMilestone = React.useCallback(() => {
+  //   // Clear any active editing states
+  //   setActiveMilestoneIdx(-1);
+  // }, []);
+
   // Import milestone actions for editing
-  const { handleSaveNewMilestone, handleSaveMilestone, handleMilestoneChange } = React.useMemo(() => {
+  const { handleSaveNewMilestone, handleSaveMilestone, handleMilestoneChange, handleMilestoneStatusToggle } = React.useMemo(() => {
     return {
       handleSaveNewMilestone: async (idx: number) => {
         const val = newMilestoneInputs[idx];
@@ -88,6 +96,17 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
       handleMilestoneChange: (id: string, newTitle: string) => {
         setMilestoneChanges(prev => ({ ...prev, [id]: true }));
       },
+      handleMilestoneStatusToggle: async (id: string, currentStatus: 'TODO' | 'DONE') => {
+        const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
+        try {
+          await updateMilestoneStatus(id, newStatus);
+          refetchMilestones();
+          toast.success(`Milestone ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+        } catch (error) {
+          console.error('Failed to toggle milestone status:', error);
+          toast.error('Gagal update status milestone');
+        }
+      },
     };
   }, [questId, newMilestoneInputs, refetchMilestones]);
 
@@ -110,6 +129,8 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
           handleSaveNewMilestone={handleSaveNewMilestone}
           handleSaveMilestone={handleSaveMilestone}
           handleMilestoneChange={handleMilestoneChange}
+          onStatusToggle={handleMilestoneStatusToggle}
+          onClearActiveMilestoneIdx={() => setActiveMilestoneIdx(-1)}
         />
       )}
       

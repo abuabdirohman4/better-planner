@@ -5,6 +5,7 @@ interface Milestone {
   id: string;
   title: string;
   display_order: number;
+  status?: 'TODO' | 'DONE';
 }
 
 interface MilestoneBarProps {
@@ -19,6 +20,8 @@ interface MilestoneBarProps {
   handleSaveNewMilestone: (idx: number) => void;
   handleSaveMilestone: (id: string, val: string) => void;
   handleMilestoneChange: (id: string, newTitle: string) => void;
+  onStatusToggle?: (id: string, currentStatus: 'TODO' | 'DONE') => void;
+  onClearActiveMilestoneIdx?: () => void;
 }
 
 export default function MilestoneBar({
@@ -33,6 +36,8 @@ export default function MilestoneBar({
   handleSaveNewMilestone,
   handleSaveMilestone,
   handleMilestoneChange,
+  onStatusToggle,
+  onClearActiveMilestoneIdx,
 }: MilestoneBarProps) {
   return (
     <div className="flex flex-col gap-4 justify-center mb-6">
@@ -55,6 +60,8 @@ export default function MilestoneBar({
             handleSaveNewMilestone={handleSaveNewMilestone}
             handleSaveMilestone={handleSaveMilestone}
             handleMilestoneChange={handleMilestoneChange}
+            onStatusToggle={onStatusToggle}
+            onClearActiveMilestoneIdx={onClearActiveMilestoneIdx}
           />
         );
       })}
