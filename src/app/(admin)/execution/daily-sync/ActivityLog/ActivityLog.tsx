@@ -2,28 +2,11 @@
 import React, { useEffect, useState } from 'react';
 
 import { useActivityStore } from '@/stores/activityStore';
-
-import { getTodayActivityLogs } from './actions/activityLoggingActions';
+import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
 
 interface ActivityLogProps {
   date: string;
   refreshKey?: number;
-}
-
-interface ActivityLogItem {
-  id: string;
-  type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK' | 'BREAK';
-  task_id?: string;
-  task_title?: string | null;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  milestone_id?: string;
-  milestone_title?: string | null;
-  quest_id?: string;
-  quest_title?: string | null;
-  what_done?: string | null;
-  what_think?: string | null;
 }
 
 const ICONS = {
@@ -164,11 +147,16 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 };
 
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
-  const [logs, setLogs] = useState<ActivityLogItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dynamicHeight, setDynamicHeight] = useState('');
 
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
+  
+  // ✅ Use SWR for data fetching instead of manual useEffect
+  const { logs, isLoading: loading, error } = useActivityLogs({
+    date,
+    refreshKey,
+    lastActivityTimestamp,
+  });
   
   // Calculate dynamic height based on Main Quest + Side Quest + Pomodoro Timer heights
   useEffect(() => {
@@ -209,13 +197,6 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
     
     return () => window.removeEventListener('resize', calculateHeight);
   }, [date]); // Recalculate when date changes
-  
-  useEffect(() => {
-    setLoading(true);
-    getTodayActivityLogs(date)
-      .then((data) => setLogs(data))
-      .finally(() => setLoading(false));
-  }, [date, refreshKey, lastActivityTimestamp]);
 
   // Group logs by task_id
   const grouped = logs.reduce((acc, log) => {
@@ -232,17 +213,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
     return acc;
   }, {} as Record<string, { title: string; sessions: ActivityLogItem[]; totalMinutes: number }>);
   const summary = Object.values(grouped);
-
-  // Helper format waktu - convert UTC to local time
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString('id-ID', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-  };
+  
   const formatTotal = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
@@ -283,13 +254,17 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-red-500 dark:text-red-400 text-center py-8">
+            Error loading activity logs: {error}
+          </div>
         ) : summary.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 text-center py-8">
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (
           <div className="space-y-4">
-            {summary.map((item) => (
+            {summary.map((item: { title: string; sessions: ActivityLogItem[]; totalMinutes: number }) => (
               <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
                 <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
                 <div className="flex items-center gap-2 mb-2">
@@ -299,7 +274,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
                   <span className="text-xs text-gray-500 dark:text-gray-300">({formatTotal(item.totalMinutes)})</span>
                 </div>
                 <div className="space-y-1 ml-2">
-                  {item.sessions.map((log) => (
+                  {item.sessions.map((log: ActivityLogItem) => (
                     <CollapsibleLogItem key={log.id} log={log} />
                   ))}
                 </div>
