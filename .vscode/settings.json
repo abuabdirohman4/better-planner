@@ -6,5 +6,7 @@
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
         ".yoyo": true
-    }
-}
+    },
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+},

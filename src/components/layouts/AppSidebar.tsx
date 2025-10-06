@@ -297,6 +297,7 @@ function MenuItem({
       <li key={nav.name || index}>
         <Link
           href={nav.path}
+          prefetch={true}
           className={`menu-item group ${
             isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
           }`}

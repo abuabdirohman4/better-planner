@@ -30,17 +30,17 @@ export function useWeeklySync(year: number, quarter: number, weekNumber: number,
     swrKey,
     () => getWeeklySync(year, quarter, weekNumber, startDate, endDate),
     {
-      // 🚀 FIXED: More responsive caching like Main Quests
-      revalidateOnFocus: true,
+      // 🚀 OPTIMIZED: Faster loading for better UX
+      revalidateOnFocus: false,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 5 * 1000,
-      errorRetryCount: 3,
-      errorRetryInterval: 1000,
-      focusThrottleInterval: 5000,
+      dedupingInterval: 2 * 1000,
+      errorRetryCount: 2,
+      errorRetryInterval: 500,
+      focusThrottleInterval: 2000,
       keepPreviousData: true,
       refreshInterval: 0,
-      loadingTimeout: 10000,
+      loadingTimeout: 5000,
       
       // 🚀 IMPROVED: Better error handling
       onError: (err) => {

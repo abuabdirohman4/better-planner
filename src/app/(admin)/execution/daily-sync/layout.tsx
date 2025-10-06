@@ -5,10 +5,6 @@ export const metadata: Metadata = {
   description: "Daily Sync untuk aplikasi Better Planner",
 };
 
-export default function DailySyncLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DailySyncLayout({ children }: { children: React.ReactNode }) {
   return children;
 } 

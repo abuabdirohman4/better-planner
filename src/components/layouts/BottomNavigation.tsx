@@ -55,6 +55,7 @@ export default function BottomNavigation() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   "bottom-nav-item",
                   isActive ? "bottom-nav-item-active" : "bottom-nav-item-inactive"
