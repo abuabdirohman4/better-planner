@@ -17,7 +17,6 @@ const Checkbox: React.FC<CheckboxProps> = ({
   className = "",
   disabled = false,
 }) => {
-  console.log('disabled', disabled)
   return (
     <label
       className={`flex items-center space-x-3 group cursor-pointer ${

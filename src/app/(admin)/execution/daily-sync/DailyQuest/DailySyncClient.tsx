@@ -98,6 +98,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               items={groupedItems['SIDE_QUEST']}
               onStatusChange={handleStatusChange}
               onAddSideQuest={handleAddSideQuest}
+              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
               onSetActiveTask={onSetActiveTask}
               selectedDate={selectedDate}
               onTargetChange={handleTargetChange}

@@ -33,7 +33,7 @@ export interface TaskColumnProps {
   items: DailyPlanItem[];
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => Promise<void>;
   onAddSideQuest?: (title: string) => void;
-  onSelectTasks?: () => void;
+  onSelectTasks?: (newItems: { item_id: string; item_type: string; }[]) => void;
   onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => Promise<void>;

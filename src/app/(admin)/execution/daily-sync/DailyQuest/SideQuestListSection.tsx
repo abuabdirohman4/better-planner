@@ -138,8 +138,23 @@ const SideQuestListSection = ({
     }
   };
 
-  const handleSelectSideQuests = (selectedQuests: SideQuest[]) => {
-    setShowSideQuestModal(false);
+  const handleSelectSideQuests = async (selectedQuests: SideQuest[]) => {
+    try {
+      // Format selected quests for daily plan
+      const formattedQuests = selectedQuests.map(quest => ({
+        item_id: quest.id,
+        item_type: 'SIDE_QUEST'
+      }));
+
+      // Call onSelectTasks to save to daily_plan_items
+      if (onSelectTasks) {
+        await onSelectTasks(formattedQuests);
+      }
+
+      setShowSideQuestModal(false);
+    } catch (error) {
+      console.error('Error saving side quest selections:', error);
+    }
   };
 
   // Calculate completed today count

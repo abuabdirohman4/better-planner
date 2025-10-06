@@ -72,7 +72,7 @@ const WorkQuestListSection = ({
             {onSelectTasks ? (
               <div className="border-t border-gray-200 pt-4">
                 <button
-                  onClick={onSelectTasks}
+                  onClick={() => onSelectTasks?.([])}
                   className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
                 >
                   Select Quest
@@ -87,7 +87,7 @@ const WorkQuestListSection = ({
           <div className="flex justify-center mt-6">
             <button 
               className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-              onClick={onSelectTasks}
+              onClick={() => onSelectTasks?.([])}
             >
               Select Quest
             </button>
