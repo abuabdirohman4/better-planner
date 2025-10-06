@@ -12,7 +12,7 @@ import BrainDumpSection from './BrainDump/BrainDumpSection';
 import ActivityLog from './ActivityLog/ActivityLog';
 import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
 import DailySyncClient from './DailyQuest/DailySyncClient';
-import { getWeekDates } from '@/lib/dateUtils';
+import { getWeekDates, getLocalDateString } from '@/lib/dateUtils';
 import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
 import { useJournal } from './Journal/hooks/useJournal';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
@@ -35,7 +35,7 @@ export default function DailySyncPage() {
   const weekDates = getWeekDates(currentWeek);
   const [selectedDayIdx, setSelectedDayIdx] = useState(() => getDefaultDayIndexForWeek(currentWeek));
   const selectedDate = weekDates[selectedDayIdx];
-  const selectedDateStr = selectedDate.toISOString().slice(0, 10);
+  const selectedDateStr = getLocalDateString(selectedDate);
 
   const { displayWeek, totalWeeks } = weekCalculations;
   const { loading, initialLoading, dailyPlan, mutate } = useDailyPlanManagement(year, displayWeek, selectedDateStr);

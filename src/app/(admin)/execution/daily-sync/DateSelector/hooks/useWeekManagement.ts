@@ -58,8 +58,8 @@ export function useWeekManagement() {
   }, [year, quarter, isTodayInQuarter, today]);
 
   const getDefaultDayIndexForWeek = (weekStartDate: Date) => {
-    const weekDateStrs = getWeekDates(weekStartDate).map(d => d.toISOString().slice(0, 10));
-    const todayStr = today.toISOString().slice(0, 10);
+    const weekDateStrs = getWeekDates(weekStartDate).map(d => getLocalDateString(d));
+    const todayStr = getLocalDateString(today);
     const todayIndex = weekDateStrs.indexOf(todayStr);
     return todayIndex !== -1 ? todayIndex : 0;
   };
@@ -127,5 +127,5 @@ export function useWeekManagement() {
   };
 }
 
-// Import getWeekDates function
-import { getWeekDates } from '@/lib/dateUtils';
+// Import getWeekDates and getLocalDateString functions
+import { getWeekDates, getLocalDateString } from '@/lib/dateUtils';
