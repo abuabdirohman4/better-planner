@@ -91,7 +91,7 @@ export default function DebugTimer() {
       </div>
       
       {/* Status indicators */}
-      <div className="mt-2 flex items-center space-x-4 text-xs">
+      {/* <div className="mt-2 flex items-center space-x-4 text-xs">
         <div className={`px-2 py-1 rounded ${
           isDebugRunning ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
         }`}>
@@ -105,7 +105,7 @@ export default function DebugTimer() {
         <div className="px-2 py-1 rounded bg-gray-100 text-gray-600">
           Tab: {document.visibilityState}
         </div>
-      </div>
+      </div> */}
       
       {/* Timer accuracy check */}
       {isDebugRunning && (
