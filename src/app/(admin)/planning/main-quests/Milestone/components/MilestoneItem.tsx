@@ -68,6 +68,11 @@ export default function MilestoneItem({
     setEditValue(newValue);
     setHasChanges(newValue.trim() !== (milestone ? milestone.title : ''));
     setIsEditing(true);
+    
+    // Sync editValue to newMilestoneInputs for new milestones
+    if (!milestone) {
+      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? newValue : v));
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -108,18 +113,16 @@ export default function MilestoneItem({
       await handleSaveMilestone(milestone.id, editValue);
       setHasChanges(false);
       setIsEditing(false);
-    } else {
-      if (!editValue.trim()) {
+      } else {
+        if (!editValue.trim()) {
+          setHasChanges(false);
+          setIsEditing(false);
+          return; // No changes
+        }
+        await handleSaveNewMilestone(idx);
         setHasChanges(false);
         setIsEditing(false);
-        return; // No changes
       }
-      // Update newMilestoneInputs before saving
-      setNewMilestoneInputs(inputs => inputs.map((v, i) => i === idx ? editValue : v));
-      await handleSaveNewMilestone(idx);
-      setHasChanges(false);
-      setIsEditing(false);
-    }
   };
 
   const handleFocus = () => {
@@ -218,10 +221,7 @@ export default function MilestoneItem({
               {isEditing && (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSave();
-                    }}
+                    onClick={handleClick}
                     disabled={!hasChanges || isLoading}
                     className="px-3 py-1.5 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 w-16 justify-center"
                     title="Klik untuk menyimpan atau tekan Enter"
@@ -257,6 +257,7 @@ export default function MilestoneItem({
               onBlur={handleInputBlur}
               onClick={e => e.stopPropagation()}
               onFocus={handleFocus}
+              ref={editInputRef}
               data-milestone-idx={idx}
               placeholder={`Tambah milestone ${idx + 1}...`}
               disabled={isLoading}
