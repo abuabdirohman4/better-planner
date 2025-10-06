@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import useSWR from 'swr';
 import { getTodayActivityLogs } from '../actions/activityLoggingActions';
 import { dailySyncKeys } from '@/lib/swr';
@@ -42,8 +43,8 @@ export function useActivityLogs({
     isLoading,
     mutate 
   } = useSWR(
-    // Create a unique key that includes all dependencies
-    dailySyncKeys.activityLogs(date, refreshKey, lastActivityTimestamp),
+    // ✅ FIX: Use stable key that only changes with date
+    dailySyncKeys.activityLogs(date),
     () => getTodayActivityLogs(date),
     {
       revalidateOnFocus: true, // ✅ ENABLED - Allow revalidation on focus for fresh data
@@ -55,6 +56,14 @@ export function useActivityLogs({
       keepPreviousData: true,
     }
   );
+
+  // ✅ NEW: Manual revalidation when refreshKey or lastActivityTimestamp changes
+  useEffect(() => {
+    if (refreshKey || lastActivityTimestamp) {
+      // Trigger revalidation when there's new activity
+      mutate();
+    }
+  }, [refreshKey, lastActivityTimestamp, mutate]);
 
   return {
     logs,
