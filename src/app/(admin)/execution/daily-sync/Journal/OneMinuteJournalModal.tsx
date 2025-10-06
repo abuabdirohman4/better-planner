@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import Spinner from '@/components/ui/spinner/Spinner';
 import Button from '@/components/ui/button/Button';
@@ -29,6 +29,19 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
   const [whatThink, setWhatThink] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // ✅ FIX: Use refs to get latest values
+  const whatDoneRef = useRef('');
+  const whatThinkRef = useRef('');
+
+  // Update refs when state changes
+  useEffect(() => {
+    whatThinkRef.current = whatThink; // Update ref
+  }, [whatThink]);
+
+  useEffect(() => {
+    whatDoneRef.current = whatDone; // Update ref
+  }, [whatDone]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -60,15 +73,19 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     };
   }, [isOpen, isSaving, whatDone]);
 
-  const handleSave = async () => {
-    if (!whatDone.trim()) {
+  const handleSave = useCallback(async () => {
+    // ✅ FIX: Get latest values from refs
+    const currentWhatDone = whatDoneRef.current;
+    const currentWhatThink = whatThinkRef.current;
+
+    if (!currentWhatDone.trim()) {
       toast.error('Silakan isi apa yang telah Anda selesaikan');
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(whatDone.trim(), whatThink.trim());
+      await onSave(currentWhatDone.trim(), currentWhatThink.trim());
       toast.success('Jurnal berhasil disimpan!');
       onClose();
     } catch (error) {
@@ -108,7 +125,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [onSave, onClose]); // ✅ FIX: Remove state dependencies, use refs instead
 
   const handleSkip = () => {
     onClose();

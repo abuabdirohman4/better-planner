@@ -71,13 +71,11 @@ export const useJournal = () => {
       // ✅ CRITICAL: Update SWR cache for real-time ActivityLog update
       await updateJournalData({ whatDone, whatThink });
       
-      // ✅ CRITICAL: Invalidate ActivityLog cache to trigger immediate update
-      await globalMutate((key) => {
-        if (Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'activity-logs') {
-          return true; // Invalidate all activity logs
-        }
-        return false;
-      });
+      // ✅ FIX: Use current date for cache invalidation
+      const currentLocalDate = getCurrentLocalDate();
+      
+      // ✅ CRITICAL: Invalidate ActivityLog cache with current date
+      await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
     } else {
       // ✅ FIX: Create activity log first, then update with journal data
       try {
@@ -133,6 +131,8 @@ export const useJournal = () => {
             throw new Error(`Failed to create activity log: ${createError.message}`);
           }
 
+          // ✅ CRITICAL: Invalidate ActivityLog cache with current date
+          await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
         }
       } catch (error) {
         console.error(`📱 [${deviceInfo}] Journal save failed (attempt ${retryCount + 1}):`, error);
@@ -161,6 +161,7 @@ export const useJournal = () => {
 
               const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
               const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
+              const currentLocalDate = getCurrentLocalDate(); // ✅ FIX: Use current date
 
               const { data: newActivity, error: createError } = await supabase
                 .from('activity_logs')
@@ -171,7 +172,7 @@ export const useJournal = () => {
                   start_time: pendingActivityData.startTime,
                   end_time: pendingActivityData.endTime,
                   duration_minutes: durationInMinutes,
-                  local_date: pendingActivityData.date,
+                  local_date: currentLocalDate, // ✅ FIX: Use current date instead of selected date
                   what_done: whatDone,
                   what_think: whatThink,
                 })
@@ -181,6 +182,9 @@ export const useJournal = () => {
               if (createError) {
                 throw createError;
               }
+
+              // ✅ CRITICAL: Invalidate ActivityLog cache with current date
+              await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
             }
             setIsRetrying(false);
             return;
@@ -196,9 +200,6 @@ export const useJournal = () => {
         throw new Error(`Failed to save journal: ${errorMessage}`);
       }
     }
-
-    const currentLocalDate = getCurrentLocalDate();
-    await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
     
     closeJournalModal();
   }, [pendingActivityData, closeJournalModal, retryCount, updateJournalData]);
