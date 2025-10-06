@@ -237,7 +237,7 @@ export default function PomodoroTimer() {
       )}
       {isProcessingCompletion && (
         <div className="mb-2 flex items-center justify-center space-x-2 text-xs text-green-500">
-          <Spinner size={14} className="mr-2" /> Processing completion...
+          <Spinner size={14} colorClass='border-green-500' className="mr-2" /> Processing completion...
         </div>
       )}
       
