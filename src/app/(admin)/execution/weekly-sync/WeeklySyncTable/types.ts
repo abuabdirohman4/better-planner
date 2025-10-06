@@ -18,6 +18,7 @@ export interface GoalRowProps {
   progress: ProgressData;
   onSlotClick: (slotNumber: number) => void;
   showCompletedTasks: boolean;
+  weekDate?: string;
 }
 
 export interface HorizontalGoalDisplayProps {
@@ -25,6 +26,7 @@ export interface HorizontalGoalDisplayProps {
   onClick: () => void;
   slotNumber: number;
   showCompletedTasks: boolean;
+  weekDate?: string;
 }
 
 export interface ProgressIndicatorProps {

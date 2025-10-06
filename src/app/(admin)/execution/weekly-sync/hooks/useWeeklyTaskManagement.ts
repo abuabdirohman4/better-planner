@@ -12,7 +12,8 @@ export function useWeeklyTaskManagement() {
   const toggleTaskStatus = async (
     taskId: string,
     goalSlot: number,
-    currentStatus: string
+    currentStatus: string,
+    weekDate?: string
   ) => {
     const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
     
@@ -52,16 +53,14 @@ export function useWeeklyTaskManagement() {
       );
       
       // Call the API
-      await updateWeeklyTaskStatus(taskId, goalSlot, newStatus as 'TODO' | 'DONE');
+      await updateWeeklyTaskStatus(taskId, goalSlot, newStatus as 'TODO' | 'DONE', weekDate);
       
       // ✅ CRITICAL: Revalidate related caches for cross-page synchronization
       await mutate(
         (key) => {
           if (Array.isArray(key)) {
-            // Invalidate main-quests, daily-sync, and weekly-sync related caches
-            return key[0] === 'main-quests' || 
-                   key[0] === 'daily-sync' || 
-                   key[0] === 'weekly-sync' ||
+            // Invalidate daily-sync and other caches without revalidation
+            return key[0] === 'daily-sync' || 
                    key[0] === 'quests' ||
                    key[0] === 'milestones' ||
                    key[0] === 'tasks';
@@ -72,7 +71,7 @@ export function useWeeklyTaskManagement() {
         { revalidate: true }
       );
       
-      const statusText = newStatus === 'DONE' ? 'Selesai' : 'Belum Dimulai';
+      const statusText = newStatus === 'DONE' ? 'Selesai' : 'Belum Selesai';
       toast.success(`Status tugas diubah menjadi: ${statusText}`);
       
       return newStatus;

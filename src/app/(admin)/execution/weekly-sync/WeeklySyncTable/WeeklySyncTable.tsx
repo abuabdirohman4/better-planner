@@ -118,6 +118,7 @@ export default function WeeklySyncTable({
                   progress={progress}
                   onSlotClick={handleSlotClick}
                   showCompletedTasks={!isCurrentWeek()} // ✅ Show completed tasks for past weeks, hide for current week
+                  weekDate={goal?.weekDate} // ✅ Pass weekDate from goal data
                 />
               );
             })}

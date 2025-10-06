@@ -11,7 +11,7 @@ const questColors = [
   'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 border border-orange-200 dark:border-orange-700',
 ];
 
-export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks }: HorizontalGoalDisplayProps) {
+export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, showCompletedTasks, weekDate }: HorizontalGoalDisplayProps) {
   // Initialize state with data from localStorage
   const getInitialExpandedItems = (): Set<string> => {
     if (typeof window === 'undefined') return new Set<string>();
@@ -152,7 +152,7 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           <button
             onClick={(e) => {
               e.stopPropagation();
-              toggleTaskStatus(item.item_id, slotNumber, item.status);
+              toggleTaskStatus(item.item_id, slotNumber, item.status, weekDate);
             }}
             disabled={isTaskLoading(item.item_id)}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${

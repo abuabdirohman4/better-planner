@@ -321,7 +321,7 @@ export function useDailyPlanManagement(
       await mutateDailyPlan();
       
       // Show success toast
-      const statusText = status === 'DONE' ? 'Selesai' : status === 'IN_PROGRESS' ? 'Sedang Dikerjakan' : 'Belum Dimulai';
+      const statusText = status === 'DONE' ? 'Selesai' : 'Belum Selesai';
       toast.success(`Status tugas diubah menjadi: ${statusText}`);
     } catch (err) {
       console.error('Error updating task status:', err);

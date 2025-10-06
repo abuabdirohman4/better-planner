@@ -23,11 +23,9 @@ const WorkQuestList: React.FC<WorkQuestListProps> = ({
     switch (status) {
       case 'DONE':
         return 'Selesai';
-      case 'IN_PROGRESS':
-        return 'Sedang Dikerjakan';
       case 'TODO':
       default:
-        return 'Belum Dimulai';
+        return 'Belum Selesai';
     }
   };
 

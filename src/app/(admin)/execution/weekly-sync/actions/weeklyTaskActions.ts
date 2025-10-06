@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/server';
 export async function updateWeeklyTaskStatus(
   taskId: string,
   goalSlot: number,
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE'
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE',
+  weekDate?: string
 ) {
   try {
     const supabase = await createClient();
@@ -21,7 +22,7 @@ export async function updateWeeklyTaskStatus(
       p_status: status,
       p_user_id: user.id,
       p_goal_slot: goalSlot,
-      p_date: new Date().toISOString().split('T')[0], // Today's date
+      p_date: weekDate || new Date().toISOString().split('T')[0], // Use provided weekDate or today's date
       p_daily_plan_item_id: null // Not used for weekly sync
     });
 

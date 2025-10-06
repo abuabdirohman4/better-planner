@@ -25,6 +25,7 @@ export interface WeeklyGoal {
   id: string;
   goal_slot: number;
   items: GoalItem[];
+  weekDate?: string;
 }
 
 // Used in: WeeklySyncClient, WeekSelector component, useWeeklySync hook
