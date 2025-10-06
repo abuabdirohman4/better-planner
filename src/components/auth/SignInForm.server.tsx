@@ -5,12 +5,14 @@ import { useTransition, useState } from "react";
 
 import { login } from "@/app/(full-width-pages)/(auth)/actions";
 import Label from "@/components/form/Label";
+import Checkbox from "@/components/form/input/Checkbox";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 
 export default function SignInForm() {
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -59,11 +61,11 @@ export default function SignInForm() {
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="keep-logged-in"
+          <Checkbox
+            checked={keepLoggedIn}
+            onChange={setKeepLoggedIn}
             disabled={isPending}
-            className="w-4 h-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="checked:opacity-100"
           />
           <label htmlFor="keep-logged-in" className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
             Keep me logged in

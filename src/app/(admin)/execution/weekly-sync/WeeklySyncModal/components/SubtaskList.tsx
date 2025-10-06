@@ -1,4 +1,5 @@
 import React from 'react';
+import Checkbox from '@/components/form/input/Checkbox';
 import type { SubtaskListProps } from '../types';
 
 export const SubtaskList: React.FC<SubtaskListProps> = ({ 
@@ -36,15 +37,11 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
           return (
             <div key={subtask.id} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-2 py-1">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={isChecked}
                   onChange={() => {
                     handleItemToggle(subtask.id, 'SUBTASK', [], taskId);
                   }}
-                  className={`w-4 h-4 text-blue-600 rounded focus:ring-blue-500 ${
-                    isDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
                   disabled={isDisabled}
                 />
                 <span className={`text-sm ${

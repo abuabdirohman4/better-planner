@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Button from '@/components/ui/button/Button';
+import Checkbox from '@/components/form/input/Checkbox';
 import { TaskSelectionModalProps } from '../types';
 
 const MainQuestModal: React.FC<TaskSelectionModalProps> = ({ 
@@ -163,16 +164,10 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           {!hasChildren && <div className="w-2 h-2" />}
 
           {/* Checkbox */}
-          <input
-            type="checkbox"
+          <Checkbox
             checked={isSelected}
             onChange={() => onTaskToggle(item.id)}
             disabled={savingLoading}
-            className={`w-4 h-4 rounded focus:ring-2 ${
-              isSelected
-                ? 'text-blue-600 bg-blue-600 border-blue-600 focus:ring-blue-500'
-                : 'text-brand-500 bg-gray-100 border-gray-300 focus:ring-brand-500'
-            } ${savingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           
           {/* Task Title */}

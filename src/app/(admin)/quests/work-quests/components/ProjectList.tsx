@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { WorkQuestProjectListProps, WorkQuestProject, WorkQuestTask } from "../types";
 import TaskForm from "./TaskForm";
+import Checkbox from "@/components/form/input/Checkbox";
 
 const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   projects,
@@ -148,11 +149,9 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
             </button>
 
             {/* Checkbox */}
-            <input
-              type="checkbox"
+            <Checkbox
               checked={project.status === 'DONE'}
               onChange={() => handleToggleProjectStatus(project.id, project.status)}
-              className="w-4 h-4 text-primary bg-gray-100 border-gray-300 cursor-pointer rounded focus:ring-primary focus:ring-2"
             />
 
             {/* Project Title */}
@@ -174,10 +173,10 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                   {showTaskForm?.projectId === project.id && showTaskForm?.taskId === task.id ? (
                     <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
                       {/* Checkbox (disabled for form) */}
-                      <input
-                        type="checkbox"
+                      <Checkbox
+                        checked={false}
+                        onChange={() => {}}
                         disabled
-                        className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 opacity-50"
                       />
 
                       {/* Task Input */}
@@ -242,11 +241,9 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                     /* Show normal task item if not being edited */
                     <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
                   {/* Checkbox */}
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={task.status === 'DONE'}
                     onChange={() => handleToggleTaskStatus(task.id, task.status)}
-                    className="w-4 h-4 text-primary bg-gray-100 border-gray-300 cursor-pointer rounded focus:ring-primary focus:ring-2"
                   />
 
                   {/* Task Title */}
@@ -291,10 +288,10 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
               {showTaskForm?.projectId === project.id && !showTaskForm?.taskId && (
                   <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
                     {/* Checkbox (disabled for form) */}
-                    <input
-                      type="checkbox"
+                    <Checkbox
+                      checked={false}
+                      onChange={() => {}}
                       disabled
-                      className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 opacity-50"
                     />
 
                     {/* Task Input */}

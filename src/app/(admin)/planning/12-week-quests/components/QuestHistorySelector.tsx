@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from '@/components/ui/button/Button';
 import ComponentCard from '@/components/common/ComponentCard';
+import Checkbox from '@/components/form/input/Checkbox';
 import type { Quest } from "../hooks/useQuestState";
 import type { QuestHistoryItem } from "../hooks/useQuestHistory";
 
@@ -217,15 +218,23 @@ export default function QuestHistorySelector({
                             : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                         }`}
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedQuests.has(quest.label)}
-                          onChange={(e) => handleQuestToggle(quest.label, e)}
+                          onChange={() => {
+                            setSelectedQuests(prev => {
+                              const newSet = new Set(prev);
+                              if (newSet.has(quest.label)) {
+                                newSet.delete(quest.label);
+                              } else {
+                                newSet.add(quest.label);
+                              }
+                              return newSet;
+                            });
+                          }}
                           disabled={!selectedQuests.has(quest.label) && selectedQuests.size >= availableSlots}
-                          className="w-4 h-4 text-blue-600 mr-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <div 
-                          className="flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+                          className="flex-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded py-1 ml-2 -my-1 transition-colors"
                           onClick={() => handleQuestToggle(quest.label)}
                         >
                           <div className="text-sm font-medium text-gray-900 dark:text-white">

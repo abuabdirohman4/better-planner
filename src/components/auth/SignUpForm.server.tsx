@@ -4,6 +4,7 @@ import { useTransition, useState } from "react";
 
 import { signup } from "@/app/(full-width-pages)/(auth)/actions";
 import Label from "@/components/form/Label";
+import Checkbox from "@/components/form/input/Checkbox";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 
@@ -16,6 +17,7 @@ export default function SignUpForm({ error, defaultEmail }: { error?: string | n
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Check if message is success or error
   const isSuccess = error && (
@@ -195,12 +197,11 @@ export default function SignUpForm({ error, defaultEmail }: { error?: string | n
           )}
         </div>
         <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="terms-agree"
-            required
+          <Checkbox
+            checked={agreeToTerms}
+            onChange={setAgreeToTerms}
             disabled={isPending}
-            className="w-4 h-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="checked:opacity-100"
           />
           <label htmlFor="terms-agree" className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
             By creating an account you agree to the <button type="button" className="underline text-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 rounded">Terms and Conditions</button> and <button type="button" className="underline text-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 rounded">Privacy Policy</button>.

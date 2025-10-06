@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useWorkQuests } from "@/app/(admin)/quests/work-quests/hooks/useWorkQuests";
 import { WorkQuest } from "@/app/(admin)/quests/work-quests/types";
 import Button from "@/components/ui/button/Button";
+import Checkbox from "@/components/form/input/Checkbox";
 
 interface WorkQuestModalProps {
   isOpen: boolean;
@@ -252,11 +253,9 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                         {/* Spacer for items without children */}
                         {!hasChildren && <div className="w-4 h-4" />}
 
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={areAllChildrenSelected(project.id)}
                           onChange={() => handleParentToggle(project.id)}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                         />
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
@@ -292,11 +291,9 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                               className="py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded border-l-2 border-gray-200 dark:border-gray-600 pl-6"
                             >
                               <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
+                                <Checkbox
                                   checked={selectedTasks.includes(task.id)}
                                   onChange={() => onTaskToggle(task.id)}
-                                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                 />
                                 <div className="flex-1">
                                   <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200">
