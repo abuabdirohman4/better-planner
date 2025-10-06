@@ -181,7 +181,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
               ? 'text-gray-500 dark:text-gray-400 line-through' 
               : 'text-gray-900 dark:text-white'
           }`}>
-            {item.title}
+            {item.title || 'Untitled Task'}
           </span>
           
           {/* Children Count Indicator */}
