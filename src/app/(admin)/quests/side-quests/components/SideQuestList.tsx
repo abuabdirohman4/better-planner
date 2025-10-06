@@ -139,10 +139,10 @@ const SideQuestList: React.FC = () => {
                 >
                   {/* Expand/Collapse Button */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpanded(quest.id);
-                    }}
+                    // onClick={(e) => {
+                    //   e.stopPropagation();
+                    //   toggleExpanded(quest.id);
+                    // }}
                     className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                   >
                     <svg

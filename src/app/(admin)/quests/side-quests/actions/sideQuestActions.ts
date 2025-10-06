@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { SideQuest } from "../types";
 
@@ -51,6 +52,8 @@ export async function updateSideQuestStatus(taskId: string, status: 'TODO' | 'IN
     if (error) {
       throw error;
     }
+
+    revalidatePath('/quests/side-quests');
   } catch (error) {
     console.error('Error updating side quest status:', error);
     throw error;

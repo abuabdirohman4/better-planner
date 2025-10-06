@@ -1,54 +1,50 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import useSWR from "swr";
 import { getSideQuests, updateSideQuestStatus } from '../actions/sideQuestActions';
 import { SideQuest } from '../types';
 
 export function useSideQuests() {
-  const [sideQuests, setSideQuests] = useState<SideQuest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchSideQuests = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await getSideQuests();
-      setSideQuests(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch side quests');
-    } finally {
-      setIsLoading(false);
+  const { 
+    data: sideQuests = [], 
+    error, 
+    isLoading,
+    mutate 
+  } = useSWR(
+    'side-quests',
+    () => getSideQuests(),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+      errorRetryCount: 3,
     }
-  };
+  );
 
   const toggleStatus = async (taskId: string, currentStatus: 'TODO' | 'IN_PROGRESS' | 'DONE') => {
     try {
       const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
       await updateSideQuestStatus(taskId, newStatus);
       
-      // Update local state
-      setSideQuests(prev => 
-        prev.map(quest => 
+      // Optimistic update
+      mutate((currentData) => 
+        (currentData || []).map(quest => 
           quest.id === taskId 
             ? { ...quest, status: newStatus, updated_at: new Date().toISOString() }
             : quest
-        )
+        ), 
+        false
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      console.error("Failed to toggle status:", err);
+      throw err;
     }
   };
-
-  useEffect(() => {
-    fetchSideQuests();
-  }, []);
 
   return {
     sideQuests,
     isLoading,
-    error,
-    refetch: fetchSideQuests,
+    error: error?.message,
+    refetch: () => mutate(),
     toggleStatus
   };
 }
