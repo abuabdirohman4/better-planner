@@ -67,7 +67,7 @@ export default function SignInForm() {
             disabled={isPending}
             className="checked:opacity-100"
           />
-          <label htmlFor="keep-logged-in" className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
+          <label onClick={() => setKeepLoggedIn(!keepLoggedIn)} htmlFor="keep-logged-in" className="block font-normal text-gray-700 text-theme-sm cursor-pointer dark:text-gray-400">
             Keep me logged in
           </label>
         </div>
