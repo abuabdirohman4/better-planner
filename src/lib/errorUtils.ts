@@ -50,6 +50,13 @@ export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo
     originalError: error,
   };
 
+  // Check if this is a Next.js redirect error (not a real error)
+  if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+    // Don't log redirect errors as they are expected behavior
+    errorInfo.message = 'Redirect in progress';
+    return errorInfo;
+  }
+
   // Extract meaningful error message
   if (error instanceof Error) {
     errorInfo.message = error.message;
@@ -61,7 +68,7 @@ export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo
     errorInfo.message = 'Terjadi kesalahan yang tidak diketahui';
   }
 
-  // Log error for debugging
+  // Log error for debugging (only for real errors, not redirects)
   console.error(`[${context.toUpperCase()}] Error:`, {
     message: errorInfo.message,
     originalError: error,
@@ -114,4 +121,24 @@ export const handleAuthError = (error: unknown): string => {
     return 'Sesi Anda telah berakhir. Silakan login kembali.';
   }
   return message;
+};
+
+/**
+ * Check if error is a Next.js redirect error (expected behavior)
+ */
+export const isRedirectError = (error: unknown): boolean => {
+  return error instanceof Error && error.message === 'NEXT_REDIRECT';
+};
+
+/**
+ * Handle server action errors with proper redirect error handling
+ */
+export const handleServerActionError = (error: unknown, context: ErrorContext): ErrorInfo | null => {
+  // If it's a redirect error, don't treat it as an error
+  if (isRedirectError(error)) {
+    return null;
+  }
+  
+  // Handle actual errors
+  return handleApiError(error, context);
 }; 
