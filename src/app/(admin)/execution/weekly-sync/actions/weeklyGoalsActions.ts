@@ -84,6 +84,19 @@ export async function setWeeklyGoalItems(data: {
       weeklyGoal = newGoal;
     }
 
+    // ✅ FIXED: Preserve existing status when updating goal items
+    // First, get existing items with their status
+    const { data: existingItems } = await supabase
+      .from('weekly_goal_items')
+      .select('item_id, status')
+      .eq('weekly_goal_id', weeklyGoal.id);
+
+    // Create a map of existing statuses
+    const existingStatusMap = new Map();
+    existingItems?.forEach(item => {
+      existingStatusMap.set(item.item_id, item.status);
+    });
+
     // Second, delete all existing goal items for this slot
     const { error: deleteError } = await supabase
       .from('weekly_goal_items')
@@ -102,8 +115,8 @@ export async function setWeeklyGoalItems(data: {
 
       const goalItemsData = uniqueItems.map(item => ({
         weekly_goal_id: weeklyGoal.id,
-        item_id: item.id
-        // item_type removed since we deleted that column
+        item_id: item.id,
+        status: existingStatusMap.get(item.id) || 'TODO' // ✅ Preserve existing status or default to TODO
       }));
 
       const { error: insertError } = await supabase

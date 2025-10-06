@@ -133,9 +133,9 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
                       className="p-1.5 text-gray-500 rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
                     >
                       {showCompletedTasksSlot ? (
-                        <EyeIcon className="w-4 h-4" />
+                        <EyeIcon className="w-5 h-5" />
                       ) : (
-                        <EyeCloseIcon className="w-4 h-4" />
+                        <EyeCloseIcon className="w-5 h-5" />
                       )}
                     </button>
                     
