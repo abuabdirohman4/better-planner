@@ -171,9 +171,6 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Pilih Work Quest
             </h2>
-            <p className="text-gray-600 mb-2">
-              Hanya menampilkan task dengan status TODO
-            </p>
             <p className="text-gray-700 font-medium">
               Selected : {selectedCount} Quest
             </p>

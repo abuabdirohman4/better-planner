@@ -1,10 +1,12 @@
 import { useState, useTransition, useRef, useEffect, FormEvent } from 'react';
 import TaskItemCard from './components/TaskItemCard';
+import SideQuestModal from './components/SideQuestModal';
 import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { isMac, isModifierKeyPressed, isDesktop } from '@/lib/utils';
+import { SideQuest } from '@/app/(admin)/quests/side-quests/types';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
 const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
@@ -81,14 +83,14 @@ const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
           disabled={!newTaskTitle.trim() || isPending}
           className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 disabled:opacity-50"
         >
-          {isPending ? 'Menambah...' : 'Tambah'}
+          {isPending ? 'Adding...' : 'Add'}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
         >
-          Batal
+          Cancel
         </button>
       </div>
       {/* Keyboard shortcut hint - Desktop only */}
@@ -97,7 +99,7 @@ const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
           {isMacUser ? '⌘' : 'Ctrl'}
         </kbd> + <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
           Enter
-        </kbd> untuk submit cepat
+        </kbd> untuk submit cepat.
       </div>
     </form>
   );
@@ -120,6 +122,7 @@ const SideQuestListSection = ({
   showAddQuestButton 
 }: TaskColumnProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showSideQuestModal, setShowSideQuestModal] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const {showCompletedSideQuest, toggleShowCompletedSideQuest} = useUIPreferencesStore();
 
@@ -134,6 +137,18 @@ const SideQuestListSection = ({
       setShowAddForm(false);
     }
   };
+
+  const handleSelectSideQuests = (selectedQuests: SideQuest[]) => {
+    setShowSideQuestModal(false);
+  };
+
+  // Calculate completed today count
+  const completedTodayCount = items.filter(item => item.status === 'DONE').length;
+  
+  // Get existing side quest IDs for today
+  const existingSideQuestIds = items
+    .filter(item => item.item_type === 'SIDE_QUEST')
+    .map(item => item.item_id);
 
   return (
     <div className="rounded-lg h-fit">
@@ -199,16 +214,32 @@ const SideQuestListSection = ({
         
         {/* Tombol Add Quest di dalam card Side Quest - hanya muncul jika ada task */}
         {onAddSideQuest ? (
-          <div className="flex justify-center mt-6">
+          <div className="grid grid-cols-4 mt-6 gap-2">
             <button 
-              className="w-full px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+              className="col-span-3 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+              onClick={() => setShowSideQuestModal(true)}
+            >
+              Select Quest
+            </button>
+            <button 
+              className="col-span-1 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
               onClick={() => setShowAddForm(!showAddForm)}
             >
-              Add Quest
+              Add
             </button>
           </div>
         ) : null}
       </div>
+
+      {/* Side Quest Modal */}
+      <SideQuestModal
+        isOpen={showSideQuestModal}
+        onClose={() => setShowSideQuestModal(false)}
+        onSave={handleSelectSideQuests}
+        selectedCount={existingSideQuestIds.length}
+        completedTodayCount={completedTodayCount}
+        existingSideQuests={existingSideQuestIds}
+      />
     </div>
   );
 };
