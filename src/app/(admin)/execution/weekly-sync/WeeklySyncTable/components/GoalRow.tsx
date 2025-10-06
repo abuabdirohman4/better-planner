@@ -32,11 +32,16 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
       setIsExpanded(savedState === 'true');
     }
     
+    // ✅ FIXED: Only use cookie value if props showCompletedTasks is undefined
+    // Otherwise, always respect the props value (for current vs past week logic)
     const savedShowCompleted = getCookie(showCompletedKey);
-    if (savedShowCompleted !== null) {
+    if (savedShowCompleted !== null && showCompletedTasks === undefined) {
       setShowCompletedTasksSlot(savedShowCompleted === 'true');
+    } else {
+      // Always use props value when provided
+      setShowCompletedTasksSlot(showCompletedTasks);
     }
-  }, [cookieKey, showCompletedKey, isClient]);
+  }, [cookieKey, showCompletedKey, isClient, showCompletedTasks]);
   
   // Save state ke cookies saat state berubah (hanya di client)
   useEffect(() => {
@@ -110,7 +115,7 @@ export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showC
                         : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Grid
+                    List
                   </button>
                 </div>
                 

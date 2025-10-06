@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ComponentCard from '@/components/common/ComponentCard';
 import { toast } from 'sonner';
 import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActions';
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
 import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
+import { useWeekCalculations } from '../WeeklySyncClient/hooks/useWeekCalculations';
+import { getQuarterWeekRange, getWeekOfYear } from '@/lib/quarterUtils';
 import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklySyncTable({ 
@@ -17,6 +19,25 @@ export default function WeeklySyncTable({
 }: WeeklyGoalsTableProps) {
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // ✅ Determine if this is current week or past week
+  const isCurrentWeek = () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentQuarter = Math.ceil((today.getMonth() + 1) / 3);
+    
+    // Use the same logic as useWeekCalculations
+    const { getWeekOfYear, getQuarterWeekRange } = require('@/lib/quarterUtils');
+    const currentWeekNumber = getWeekOfYear(today);
+    const { startWeek, endWeek } = getQuarterWeekRange(currentYear, currentQuarter);
+    const totalWeeks = endWeek - startWeek + 1;
+    const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
+    const displayWeek = weekInQuarter;
+    
+    return props.year === currentYear && 
+           props.quarter === currentQuarter && 
+           props.weekNumber === displayWeek;
+  };
   
   // 🚀 OPTIMIZED: Use client-side progress calculation
   const clientProgress = useWeeklyGoalsProgress(goals);
@@ -96,7 +117,7 @@ export default function WeeklySyncTable({
                   goal={goal}
                   progress={progress}
                   onSlotClick={handleSlotClick}
-                  showCompletedTasks={true}
+                  showCompletedTasks={!isCurrentWeek()} // ✅ Show completed tasks for past weeks, hide for current week
                 />
               );
             })}
