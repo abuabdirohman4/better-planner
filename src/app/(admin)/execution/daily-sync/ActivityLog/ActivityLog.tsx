@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useActivityStore } from '@/stores/activityStore';
 import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
+import { formatTimeRange } from '@/lib/dateUtils';
 
 interface ActivityLogProps {
   date: string;
@@ -24,25 +25,7 @@ const ICONS = {
   ),
 };
 
-function formatTimeRange(start: string, end: string) {
-  const s = new Date(start);
-  const e = new Date(end);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  // Convert to local time
-  const startLocal = s.toLocaleTimeString('id-ID', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  });
-  const endLocal = e.toLocaleTimeString('id-ID', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: false,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  });
-  return `${startLocal} - ${endLocal}`;
-}
+// ✅ REMOVED: Using utility function instead
 
 function formatDuration(minutes: number) {
   if (minutes < 60) return `${minutes} menit`;

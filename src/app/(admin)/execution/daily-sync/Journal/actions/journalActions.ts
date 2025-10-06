@@ -11,7 +11,7 @@ export async function getActivityLogById(activityId: string) {
   try {
     const { data, error } = await supabase
       .from('activity_logs')
-      .select('id, what_done, what_think, updated_at')
+      .select('id, what_done, what_think, created_at')
       .eq('id', activityId)
       .eq('user_id', user.id)
       .single();
@@ -39,7 +39,6 @@ export async function updateActivityJournal(activityId: string, whatDone: string
       .update({
         what_done: whatDone.trim() || null,
         what_think: whatThink.trim() || null,
-        updated_at: new Date().toISOString(),
       })
       .eq('id', activityId)
       .eq('user_id', user.id)

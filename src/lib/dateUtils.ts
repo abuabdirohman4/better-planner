@@ -26,10 +26,6 @@ export function getWeekDates(date: Date): Date[] {
   });
 }
 
-/**
- * Get local date string in YYYY-MM-DD format
- * This prevents timezone conversion issues when converting to ISO string
- */
 export function getLocalDateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -37,4 +33,26 @@ export function getLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export {}; 
+export function getCurrentLocalDate(): string {
+  return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+}
+
+export function formatTimeRange(start: string, end: string) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  // Convert to local time
+  const startLocal = s.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+  const endLocal = e.toLocaleTimeString('id-ID', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  });
+  return `${startLocal} - ${endLocal}`;
+}

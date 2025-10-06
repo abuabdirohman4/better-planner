@@ -59,7 +59,6 @@ export async function updateActivityLogJournal(logId: string, whatDone: string, 
       .update({
         what_done: whatDone,
         what_think: whatThink,
-        updated_at: new Date().toISOString()
       })
       .eq('id', logId)
       .eq('user_id', user.id);

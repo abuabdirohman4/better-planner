@@ -54,7 +54,6 @@ export function useJournalData({
           ...current,
           what_done: data.whatDone,
           what_think: data.whatThink,
-          updated_at: new Date().toISOString(),
         };
       }, false);
 

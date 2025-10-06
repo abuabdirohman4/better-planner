@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useJournalData } from './useJournalData';
 import { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
+import { getCurrentLocalDate } from '@/lib/dateUtils';
 
 export const useJournal = () => {
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
@@ -83,12 +84,7 @@ export const useJournal = () => {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
-
-        console.log(`📱 [${deviceInfo}] Looking for activity log with data:`, {
-          taskId: pendingActivityData.taskId,
-          startTime: pendingActivityData.startTime,
-          endTime: pendingActivityData.endTime
-        });
+        
 
         // ✅ FIX: First try to find existing activity log
         const { data: recentActivity, error: activityError } = await supabase
@@ -110,14 +106,11 @@ export const useJournal = () => {
         }
 
         if (recentActivity) {
-          console.log(`📱 [${deviceInfo}] Found existing activity log:`, recentActivity.id);
           await updateActivityJournal(recentActivity.id, whatDone, whatThink);
         } else {
-          // ✅ FIX: Activity log doesn't exist, create it first
-          console.log(`📱 [${deviceInfo}] Activity log not found, creating new one...`);
-          
           const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
           const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
+          const currentLocalDate = getCurrentLocalDate(); // YYYY-MM-DD format in user's timezone
 
           const { data: newActivity, error: createError } = await supabase
             .from('activity_logs')
@@ -128,7 +121,7 @@ export const useJournal = () => {
               start_time: pendingActivityData.startTime,
               end_time: pendingActivityData.endTime,
               duration_minutes: durationInMinutes,
-              local_date: pendingActivityData.date,
+              local_date: currentLocalDate, // ✅ Use current date instead of selected date
               what_done: whatDone,
               what_think: whatThink,
             })
@@ -140,14 +133,12 @@ export const useJournal = () => {
             throw new Error(`Failed to create activity log: ${createError.message}`);
           }
 
-          console.log(`📱 [${deviceInfo}] Created new activity log:`, newActivity.id);
         }
       } catch (error) {
         console.error(`📱 [${deviceInfo}] Journal save failed (attempt ${retryCount + 1}):`, error);
         
         // ✅ MOBILE FIX: Retry mechanism for mobile devices
         if (isMobile && retryCount < 2) {
-          console.log(`📱 [${deviceInfo}] Retrying journal save... (${retryCount + 1}/2)`);
           setIsRetrying(true);
           setRetryCount(prev => prev + 1);
           
@@ -206,15 +197,8 @@ export const useJournal = () => {
       }
     }
 
-    console.log(`📱 [${deviceInfo}] Journal saved successfully!`);
-    
-    // ✅ CRITICAL: Invalidate ActivityLog cache to trigger immediate update
-    await globalMutate((key) => {
-      if (Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'activity-logs') {
-        return true; // Invalidate all activity logs
-      }
-      return false;
-    });
+    const currentLocalDate = getCurrentLocalDate();
+    await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
     
     closeJournalModal();
   }, [pendingActivityData, closeJournalModal, retryCount, updateJournalData]);
