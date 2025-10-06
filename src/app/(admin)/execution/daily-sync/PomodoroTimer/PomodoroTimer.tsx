@@ -157,6 +157,9 @@ export default function PomodoroTimer() {
     setShowAudioPermissionPrompt(false);
   };
 
+  // Check if any loading state is active
+  const isLoading = isRecovering || isProcessingCompletion;
+
   // Helper to get total seconds for progress
   const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
   let totalSeconds = 0;
@@ -239,7 +242,7 @@ export default function PomodoroTimer() {
       )}
       
       {/* Timer lingkaran dan kontrol play/pause */}
-      <div className="flex items-center gap-6">
+      <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}>
         {/* Timer Circle - Fixed position di kiri */}
         <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
           {activeTask ? (

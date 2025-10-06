@@ -85,9 +85,13 @@ export function useTimerPersistence() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [timerState, activeTask, startTime, debouncedSave, isTimerEnabled]);
 
+  // ✅ FIX: Use global state for isRecovering to ensure consistency across all hooks
+  const { recoveryInProgress } = getGlobalState();
+  const isRecoveringFromGlobal = recoveryInProgress;
+
   return {
     isOnline,
-    isRecovering,
+    isRecovering: isRecoveringFromGlobal,
     handleTimerComplete,
     handleTimerPause,
     handleTimerResume

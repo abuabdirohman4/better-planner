@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
-import { getGlobalState } from '../globalState';
+import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from '../globalState';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 import { useBackgroundTimer } from '../useBackgroundTimer';
 
@@ -53,9 +53,16 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
         cancelBackgroundCompletion();
         
         if (timerState === 'FOCUSING' && activeTask && startTime && !recoveryInProgress && recoveryCompleted) {
+          // ✅ NEW: Set loading state for visibility change sync
+          setGlobalRecoveryInProgress(true);
+          console.log('🔄 Tab became visible - syncing timer with server...');
+          
           try {
             const activeSession = await getActiveTimerSession();
-            if (!activeSession) return;
+            if (!activeSession) {
+              setGlobalRecoveryInProgress(false);
+              return;
+            }
             
             const result = await updateSessionWithActualTime(activeSession.id);
             
@@ -83,6 +90,10 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
             }
           } catch (error) {
             console.error('❌ Failed to sync timer with server:', error);
+          } finally {
+            // ✅ NEW: Clear loading state after sync
+            setGlobalRecoveryInProgress(false);
+            console.log('✅ Tab visibility sync completed');
           }
         }
       }

@@ -72,7 +72,7 @@ export default function DebugTimer() {
   };
 
   return (
-    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+    <div className="mt-4 p-3 w-full bg-yellow-50 border border-yellow-200 rounded-lg">
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-sm font-medium text-yellow-800">🐛 Debug Timer</h4>
@@ -109,7 +109,7 @@ export default function DebugTimer() {
       
       {/* Timer accuracy check */}
       {isDebugRunning && (
-        <div className="mt-2 p-2 bg-yellow-100 rounded text-xs">
+        <div className="mt-2 text-xs">
           <div className="font-medium text-yellow-800 mb-1">Timer Accuracy Check:</div>
           <div className="text-yellow-700">
             Debug timer: {debugSeconds}s | Main timer: {secondsElapsed}s
