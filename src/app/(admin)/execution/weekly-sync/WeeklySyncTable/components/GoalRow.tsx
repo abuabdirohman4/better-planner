@@ -9,7 +9,7 @@ import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import type { GoalRowProps } from '../types';
 
 export default function GoalRow({ slotNumber, goal, progress, onSlotClick, showCompletedTasks, weekDate }: GoalRowProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [isHierarchicalView, setIsHierarchicalView] = useState(true);
   const [showCompletedTasksSlot, setShowCompletedTasksSlot] = useState(showCompletedTasks);
