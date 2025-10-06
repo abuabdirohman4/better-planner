@@ -44,7 +44,7 @@ export async function getTasksForWeek(year: number, weekNumber: number, selected
         // Fetch task details directly from tasks table
         const { data: task } = await supabase
           .from('tasks')
-          .select('id, title, status, milestone_id, type')
+          .select('id, title, status, milestone_id, type, parent_task_id')
           .eq('id', item.item_id)
           .single();
         
@@ -81,7 +81,8 @@ export async function getTasksForWeek(year: number, weekNumber: number, selected
           title,
           status,
           quest_title,
-          goal_slot
+          goal_slot,
+          parent_task_id: task?.parent_task_id || null
         };
       })
     );

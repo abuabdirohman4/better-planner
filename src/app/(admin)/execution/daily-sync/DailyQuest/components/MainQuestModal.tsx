@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Button from '@/components/ui/button/Button';
 import { TaskSelectionModalProps } from '../types';
@@ -14,6 +14,51 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   savingLoading = false,
   completedTodayCount = 0
 }) => {
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const isInitialLoad = useRef(true);
+  
+  // Cookie key untuk menyimpan expanded state
+  const expandedKey = 'mainquest-modal-expanded';
+
+  // Initialize state with data from localStorage
+  const getInitialExpandedItems = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set<string>();
+    
+    try {
+      const saved = localStorage.getItem(expandedKey);
+      if (saved) {
+        const expandedArray: string[] = JSON.parse(saved);
+        return new Set(expandedArray);
+      }
+    } catch (error) {
+      console.warn('Failed to load initial expanded state:', error);
+    }
+    return new Set<string>();
+  };
+
+  // Initialize expanded state
+  useEffect(() => {
+    if (isOpen) {
+      setExpandedItems(getInitialExpandedItems());
+    }
+  }, [isOpen]);
+
+  // Save expanded state to localStorage whenever it changes (but not on initial load)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return; // Skip saving during initial load
+    }
+    
+    try {
+      const expandedArray = Array.from(expandedItems);
+      localStorage.setItem(expandedKey, JSON.stringify(expandedArray));
+    } catch (error) {
+      console.warn('Failed to save expanded state to localStorage:', error);
+    }
+  }, [expandedItems, expandedKey]);
+
   const groupByGoalSlot = (tasks: any[]) => {
     const groups: Record<number, any[]> = {};
     tasks.forEach(task => {
@@ -23,6 +68,148 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
       groups[task.goal_slot].push(task);
     });
     return groups;
+  };
+
+  // Build hierarchical structure like HierarchicalGoalDisplay
+  const buildHierarchy = (tasks: any[]) => {
+    const hierarchy: { [key: string]: any } = {};
+    const rootItems: any[] = [];
+    
+    // First, identify root items (items without parent_task_id)
+    tasks.forEach(task => {
+      if (!task.parent_task_id) {
+        rootItems.push(task);
+      }
+    });
+
+    // If no root items found (all items are subtasks), treat all items as root
+    if (rootItems.length === 0) {
+      tasks.forEach(task => {
+        hierarchy[task.id] = {
+          ...task,
+          children: [],
+          isExpanded: expandedItems.has(task.id)
+        };
+      });
+    } else {
+      // Build hierarchy for each root item
+      rootItems.forEach(rootItem => {
+        const children = tasks.filter(task => task.parent_task_id === rootItem.id);
+        
+        hierarchy[rootItem.id] = {
+          ...rootItem,
+          children: children.length > 0 ? children : [],
+          isExpanded: expandedItems.has(rootItem.id)
+        };
+      });
+    }
+
+    return hierarchy;
+  };
+
+  // Toggle expanded state
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  // Render item recursively like HierarchicalGoalDisplay
+  const renderItem = (item: any, level: number = 0, isChild: boolean = false) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.has(item.id);
+    const isSelected = selectedTasks[item.id] || false;
+    
+    return (
+      <div key={item.id} className="space-y-1">
+        <div
+          className={`group relative flex items-center space-x-3 py-1 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+            level > 0 ? 'ml-9 border-l-2 border-gray-200 dark:border-gray-600' : ''
+          } ${
+            item.status === 'DONE' 
+              ? 'opacity-75' 
+              : ''
+          }`}
+        >
+          {/* Expand/Collapse Button */}
+          {hasChildren && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpanded(item.id);
+              }}
+              className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+              <svg
+                className={`w-3 h-3 transition-all duration-300 ease-in-out ${
+                  isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+          
+          {/* Spacer for items without children */}
+          {!hasChildren && <div className="w-2 h-2" />}
+
+          {/* Checkbox */}
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onTaskToggle(item.id)}
+            disabled={savingLoading}
+            className={`w-4 h-4 rounded focus:ring-2 ${
+              isSelected
+                ? 'text-blue-600 bg-blue-600 border-blue-600 focus:ring-blue-500'
+                : 'text-brand-500 bg-gray-100 border-gray-300 focus:ring-brand-500'
+            } ${savingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          />
+          
+          {/* Task Title */}
+          <span className={`flex-1 text-sm font-medium ${
+            item.status === 'DONE' 
+              ? 'text-gray-500 dark:text-gray-400 line-through' 
+              : 'text-gray-900 dark:text-white'
+          }`}>
+            {item.title}
+          </span>
+          
+          {/* Children Count Indicator */}
+          {hasChildren && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              ({item.children.length})
+            </span>
+          )}
+        </div>
+        
+        {/* Render Children with Smooth Animation */}
+        {hasChildren && (
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              isExpanded 
+                ? 'max-h-96 opacity-100 transform translate-y-0' 
+                : 'max-h-0 opacity-0 transform -translate-y-2'
+            }`}
+          >
+            <div className="space-y-1">
+              {item.children.map((child: any) => 
+                renderItem(child, level + 1, true)
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -102,56 +289,35 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           </div>
         ) : (
           <div className="space-y-6 max-h-96 overflow-y-auto">
-            {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => (
-              <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
-                <div className="space-y-3">
-                  {slotTasks.map((task, index) => {
-                    const isSelected = selectedTasks[task.id] || false;
-                    // Create unique key by combining task.id with goal_slot and index to prevent duplicates
-                    const uniqueKey = `${task.id}-${task.goal_slot}-${index}`;
-                    return (
-                      <div 
-                        key={uniqueKey} 
-                        className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                          savingLoading 
-                            ? 'cursor-not-allowed opacity-50' 
-                            : 'cursor-pointer'
-                        } ${
-                          isSelected 
-                            ? 'bg-blue-50 border border-blue-200' 
-                            : 'bg-gray-50 border border-transparent'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => onTaskToggle(task.id)}
-                          disabled={savingLoading}
-                          className={`w-4 h-4 rounded focus:ring-2 ${
-                            isSelected
-                              ? 'text-blue-600 bg-blue-600 border-blue-600 focus:ring-blue-500'
-                              : 'text-brand-500 bg-gray-100 border-gray-300 focus:ring-brand-500'
-                          } ${savingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <div className="flex-1">
-                          <span className={`text-sm font-medium block ${
-                            isSelected ? 'text-gray-900' : 'text-gray-900'
-                          }`}>
-                            {task.title}
-                          </span>
-                          <span className={`text-xs block ${
-                            isSelected ? 'text-gray-600' : 'text-gray-500'
-                          }`}>
-                            {task.quest_title} • {task.type}
-                          </span>
+            {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => {
+              const hierarchy = buildHierarchy(slotTasks);
+              const rootItems = Object.values(hierarchy);
+              
+              return (
+                <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
+                  <div className="space-y-2">
+                    {rootItems.length > 0 ? (
+                      rootItems.map((item: any) => renderItem(item))
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                          <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
                         </div>
+                        <p className="text-sm font-medium mb-1">
+                          Tidak ada task di goal slot ini
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
+                          Klik edit untuk menambahkan task
+                        </p>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

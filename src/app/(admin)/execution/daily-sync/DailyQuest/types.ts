@@ -75,6 +75,7 @@ export interface WeeklyTaskItem {
   status: string;
   quest_title: string;
   goal_slot: number;
+  parent_task_id?: string | null;
 }
 
 export interface SideQuestFormProps {
