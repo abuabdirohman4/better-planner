@@ -25,6 +25,7 @@ import {
 
 import LanguageToggle from "@/components/ui/languages/LanguageToggle";
 import { useLanguage } from "@/stores/languageStore";
+import Image from "next/image";
 
 export default function LandingPageContent() {
   const { language, setLanguage, t } = useLanguage();
@@ -39,7 +40,13 @@ export default function LandingPageContent() {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <RiRocketLine className="w-5 h-5 text-white" />
+                <Image
+                  src="/images/logo/logo-icon.svg"
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                  priority
+                />
               </div>
               <span className="text-xl font-bold text-gray-900">Better Planner</span>
             </div>
@@ -488,7 +495,13 @@ export default function LandingPageContent() {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <RiRocketLine className="w-5 h-5 text-white" />
+                  <Image
+                    src="/images/logo/logo-icon.svg"
+                    alt="Logo"
+                    width={48}
+                    height={48}
+                    priority
+                  />
                 </div>
                 <span className="text-xl font-bold">Better Planner</span>
               </div>
