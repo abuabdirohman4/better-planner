@@ -32,6 +32,8 @@ function PageTitle() {
         return 'Main Quests';
       case '/quests/work-quests':
         return 'Work Quests';
+      case '/quests/side-quests':
+        return 'Side Quests';
       case '/analytics':
         return 'Analytics';
       default:

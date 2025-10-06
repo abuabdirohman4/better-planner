@@ -17,6 +17,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
   className = "",
   disabled = false,
 }) => {
+  console.log('disabled', disabled)
   return (
     <label
       className={`flex items-center space-x-3 group cursor-pointer ${
@@ -27,8 +28,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
         <input
           id={id}
           type="checkbox"
-          className={`w-5 h-5 appearance-none cursor-pointer border border-gray-300 checked:border-transparent rounded-md checked:bg-gray-300 disabled:opacity-60 
-          ${className}`}
+          className={`w-5 h-5 appearance-none cursor-pointer border border-gray-300 checked:border-transparent rounded-md checked:bg-gradient-to-r checked:from-blue-500 checked:to-blue-600 checked:border-blue-600 checked:opacity-75 ${className}`}
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}

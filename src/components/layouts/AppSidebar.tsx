@@ -80,6 +80,11 @@ const questsNav: NavItem[] = [
     name: "Work Quests",
     path: "/quests/work-quests",
   },
+  {
+    icon: <TaskIcon />,
+    name: "Side Quests",
+    path: "/quests/side-quests",
+  },
 ];
 
 const trackingNav: NavItem[] = [
