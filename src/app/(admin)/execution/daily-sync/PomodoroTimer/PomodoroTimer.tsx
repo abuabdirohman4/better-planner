@@ -242,7 +242,8 @@ export default function PomodoroTimer() {
       )}
       
       {/* Timer lingkaran dan kontrol play/pause */}
-      <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}>
+      <div className={`flex items-center gap-6`}>
+      {/* <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}> */}
         {/* Timer Circle - Fixed position di kiri */}
         <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
           {activeTask ? (
