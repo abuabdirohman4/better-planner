@@ -5,6 +5,9 @@ import { updateActivityJournal, logActivityWithJournal } from '../actions/journa
 import { getActivityLogId, updateActivityLogJournal } from '../../PomodoroTimer/actions/timerSessionActions';
 import { JournalData } from '../types';
 import { createClient } from '@/lib/supabase/client';
+import { useJournalData } from './useJournalData';
+import { mutate as globalMutate } from 'swr';
+import { dailySyncKeys } from '@/lib/swr';
 
 export const useJournal = () => {
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
@@ -19,6 +22,11 @@ export const useJournal = () => {
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+
+  const { updateJournal: updateJournalData } = useJournalData({
+    activityId: pendingActivityData?.activityId,
+    enabled: !!pendingActivityData?.activityId,
+  });
 
   const openJournalModal = useCallback((data: {
     activityId?: string;
@@ -58,6 +66,17 @@ export const useJournal = () => {
         whatDone,
         whatThink
       );
+      
+      // ✅ CRITICAL: Update SWR cache for real-time ActivityLog update
+      await updateJournalData({ whatDone, whatThink });
+      
+      // ✅ CRITICAL: Invalidate ActivityLog cache to trigger immediate update
+      await globalMutate((key) => {
+        if (Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'activity-logs') {
+          return true; // Invalidate all activity logs
+        }
+        return false;
+      });
     } else {
       // ✅ FIX: Create activity log first, then update with journal data
       try {
@@ -188,8 +207,17 @@ export const useJournal = () => {
     }
 
     console.log(`📱 [${deviceInfo}] Journal saved successfully!`);
+    
+    // ✅ CRITICAL: Invalidate ActivityLog cache to trigger immediate update
+    await globalMutate((key) => {
+      if (Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'activity-logs') {
+        return true; // Invalidate all activity logs
+      }
+      return false;
+    });
+    
     closeJournalModal();
-  }, [pendingActivityData, closeJournalModal, retryCount]);
+  }, [pendingActivityData, closeJournalModal, retryCount, updateJournalData]);
 
   return {
     isJournalModalOpen,

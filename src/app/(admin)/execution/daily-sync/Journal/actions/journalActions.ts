@@ -3,6 +3,31 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
+export async function getActivityLogById(activityId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('id, what_done, what_think, updated_at')
+      .eq('id', activityId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('[getActivityLogById] Supabase error:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[getActivityLogById] Exception:', error);
+    throw error;
+  }
+}
+
 export async function updateActivityJournal(activityId: string, whatDone: string, whatThink: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -14,6 +39,7 @@ export async function updateActivityJournal(activityId: string, whatDone: string
       .update({
         what_done: whatDone.trim() || null,
         what_think: whatThink.trim() || null,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', activityId)
       .eq('user_id', user.id)
