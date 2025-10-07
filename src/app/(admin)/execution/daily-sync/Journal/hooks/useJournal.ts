@@ -9,6 +9,7 @@ import { useJournalData } from './useJournalData';
 import { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { getCurrentLocalDate } from '@/lib/dateUtils';
+import { useActivityLogs } from '../../ActivityLog/hooks/useActivityLogs';
 
 export const useJournal = () => {
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
@@ -27,6 +28,14 @@ export const useJournal = () => {
   const { updateJournal: updateJournalData } = useJournalData({
     activityId: pendingActivityData?.activityId,
     enabled: !!pendingActivityData?.activityId,
+  });
+  
+  // ✅ NEW: Get ActivityLogs hook for optimistic updates
+  const currentLocalDate = getCurrentLocalDate();
+  const { updateLogJournal } = useActivityLogs({ 
+    date: currentLocalDate,
+    refreshKey: 0,
+    lastActivityTimestamp: 0
   });
 
   const openJournalModal = useCallback((data: {
@@ -61,6 +70,9 @@ export const useJournal = () => {
     const deviceInfo = isMobile ? 'Mobile' : 'Desktop';
 
     if (pendingActivityData.activityId) {
+      // ✅ INSTANT: Optimistic update for immediate UI feedback
+      updateLogJournal(pendingActivityData.activityId, whatDone, whatThink);
+      
       // Update existing activity log
       await updateActivityJournal(
         pendingActivityData.activityId,

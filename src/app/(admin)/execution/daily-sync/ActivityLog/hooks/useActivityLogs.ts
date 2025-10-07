@@ -30,6 +30,7 @@ export interface UseActivityLogsReturn {
   isLoading: boolean;
   error: string | null;
   mutate: () => void;
+  updateLogJournal: (logId: string, whatDone: string, whatThink: string) => void;
 }
 
 export function useActivityLogs({ 
@@ -65,10 +66,27 @@ export function useActivityLogs({
     }
   }, [refreshKey, lastActivityTimestamp, mutate]);
 
+  // ✅ NEW: Optimistic update for journal data
+  const updateLogJournal = (logId: string, whatDone: string, whatThink: string) => {
+    mutate(
+      (currentLogs) => {
+        if (!currentLogs) return currentLogs;
+        
+        return currentLogs.map((log) => 
+          log.id === logId 
+            ? { ...log, what_done: whatDone, what_think: whatThink }
+            : log
+        );
+      },
+      false // Don't revalidate immediately
+    );
+  };
+
   return {
     logs,
     isLoading,
     error: error?.message || null,
     mutate,
+    updateLogJournal,
   };
 }
