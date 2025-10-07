@@ -69,11 +69,14 @@ const TargetFocusContent: React.FC<TargetFocusContentProps> = ({
   // Default max sessions target
   const maxSessionsTarget = 16;
 
-  // Calculate progress percentages with safety checks
+  // Calculate progress percentages - actual sessions are independent of target
   const progressTotalSessionsActual = Math.min((totalSessionsActual / maxSessionsTarget) * 100, 100);
   
-  // If there is no target (totalSessionsTarget = 0), then all progress is actual
-  if (totalSessionsTarget === 0) {
+  // Calculate remaining space for target and max sessions
+  const remainingSpace = Math.max(0, 100 - progressTotalSessionsActual);
+  
+  // If there's no target or target is very small, show only actual + max
+  if (totalSessionsTarget === 0 || totalSessionsTarget < totalSessionsActual) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         {/* Header */}
@@ -104,10 +107,10 @@ const TargetFocusContent: React.FC<TargetFocusContentProps> = ({
               </div>
               
               {/* Max Sessions */}
-              {progressTotalSessionsActual < 100 && (
+              {remainingSpace > 0 && (
                 <div 
                   className="bg-gray-300 dark:bg-gray-600 flex items-center justify-end pr-2 text-gray-700 dark:text-gray-300 text-sm whitespace-nowrap overflow-hidden"
-                  style={{ width: `${Math.max(0, 100 - progressTotalSessionsActual)}%` }}
+                  style={{ width: `${remainingSpace}%` }}
                 >
                   <span className="flex items-center gap-1 whitespace-nowrap">
                     <span className="truncate">{maxSessionsTarget}</span>
@@ -124,11 +127,12 @@ const TargetFocusContent: React.FC<TargetFocusContentProps> = ({
     );
   }
   
+  // Normal case: target is meaningful and larger than actual
   const remainingTargetSessions = Math.max(0, totalSessionsTarget - totalSessionsActual);
-  const progressTotalSessionsTarget = Math.min((remainingTargetSessions / maxSessionsTarget) * 100, 100);
+  const progressTotalSessionsTarget = Math.min((remainingTargetSessions / maxSessionsTarget) * 100, remainingSpace);
   
   const remainingMaxSessions = Math.max(0, maxSessionsTarget - totalSessionsTarget);
-  const progressMaxSessionsTarget = Math.min((remainingMaxSessions / maxSessionsTarget) * 100, 100);
+  const progressMaxSessionsTarget = Math.min((remainingMaxSessions / maxSessionsTarget) * 100, remainingSpace - progressTotalSessionsTarget);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
