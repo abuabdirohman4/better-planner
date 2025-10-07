@@ -7,6 +7,7 @@ import { DailyPlanItem } from '../types';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';
+import { useCompletedSessions } from './useCompletedSessions';
 
 // Helper function to get daily plan with detailed task information
 async function getDailyPlan(selectedDate: string) {
@@ -135,8 +136,15 @@ export function useDailyPlanManagement(
     mutate: mutateTasks 
   } = useTasksForWeek(year, weekNumber, selectedDate);
 
+  // ✅ NEW: Get completed sessions from activity_logs
+  const dailyPlanItems = dailyPlan?.daily_plan_items || [];
+  const { completedSessions, isLoading: completedSessionsLoading } = useCompletedSessions({
+    selectedDate,
+    dailyPlanItems
+  });
+
   // Combine loading states
-  const loading = dailyPlanLoading || tasksLoading;
+  const loading = dailyPlanLoading || tasksLoading || completedSessionsLoading;
   const error = dailyPlanError || tasksError;
   
   // Enhanced mutate function that refreshes both and invalidates related caches
@@ -159,9 +167,6 @@ export function useDailyPlanManagement(
       })
     ]);
   };
-
-  // For now, we'll use empty completed sessions
-  const completedSessions: Record<string, number> = {};
 
   // Unified modal state
   const [modalState, setModalState] = useState({

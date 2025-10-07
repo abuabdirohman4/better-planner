@@ -205,7 +205,7 @@ const TaskItemCard = ({
       </div>
 
       {/* Quest & Target */}
-      {/* <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         {item.quest_title && (
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.quest_title}
@@ -250,7 +250,7 @@ const TaskItemCard = ({
             </button>
           </div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };
