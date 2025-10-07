@@ -209,9 +209,9 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
 
     // Calculate sessions from actual targets, not from time
     const totalSessionsTarget = targetsData.targets.reduce((sum, item) => sum + item.sessionTarget, 0);
-    // const totalSessionsActual = Math.floor(totalTimeActual / 25);
+    const totalSessionsActual = Math.floor(totalTimeActual / 25);
     // const totalSessionsTarget = 6;
-    const totalSessionsActual = 14;
+    // const totalSessionsActual = 14;
 
     // Calculate progress percentage (capped at 100%)
     const progressPercentage = totalTimeTarget > 0 ? Math.min((totalTimeActual / totalTimeTarget) * 100, 100) : 0;
