@@ -86,29 +86,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             />
           </div>
         </CollapsibleCard>
-        
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.sideQuest}
-          onToggle={() => toggleCardCollapsed('sideQuest')}
-          className="side-quest-card"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <SideQuestListSection
-              title="Side Quest"
-              items={groupedItems['SIDE_QUEST']}
-              onStatusChange={handleStatusChange}
-              onAddSideQuest={handleAddSideQuest}
-              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
-            />
-          </div>
-        </CollapsibleCard>
 
         <CollapsibleCard
           isCollapsed={cardCollapsed.workQuest}
@@ -129,6 +106,29 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               refreshSessionKey={refreshSessionKey}
               forceRefreshTaskId={forceRefreshTaskId}
               showAddQuestButton={true}
+            />
+          </div>
+        </CollapsibleCard>
+        
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.sideQuest}
+          onToggle={() => toggleCardCollapsed('sideQuest')}
+          className="side-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <SideQuestListSection
+              title="Side Quest"
+              items={groupedItems['SIDE_QUEST']}
+              onStatusChange={handleStatusChange}
+              onAddSideQuest={handleAddSideQuest}
+              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
             />
           </div>
         </CollapsibleCard>

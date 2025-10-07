@@ -182,7 +182,8 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   }, [date]); // Recalculate when date changes
 
   // Group logs by task_id
-  const grouped = logs.reduce((acc, log) => {
+  const safeLogs = Array.isArray(logs) ? logs : [];
+  const grouped = safeLogs.reduce((acc, log) => {
     if (!log.task_id) return acc;
     if (!acc[log.task_id]) {
       acc[log.task_id] = {
@@ -251,7 +252,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
               <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
                 <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-block bg-brand-100 text-brand-700 px-2 py-1 rounded-full text-xs font-semibold">
                     {item.sessions.length} sessions
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-300">({formatTotal(item.totalMinutes)})</span>

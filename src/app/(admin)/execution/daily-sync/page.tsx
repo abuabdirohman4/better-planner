@@ -17,6 +17,7 @@ import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
 import { useJournal } from './Journal/hooks/useJournal';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
+import TargetFocus from "./TargetFocus/TargetFocus";
 
 export default function DailySyncPage() {
   const {
@@ -104,6 +105,11 @@ export default function DailySyncPage() {
             <DailySyncSkeleton />
           ) : (
             <>
+              {/* Target Focus Component */}
+              <div className="block md:hidden mt-4 mb-6">
+                <TargetFocus selectedDate={selectedDateStr} />
+              </div>
+
               <div className="block md:hidden mb-6">
                 <CollapsibleCard
                   isCollapsed={cardCollapsed.pomodoroTimer}
@@ -130,6 +136,9 @@ export default function DailySyncPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-6">
+                  <div className="hidden md:block">
+                    <TargetFocus selectedDate={selectedDateStr} />
+                  </div>
                   <div className="hidden md:block">
                     <CollapsibleCard
                       isCollapsed={cardCollapsed.pomodoroTimer}
