@@ -29,7 +29,6 @@ const TaskItemCard = ({
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
   const [optimisticFocusDuration, setOptimisticFocusDuration] = useState<number | null>(null);
 
-
   // Get active task from timer store
   const { activeTask, timerState } = useTimerStore();
   

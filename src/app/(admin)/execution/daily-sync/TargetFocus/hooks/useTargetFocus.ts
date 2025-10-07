@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
 import { dailySyncKeys } from '@/lib/swr';
@@ -24,27 +24,46 @@ async function getDailyPlanTargets(selectedDate: string) {
   if (!user) return { targets: [], totalTimeTarget: 0 };
 
   try {
-    const { data: plan, error } = await supabase
+    // First, get the daily plan
+    const { data: plan, error: planError } = await supabase
       .from('daily_plans')
-      .select(`
-        daily_plan_items(
-          id,
-          item_id,
-          item_type,
-          daily_session_target,
-          focus_duration
-        )
-      `)
+      .select('id, plan_date')
       .eq('plan_date', selectedDate)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to avoid error when no data
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (planError) {
+      console.error('Error fetching daily plan:', planError);
+      throw planError;
+    }
     
-    if (!plan?.daily_plan_items) return { targets: [], totalTimeTarget: 0 };
+    if (!plan) {
+      return { targets: [], totalTimeTarget: 0 };
+    }
+
+    // Then get the daily plan items
+    const { data: items, error: itemsError } = await supabase
+      .from('daily_plan_items')
+      .select(`
+        id,
+        item_id,
+        item_type,
+        daily_session_target,
+        focus_duration
+      `)
+      .eq('daily_plan_id', plan.id);
+
+    if (itemsError) {
+      console.error('Error fetching daily plan items:', itemsError);
+      throw itemsError;
+    }
+
+    if (!items || items.length === 0) {
+      return { targets: [], totalTimeTarget: 0 };
+    }
 
     // Calculate total target
-    const targets = plan.daily_plan_items.map((item: any) => ({
+    const targets = items.map((item: any) => ({
       id: item.id,
       itemId: item.item_id,
       itemType: item.item_type,
@@ -64,11 +83,15 @@ async function getDailyPlanTargets(selectedDate: string) {
 
 // Fetch actual focus time from activity logs
 async function getActualFocusTime(selectedDate: string, taskIds: string[]) {
-  if (taskIds.length === 0) return 0;
+  if (taskIds.length === 0) {
+    return 0;
+  }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return 0;
+  if (!user) {
+    return 0;
+  }
 
   try {
     const { data: activityLogs, error } = await supabase
@@ -84,7 +107,8 @@ async function getActualFocusTime(selectedDate: string, taskIds: string[]) {
       return 0;
     }
 
-    return activityLogs?.reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
+    const totalMinutes = activityLogs?.reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
+    return totalMinutes;
   } catch (error) {
     console.error('Error in getActualFocusTime:', error);
     return 0;
@@ -96,7 +120,8 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
   const { 
     data: targetsData, 
     error: targetsError, 
-    isLoading: targetsLoading 
+    isLoading: targetsLoading,
+    mutate: mutateTargets
   } = useSWR(
     selectedDate ? dailySyncKeys.targetFocusData(selectedDate) : null,
     () => getDailyPlanTargets(selectedDate),
@@ -104,7 +129,7 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000, // 30 seconds
+      dedupingInterval: 0, // No deduplication to ensure fresh data
       errorRetryCount: 3,
     }
   );
@@ -116,7 +141,8 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
   const { 
     data: actualFocusTime = 0, 
     error: focusError, 
-    isLoading: focusLoading 
+    isLoading: focusLoading,
+    mutate: mutateFocus
   } = useSWR(
     selectedDate && taskIds.length > 0 
       ? dailySyncKeys.actualFocusTime(selectedDate, taskIds) 
@@ -126,21 +152,38 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 10 * 1000, // 10 seconds for fresher data
+      dedupingInterval: 0, // No deduplication to ensure fresh data
       errorRetryCount: 3,
     }
   );
 
+  // Clear cache when date changes
+  useEffect(() => {
+    mutateTargets();
+    mutateFocus();
+  }, [selectedDate, mutateTargets, mutateFocus]);
+
   // Calculate derived values
   const result = useMemo(() => {
-    const totalTimeTarget = targetsData?.totalTimeTarget || 0;
+    // Reset to 0 if no data for the selected date
+    if (!targetsData || !targetsData.targets || targetsData.targets.length === 0) {
+      return {
+        totalTimeTarget: 0,
+        totalTimeActual: 0,
+        totalSessionsTarget: 0,
+        totalSessionsActual: 0,
+        progressPercentage: 0,
+      };
+    }
+
+    const totalTimeTarget = targetsData.totalTimeTarget || 0;
     const totalTimeActual = actualFocusTime || 0;
 
-    // Assuming 25 minutes per session
-    const totalSessionsTarget = Math.floor(totalTimeTarget / 25);
+    // Calculate sessions from actual targets, not from time
+    const totalSessionsTarget = targetsData.targets.reduce((sum, item) => sum + item.sessionTarget, 0);
     const totalSessionsActual = Math.floor(totalTimeActual / 25);
-    // const totalSessionsActual = 8;
-    // const totalSessionsTarget = 14;
+    // const totalSessionsTarget = 6;
+    // const totalSessionsActual = 6;
 
     // Calculate progress percentage (capped at 100%)
     const progressPercentage = totalTimeTarget > 0 ? Math.min((totalTimeActual / totalTimeTarget) * 100, 100) : 0;
@@ -152,7 +195,7 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       totalSessionsActual,
       progressPercentage,
     };
-  }, [targetsData, actualFocusTime]);
+  }, [targetsData, actualFocusTime, selectedDate]);
 
   return {
     ...result,
