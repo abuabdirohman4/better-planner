@@ -2,6 +2,7 @@ import { useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
 import { dailySyncKeys } from '@/lib/swr';
+import { useTargetFocusStore } from '../stores/targetFocusStore';
 
 interface UseTargetFocusOptions {
   selectedDate: string;
@@ -15,6 +16,7 @@ interface UseTargetFocusReturn {
   progressPercentage: number; // Progress percentage for progress bar
   isLoading: boolean;
   error: string | null;
+  updateTargetOptimistically: (itemId: string, newTarget: number) => void; // Function to update target optimistically
 }
 
 // Fetch daily plan items and their targets
@@ -116,9 +118,20 @@ async function getActualFocusTime(selectedDate: string, taskIds: string[]) {
 }
 
 export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTargetFocusReturn {
+  // Get Zustand store
+  const { 
+    targetsData, 
+    totalTimeActual, 
+    totalSessionsActual,
+    setTargetsData,
+    setTotalTimeActual,
+    setTotalSessionsActual,
+    updateTargetOptimistically 
+  } = useTargetFocusStore();
+
   // Fetch daily plan targets
   const { 
-    data: targetsData, 
+    data: fetchedTargetsData, 
     error: targetsError, 
     isLoading: targetsLoading,
     mutate: mutateTargets
@@ -133,6 +146,13 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       errorRetryCount: 3,
     }
   );
+
+  // Update Zustand store when data changes
+  useEffect(() => {
+    if (fetchedTargetsData) {
+      setTargetsData(fetchedTargetsData);
+    }
+  }, [fetchedTargetsData, setTargetsData]);
 
   // Get task IDs for focus time query
   const taskIds = targetsData?.targets?.map((item: any) => item.itemId) || [];
@@ -163,6 +183,14 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     mutateFocus();
   }, [selectedDate, mutateTargets, mutateFocus]);
 
+  // Update actual focus time in Zustand store
+  useEffect(() => {
+    if (actualFocusTime !== undefined) {
+      setTotalTimeActual(actualFocusTime);
+      setTotalSessionsActual(Math.floor(actualFocusTime / 25));
+    }
+  }, [actualFocusTime, setTotalTimeActual, setTotalSessionsActual]);
+
   // Calculate derived values
   const result = useMemo(() => {
     // Reset to 0 if no data for the selected date
@@ -183,7 +211,7 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     const totalSessionsTarget = targetsData.targets.reduce((sum, item) => sum + item.sessionTarget, 0);
     const totalSessionsActual = Math.floor(totalTimeActual / 25);
     // const totalSessionsTarget = 6;
-    // const totalSessionsActual = 6;
+    // const totalSessionsActual = 14;
 
     // Calculate progress percentage (capped at 100%)
     const progressPercentage = totalTimeTarget > 0 ? Math.min((totalTimeActual / totalTimeTarget) * 100, 100) : 0;
@@ -201,5 +229,6 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     ...result,
     isLoading: targetsLoading || focusLoading,
     error: targetsError?.message || focusError?.message || null,
+    updateTargetOptimistically,
   };
 }

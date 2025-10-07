@@ -1,20 +1,31 @@
 'use client';
 import React from 'react';
 import { useTargetFocus } from './hooks/useTargetFocus';
+import { useTargetFocusStore } from './stores/targetFocusStore';
 
 interface TargetFocusProps {
   selectedDate: string;
 }
 
-const TargetFocus: React.FC<TargetFocusProps> = ({ selectedDate }) => {
-  const { 
-    totalTimeTarget, 
-    totalTimeActual, 
-    totalSessionsTarget,
-    totalSessionsActual,
-    isLoading, 
-    error,
-  } = useTargetFocus({ selectedDate });
+interface TargetFocusContentProps {
+  selectedDate: string;
+  totalTimeTarget: number;
+  totalTimeActual: number;
+  totalSessionsTarget: number;
+  totalSessionsActual: number;
+  isLoading: boolean;
+  error: string | null;
+}
+
+const TargetFocusContent: React.FC<TargetFocusContentProps> = ({ 
+  selectedDate,
+  totalTimeTarget, 
+  totalTimeActual, 
+  totalSessionsTarget,
+  totalSessionsActual,
+  isLoading, 
+  error,
+}) => {
 
   if (isLoading) {
     return (
@@ -182,6 +193,33 @@ const TargetFocus: React.FC<TargetFocusProps> = ({ selectedDate }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const TargetFocus: React.FC<TargetFocusProps> = ({ selectedDate }) => {
+  const { 
+    totalTimeTarget, 
+    totalTimeActual, 
+    totalSessionsTarget,
+    totalSessionsActual,
+    isLoading, 
+    error,
+  } = useTargetFocus({ selectedDate });
+  
+  // Get Zustand store for optimistic updates
+  const { updateTargetOptimistically } = useTargetFocusStore();
+  
+  
+  return (
+    <TargetFocusContent 
+      selectedDate={selectedDate}
+      totalTimeTarget={totalTimeTarget}
+      totalTimeActual={totalTimeActual}
+      totalSessionsTarget={totalSessionsTarget}
+      totalSessionsActual={totalSessionsActual}
+      isLoading={isLoading}
+      error={error}
+    />
   );
 };
 

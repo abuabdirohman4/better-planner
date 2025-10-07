@@ -6,8 +6,9 @@ import { TaskCardProps } from '../types';
 import { playSound } from '@/lib/soundUtils';
 import { useTimerStore } from '@/stores/timerStore';
 import { useSoundStore } from '@/stores/soundStore';
+import { useTargetFocusStore } from '../../TargetFocus/stores/targetFocusStore';
 
-const TaskItemCard = ({ 
+const TaskItemCardContent = ({ 
   item, 
   onStatusChange, 
   onSetActiveTask, 
@@ -34,6 +35,9 @@ const TaskItemCard = ({
   
   // Get task completion sound settings
   const { taskCompletionSettings } = useSoundStore();
+  
+  // Get target focus store for optimistic updates
+  const { updateTargetOptimistically } = useTargetFocusStore();
   
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   const isActiveInTimer = activeTask?.id === item.item_id && (timerState === 'FOCUSING' || timerState === 'PAUSED');
@@ -219,7 +223,17 @@ const TaskItemCard = ({
                   : 'text-gray-500 hover:text-brand-600'
               }`}
               disabled={savingTarget || target <= 1 || isCompleted}
-              onClick={() => !isCompleted && handleTargetChange(target - 1, onTargetChange)}
+            onClick={() => {
+              if (!isCompleted) {
+                const newTarget = target - 1;
+                
+                // Optimistic update to progress bar via Zustand store
+                updateTargetOptimistically(item.item_id, newTarget);
+                
+                // Update the actual target
+                handleTargetChange(newTarget, onTargetChange);
+              }
+            }}
               aria-label="Kurangi target"
             >
               –
@@ -242,7 +256,17 @@ const TaskItemCard = ({
                   : 'text-gray-500 hover:text-brand-600'
               }`}
               disabled={savingTarget || isCompleted}
-              onClick={() => !isCompleted && handleTargetChange(target + 1, onTargetChange)}
+            onClick={() => {
+              if (!isCompleted) {
+                const newTarget = target + 1;
+                
+                // Optimistic update to progress bar via Zustand store
+                updateTargetOptimistically(item.item_id, newTarget);
+                
+                // Update the actual target
+                handleTargetChange(newTarget, onTargetChange);
+              }
+            }}
               aria-label="Tambah target"
             >
               +
@@ -253,5 +277,7 @@ const TaskItemCard = ({
     </div>
   );
 };
+
+const TaskItemCard = TaskItemCardContent;
 
 export default TaskItemCard;
