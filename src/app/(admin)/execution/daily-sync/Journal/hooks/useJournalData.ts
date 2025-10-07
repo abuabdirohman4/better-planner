@@ -1,6 +1,7 @@
 import useSWR, { mutate as globalMutate } from 'swr';
 import { getActivityLogById } from '../actions/journalActions';
 import { dailySyncKeys } from '@/lib/swr';
+import { getCurrentLocalDate } from '@/lib/dateUtils';
 
 export interface JournalData {
   whatDone: string;
@@ -47,7 +48,7 @@ export function useJournalData({
     if (!activityId) return;
 
     try {
-      // Optimistic update - update UI immediately
+      // ✅ INSTANT: Optimistic update for journal data
       mutate((current) => {
         if (!current) return current;
         return {
@@ -55,6 +56,17 @@ export function useJournalData({
           what_done: data.whatDone,
           what_think: data.whatThink,
         };
+      }, false);
+
+      // ✅ INSTANT: Optimistic update for ActivityLog cache
+      const currentDate = getCurrentLocalDate();
+      await globalMutate(dailySyncKeys.activityLogs(currentDate), (currentLogs: any) => {
+        if (!currentLogs) return currentLogs;
+        return currentLogs.map((log: any) => 
+          log.id === activityId 
+            ? { ...log, what_done: data.whatDone, what_think: data.whatThink }
+            : log
+        );
       }, false);
 
       // Update in background
