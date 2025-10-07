@@ -76,6 +76,9 @@ export const useJournal = () => {
       
       // ✅ CRITICAL: Invalidate ActivityLog cache with current date
       await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+      
+      // ✅ FIX: Add small delay to ensure date consistency
+      await new Promise(resolve => setTimeout(resolve, 100));
     } else {
       // ✅ FIX: Create activity log first, then update with journal data
       try {
@@ -133,6 +136,9 @@ export const useJournal = () => {
 
           // ✅ CRITICAL: Invalidate ActivityLog cache with current date
           await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+          
+          // ✅ FIX: Add small delay to ensure date consistency
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       } catch (error) {
         console.error(`📱 [${deviceInfo}] Journal save failed (attempt ${retryCount + 1}):`, error);
@@ -185,6 +191,9 @@ export const useJournal = () => {
 
               // ✅ CRITICAL: Invalidate ActivityLog cache with current date
               await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+              
+              // ✅ FIX: Add small delay to ensure date consistency
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
             setIsRetrying(false);
             return;
