@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState,useCallback } from "react";
 
 import { useSidebar } from "@/stores/sidebarStore";
@@ -18,6 +18,7 @@ import {
   // DocsIcon,
   // ShootingStarIcon,
 } from "@/lib/icons";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -234,7 +235,9 @@ function MenuItem({
   subMenuHeight, 
   subMenuRefs, 
   handleSubmenuToggle, 
-  isActive 
+  isActive,
+  isLoading,
+  onNavigate
 }: { 
   nav: NavItem; 
   index: number; 
@@ -247,6 +250,8 @@ function MenuItem({
   subMenuRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleSubmenuToggle: (index: number, menuType: "main" | "others") => void;
   isActive: (path: string) => boolean;
+  isLoading: (path: string) => boolean;
+  onNavigate: (path: string) => void;
 }) {
   const isSubmenuOpen = openSubmenu?.type === menuType && openSubmenu?.index === index;
   const showText = isExpanded || isHovered || isMobileOpen;
@@ -293,24 +298,31 @@ function MenuItem({
   }
 
   if (nav.path) {
+    const isRouteLoading = isLoading(nav.path);
+    const isRouteActive = isActive(nav.path);
+    
     return (
       <li key={nav.name || index}>
-        <Link
-          href={nav.path}
-          prefetch={true}
+        <button
+          onClick={() => onNavigate(nav.path!)}
+          disabled={isRouteLoading}
           className={`menu-item group ${
-            isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-          }`}
+            isRouteActive ? "menu-item-active" : "menu-item-inactive"
+          } ${isRouteLoading ? "opacity-70 cursor-wait" : ""}`}
         >
           <span
             className={
-              isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"
+              isRouteActive ? "menu-item-icon-active" : "menu-item-icon-inactive"
             }
           >
-            {nav.icon ? nav.icon : null}
+            {isRouteLoading ? (
+              <Spinner size={16} />
+            ) : (
+              nav.icon ? nav.icon : null
+            )}
           </span>
           {showText && nav.name ? <span className="menu-item-text">{nav.name}</span> : null}
-        </Link>
+        </button>
       </li>
     );
   }
@@ -329,7 +341,9 @@ function MenuItems({
   subMenuHeight, 
   subMenuRefs, 
   handleSubmenuToggle, 
-  isActive 
+  isActive,
+  isLoading,
+  onNavigate
 }: { 
   navItems: NavItem[]; 
   menuType: "main" | "others";
@@ -341,6 +355,8 @@ function MenuItems({
   subMenuRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleSubmenuToggle: (index: number, menuType: "main" | "others") => void;
   isActive: (path: string) => boolean;
+  isLoading: (path: string) => boolean;
+  onNavigate: (path: string) => void;
 }) {
   return (
     <ul className="flex flex-col gap-4">
@@ -358,6 +374,8 @@ function MenuItems({
           subMenuRefs={subMenuRefs}
           handleSubmenuToggle={handleSubmenuToggle}
           isActive={isActive}
+          isLoading={isLoading}
+          onNavigate={onNavigate}
         />
       ))}
     </ul>
@@ -373,7 +391,9 @@ function SidebarContent({
   subMenuHeight,
   subMenuRefs,
   handleSubmenuToggle,
-  isActive
+  isActive,
+  isLoading,
+  onNavigate
 }: {
   isExpanded: boolean;
   isMobileOpen: boolean;
@@ -384,6 +404,8 @@ function SidebarContent({
   subMenuRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   handleSubmenuToggle: (index: number, menuType: "main" | "others") => void;
   isActive: (path: string) => boolean;
+  isLoading: (path: string) => boolean;
+  onNavigate: (path: string) => void;
 }) {
   return (
     <aside
@@ -443,6 +465,8 @@ function SidebarContent({
               subMenuRefs={subMenuRefs}
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
+              isLoading={isLoading}
+              onNavigate={onNavigate}
             />
           </div>
           {/* PLANNING */}
@@ -459,6 +483,8 @@ function SidebarContent({
               subMenuRefs={subMenuRefs}
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
+              isLoading={isLoading}
+              onNavigate={onNavigate}
             />
           </div>
           {/* QUEST */}
@@ -475,6 +501,8 @@ function SidebarContent({
               subMenuRefs={subMenuRefs}
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
+              isLoading={isLoading}
+              onNavigate={onNavigate}
             />
           </div>
           {/* TRACKING */}
@@ -520,6 +548,7 @@ function SidebarContent({
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -528,9 +557,34 @@ const AppSidebar: React.FC = () => {
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
     {}
   );
+  const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+
+  // Handle navigation with loading state
+  const handleNavigation = useCallback((path: string) => {
+    if (path === pathname) return; // Don't navigate if already on the page
+    
+    setLoadingRoutes(prev => new Set(prev).add(path));
+    
+    router.push(path);
+  }, [pathname, router]);
+
+  // Clear loading state when navigation completes
+  useEffect(() => {
+    setLoadingRoutes(new Set());
+  }, [pathname]);
+
+  // Prefetch all routes on component mount for better performance
+  useEffect(() => {
+    const allNavs = [...executionNav, ...planningNav, ...questsNav];
+    allNavs.forEach(nav => {
+      if (nav.path) {
+        router.prefetch(nav.path);
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     // Check if the current path matches any submenu item
@@ -584,6 +638,11 @@ const AppSidebar: React.FC = () => {
     });
   };
 
+  // Check if a route is currently loading
+  const isLoadingRoute = useCallback((path: string) => {
+    return loadingRoutes.has(path);
+  }, [loadingRoutes]);
+
   return (
     <SidebarContent
       isExpanded={isExpanded}
@@ -595,6 +654,8 @@ const AppSidebar: React.FC = () => {
       subMenuRefs={subMenuRefs}
       handleSubmenuToggle={handleSubmenuToggle}
       isActive={isActive}
+      isLoading={isLoadingRoute}
+      onNavigate={handleNavigation}
     />
   );
 };
