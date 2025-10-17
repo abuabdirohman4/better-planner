@@ -12,6 +12,7 @@ interface ButtonProps {
   loading?: boolean; // Loading state
   loadingText?: string; // Text to show when loading
   className?: string; // Additional CSS classes
+  sizeClassName?: string; // Additional CSS classes for size
   type?: "button" | "submit" | "reset"; // Button type
   formAction?: (formData: FormData) => Promise<never>; // Form action
 }
@@ -19,6 +20,7 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({
   children,
   size = "md",
+  sizeClassName = "",
   variant = "primary",
   startIcon,
   endIcon,
@@ -67,11 +69,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       formAction={formAction}
-      className={`inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${
-        sizeClasses[size]
-      } ${variantClasses[variant]} ${
-        isDisabled ? "cursor-not-allowed" : ""
-      } ${className}`}
+      className={`inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${sizeClassName || sizeClasses[size]} ${variantClasses[variant]} ${isDisabled ? "cursor-not-allowed" : ""} ${className}`}
       onClick={onClick}
       disabled={isDisabled}
     >

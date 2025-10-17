@@ -26,33 +26,10 @@ async function DashboardContent() {
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
-        {/* <div className="col-span-12">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Dashboard
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
-                Welcome Back
-              </p>
-            </div>
-          </div>
-        </div> */}
-        <QuarterSelector />
+        <div className="col-span-12">
+          <QuarterSelector />
+        </div>
 
-        {/* <div className="col-span-12">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Getting Started
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Welcome to Better Planner! This is where you&apos;ll manage your goals, tasks, and habits. 
-              The dashboard will show your daily progress and important metrics once you start using the app.
-            </p>
-          </div>
-        </div> */}
-
-        {/* Mobile Cards - Only visible on mobile */}
         <div className="col-span-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
             {/* Vision Card */}
