@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { GridIcon, TaskIcon, CalenderIcon, PieChartIcon } from "@/lib/icons";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 interface NavItem {
   href: string;
@@ -42,6 +43,35 @@ const navItems: NavItem[] = [
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
+  
+  const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
+  
+  // Handle navigation with loading state
+  const handleNavigation = useCallback((path: string) => {
+    if (path === pathname) return; // Don't navigate if already on the page
+    
+    setLoadingRoutes(prev => new Set(prev).add(path));
+    
+    router.push(path);
+  }, [pathname, router]);
+  
+  // Clear loading state when navigation completes
+  useEffect(() => {
+    setLoadingRoutes(new Set());
+  }, [pathname]);
+  
+  // Prefetch all routes on component mount for better performance
+  useEffect(() => {
+    navItems.forEach(item => {
+      router.prefetch(item.href);
+    });
+  }, [router]);
+  
+  // Check if a route is currently loading
+  const isLoadingRoute = useCallback((path: string) => {
+    return loadingRoutes.has(path);
+  }, [loadingRoutes]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
@@ -50,22 +80,28 @@ export default function BottomNavigation() {
         <div className="flex items-center justify-around px-1 py-1">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
+            const isRouteLoading = isLoadingRoute(item.href);
             
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                prefetch={true}
+                onClick={() => handleNavigation(item.href)}
+                disabled={isRouteLoading}
                 className={cn(
                   "bottom-nav-item",
-                  isActive ? "bottom-nav-item-active" : "bottom-nav-item-inactive"
+                  isActive ? "bottom-nav-item-active" : "bottom-nav-item-inactive",
+                  isRouteLoading ? "opacity-70 cursor-wait" : ""
                 )}
               >
                 <div className={cn(
                   "bottom-nav-icon",
                   isActive ? "bottom-nav-icon-active" : "bottom-nav-icon-inactive"
                 )}>
-                  {isActive ? item.activeIcon : item.icon}
+                  {isRouteLoading ? (
+                    <Spinner size={16} />
+                  ) : (
+                    isActive ? item.activeIcon : item.icon
+                  )}
                 </div>
                 <span className={cn(
                   "bottom-nav-label",
@@ -73,7 +109,7 @@ export default function BottomNavigation() {
                 )}>
                   {item.label}
                 </span>
-              </Link>
+              </button>
             );
           })}
         </div>
