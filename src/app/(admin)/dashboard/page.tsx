@@ -31,7 +31,7 @@ async function DashboardContent() {
         </div>
 
         <div className="col-span-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
             {/* Vision Card */}
             <Link 
               href="/planning/vision"
@@ -42,7 +42,7 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Vision</h3>
-                <p className="text-xs text-gray-500">Lihat visi utama</p>
+                <p className="text-xs text-gray-500 hidden md:block">Lihat visi utama</p>
               </div>
             </Link>
             {/* 12 Week Quests Card */}
@@ -55,7 +55,7 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">12 Week Quests</h3>
-                <p className="text-xs text-gray-500">Rencana 12 minggu</p>
+                <p className="text-xs text-gray-500 hidden md:block">Rencana 12 minggu</p>
               </div>
             </Link>
             {/* Main Quests Card */}
@@ -68,20 +68,7 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Main Quests</h3>
-                <p className="text-xs text-gray-500">Target utama</p>
-              </div>
-            </Link>
-            {/* Daily Sync Card */}
-            <Link 
-              href="/execution/daily-sync"
-              className="group flex items-center bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FEF3F2] group-hover:bg-[#ffd7d6] transition-colors mr-4">
-                <TaskIcon className="w-6 h-6 text-[#F04438]" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Daily Sync</h3>
-                <p className="text-xs text-gray-500">Rutinitas harian</p>
+                <p className="text-xs text-gray-500 hidden md:block">Target utama</p>
               </div>
             </Link>
             {/* Weekly Sync Card */}
@@ -94,7 +81,20 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Weekly Sync</h3>
-                <p className="text-xs text-gray-500">Review mingguan</p>
+                <p className="text-xs text-gray-500 hidden md:block">Review mingguan</p>
+              </div>
+            </Link>
+            {/* Daily Sync Card */}
+            <Link 
+              href="/execution/daily-sync"
+              className="group flex items-center bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FEF3F2] group-hover:bg-[#ffd7d6] transition-colors mr-4">
+                <TaskIcon className="w-6 h-6 text-[#F04438]" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Daily Sync</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Rutinitas harian</p>
               </div>
             </Link>
             {/* Work Quests Card */}
@@ -107,7 +107,7 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Work Quests</h3>
-                <p className="text-xs text-gray-500">Tugas pekerjaan</p>
+                <p className="text-xs text-gray-500 hidden md:block">Tugas pekerjaan</p>
               </div>
             </Link>
             {/* Side Quests Card */}
@@ -120,7 +120,7 @@ async function DashboardContent() {
               </div>
               <div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Side Quests</h3>
-                <p className="text-xs text-gray-500">Tugas sampingan</p>
+                <p className="text-xs text-gray-500 hidden md:block">Tugas sampingan</p>
               </div>
             </Link>
           </div>
