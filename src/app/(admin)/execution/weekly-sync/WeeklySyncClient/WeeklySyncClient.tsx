@@ -201,7 +201,7 @@ export default function WeeklySyncClient() {
   // }
 
   // Loading state - using WeeklySyncSkeleton
-  if (ultraFastLoading || (!mobileOptimizedGoals || mobileOptimizedGoals.length === 0)) {
+  if (ultraFastLoading) {
     return (
       <div className="container mx-auto py-8 pt-0">
         <WeeklySyncSkeleton />
