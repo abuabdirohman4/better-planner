@@ -16,25 +16,30 @@ interface Subtask {
   display_order: number;
 }
 
-// Custom hook for new subtask management
+// Custom hook for new subtask management - Manual Add System
 function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: Subtask[], fetchSubtasks: () => void) {
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskLoading, setNewSubtaskLoading] = useState(false);
 
-  const debouncedInsertNewSubtask = useMemo(() => debounce(async (title: string) => {
-    if (!title) return;
+  // Manual add subtask function - dipanggil saat tombol diklik
+  const handleAddNewSubtask = async () => {
+    if (!newSubtaskTitle.trim()) return;
+    
     setNewSubtaskLoading(true);
+    
     let newOrder = 1.0;
     if (subtasks.length > 0) {
       const lastOrder = subtasks[subtasks.length - 1].display_order;
       newOrder = lastOrder + 1.0;
     }
+    
     try {
       const formData = new FormData();
       formData.append('parent_task_id', taskId);
-      formData.append('title', title);
+      formData.append('title', newSubtaskTitle.trim());
       formData.append('milestone_id', milestoneId);
       formData.append('display_order', String(newOrder));
+      
       const res = await addTask(formData);
       if (res && res.task) {
         setNewSubtaskTitle('');
@@ -48,12 +53,9 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     } finally {
       setNewSubtaskLoading(false);
     }
-  }, 500), [taskId, milestoneId, fetchSubtasks]); // 🔧 FIX: Remove subtasks dependency to prevent recreation
+  };
 
-  useEffect(() => {
-    if (newSubtaskTitle) debouncedInsertNewSubtask(newSubtaskTitle);
-  }, [newSubtaskTitle, debouncedInsertNewSubtask]);
-
+  // Simplified bulk paste - hanya untuk existing subtasks, tidak auto-create
   const handleBulkPasteEmpty = async (e: React.ClipboardEvent, handleSubtaskEnter: (idx: number, title?: string, subtasksOverride?: Subtask[]) => Promise<{ newIndex: number | null; newSubtaskId?: string } | null>) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.split('\n').filter(line => line.trim());
@@ -62,8 +64,10 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     
     e.preventDefault();
     
+    // Set first line to input field
     setNewSubtaskTitle(lines[0]);
     
+    // Process remaining lines for existing subtasks only
     const localSubtasks = subtasks.map(st => ({ ...st }));
     for (let i = 1; i < lines.length; i++) {
       const idx = localSubtasks.length - 1;
@@ -83,6 +87,7 @@ function useNewSubtaskManagement(taskId: string, milestoneId: string, subtasks: 
     newSubtaskTitle,
     setNewSubtaskTitle,
     newSubtaskLoading,
+    handleAddNewSubtask,
     handleBulkPasteEmpty
   };
 }
@@ -120,7 +125,7 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
     handleCheck, 
     handleDeleteSubtaskCRUD
   );
-  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, stableDisplaySubtasks, refetchSubtasks);
+  const { newSubtaskTitle, setNewSubtaskTitle, newSubtaskLoading, handleAddNewSubtask, handleBulkPasteEmpty } = useNewSubtaskManagement(task.id, milestoneId, stableDisplaySubtasks, refetchSubtasks);
 
   // 🔧 FIX: Only reset state when task.id actually changes, not on every render
   const prevTaskId = useRef<string | null>(null);
@@ -162,6 +167,7 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
           newSubtaskTitle={newSubtaskTitle}
           setNewSubtaskTitle={setNewSubtaskTitle}
           newSubtaskLoading={newSubtaskLoading}
+          handleAddNewSubtask={handleAddNewSubtask}
           handleBulkPasteEmpty={handleBulkPasteEmptyWrapper}
           handleSubtaskEnter={async (idx: number, title?: string) => {
             // 🔧 FIX: Handle out of bounds case

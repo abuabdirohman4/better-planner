@@ -1,7 +1,6 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import debounce from 'lodash/debounce';
 import { updateTask, updateTaskDisplayOrder, deleteTask } from '../../actions/taskActions';
 
 interface Subtask {
@@ -24,42 +23,46 @@ export function useSubtaskOperations(
   handleCheck: (subtask: Subtask) => void,
   handleDeleteSubtask: (id: string, idx: number) => Promise<{ newIndex: number; newFocusId?: string }>
 ) {
-  const debouncedUpdateTask = useMemo(() => debounce(async (id: string, val: string) => {
-    try {
-      await updateTask(id, val);
-      // ✅ Always refetch after successful update to ensure data consistency
-      refetchSubtasks();
-    } catch {
-      // Refetch on error to get fresh data
-      refetchSubtasks();
-    }
-  }, 1000), [refetchSubtasks]);
-
-  const updateTaskImmediate = useCallback(async (id: string, val: string) => {
-    try {
-      await updateTask(id, val);
-      // 🔧 FIX: Only refetch for immediate updates (like Enter key)
-      refetchSubtasks();
-    } catch {
-      refetchSubtasks();
-    }
-  }, [refetchSubtasks]);
+  // Removed debouncedUpdateTask - now using manual save only
+  // Removed updateTaskImmediate - now using SWR mutate for optimistic updates
 
   const handleDraftTitleChange = useCallback((id: string, val: string, immediate = false) => {
     setDraftTitles(draft => ({ ...draft, [id]: val }));
     
-    // 🔧 FIX: Only make API calls if there are actual changes
-    const currentSubtask = subtasks.find(st => st.id === id);
-    const hasChanges = currentSubtask && val.trim() !== (currentSubtask.title || '').trim();
-    
-    if (hasChanges) {
-      if (immediate) {
-        updateTaskImmediate(id, val);
-      } else {
-        debouncedUpdateTask(id, val);
+    // Only make API call if immediate is true (from Edit button)
+    if (immediate) {
+      const currentSubtask = subtasks.find(st => st.id === id);
+      const hasChanges = currentSubtask && val.trim() !== (currentSubtask.title || '').trim();
+      
+      if (hasChanges) {
+        // Optimistic update with SWR mutate
+        refetchSubtasks(
+          (currentData: any) => {
+            if (!currentData) return currentData;
+            return currentData.map((st: any) => 
+              st.id === id ? { ...st, title: val } : st
+            );
+          },
+          { revalidate: false } // Don't refetch immediately
+        );
+        
+        // Call API in background
+        updateTask(id, val).catch((error) => {
+          // Revert on error
+          refetchSubtasks(
+            (currentData: any) => {
+              if (!currentData) return currentData;
+              return currentData.map((st: any) => 
+                st.id === id ? { ...st, title: currentSubtask.title } : st
+              );
+            },
+            { revalidate: false }
+          );
+          throw error;
+        });
       }
     }
-  }, [setDraftTitles, updateTaskImmediate, debouncedUpdateTask, subtasks]);
+  }, [setDraftTitles, refetchSubtasks, subtasks]);
 
   const handleDeleteSubtaskWithFocus = useCallback(async (id: string, idx: number) => {
     const result = await handleDeleteSubtask(id, idx);
