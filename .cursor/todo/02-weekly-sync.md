@@ -8,7 +8,6 @@
 - [x] ✅ Design decision untuk hierarchy selection rule (Task vs Subtask vs Mixed)
 - [x] ✅ Implement strict hierarchy validation dengan prevent selection
 - [x] ✅ Add UI indicators untuk parent-child relationships
-- [ ] Improve anti-duplication logic untuk handle hierarchy
 
 # BUG
 - [x] ✅ Task yang sudah ter-checklist tidak bisa di-uncheck
@@ -23,4 +22,3 @@
 - [x] ✅ Added hierarchy conflict warnings
 - [x] ✅ Implement prevention logic untuk hierarchy conflicts
 - [x] ✅ Redesign UI untuk clearer hierarchy indication
-- [ ] Add bulk operations untuk manage hierarchy selections

@@ -1,7 +1,6 @@
 # DAILY SYNC
 - [x] ✅ Cadd what have done & what next
 - [x] ✅ Add brain dump
-- [ ] Add target & sesi per hari
 
 # BUG
 
