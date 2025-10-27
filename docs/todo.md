@@ -1,6 +1,16 @@
 ## v2.3.0
 Main Quest
-- [] Change Add subtask with button
+- [x] Change Add subtask with button
+- [ ] Fix glitch when edit subtask
+- [ ] Delete subtask with button
+- Fix Progress Bar
+
+Weekly Sync
+- [ ] Add Progress Per Weekly
+
+Daily Sync
+- [ ] Add Progress per Day
+- [ ] Ask to use regular timer like debug timer
 
 ## Backlog
 Daily Sync

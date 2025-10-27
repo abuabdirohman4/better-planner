@@ -35,29 +35,10 @@ export function useSubtaskOperations(
       const hasChanges = currentSubtask && val.trim() !== (currentSubtask.title || '').trim();
       
       if (hasChanges) {
-        // Optimistic update with SWR mutate
-        refetchSubtasks(
-          (currentData: any) => {
-            if (!currentData) return currentData;
-            return currentData.map((st: any) => 
-              st.id === id ? { ...st, title: val } : st
-            );
-          },
-          { revalidate: false } // Don't refetch immediately
-        );
-        
-        // Call API in background
+        // Simply call API - draftTitle already updated, no need for optimistic update
         updateTask(id, val).catch((error) => {
-          // Revert on error
-          refetchSubtasks(
-            (currentData: any) => {
-              if (!currentData) return currentData;
-              return currentData.map((st: any) => 
-                st.id === id ? { ...st, title: currentSubtask.title } : st
-              );
-            },
-            { revalidate: false }
-          );
+          // Refetch on error to ensure data consistency
+          refetchSubtasks();
           throw error;
         });
       }
