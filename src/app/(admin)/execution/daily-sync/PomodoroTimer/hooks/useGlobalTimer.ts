@@ -13,7 +13,7 @@ import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 let globalIntervalRef: NodeJS.Timeout | null = null;
 
 export function useGlobalTimer() {
-  const { timerState, incrementSeconds, secondsElapsed, activeTask, startTime } = useTimer();
+  const { timerState, secondsElapsed, activeTask, startTime } = useTimer();
   const lastActiveTimeRef = useRef<number>(Date.now());
 
   // ✅ MOBILE FIX: Background timer recovery
@@ -70,28 +70,35 @@ export function useGlobalTimer() {
 
     if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
       globalIntervalRef = setInterval(() => {
-        // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
-        if (activeTask && startTime) {
-          const now = new Date();
-          const startTimeDate = new Date(startTime);
-          const elapsedSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
-          const targetDuration = (activeTask.focus_duration || 25) * 60;
+        const state = useTimerStore.getState();
+        
+        // ✅ TIME-BASED CALCULATION: Calculate elapsed time from startTime
+        if (state.startTime) {
+          const now = Date.now();
+          const startTimeMs = new Date(state.startTime).getTime();
+          const elapsedSeconds = Math.floor((now - startTimeMs) / 1000);
           
-          // If elapsed time >= target duration, complete the timer
-          if (elapsedSeconds >= targetDuration) {
-            useTimerStore.getState().completeTimerFromDatabase({
-              taskId: activeTask.id,
-              taskTitle: activeTask.title,
-              startTime: startTime,
-              duration: targetDuration, // Use target duration, not actual elapsed
-              status: 'COMPLETED'
-            });
-            return; // Don't increment seconds
+          // Update secondsElapsed with calculated value
+          useTimerStore.setState({ secondsElapsed: elapsedSeconds });
+          
+          // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
+          if (activeTask && startTime) {
+            const targetDuration = (activeTask.focus_duration || 25) * 60;
+            
+            if (elapsedSeconds >= targetDuration) {
+              useTimerStore.getState().completeTimerFromDatabase({
+                taskId: activeTask.id,
+                taskTitle: activeTask.title,
+                startTime: startTime,
+                duration: targetDuration,
+                status: 'COMPLETED'
+              });
+              return;
+            }
           }
         }
         
-        incrementSeconds();
-        lastActiveTimeRef.current = Date.now(); // Update last active time
+        lastActiveTimeRef.current = Date.now();
       }, 1000);
     }
 
@@ -101,5 +108,5 @@ export function useGlobalTimer() {
         globalIntervalRef = null;
       }
     };
-  }, [timerState, activeTask, startTime]); // Add activeTask and startTime to deps for auto-completion check
+  }, [timerState, activeTask, startTime]);
 }
