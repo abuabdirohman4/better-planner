@@ -25,9 +25,10 @@ interface MilestoneProps {
   activeSubTask: Task | null;
   onOpenSubtask: (task: Task) => void;
   showCompletedTasks: boolean;
+  showAllTasks: boolean;
 }
 
-export default function Milestone({ questId, activeSubTask, onOpenSubtask, showCompletedTasks }: MilestoneProps) {
+export default function Milestone({ questId, activeSubTask, onOpenSubtask, showCompletedTasks, showAllTasks }: MilestoneProps) {
   
   const {
     milestones,
@@ -148,9 +149,23 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
               ))}
             </div>
           </div>
+        ) : showAllTasks ? (
+          // Show all tasks for all milestones
+          milestones.map((milestone: Milestone) => (
+            <div key={`milestone-tasks-${milestone.id}`} className="space-y-4">
+              <Task
+                key={`task-${milestone.id}`}
+                milestone={milestone}
+                milestoneNumber={milestone.display_order}
+                onOpenSubtask={onOpenSubtask}
+                activeSubTask={activeSubTask}
+                showCompletedTasks={showCompletedTasks}
+              />
+            </div>
+          ))
         ) : (
+          // Current behavior: only show active milestone's tasks
           (() => {
-            // Find milestone with display_order matching activeMilestoneIdx + 1
             const activeMilestone = milestones.find((m: Milestone) => m.display_order === activeMilestoneIdx + 1);
             return activeMilestone && (
               <Task

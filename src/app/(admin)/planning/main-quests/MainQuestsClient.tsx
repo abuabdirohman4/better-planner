@@ -6,6 +6,7 @@ import MainQuestsSkeleton from '@/components/ui/skeleton/MainQuestsSkeleton';
 import { useQuarterStore } from '@/stores/quarterStore';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
+import { RiListUnordered, RiFocus3Line } from 'react-icons/ri';
 
 import Quest from './Quest';
 import { useMainQuests } from './hooks/useMainQuestsSWR';
@@ -17,7 +18,12 @@ export default function MainQuestsClient() {
   const [isHovering, setIsHovering] = useState(false);
   
   // UI Preferences untuk hide/show completed tasks - gunakan state yang terpisah untuk planning
-  const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
+  const { 
+    showCompletedMainQuest, 
+    toggleShowCompletedMainQuest,
+    showAllTasksAutomatically,
+    toggleShowAllTasksAutomatically 
+  } = useUIPreferencesStore();
 
   if (isLoading) {
     return (
@@ -37,16 +43,36 @@ export default function MainQuestsClient() {
     <div className="max-w-7xl mx-auto px-2 md:px-0">
       <div className="mb-6">
         {/* Header dengan Toggle Button */}
-        <div className="flex justify-center mb-4">
-          {/* <div className="flex-1"></div> */}
+        <div className="flex justify-center items-center gap-2 mb-4 relative">
+          {/* Toggle Show All Tasks Button */}
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={toggleShowAllTasksAutomatically}
+              className={`p-2 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                showAllTasksAutomatically 
+                  ? 'text-gray-600 dark:text-gray-400' 
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+              title={showAllTasksAutomatically ? 'Tampilkan task saat milestone dipilih' : 'Tampilkan semua task secara otomatis'}
+            >
+              {showAllTasksAutomatically ? (
+                <RiListUnordered className="w-5 h-5" />
+              ) : (
+                <RiFocus3Line className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
           <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
             Main Quests
           </h1>
+          
           {/* Toggle Show/Hide Completed Button */}
-          <div className="relative" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+          <div className="relative bg-white border border-gray-200 rounded-lg" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
             <button
               onClick={toggleShowCompletedMainQuest}
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              title={showCompletedMainQuest ? 'Sembunyikan subtask selesai' : 'Tampilkan subtask selesai'}
             >
               {showCompletedMainQuest ? (
                 <EyeIcon className="w-5 h-5" />
@@ -89,7 +115,11 @@ export default function MainQuestsClient() {
           {quests.map((quest, idx) => 
             activeTab === idx ? (
               <div key={quest.id}>
-                <Quest quest={quest} showCompletedTasks={showCompletedMainQuest} />
+                <Quest 
+                  quest={quest} 
+                  showCompletedTasks={showCompletedMainQuest}
+                  showAllTasks={showAllTasksAutomatically}
+                />
               </div>
             ) : null
           )}

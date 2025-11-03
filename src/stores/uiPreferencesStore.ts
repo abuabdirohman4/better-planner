@@ -13,6 +13,11 @@ interface UIPreferencesState {
   toggleShowCompletedSideQuest: () => void;
   toggleShowCompletedWorkQuest: () => void;
   
+  // Show all tasks automatically vs show on milestone select
+  showAllTasksAutomatically: boolean; // false by default (current behavior)
+  setShowAllTasksAutomatically: (show: boolean) => void;
+  toggleShowAllTasksAutomatically: () => void;
+  
   // Card collapse states
   cardCollapsed: {
     pomodoroTimer: boolean;
@@ -46,6 +51,13 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
       toggleShowCompletedWorkQuest: () => 
         set((state) => ({ showCompletedWorkQuest: !state.showCompletedWorkQuest })),
       
+      // Show all tasks automatically vs show on milestone select
+      showAllTasksAutomatically: false, // Default to current behavior (show on milestone select)
+      setShowAllTasksAutomatically: (show: boolean) => 
+        set({ showAllTasksAutomatically: show }),
+      toggleShowAllTasksAutomatically: () => 
+        set((state) => ({ showAllTasksAutomatically: !state.showAllTasksAutomatically })),
+      
       // Card collapse states - all cards start expanded (false = not collapsed)
       cardCollapsed: {
         pomodoroTimer: false,
@@ -77,6 +89,7 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
         showCompletedMainQuest: state.showCompletedMainQuest,
         showCompletedSideQuest: state.showCompletedSideQuest,
         showCompletedWorkQuest: state.showCompletedWorkQuest,
+        showAllTasksAutomatically: state.showAllTasksAutomatically,
         cardCollapsed: state.cardCollapsed,
       }),
     }

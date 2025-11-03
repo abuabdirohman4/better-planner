@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
@@ -22,12 +22,13 @@ interface QuestProps {
   motivation?: string;
 }
 
-export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps; showCompletedTasks: boolean }) {
+export default function Quest({ quest, showCompletedTasks, showAllTasks }: { quest: QuestProps; showCompletedTasks: boolean; showAllTasks: boolean }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [showSubTask, setShowSubTask] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const subtaskContainerRef = useRef<HTMLDivElement>(null);
   
   const hasExistingContent = !!quest.motivation;
   const canSave = hasChanges && !isSaving;
@@ -80,6 +81,27 @@ export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps
       setShowSubTask(false);
     }
   }, [activeSubTask]);
+
+  // Handle auto-scroll when task is selected
+  useEffect(() => {
+    if (!activeSubTask) return;
+    
+    // Detect screen size using matchMedia (lg breakpoint = 1024px)
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    
+    if (isDesktop && showAllTasks) {
+      // Desktop + showAllTasks: scroll to top of page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (!isDesktop) {
+      // Mobile: scroll to subtask container
+      setTimeout(() => {
+        subtaskContainerRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100); // Small delay to allow SubTask panel to render
+    }
+  }, [activeSubTask, showAllTasks]);
 
   return (
     <div className={`flex flex-col lg:flex-row gap-4 transition-all duration-300 ease-in ${
@@ -137,14 +159,18 @@ export default function Quest({ quest, showCompletedTasks }: { quest: QuestProps
             activeSubTask={activeSubTask}
             onOpenSubtask={setActiveSubTask}
             showCompletedTasks={showCompletedTasks}
+            showAllTasks={showAllTasks}
           />
         </ComponentCard>
       </div>
-      <div className={`transition-all duration-300 ease-out ${
-        activeSubTask 
-          ? 'flex-1 max-w-2xl w-full mx-auto lg:mx-0 opacity-100 translate-x-0' 
-          : 'w-0 opacity-0 translate-x-4 overflow-hidden pointer-events-none'
-      }`}>
+      <div 
+        ref={subtaskContainerRef}
+        className={`transition-all duration-300 ease-out ${
+          activeSubTask 
+            ? 'flex-1 max-w-2xl w-full mx-auto lg:mx-0 opacity-100 translate-x-0' 
+            : 'w-0 opacity-0 translate-x-4 overflow-hidden pointer-events-none'
+        }`}
+      >
         {showSubTask && activeSubTask && (
           <SubTask
             task={activeSubTask}
