@@ -23,11 +23,9 @@ export default function QuestProgressBar({ questId, className = '' }: QuestProgr
 
   if (isLoading) {
     return (
-      <div className={`bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 ${className}`}>
+      <div className={`bg-white dark:bg-gray-800 rounded-lg px-4 py-3.5 border border-gray-200 dark:border-gray-700 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-3"></div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
       </div>
     );
