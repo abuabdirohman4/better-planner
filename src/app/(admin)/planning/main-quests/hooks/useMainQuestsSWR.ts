@@ -23,10 +23,10 @@ export function useMainQuests(year: number, quarter: number) {
     swrKey,
     () => getQuests(year, quarter, true),
     {
-      revalidateOnFocus: true, // Enable revalidation on focus
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - quests don't need real-time updates
       revalidateIfStale: true, // Enable revalidation if stale
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000, // 30 seconds cache - shorter
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       errorRetryCount: 3,
     }
   );
@@ -56,10 +56,10 @@ export function useMilestones(questId: string) {
     swrKey,
     () => getMilestonesForQuest(questId),
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - milestones don't need real-time updates
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000,
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       errorRetryCount: 3,
     }
   );
@@ -88,10 +88,10 @@ export function useTasks(milestoneId: string) {
     swrKey,
     () => getTasksForMilestone(milestoneId),
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - milestones don't need real-time updates
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000,
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       errorRetryCount: 3,
     }
   );

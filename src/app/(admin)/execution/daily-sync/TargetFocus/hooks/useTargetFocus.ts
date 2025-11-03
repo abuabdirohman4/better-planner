@@ -142,7 +142,7 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 0, // No deduplication to ensure fresh data
+      dedupingInterval: 30 * 1000, // ✅ OPTIMIZED: 30 seconds cache for fresh data
       errorRetryCount: 3,
     }
   );
@@ -172,7 +172,7 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 0, // No deduplication to ensure fresh data
+      dedupingInterval: 30 * 1000, // ✅ OPTIMIZED: 30 seconds cache for fresh data
       errorRetryCount: 3,
     }
   );

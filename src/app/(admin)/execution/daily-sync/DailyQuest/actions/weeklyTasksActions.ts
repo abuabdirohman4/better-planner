@@ -32,60 +32,99 @@ export async function getTasksForWeek(year: number, weekNumber: number, selected
     if (itemsError) throw itemsError;
     if (!items?.length) return [];
 
-    // Get details for each item by fetching from tasks table
-    const itemsWithDetails = await Promise.all(
-      items.map(async (item) => {
-        let title = '';
-        let status = 'TODO';
-        let quest_title = '';
-        let task_type = '';
-        const goal_slot = weeklyGoals.find(g => g.id === item.weekly_goal_id)?.goal_slot || 0;
+    // ✅ OPTIMIZED: Batch queries instead of N+1 queries
+    // Extract all item_ids for batch fetching
+    const itemIds = items.map(item => item.item_id);
 
-        // Fetch task details directly from tasks table
-        const { data: task } = await supabase
-          .from('tasks')
-          .select('id, title, status, milestone_id, type, parent_task_id')
-          .eq('id', item.item_id)
-          .single();
-        
-        if (task) {
-          title = task.title || '';
-          status = task.status || 'TODO';
-          task_type = task.type || '';
-          
-          if (task.milestone_id) {
-            const { data: milestone } = await supabase
-              .from('milestones')
-              .select('id, title, quest_id')
-              .eq('id', task.milestone_id)
-              .single();
-            
-            if (milestone?.quest_id) {
-              const { data: quest } = await supabase
-                .from('quests')
-                .select('id, title')
-                .eq('id', milestone.quest_id)
-                .single();
-              quest_title = quest?.title || '';
+    // Batch fetch all tasks in one query
+    const { data: allTasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('id, title, status, milestone_id, type, parent_task_id')
+      .in('id', itemIds);
+
+    if (tasksError) throw tasksError;
+
+    // Create task map for O(1) lookup
+    const taskMap = new Map((allTasks || []).map(task => [task.id, task]));
+
+    // Extract unique milestone_ids and batch fetch milestones
+    const milestoneIds = [...new Set(
+      (allTasks || [])
+        .map(task => task.milestone_id)
+        .filter(Boolean)
+    )];
+
+    let milestoneMap = new Map();
+    let questMap = new Map();
+
+    if (milestoneIds.length > 0) {
+      // Batch fetch all milestones
+      const { data: allMilestones, error: milestonesError } = await supabase
+        .from('milestones')
+        .select('id, title, quest_id')
+        .in('id', milestoneIds);
+
+      if (milestonesError) throw milestonesError;
+      milestoneMap = new Map((allMilestones || []).map(m => [m.id, m]));
+
+      // Extract quest_ids and batch fetch quests
+      const questIds = [...new Set(
+        (allMilestones || [])
+          .map(m => m.quest_id)
+          .filter(Boolean)
+      )];
+
+      if (questIds.length > 0) {
+        const { data: allQuests, error: questsError } = await supabase
+          .from('quests')
+          .select('id, title')
+          .in('id', questIds);
+
+        if (questsError) throw questsError;
+        questMap = new Map((allQuests || []).map(q => [q.id, q]));
+      }
+    }
+
+    // Combine data in-memory (fast, no additional network calls)
+    const itemsWithDetails = items.map((item) => {
+      let title = '';
+      let status = 'TODO';
+      let quest_title = '';
+      let task_type = '';
+      const goal_slot = weeklyGoals.find(g => g.id === item.weekly_goal_id)?.goal_slot || 0;
+
+      const task = taskMap.get(item.item_id);
+
+      if (task) {
+        title = task.title || '';
+        status = task.status || 'TODO';
+        task_type = task.type || '';
+
+        if (task.milestone_id) {
+          const milestone = milestoneMap.get(task.milestone_id);
+          if (milestone && milestone.quest_id) {
+            const quest = questMap.get(milestone.quest_id);
+            if (quest) {
+              quest_title = quest.title || '';
             }
           }
         }
+      }
 
-        // Ensure type is valid for WeeklyTaskItem (matches task_type enum from database)
-        const validTypes = ['MAIN_QUEST', 'WORK', 'SIDE_QUEST', 'LEARNING'] as const;
-        const validType = validTypes.includes(task_type as any) ? task_type as 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING' : 'MAIN_QUEST';
+      // Ensure type is valid for WeeklyTaskItem (matches task_type enum from database)
+      const validTypes = ['MAIN_QUEST', 'WORK', 'SIDE_QUEST', 'LEARNING'] as const;
+      const validType = validTypes.includes(task_type as any) ? task_type as 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING' : 'MAIN_QUEST';
 
-        return {
-          id: item.item_id,
-          type: validType,
-          title,
-          status,
-          quest_title,
-          goal_slot,
-          parent_task_id: task?.parent_task_id || null
-        };
-      })
-    );
+      return {
+        id: item.item_id,
+        type: validType,
+        title,
+        status,
+        quest_title,
+        goal_slot,
+        parent_task_id: task?.parent_task_id || null
+      };
+    });
 
     // Remove duplicates based on item_id only (not goal_slot combination)
     // This ensures each task appears only once in the daily sync list

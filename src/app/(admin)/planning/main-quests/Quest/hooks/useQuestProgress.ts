@@ -41,10 +41,10 @@ function useAllTasksForQuest(milestoneIds: string[]) {
       return taskArrays.flat();
     },
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - progress data doesn't need focus revalidation
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       // Removed refreshInterval: 1000 - only update on user actions, not continuous polling
       errorRetryCount: 3,
     }
@@ -74,10 +74,10 @@ function useAllSubtasksForQuest(taskIds: string[]) {
       return subtaskArrays.flat();
     },
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - progress data doesn't need focus revalidation
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       // Removed refreshInterval: 1000 - only update on user actions, not continuous polling
       errorRetryCount: 3,
     }

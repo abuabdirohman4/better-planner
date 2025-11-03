@@ -38,73 +38,142 @@ async function getDailyPlan(selectedDate: string) {
 
     if (itemsError) throw itemsError;
 
-    // Fetch detailed information for each daily plan item
-    const itemsWithDetails = await Promise.all(
-      (dailyPlanItems || []).map(async (item: { item_id: string; item_type: string; [key: string]: unknown }) => {
-        let title = '';
-        let quest_title = '';
-        let task_status = item.status; // Preserve existing status
+    if (!dailyPlanItems || dailyPlanItems.length === 0) {
+      return {
+        ...plan,
+        daily_plan_items: []
+      };
+    }
 
-        if (item.item_type === 'MAIN_QUEST') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title, milestone_id, status')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          task_status = task?.status || item.status; // Use task status if available
-          
-          if (task?.milestone_id) {
-            const { data: milestone } = await supabase
-              .from('milestones')
-              .select('id, title, quest_id')
-              .eq('id', task.milestone_id)
-              .single();
-            
-            if (milestone?.quest_id) {
-              const { data: quest } = await supabase
-                .from('quests')
-                .select('id, title')
-                .eq('id', milestone.quest_id)
-                .single();
-              quest_title = quest?.title || '';
+    // ✅ OPTIMIZED: Batch queries by item type instead of N+1 queries
+    // Group items by type
+    const mainQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'MAIN_QUEST');
+    const sideQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'SIDE_QUEST');
+    const workQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'WORK_QUEST');
+
+    // Extract all item_ids for batch fetching
+    const allItemIds = dailyPlanItems.map((item: any) => item.item_id);
+
+    // Batch fetch all tasks in one query
+    const { data: allTasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('id, title, milestone_id, parent_task_id, status')
+      .in('id', allItemIds);
+
+    if (tasksError) throw tasksError;
+
+    // Create task map for O(1) lookup
+    const taskMap = new Map((allTasks || []).map(task => [task.id, task]));
+
+    // For MAIN_QUEST items: Extract milestone_ids and batch fetch milestones
+    const mainQuestTaskIds = mainQuestItems.map((item: any) => item.item_id);
+    const mainQuestTasks = (allTasks || []).filter(task => mainQuestTaskIds.includes(task.id));
+    const milestoneIds = [...new Set(
+      mainQuestTasks
+        .map(task => task.milestone_id)
+        .filter(Boolean)
+    )];
+
+    let milestoneMap = new Map();
+    let questMap = new Map();
+
+    if (milestoneIds.length > 0) {
+      // Batch fetch all milestones
+      const { data: allMilestones, error: milestonesError } = await supabase
+        .from('milestones')
+        .select('id, title, quest_id')
+        .in('id', milestoneIds);
+
+      if (milestonesError) throw milestonesError;
+      milestoneMap = new Map((allMilestones || []).map(m => [m.id, m]));
+
+      // Extract quest_ids and batch fetch quests
+      const questIds = [...new Set(
+        (allMilestones || [])
+          .map(m => m.quest_id)
+          .filter(Boolean)
+      )];
+
+      if (questIds.length > 0) {
+        const { data: allQuests, error: questsError } = await supabase
+          .from('quests')
+          .select('id, title')
+          .in('id', questIds);
+
+        if (questsError) throw questsError;
+        questMap = new Map((allQuests || []).map(q => [q.id, q]));
+      }
+    }
+
+    // For WORK_QUEST items: Extract parent_task_ids and batch fetch projects
+    const workQuestTaskIds = workQuestItems.map((item: any) => item.item_id);
+    const workQuestTasks = (allTasks || []).filter(task => workQuestTaskIds.includes(task.id));
+    const parentTaskIds = [...new Set(
+      workQuestTasks
+        .map(task => task.parent_task_id)
+        .filter(Boolean)
+    )];
+
+    let projectMap = new Map();
+    if (parentTaskIds.length > 0) {
+      const { data: allProjects, error: projectsError } = await supabase
+        .from('tasks')
+        .select('id, title')
+        .in('id', parentTaskIds);
+
+      if (projectsError) throw projectsError;
+      projectMap = new Map((allProjects || []).map(p => [p.id, p]));
+    }
+
+    // Combine data in-memory (fast, no additional network calls)
+    const itemsWithDetails = dailyPlanItems.map((item: { item_id: string; item_type: string; [key: string]: unknown }) => {
+      let title = '';
+      let quest_title = '';
+      let task_status = item.status as string; // Preserve existing status
+
+      const task = taskMap.get(item.item_id);
+
+      if (item.item_type === 'MAIN_QUEST') {
+        if (task) {
+          title = task.title || '';
+          task_status = task.status || (item.status as string);
+
+          if (task.milestone_id) {
+            const milestone = milestoneMap.get(task.milestone_id);
+            if (milestone && milestone.quest_id) {
+              const quest = questMap.get(milestone.quest_id);
+              if (quest) {
+                quest_title = quest.title || '';
+              }
             }
           }
-        } else if (item.item_type === 'SIDE_QUEST') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title, status')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          task_status = task?.status || item.status; // Use task status if available
-        } else if (item.item_type === 'WORK_QUEST') {
-          const { data: task } = await supabase
-            .from('tasks')
-            .select('id, title, parent_task_id, status')
-            .eq('id', item.item_id)
-            .single();
-          title = task?.title || '';
-          task_status = task?.status || item.status; // Use task status if available
-          
-          if (task?.parent_task_id) {
-            const { data: project } = await supabase
-              .from('tasks')
-              .select('id, title')
-              .eq('id', task.parent_task_id)
-              .single();
-            quest_title = project?.title || '';
+        }
+      } else if (item.item_type === 'SIDE_QUEST') {
+        if (task) {
+          title = task.title || '';
+          task_status = task.status || (item.status as string);
+        }
+      } else if (item.item_type === 'WORK_QUEST') {
+        if (task) {
+          title = task.title || '';
+          task_status = task.status || (item.status as string);
+
+          if (task.parent_task_id) {
+            const project = projectMap.get(task.parent_task_id);
+            if (project) {
+              quest_title = project.title || '';
+            }
           }
         }
+      }
 
-        return {
-          ...item,
-          title,
-          quest_title,
-          status: task_status // Use synced status
-        };
-      })
-    );
+      return {
+        ...item,
+        title,
+        quest_title,
+        status: task_status // Use synced status
+      };
+    });
 
     return {
       ...plan,
@@ -131,7 +200,7 @@ export function useDailyPlanManagement(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
     () => getDailyPlan(selectedDate),
     {
-      revalidateOnFocus: true, // ✅ ENABLED - Allow revalidation on focus for fresh data
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - daily plan doesn't need focus revalidation
       revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data
       revalidateOnReconnect: true,
       dedupingInterval: 30 * 1000, // ✅ REDUCED - 30 seconds for fresher data

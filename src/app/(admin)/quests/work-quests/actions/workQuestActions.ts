@@ -41,47 +41,63 @@ export async function getWorkQuests(): Promise<WorkQuest[]> {
       throw tasksError;
     }
 
-    // Get subtasks for each main task
-    const workQuests: WorkQuest[] = [];
-    
-    for (const task of tasks || []) {
-      const { data: subtasks, error: subtasksError } = await supabase
-        .from('tasks')
-        .select(`
-          id,
-          parent_task_id,
-          title,
-          description,
-          status,
-          created_at,
-          updated_at
-        `)
-        .eq('parent_task_id', task.id)
-        .eq('type', 'WORK_QUEST')
-        .order('created_at', { ascending: true });
-
-      if (subtasksError) {
-        throw subtasksError;
-      }
-
-      workQuests.push({
-        id: task.id,
-        title: task.title,
-        description: task.description || undefined,
-        status: task.status as 'TODO' | 'IN_PROGRESS' | 'DONE',
-        created_at: task.created_at,
-        updated_at: task.updated_at,
-        tasks: (subtasks || []).map(subtask => ({
-          id: subtask.id,
-          parent_task_id: subtask.parent_task_id,
-          title: subtask.title,
-          description: subtask.description || undefined,
-          status: subtask.status as 'TODO' | 'IN_PROGRESS' | 'DONE',
-          created_at: subtask.created_at,
-          updated_at: subtask.updated_at,
-        }))
-      });
+    if (!tasks || tasks.length === 0) {
+      return [];
     }
+
+    // ✅ OPTIMIZED: Batch query for all subtasks instead of N+1 queries
+    // Extract all task IDs from main tasks
+    const taskIds = tasks.map(t => t.id);
+
+    // Batch fetch all subtasks in a single query
+    const { data: allSubtasks, error: subtasksError } = await supabase
+      .from('tasks')
+      .select(`
+        id,
+        parent_task_id,
+        title,
+        description,
+        status,
+        created_at,
+        updated_at
+      `)
+      .in('parent_task_id', taskIds)
+      .eq('type', 'WORK_QUEST')
+      .order('created_at', { ascending: true });
+
+    if (subtasksError) {
+      throw subtasksError;
+    }
+
+    // Create subtasks map grouped by parent_task_id
+    const subtasksMap = new Map<string, typeof allSubtasks>();
+    (allSubtasks || []).forEach(subtask => {
+      const parentId = subtask.parent_task_id;
+      if (parentId) {
+        const list = subtasksMap.get(parentId) || [];
+        list.push(subtask);
+        subtasksMap.set(parentId, list);
+      }
+    });
+
+    // Combine data in-memory (fast, no additional network calls)
+    const workQuests: WorkQuest[] = tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description || undefined,
+      status: task.status as 'TODO' | 'IN_PROGRESS' | 'DONE',
+      created_at: task.created_at,
+      updated_at: task.updated_at,
+      tasks: (subtasksMap.get(task.id) || []).map(subtask => ({
+        id: subtask.id,
+        parent_task_id: subtask.parent_task_id,
+        title: subtask.title,
+        description: subtask.description || undefined,
+        status: subtask.status as 'TODO' | 'IN_PROGRESS' | 'DONE',
+        created_at: subtask.created_at,
+        updated_at: subtask.updated_at,
+      }))
+    }));
 
     return workQuests;
   } catch (error) {

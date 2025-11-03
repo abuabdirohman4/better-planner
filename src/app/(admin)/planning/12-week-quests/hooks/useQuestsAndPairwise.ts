@@ -26,9 +26,9 @@ export function useQuestsAndPairwise(year: number, quarter: number) {
       return { quests, pairwiseResults };
     },
     {
-      revalidateOnFocus: true, // ✅ Enable revalidation on focus
+      revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - planning data doesn't need real-time updates
       revalidateIfStale: true, // ✅ Enable revalidation if stale
-      dedupingInterval: 30 * 1000, // ✅ 30 seconds - shorter cache
+      dedupingInterval: 2 * 60 * 1000, // ✅ OPTIMIZED: 2 minutes cache - planning data changes less frequently
       errorRetryCount: 3, // ✅ Standard retry count
       keepPreviousData: true, // Keep previous data while revalidating
       refreshInterval: 0, // No automatic refresh
