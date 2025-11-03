@@ -16,21 +16,31 @@ async function getDailyPlan(selectedDate: string) {
   if (!user) return null;
 
   try {
-    const { data: plan, error } = await supabase
+    // ✅ FIX 406 Error: Split query to avoid complex nested select
+    // First, get the daily plan
+    const { data: plan, error: planError } = await supabase
       .from('daily_plans')
-      .select('*, daily_plan_items(id, item_id, item_type, status, daily_session_target, focus_duration, created_at, updated_at)')
+      .select('*')
       .eq('plan_date', selectedDate)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle(); // Use maybeSingle to avoid error when no data
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (planError && planError.code !== 'PGRST116') throw planError;
     
     // If no plan exists, return null
     if (!plan) return null;
 
+    // Then, fetch daily_plan_items separately
+    const { data: dailyPlanItems, error: itemsError } = await supabase
+      .from('daily_plan_items')
+      .select('id, item_id, item_type, status, daily_session_target, focus_duration, created_at, updated_at')
+      .eq('daily_plan_id', plan.id);
+
+    if (itemsError) throw itemsError;
+
     // Fetch detailed information for each daily plan item
     const itemsWithDetails = await Promise.all(
-      (plan.daily_plan_items || []).map(async (item: { item_id: string; item_type: string; [key: string]: unknown }) => {
+      (dailyPlanItems || []).map(async (item: { item_id: string; item_type: string; [key: string]: unknown }) => {
         let title = '';
         let quest_title = '';
         let task_status = item.status; // Preserve existing status
