@@ -176,10 +176,13 @@ export async function convertToChecklist(dailyPlanItemId: string) {
   if (!user) throw new Error('User not authenticated');
 
   try {
-    // Update focus_duration menjadi 0 untuk convert ke checklist mode
+    // ✅ FIXED: Update both focus_duration AND daily_session_target to 0 for checklist mode
     const { error } = await supabase
       .from('daily_plan_items')
-      .update({ focus_duration: 0 })
+      .update({ 
+        focus_duration: 0,
+        daily_session_target: 0  // ✅ NEW: Also update daily_session_target
+      })
       .eq('id', dailyPlanItemId);
 
     if (error) throw error;
@@ -191,6 +194,34 @@ export async function convertToChecklist(dailyPlanItemId: string) {
     return { success: true };
   } catch (error) {
     console.error('Error converting to checklist:', error);
+    throw error;
+  }
+}
+
+export async function convertToQuest(dailyPlanItemId: string, defaultFocusDuration: number = 25) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // ✅ NEW: Update focus_duration back to default and restore daily_session_target to 1
+    const { error } = await supabase
+      .from('daily_plan_items')
+      .update({ 
+        focus_duration: defaultFocusDuration,
+        daily_session_target: 1  // Restore to default
+      })
+      .eq('id', dailyPlanItemId);
+
+    if (error) throw error;
+
+    // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error converting to quest:', error);
     throw error;
   }
 }

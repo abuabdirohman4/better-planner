@@ -43,6 +43,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleFocusDurationChange,
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
+    handleConvertToQuest, // NEW: Handler untuk convert to quest
     // Work Quest state (unified)
     modalState,
     selectedWorkQuests,
@@ -87,6 +88,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               showAddQuestButton={true}
               onRemove={handleRemoveItem}
               onConvertToChecklist={handleConvertToChecklist}
+              onConvertToQuest={handleConvertToQuest}
             />
           </div>
         </CollapsibleCard>
@@ -112,6 +114,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               showAddQuestButton={true}
               onRemove={handleRemoveItem}
               onConvertToChecklist={handleConvertToChecklist}
+              onConvertToQuest={handleConvertToQuest}
             />
           </div>
         </CollapsibleCard>
@@ -136,6 +139,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               refreshSessionKey={refreshSessionKey}
               forceRefreshTaskId={forceRefreshTaskId}
               onRemove={handleRemoveItem}
+              onConvertToChecklist={handleConvertToChecklist}
+              onConvertToQuest={handleConvertToQuest}
             />
           </div>
         </CollapsibleCard>

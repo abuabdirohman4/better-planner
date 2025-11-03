@@ -121,7 +121,8 @@ const SideQuestListSection = ({
   forceRefreshTaskId, 
   showAddQuestButton,
   onRemove,
-  onConvertToChecklist
+  onConvertToChecklist,
+  onConvertToQuest
 }: TaskColumnProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showSideQuestModal, setShowSideQuestModal] = useState(false);
@@ -210,6 +211,7 @@ const SideQuestListSection = ({
             forceRefreshTaskId={forceRefreshTaskId}
             onRemove={onRemove}
             onConvertToChecklist={onConvertToChecklist}
+            onConvertToQuest={onConvertToQuest}
           />
         ))}
 

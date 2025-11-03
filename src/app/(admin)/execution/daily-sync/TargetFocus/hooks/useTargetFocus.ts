@@ -65,14 +65,22 @@ async function getDailyPlanTargets(selectedDate: string) {
     }
 
     // Calculate total target
-    const targets = items.map((item: any) => ({
-      id: item.id,
-      itemId: item.item_id,
-      itemType: item.item_type,
-      sessionTarget: item.daily_session_target || 1,
-      focusDuration: item.focus_duration || 25, // Default 25 minutes
-      totalTimeTarget: (item.daily_session_target || 1) * (item.focus_duration || 25)
-    }));
+    // ✅ FIXED: Handle focus_duration = 0 (checklist mode) correctly
+    // Don't use || 25 fallback if focus_duration is explicitly 0
+    const targets = items.map((item: any) => {
+      const sessionTarget = item.daily_session_target ?? 1; // Use nullish coalescing for proper 0 handling
+      const focusDuration = item.focus_duration ?? 25; // Use nullish coalescing - 0 is valid for checklist mode
+      const totalTimeTarget = sessionTarget * focusDuration; // ✅ FIXED: 0 * 0 = 0 for checklist items
+      
+      return {
+        id: item.id,
+        itemId: item.item_id,
+        itemType: item.item_type,
+        sessionTarget,
+        focusDuration,
+        totalTimeTarget
+      };
+    });
 
     const totalTimeTarget = targets.reduce((sum, item) => sum + item.totalTimeTarget, 0);
 
@@ -155,7 +163,15 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
   }, [fetchedTargetsData, setTargetsData]);
 
   // Get task IDs for focus time query
-  const taskIds = targetsData?.targets?.map((item: any) => item.itemId) || [];
+  // ✅ CRITICAL: Sort and stringify to create stable dependency
+  const taskIds = useMemo(() => {
+    return targetsData?.targets?.map((item: any) => item.itemId) || [];
+  }, [targetsData?.targets]);
+
+  const taskIdsKey = useMemo(() => {
+    // ✅ FIXED: Create new array to avoid mutating original
+    return [...taskIds].sort().join(',');
+  }, [taskIds]);
 
   // Fetch actual focus time
   const { 
@@ -182,6 +198,13 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     mutateTargets();
     mutateFocus();
   }, [selectedDate, mutateTargets, mutateFocus]);
+
+  // ✅ CRITICAL: Re-fetch actualFocusTime when taskIds change (e.g., after checklist conversion)
+  useEffect(() => {
+    if (taskIds.length > 0 && selectedDate) {
+      mutateFocus();
+    }
+  }, [taskIdsKey, selectedDate, mutateFocus]);
 
   // Update actual focus time in Zustand store
   useEffect(() => {

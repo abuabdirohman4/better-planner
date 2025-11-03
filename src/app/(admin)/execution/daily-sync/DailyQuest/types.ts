@@ -44,6 +44,7 @@ export interface TaskColumnProps {
   showAddQuestButton?: boolean;
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
+  onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
 }
 
 export interface TaskCardProps {
@@ -58,6 +59,7 @@ export interface TaskCardProps {
   forceRefreshTaskId?: string | null;
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
+  onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
 }
 
 export interface TaskSelectionModalProps {
