@@ -5,6 +5,7 @@ import { updateTaskStatus } from '../../actions/taskActions';
 import Checkbox from '@/components/form/input/Checkbox';
 import { toast } from 'sonner';
 import { useQuestProgressInvalidation } from '../../Quest/hooks/useQuestProgress';
+import type { KeyedMutator } from 'swr';
 
 interface Task {
   id: string;
@@ -25,7 +26,8 @@ interface TaskItemProps {
   canNavigateDown?: boolean;
   onEdit: (taskId: string, newTitle: string) => void;
   onClearActiveTaskIdx?: () => void;
-  onTaskUpdate?: () => void; // Optional callback for SWR refresh
+  onTaskUpdate?: () => void; // Optional callback for SWR refresh (deprecated - use refetchTasks for optimistic updates)
+  refetchTasks?: KeyedMutator<any[]>; // SWR mutate function for optimistic cache updates
 }
 
 export default function TaskItem({ 
@@ -39,7 +41,8 @@ export default function TaskItem({
   canNavigateDown = true,
   onEdit,
   onClearActiveTaskIdx,
-  onTaskUpdate
+  onTaskUpdate,
+  refetchTasks
 }: TaskItemProps) {
   const [editValue, setEditValue] = useState(task.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -86,19 +89,41 @@ export default function TaskItem({
     setOptimisticStatus(newStatus);
     
     try {
+      // ✅ OPTIMIZED: Update optimistic progress immediately
+      invalidateTasksProgress(task.id, newStatus);
+      
+      // ✅ OPTIMISTIC UPDATE: Update task cache immediately without triggering isLoading
+      if (refetchTasks) {
+        await refetchTasks(
+          (currentData: any) => {
+            if (!currentData) return currentData;
+            return currentData.map((t: any) =>
+              t.id === task.id ? { ...t, status: newStatus } : t
+            );
+          },
+          { revalidate: false } // Don't trigger loading state
+        );
+      }
+      
+      // API call
       const res = await updateTaskStatus(task.id, newStatus);
       if (res) {
-        onTaskUpdate?.();
-        // Invalidate quest progress cache to trigger progress bar update
-        invalidateTasksProgress();
+        // ✅ OPTIMIZED: No need to call onTaskUpdate() - SWR will automatically revalidate
+        // The optimistic update (line above) already updated the cache
+        // SWR's automatic revalidation will sync with server in background without triggering isLoading
         toast.success(`Task ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
       } else {
         toast.error('Gagal update status');
+        // Note: Optimistic state will be cleared when SWR refetches
       }
     } catch (error) {
       // Revert optimistic update on error
+      if (refetchTasks) {
+        await refetchTasks(); // Revalidate to get correct data
+      }
       console.error('Failed to toggle task status:', error);
       setOptimisticStatus(null);
+      // Note: Optimistic progress state will be cleared when SWR refetches
     }
   };
 

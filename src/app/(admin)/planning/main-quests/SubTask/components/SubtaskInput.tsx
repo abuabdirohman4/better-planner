@@ -111,14 +111,16 @@ export default function SubtaskInput({
     setOptimisticStatus(newStatus);
     
     try {
+      // ✅ OPTIMIZED: Update optimistic progress immediately
+      invalidateSubtasksProgress(subtask.id, newStatus);
+      
       await handleCheck(subtask);
-      // Invalidate quest progress cache to trigger progress bar update
-      invalidateSubtasksProgress();
       // Clear optimistic status after successful API call
       // (it will be cleared when SWR refetches and subtask.status updates)
     } catch (error) {
       // Revert optimistic update on error
       setOptimisticStatus(null);
+      // Note: Optimistic progress state will be cleared when SWR refetches
     }
   };
 

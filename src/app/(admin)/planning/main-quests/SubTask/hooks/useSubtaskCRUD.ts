@@ -119,8 +119,9 @@ export function useSubtaskCRUD(
         // API call
         const res = await updateTaskStatus(subtask.id, newStatus);
         if (res) {
-          // Revalidate to ensure data sync with server
-          await mutateSubtasks();
+          // ✅ OPTIMIZED: No need to call mutateSubtasks() - SWR will automatically revalidate
+          // The optimistic update (line 117) already updated the cache
+          // SWR's automatic revalidation will sync with server in background without triggering isLoading
           toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
         } else {
           // Revert on error

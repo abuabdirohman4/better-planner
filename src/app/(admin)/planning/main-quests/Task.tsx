@@ -220,7 +220,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
                   canNavigateDown={idx < 2}
                   onEdit={handleTaskEdit}
                   onClearActiveTaskIdx={() => setActiveTaskIdx(-1)}
-                  onTaskUpdate={refetchTasks}
+                  refetchTasks={refetchTasks as unknown as KeyedMutator<any[]>}
                 />
               );
             } else {

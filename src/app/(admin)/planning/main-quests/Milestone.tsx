@@ -7,6 +7,7 @@ import { TaskItemSkeleton, MilestoneItemSkeleton } from '@/components/ui/skeleto
 import { addMilestone, updateMilestone, updateMilestoneStatus } from './actions/milestoneActions';
 import { toast } from 'sonner';
 import { useMilestoneOperations } from './Milestone/hooks/useMilestoneOperations';
+import { useQuestProgressInvalidation } from './Quest/hooks/useQuestProgress';
 import type { KeyedMutator } from 'swr';
 
 interface Task {
@@ -49,6 +50,8 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
     refetchMilestones as unknown as KeyedMutator<any[]>
   );
   
+  // ✅ OPTIMIZED: Get progress invalidation functions
+  const { invalidateMilestonesProgress } = useQuestProgressInvalidation();
 
   // For now, keep the old state management for milestone editing
   // TODO: Migrate milestone editing to use SWR and RPC
@@ -113,16 +116,37 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
       handleMilestoneStatusToggle: async (id: string, currentStatus: 'TODO' | 'DONE') => {
         const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
         try {
+          // ✅ OPTIMIZED: Update optimistic progress immediately
+          invalidateMilestonesProgress(id, newStatus);
+          
+          // ✅ OPTIMISTIC UPDATE: Update cache immediately without triggering isLoading
+          await refetchMilestones(
+            (currentData: any) => {
+              if (!currentData) return currentData;
+              return currentData.map((milestone: any) =>
+                milestone.id === id ? { ...milestone, status: newStatus } : milestone
+              );
+            },
+            { revalidate: false } // Don't trigger loading state
+          );
+          
+          // API call
           await updateMilestoneStatus(id, newStatus);
-          refetchMilestones();
+          
+          // ✅ OPTIMIZED: No need to call refetchMilestones() - SWR will automatically revalidate
+          // The optimistic update (line 123-131) already updated the cache
+          // SWR's automatic revalidation will sync with server in background without triggering isLoading
+          
           toast.success(`Milestone ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
         } catch (error) {
+          // Revert optimistic update on error
+          await refetchMilestones(); // Revalidate to get correct data
           console.error('Failed to toggle milestone status:', error);
           toast.error('Gagal update status milestone');
         }
       },
     };
-  }, [questId, newMilestoneInputs, refetchMilestones]);
+  }, [questId, newMilestoneInputs, refetchMilestones, invalidateMilestonesProgress]);
 
   return (
     <>
