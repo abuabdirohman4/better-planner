@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 import { toast } from 'sonner';
 import { useQuarterStore } from '@/stores/quarterStore';
+import Skeleton from '@/components/ui/skeleton/Skeleton';
 
 import type { WeeklyFocusModalProps } from './types';
 import { ModalHeader } from './components/ModalHeader';
@@ -65,9 +66,55 @@ export default function WeeklySyncModal({
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {dataLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-              <span className="ml-2 text-gray-600 dark:text-gray-400">Memuat data...</span>
+            <div className="space-y-4">
+              {Array.from({ length: 2 }).map((_, questIdx) => (
+                <div key={`skeleton-quest-${questIdx}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  {/* Quest title and expand button */}
+                  <div className="flex items-center space-x-2 py-1 mb-3">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-20 rounded" />
+                  </div>
+                  
+                  {/* Milestones skeleton */}
+                  <div className="ml-2 space-y-3">
+                    {Array.from({ length: 2 }).map((_, milestoneIdx) => (
+                      <div key={`skeleton-milestone-${milestoneIdx}`} className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
+                        {/* Milestone title and expand button */}
+                        <div className="flex items-center space-x-2 py-1 mb-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-16 rounded" />
+                        </div>
+                        
+                        {/* Tasks skeleton */}
+                        <div className="ml-2 space-y-2">
+                          {Array.from({ length: 2 }).map((_, taskIdx) => (
+                            <div key={`skeleton-task-${taskIdx}`} className="border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                              <div className="flex items-center space-x-2 py-1">
+                                <Skeleton className="w-4 h-4 rounded" />
+                                <Skeleton className="h-4 w-40" />
+                              </div>
+                              
+                              {/* Subtasks skeleton (only for first task) */}
+                              {taskIdx === 0 && (
+                                <div className="ml-2 space-y-2 mt-2">
+                                  {Array.from({ length: 1 }).map((_, subtaskIdx) => (
+                                    <div key={`skeleton-subtask-${subtaskIdx}`} className="border-l-2 border-gray-100 dark:border-gray-700 pl-4">
+                                      <div className="flex items-center space-x-2 py-1">
+                                        <Skeleton className="w-4 h-4 rounded" />
+                                        <Skeleton className="h-3 w-32" />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : hierarchicalData.length === 0 ? (
             <div className="text-center py-8">

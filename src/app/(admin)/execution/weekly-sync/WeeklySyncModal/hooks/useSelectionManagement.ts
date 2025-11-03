@@ -49,10 +49,13 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
           return newItems;
         } else {
           // Add to current selection (check)
+          // ✅ FIXED: Only add non-completed subtasks (matching display logic in SubtaskList.tsx)
           const newItems = [
             ...prev,
             { id: itemId, type: 'TASK' as const },
-            ...subtasks.map(st => ({ id: st.id, type: 'SUBTASK' as const })),
+            ...subtasks
+              .filter(st => st.status !== 'DONE') // Only add non-completed subtasks
+              .map(st => ({ id: st.id, type: 'SUBTASK' as const })),
           ];
           return newItems;
         }

@@ -187,7 +187,7 @@ const TaskItemCardContent = ({
           </button>
           
           {/* Judul Task */}
-          <h4 className={`flex-1 font-medium text-sm leading-tight ${
+          <h4 className={`flex-1 mr-1.5 font-medium text-sm leading-tight ${
             isCompleted 
               ? 'text-gray-500 dark:text-gray-500 line-through' 
               : 'text-gray-900 dark:text-gray-100'
@@ -242,7 +242,7 @@ const TaskItemCardContent = ({
                   )}
                 </button>
               ) : null}
-              <h4 className={`font-medium text-sm leading-tight ${
+              <h4 className={`mr-1.5 font-medium text-sm leading-tight ${
                 isCompleted 
                   ? 'text-gray-500 dark:text-gray-500 line-through' 
                   : 'text-gray-900 dark:text-gray-100'
