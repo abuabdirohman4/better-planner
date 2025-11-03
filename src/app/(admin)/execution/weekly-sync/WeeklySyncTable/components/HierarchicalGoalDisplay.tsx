@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { GoalItem } from '../../WeeklySyncClient/types';
 import type { HorizontalGoalDisplayProps } from '../types';
 import { useWeeklyTaskManagement } from '../../hooks/useWeeklyTaskManagement';
+import { getTaskTitles } from '../../actions/weeklyTaskActions';
 
 const questColors = [
   'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
@@ -32,6 +33,7 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
   const [expandedItems, setExpandedItems] = useState<Set<string>>(getInitialExpandedItems);
   const { toggleTaskStatus, isTaskLoading } = useWeeklyTaskManagement();
   const isInitialLoad = useRef(true);
+  const [parentTaskTitles, setParentTaskTitles] = useState<Record<string, string>>({});
   
   // Cookie key untuk menyimpan expanded state
   const expandedKey = `hierarchical-expanded-slot-${slotNumber}`;
@@ -53,46 +55,139 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
   }, [expandedItems, expandedKey]);
 
   // Filter items based on showCompletedTasks state
-  const filteredItems = showCompletedTasks 
-    ? items 
-    : items.filter(item => item.status !== 'DONE');
+  // ✅ FIXED: Memoize filteredItems to prevent infinite loop
+  const filteredItems = useMemo(() => {
+    return showCompletedTasks 
+      ? items 
+      : items.filter(item => item.status !== 'DONE');
+  }, [items, showCompletedTasks]);
 
-  // Build hierarchical structure
-  const buildHierarchy = (items: GoalItem[]) => {
-    const hierarchy: { [key: string]: any } = {};
-    const rootItems: GoalItem[] = [];
+  // ✅ NEW: Create stable dependency key for parent task IDs
+  const parentTaskIdsKey = useMemo(() => {
+    const hasRootItems = filteredItems.some(item => !item.parent_task_id);
     
-    // First, identify root items (items without parent_task_id)
-    items.forEach(item => {
-      if (!item.parent_task_id) {
-        rootItems.push(item);
-      }
-    });
+    if (hasRootItems || filteredItems.length === 0) {
+      return 'no-fetch-needed';
+    }
+    
+    const parentTaskIds = [...new Set(
+      filteredItems
+        .map(item => item.parent_task_id)
+        .filter((id): id is string => !!id)
+    )].sort();
+    
+    return parentTaskIds.length > 0 ? parentTaskIds.join(',') : 'no-parents';
+  }, [filteredItems]);
 
-    // If no root items found (all items are subtasks), treat all items as root
-    if (rootItems.length === 0) {
-      items.forEach(item => {
-        hierarchy[item.item_id] = {
-          ...item,
-          children: [],
-          isExpanded: expandedItems.has(item.item_id)
-        };
-      });
-    } else {
-      // Build hierarchy for each root item
-      rootItems.forEach(rootItem => {
-        const children = items.filter(item => item.parent_task_id === rootItem.item_id);
-        
-        hierarchy[rootItem.item_id] = {
-          ...rootItem,
-          children: children.length > 0 ? children : [],
-          isExpanded: expandedItems.has(rootItem.item_id)
-        };
-      });
+  // ✅ NEW: Fetch parent task titles when needed (when only subtasks are selected)
+  // ✅ FIXED: Use stable string key and use ref to track current titles without causing re-renders
+  const parentTaskTitlesRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    parentTaskTitlesRef.current = parentTaskTitles;
+  }, [parentTaskTitles]);
+
+  useEffect(() => {
+    // Skip if we don't need to fetch
+    if (parentTaskIdsKey === 'no-fetch-needed' || parentTaskIdsKey === 'no-parents') {
+      // Reset titles if we had them before but don't need them now
+      if (Object.keys(parentTaskTitlesRef.current).length > 0) {
+        setParentTaskTitles({});
+      }
+      return;
     }
 
-    return hierarchy;
-  };
+    const fetchParentTitles = async () => {
+      const parentTaskIds = parentTaskIdsKey.split(',');
+      
+      // ✅ FIXED: Check if titles already exist using ref to avoid dependency issues
+      const currentTitles = parentTaskTitlesRef.current;
+      const needsFetch = parentTaskIds.some(id => !currentTitles[id]);
+      
+      if (needsFetch) {
+        try {
+          const titles = await getTaskTitles(parentTaskIds);
+          setParentTaskTitles(prev => {
+            // ✅ Only update if titles actually changed to prevent unnecessary re-renders
+            const hasChanges = parentTaskIds.some(id => titles[id] !== prev[id]);
+            return hasChanges ? { ...prev, ...titles } : prev;
+          });
+        } catch (error) {
+          console.error('Failed to fetch parent task titles:', error);
+        }
+      }
+    };
+
+    fetchParentTitles();
+    // ✅ FIXED: Only depend on parentTaskIdsKey, not parentTaskTitles
+  }, [parentTaskIdsKey]);
+
+  // Build hierarchical structure
+  // ✅ Memoized to use latest parentTaskTitles and expandedItems
+  const buildHierarchy = useMemo(() => {
+    return (items: GoalItem[]) => {
+      const hierarchy: { [key: string]: any } = {};
+      const rootItems: GoalItem[] = [];
+      
+      // First, identify root items (items without parent_task_id)
+      items.forEach(item => {
+        if (!item.parent_task_id) {
+          rootItems.push(item);
+        }
+      });
+
+      // ✅ NEW: If no root items found, check if we need to create virtual parents
+      if (rootItems.length === 0) {
+        // Collect unique parent_task_id values from subtasks
+        const parentTaskIds = [...new Set(
+          items
+            .map(item => item.parent_task_id)
+            .filter((id): id is string => !!id)
+        )];
+        
+        if (parentTaskIds.length > 0) {
+          // Create virtual parent tasks for subtasks that have parent_task_id
+          parentTaskIds.forEach(parentTaskId => {
+            const children = items.filter(item => item.parent_task_id === parentTaskId);
+            if (children.length > 0) {
+              // ✅ Create virtual parent: has item_id but no status (indicates not selected)
+              // Title fetched from parentTaskTitles state (fetched via useEffect)
+              hierarchy[parentTaskId] = {
+                item_id: parentTaskId,
+                id: parentTaskId, // For React key
+                title: parentTaskTitles[parentTaskId] || 'Parent Task', // ✅ Use fetched title or placeholder
+                status: undefined, // ✅ Key: undefined status means virtual parent (not selected)
+                children: children,
+                isExpanded: expandedItems.has(parentTaskId),
+                isVirtualParent: true // ✅ Flag to identify virtual parent
+              };
+            }
+          });
+        } else {
+          // Fallback: no parent_task_id at all, treat as before
+          items.forEach(item => {
+            hierarchy[item.item_id] = {
+              ...item,
+              children: [],
+              isExpanded: expandedItems.has(item.item_id)
+            };
+          });
+        }
+      } else {
+        // Existing logic: build hierarchy for each root item
+        rootItems.forEach(rootItem => {
+          const children = items.filter(item => item.parent_task_id === rootItem.item_id);
+          
+          hierarchy[rootItem.item_id] = {
+            ...rootItem,
+            children: children.length > 0 ? children : [],
+            isExpanded: expandedItems.has(rootItem.item_id)
+          };
+        });
+      }
+
+      return hierarchy;
+    };
+  }, [parentTaskTitles, expandedItems]);
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
@@ -110,6 +205,9 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.item_id);
     const colorClass = questColors[(slotNumber-1)%questColors.length];
+    
+    // ✅ NEW: Detect if this is a virtual parent (not selected, only shown for hierarchy)
+    const isVirtualParent = item.status === undefined || item.isVirtualParent === true;
     
     return (
       <div key={item.id} className="space-y-1">
@@ -148,31 +246,39 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
           {/* Spacer for items without children */}
           {!hasChildren && <div className="w-2 h-2" />}
 
-          {/* Interactive Checkbox */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleTaskStatus(item.item_id, slotNumber, item.status, weekDate);
-            }}
-            disabled={isTaskLoading(item.item_id)}
-            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
-              item.status === 'DONE' 
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
-                : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-            } ${isTaskLoading(item.item_id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            {isTaskLoading(item.item_id) ? (
-              <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
-            ) : item.status === 'DONE' ? (
-              <svg 
-                className="w-2.5 h-2.5 text-white" 
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : null}
-          </button>
+          {/* ✅ NEW: Render dash for virtual parent, checkbox for selected items */}
+          {isVirtualParent ? (
+            // Dash display for virtual parent (not selected)
+            <div className="w-4 h-4 flex items-center justify-center text-gray-200">
+              <span className="text-lg font-medium select-none ml-0.5">|</span>
+            </div>
+          ) : (
+            // Existing checkbox for selected items
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTaskStatus(item.item_id, slotNumber, item.status, weekDate);
+              }}
+              disabled={isTaskLoading(item.item_id)}
+              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                item.status === 'DONE' 
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600' 
+                  : 'border-gray-300 dark:border-gray-500 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+              } ${isTaskLoading(item.item_id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              {isTaskLoading(item.item_id) ? (
+                <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+              ) : item.status === 'DONE' ? (
+                <svg 
+                  className="w-2.5 h-2.5 text-white" 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : null}
+            </button>
+          )}
           
           {/* Task Title */}
           <span className={`flex-1 text-sm font-medium ${
@@ -211,7 +317,11 @@ export default function HierarchicalGoalDisplay({ items, onClick, slotNumber, sh
     );
   };
 
-  const hierarchy = buildHierarchy(filteredItems);
+  // ✅ NEW: Build hierarchy using memoized function
+  const hierarchy = useMemo(() => {
+    return buildHierarchy(filteredItems);
+  }, [filteredItems, buildHierarchy]);
+  
   const rootItems = Object.values(hierarchy);
 
   return (

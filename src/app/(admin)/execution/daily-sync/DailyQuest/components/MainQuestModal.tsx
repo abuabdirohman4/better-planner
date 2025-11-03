@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Button from '@/components/ui/button/Button';
 import Checkbox from '@/components/form/input/Checkbox';
 import { TaskSelectionModalProps } from '../types';
+import { getTaskTitles } from '@/app/(admin)/execution/weekly-sync/actions/weeklyTaskActions';
 
 const MainQuestModal: React.FC<TaskSelectionModalProps> = ({ 
   isOpen, 
@@ -17,6 +18,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const isInitialLoad = useRef(true);
+  const [parentTaskTitles, setParentTaskTitles] = useState<Record<string, string>>({});
   
   // Cookie key untuk menyimpan expanded state
   const expandedKey = 'mainquest-modal-expanded';
@@ -60,53 +62,153 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
     }
   }, [expandedItems, expandedKey]);
 
-  const groupByGoalSlot = (tasks: any[]) => {
-    const groups: Record<number, any[]> = {};
-    tasks.forEach(task => {
-      if (!groups[task.goal_slot]) {
-        groups[task.goal_slot] = [];
-      }
-      groups[task.goal_slot].push(task);
-    });
-    return groups;
-  };
-
-  // Build hierarchical structure like HierarchicalGoalDisplay
-  const buildHierarchy = (tasks: any[]) => {
-    const hierarchy: { [key: string]: any } = {};
-    const rootItems: any[] = [];
-    
-    // First, identify root items (items without parent_task_id)
-    tasks.forEach(task => {
-      if (!task.parent_task_id) {
-        rootItems.push(task);
-      }
-    });
-
-    // If no root items found (all items are subtasks), treat all items as root
-    if (rootItems.length === 0) {
+  const groupByGoalSlot = useMemo(() => {
+    return (tasks: any[]) => {
+      const groups: Record<number, any[]> = {};
       tasks.forEach(task => {
-        hierarchy[task.id] = {
-          ...task,
-          children: [],
-          isExpanded: expandedItems.has(task.id)
-        };
+        if (!groups[task.goal_slot]) {
+          groups[task.goal_slot] = [];
+        }
+        groups[task.goal_slot].push(task);
       });
-    } else {
-      // Build hierarchy for each root item
-      rootItems.forEach(rootItem => {
-        const children = tasks.filter(task => task.parent_task_id === rootItem.id);
+      return groups;
+    };
+  }, []);
+
+  // ✅ NEW: Create stable dependency key for parent task IDs per goal slot
+  // We need to process this per goal slot, so we'll do it inside the map function
+  // But we need a way to track parent task IDs across all slots
+  const allParentTaskIds = useMemo(() => {
+    const parentTaskIdsMap: Record<number, string[]> = {};
+    
+    if (!isOpen || !tasks || tasks.length === 0) return parentTaskIdsMap;
+    
+    const grouped = groupByGoalSlot(tasks);
+    Object.entries(grouped).forEach(([goalSlot, slotTasks]) => {
+      const hasRootItems = slotTasks.some(task => !task.parent_task_id);
+      
+      if (!hasRootItems && slotTasks.length > 0) {
+        const parentTaskIds = [...new Set(
+          slotTasks
+            .map(task => task.parent_task_id)
+            .filter((id): id is string => !!id)
+        )].sort();
         
-        hierarchy[rootItem.id] = {
-          ...rootItem,
-          children: children.length > 0 ? children : [],
-          isExpanded: expandedItems.has(rootItem.id)
-        };
-      });
+        if (parentTaskIds.length > 0) {
+          parentTaskIdsMap[Number(goalSlot)] = parentTaskIds;
+        }
+      }
+    });
+    
+    return parentTaskIdsMap;
+  }, [tasks, isOpen, groupByGoalSlot]);
+
+  // ✅ NEW: Fetch parent task titles when needed
+  const parentTaskTitlesRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    parentTaskTitlesRef.current = parentTaskTitles;
+  }, [parentTaskTitles]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // Collect all unique parent task IDs from all goal slots
+    const allParentIds = Object.values(allParentTaskIds).flat();
+    
+    if (allParentIds.length === 0) {
+      if (Object.keys(parentTaskTitlesRef.current).length > 0) {
+        setParentTaskTitles({});
+      }
+      return;
     }
 
-    return hierarchy;
-  };
+    const fetchParentTitles = async () => {
+      // ✅ FIXED: Check if titles already exist using ref to avoid dependency issues
+      const currentTitles = parentTaskTitlesRef.current;
+      const needsFetch = allParentIds.some(id => !currentTitles[id]);
+      
+      if (needsFetch) {
+        try {
+          const titles = await getTaskTitles(allParentIds);
+          setParentTaskTitles(prev => {
+            // ✅ Only update if titles actually changed to prevent unnecessary re-renders
+            const hasChanges = allParentIds.some(id => titles[id] !== prev[id]);
+            return hasChanges ? { ...prev, ...titles } : prev;
+          });
+        } catch (error) {
+          console.error('Failed to fetch parent task titles:', error);
+        }
+      }
+    };
+
+    fetchParentTitles();
+  }, [allParentTaskIds, isOpen]);
+
+  // Build hierarchical structure like HierarchicalGoalDisplay
+  // ✅ Memoized to use latest parentTaskTitles and expandedItems
+  const buildHierarchy = useMemo(() => {
+    return (tasks: any[], goalSlot: number) => {
+      const hierarchy: { [key: string]: any } = {};
+      const rootItems: any[] = [];
+      
+      // First, identify root items (items without parent_task_id)
+      tasks.forEach(task => {
+        if (!task.parent_task_id) {
+          rootItems.push(task);
+        }
+      });
+
+      // ✅ NEW: If no root items found, check if we need to create virtual parents
+      if (rootItems.length === 0) {
+        // Collect unique parent_task_id values from subtasks
+        const parentTaskIds = [...new Set(
+          tasks
+            .map(task => task.parent_task_id)
+            .filter((id): id is string => !!id)
+        )];
+        
+        if (parentTaskIds.length > 0) {
+          // Create virtual parent tasks for subtasks that have parent_task_id
+          parentTaskIds.forEach(parentTaskId => {
+            const children = tasks.filter(task => task.parent_task_id === parentTaskId);
+            if (children.length > 0) {
+              // ✅ Create virtual parent: has id but not in tasks array (indicates not selected)
+              hierarchy[parentTaskId] = {
+                id: parentTaskId,
+                title: parentTaskTitles[parentTaskId] || 'Parent Task', // ✅ Use fetched title or placeholder
+                status: undefined, // ✅ Key: undefined status means virtual parent (not selected)
+                children: children,
+                isExpanded: expandedItems.has(parentTaskId),
+                isVirtualParent: true // ✅ Flag to identify virtual parent
+              };
+            }
+          });
+        } else {
+          // Fallback: no parent_task_id at all, treat as before
+          tasks.forEach(task => {
+            hierarchy[task.id] = {
+              ...task,
+              children: [],
+              isExpanded: expandedItems.has(task.id)
+            };
+          });
+        }
+      } else {
+        // Existing logic: build hierarchy for each root item
+        rootItems.forEach(rootItem => {
+          const children = tasks.filter(task => task.parent_task_id === rootItem.id);
+          
+          hierarchy[rootItem.id] = {
+            ...rootItem,
+            children: children.length > 0 ? children : [],
+            isExpanded: expandedItems.has(rootItem.id)
+          };
+        });
+      }
+
+      return hierarchy;
+    };
+  }, [parentTaskTitles, expandedItems]);
 
   // Toggle expanded state
   const toggleExpanded = (itemId: string) => {
@@ -126,6 +228,9 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.id);
     const isSelected = selectedTasks[item.id] || false;
+    
+    // ✅ NEW: Detect if this is a virtual parent (not selected, only shown for hierarchy)
+    const isVirtualParent = item.status === undefined || item.isVirtualParent === true;
     
     return (
       <div key={item.id} className="space-y-1">
@@ -163,12 +268,20 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           {/* Spacer for items without children */}
           {!hasChildren && <div className="w-2 h-2" />}
 
-          {/* Checkbox */}
-          <Checkbox
-            checked={isSelected}
-            onChange={() => onTaskToggle(item.id)}
-            disabled={savingLoading}
-          />
+          {/* ✅ NEW: Render dash for virtual parent, checkbox for selected items */}
+          {isVirtualParent ? (
+            // Dash display for virtual parent (not selected)
+            <div className="w-4 h-4 flex items-center justify-center text-gray-200">
+              <span className="text-lg font-medium select-none ml-0.5">|</span>
+            </div>
+          ) : (
+            // Existing checkbox for selected items
+            <Checkbox
+              checked={isSelected}
+              onChange={() => onTaskToggle(item.id)}
+              disabled={savingLoading}
+            />
+          )}
           
           {/* Task Title */}
           <span className={`flex-1 text-sm font-medium ${
@@ -212,16 +325,20 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   // Filter out tasks that are not available for selection
   // Tasks that were completed yesterday are already filtered out in getTasksForWeek
   // But we need to ensure tasks added today are still available
-  const availableTasks = tasks.filter(task => {
-    // Always show tasks that are currently selected (added today)
-    if (selectedTasks[task.id]) {
+  const availableTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // Always show tasks that are currently selected (added today)
+      if (selectedTasks[task.id]) {
+        return true;
+      }
+      // Show all other available tasks (filtered by getTasksForWeek)
       return true;
-    }
-    // Show all other available tasks (filtered by getTasksForWeek)
-    return true;
-  });
+    });
+  }, [tasks, selectedTasks]);
 
-  const groupedTasks = groupByGoalSlot(availableTasks);
+  const groupedTasks = useMemo(() => {
+    return groupByGoalSlot(availableTasks);
+  }, [availableTasks, groupByGoalSlot]);
   const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
@@ -285,7 +402,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
         ) : (
           <div className="space-y-6 max-h-96 overflow-y-auto">
             {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => {
-              const hierarchy = buildHierarchy(slotTasks);
+              const hierarchy = buildHierarchy(slotTasks, Number(goalSlot));
               const rootItems = Object.values(hierarchy);
               
               return (

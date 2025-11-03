@@ -3,6 +3,41 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
+export async function getTaskTitles(taskIds: string[]) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    if (!taskIds || taskIds.length === 0) {
+      return {};
+    }
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('id, title')
+      .in('id', taskIds);
+
+    if (error) {
+      throw error;
+    }
+
+    // Return a map of task_id -> title
+    const titleMap: Record<string, string> = {};
+    data?.forEach(task => {
+      titleMap[task.id] = task.title;
+    });
+
+    return titleMap;
+  } catch (error) {
+    console.error("Error in getTaskTitles:", error);
+    return {};
+  }
+}
+
 export async function updateWeeklyTaskStatus(
   taskId: string,
   goalSlot: number,
