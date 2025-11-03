@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Checkbox from '@/components/form/input/Checkbox';
+import { useQuestProgressInvalidation } from '../../Quest/hooks/useQuestProgress';
 
 interface Subtask {
   id: string;
@@ -40,15 +41,20 @@ export default function SubtaskInput({
   handleDeleteSubtask 
 }: SubtaskInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { invalidateSubtasksProgress } = useQuestProgressInvalidation();
   
   // Add new states for edit button system
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [originalTitle, setOriginalTitle] = useState<string>(draftTitle);
+  const [optimisticStatus, setOptimisticStatus] = useState<'TODO' | 'DONE' | null>(null);
   
   // Check if subtask has content
   const hasContent = subtask.title.trim().length > 0;
+  
+  // Use optimistic status if available, otherwise use subtask status
+  const isCompleted = (optimisticStatus || subtask.status) === 'DONE';
   
   // Sync originalTitle with draftTitle when subtask changes (but not when editing)
   useEffect(() => {
@@ -56,6 +62,14 @@ export default function SubtaskInput({
       setOriginalTitle(draftTitle);
     }
   }, [draftTitle, isEditing]);
+  
+  // Sync optimisticStatus when subtask.status changes from SWR (after refetch)
+  useEffect(() => {
+    if (optimisticStatus !== null) {
+      // Clear optimistic status when SWR data updates
+      setOptimisticStatus(null);
+    }
+  }, [subtask.status]);
   
   // Handle edit change - track changes against originalTitle
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,6 +99,26 @@ export default function SubtaskInput({
       setHasChanges(true);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle checkbox click with optimistic update
+  const handleCheckOptimistic = async () => {
+    const currentStatus = optimisticStatus || subtask.status;
+    const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE';
+    
+    // Optimistic update - update UI immediately
+    setOptimisticStatus(newStatus);
+    
+    try {
+      await handleCheck(subtask);
+      // Invalidate quest progress cache to trigger progress bar update
+      invalidateSubtasksProgress();
+      // Clear optimistic status after successful API call
+      // (it will be cleared when SWR refetches and subtask.status updates)
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticStatus(null);
     }
   };
 
@@ -156,20 +190,20 @@ export default function SubtaskInput({
         <div className="flex items-center justify-between w-full gap-2">
           <span 
             className={`border rounded px-2 py-1 text-sm flex-1 cursor-text focus:outline-none transition-all ${
-              subtask.status === 'DONE' ? 'line-through text-gray-400' : ''
+              isCompleted ? 'line-through text-gray-400' : ''
             }`}
             onClick={handleTextClick}
           >
             {draftTitle}  {/* CHANGED: Use draftTitle instead of subtask.title */}
           </span>
-          <Checkbox checked={subtask.status === 'DONE'} onChange={() => handleCheck(subtask)} />
+          <Checkbox checked={isCompleted} onChange={handleCheckOptimistic} />
         </div>
       ) : (
         // Edit mode - show input + Edit button
         <div className="flex items-center w-full gap-2">
           <input
             className={`border rounded px-2 py-1 text-sm flex-1 w-full focus:outline-none focus:ring-0 ${
-              subtask.status === 'DONE' ? 'line-through text-gray-400' : ''
+              isCompleted ? 'line-through text-gray-400' : ''
             }`}
             value={draftTitle}
             onChange={handleEditChange}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from 'react';
-import useSWR from 'swr';
+import { useMemo, useCallback } from 'react';
+import useSWR, { useSWRConfig } from 'swr';
 import { useMilestones, useTasks } from '../../hooks/useMainQuestsSWR';
 import { getTasksForMilestone } from '../../actions/taskActions';
 import { getSubtasksForTask } from '../../actions/subTaskActions';
@@ -45,7 +45,7 @@ function useAllTasksForQuest(milestoneIds: string[]) {
       revalidateIfStale: true,
       revalidateOnReconnect: true,
       dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
-      refreshInterval: 1000, // Poll every second for status changes
+      // Removed refreshInterval: 1000 - only update on user actions, not continuous polling
       errorRetryCount: 3,
     }
   );
@@ -78,7 +78,7 @@ function useAllSubtasksForQuest(taskIds: string[]) {
       revalidateIfStale: true,
       revalidateOnReconnect: true,
       dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
-      refreshInterval: 1000, // Poll every second for status changes
+      // Removed refreshInterval: 1000 - only update on user actions, not continuous polling
       errorRetryCount: 3,
     }
   );
@@ -205,5 +205,53 @@ export function useMilestoneProgress(milestoneId: string) {
     taskProgress,
     subtaskProgress,
     isLoading: tasksLoading,
+  };
+}
+
+/**
+ * Hook to invalidate quest progress cache
+ * Use this after task/subtask status changes to trigger immediate progress bar update
+ */
+export function useQuestProgressInvalidation() {
+  const { mutate, cache } = useSWRConfig();
+  
+  /**
+   * Invalidate quest progress cache for tasks
+   * Call this after task status changes
+   */
+  const invalidateTasksProgress = useCallback(() => {
+    // Invalidate all quest-tasks-* cache keys
+    const keys = Array.from(cache.keys()) as string[];
+    const taskKeys = keys.filter(key => 
+      typeof key === 'string' && key.startsWith('quest-tasks-')
+    );
+    taskKeys.forEach(key => mutate(key, undefined, { revalidate: true }));
+  }, [mutate, cache]);
+  
+  /**
+   * Invalidate quest progress cache for subtasks
+   * Call this after subtask status changes
+   */
+  const invalidateSubtasksProgress = useCallback(() => {
+    // Invalidate all quest-subtasks-* cache keys
+    const keys = Array.from(cache.keys()) as string[];
+    const subtaskKeys = keys.filter(key => 
+      typeof key === 'string' && key.startsWith('quest-subtasks-')
+    );
+    subtaskKeys.forEach(key => mutate(key, undefined, { revalidate: true }));
+  }, [mutate, cache]);
+  
+  /**
+   * Invalidate all quest progress cache (both tasks and subtasks)
+   */
+  const invalidateAllProgress = useCallback(() => {
+    invalidateTasksProgress();
+    invalidateSubtasksProgress();
+  }, [invalidateTasksProgress, invalidateSubtasksProgress]);
+  
+  return {
+    invalidateTasksProgress,
+    invalidateSubtasksProgress,
+    invalidateAllProgress,
   };
 }

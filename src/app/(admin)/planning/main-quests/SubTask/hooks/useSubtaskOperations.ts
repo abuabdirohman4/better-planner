@@ -3,19 +3,31 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 import { updateTask, updateTaskDisplayOrder, deleteTask } from '../../actions/taskActions';
+import type { KeyedMutator } from 'swr';
 
 interface Subtask {
   id: string;
   title: string;
   status: 'TODO' | 'DONE';
   display_order: number;
+  parent_task_id?: string | null;
+  milestone_id?: string | null;
 }
+
+type SubtaskData = Array<{
+  id: any;
+  title: any;
+  status: any;
+  display_order: any;
+  parent_task_id?: any;
+  milestone_id?: any;
+}>;
 
 export function useSubtaskOperations(
   taskId: string,
   _milestoneId: string,
   subtasks: Subtask[],
-  refetchSubtasks: () => void,
+  mutateSubtasks: KeyedMutator<SubtaskData>,
   draftTitles: Record<string, string>,
   setDraftTitles: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   focusSubtaskId: string | null,
@@ -42,13 +54,13 @@ export function useSubtaskOperations(
           toast.success('Subtask berhasil diperbarui');
         } catch (error) {
           // Refetch on error to ensure data consistency
-          refetchSubtasks();
+          mutateSubtasks();
           toast.error('Gagal memperbarui subtask');
           throw error;
         }
       }
     }
-  }, [setDraftTitles, refetchSubtasks, subtasks]);
+  }, [setDraftTitles, mutateSubtasks, subtasks]);
 
   const handleDeleteSubtaskWithFocus = useCallback(async (id: string, idx: number) => {
     const result = await handleDeleteSubtask(id, idx);
@@ -76,6 +88,8 @@ export function useSubtaskOperations(
     const oldIndex = subtasks.findIndex(st => st.id === activeId);
     const newIndex = subtasks.findIndex(st => st.id === overId);
     if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Calculate new order
     const newSubtasks = arrayMove(subtasks, oldIndex, newIndex);
     let newOrder = newSubtasks[newIndex].display_order;
     if (newIndex === 0) {
@@ -88,12 +102,24 @@ export function useSubtaskOperations(
       newOrder = (prev + next) / 2;
     }
     
+    // Save original state for revert
+    const originalSubtasks = [...subtasks];
+    
     try {
+      // Optimistic update - update UI immediately
+      await mutateSubtasks(newSubtasks as SubtaskData, { revalidate: false });
+      
+      // API call
       await updateTaskDisplayOrder(newSubtasks[newIndex].id, newOrder);
-      // 🔧 FIX: Refetch data instead of optimistic updates
-      refetchSubtasks();
-    } catch {}
-  }, [subtasks, refetchSubtasks]);
+      
+      // Revalidate to ensure data sync with server
+      await mutateSubtasks();
+    } catch (error) {
+      // Revert optimistic update on error
+      await mutateSubtasks(originalSubtasks as SubtaskData, { revalidate: false });
+      toast.error('Gagal mengubah urutan subtask');
+    }
+  }, [subtasks, mutateSubtasks]);
 
   const handleSubtaskEnterWithFocus = useCallback(async (idx: number, title: string = '', subtasksOverride?: Subtask[]): Promise<number> => {
     const result = await handleSubtaskEnter(idx, title, subtasksOverride);

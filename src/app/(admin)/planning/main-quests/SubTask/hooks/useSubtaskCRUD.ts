@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { addTask, updateTaskStatus, deleteTask } from '../../actions/taskActions';
 import { toast } from 'sonner';
+import type { KeyedMutator } from 'swr';
 
 interface Subtask {
   id: string;
@@ -9,11 +10,21 @@ interface Subtask {
   display_order: number;
 }
 
+type SubtaskData = Array<{
+  id: any;
+  title: any;
+  status: any;
+  display_order: any;
+  parent_task_id?: any;
+  milestone_id?: any;
+  created_at?: any;
+}>;
+
 export function useSubtaskCRUD(
   taskId: string, 
   milestoneId: string, 
   subtasks: Subtask[], 
-  refetchSubtasks: () => void
+  refetchSubtasks: (() => void) | KeyedMutator<SubtaskData>
 ) {
   const handleSubtaskEnter = useCallback(async (
     idx: number,
@@ -63,7 +74,13 @@ export function useSubtaskCRUD(
       const res = await addTask(formData);
       if (res && res.task) {
       // ✅ Refetch data to ensure consistency
-      refetchSubtasks();
+      if (typeof refetchSubtasks === 'function' && refetchSubtasks.length === 0) {
+        // SWR mutate function
+        await (refetchSubtasks as KeyedMutator<SubtaskData>)();
+      } else {
+        // Regular function
+        (refetchSubtasks as () => void)();
+      }
       toast.success('Subtask berhasil ditambahkan');
       return { 
         newIndex: idx + 1, // Return next index
@@ -81,21 +98,56 @@ export function useSubtaskCRUD(
 
   const handleCheck = useCallback(async (subtask: Subtask) => {
     const newStatus = subtask.status === 'DONE' ? 'TODO' : 'DONE';
-    try {
-      const res = await updateTaskStatus(subtask.id, newStatus);
-      if (res) {
-        // ✅ Always refetch on success for status changes (important for UI consistency)
-        refetchSubtasks();
-        toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
-      } else {
+    
+    // Store original subtasks for potential revert
+    const originalSubtasks = [...subtasks];
+    
+    // Optimistic update - update status in-place to preserve order
+    // Check if refetchSubtasks is a SWR mutate function (KeyedMutator)
+    const isKeyedMutator = typeof refetchSubtasks === 'function' && 
+      refetchSubtasks.length === 0 || refetchSubtasks.length === 2;
+    
+    if (isKeyedMutator) {
+      const mutateSubtasks = refetchSubtasks as unknown as KeyedMutator<SubtaskData>;
+      try {
+        // Optimistic update - update UI immediately while preserving order
+        const updatedSubtasks = subtasks.map(s => 
+          s.id === subtask.id ? { ...s, status: newStatus } : s
+        );
+        await mutateSubtasks(updatedSubtasks as SubtaskData, { revalidate: false });
+        
+        // API call
+        const res = await updateTaskStatus(subtask.id, newStatus);
+        if (res) {
+          // Revalidate to ensure data sync with server
+          await mutateSubtasks();
+          toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+        } else {
+          // Revert on error
+          await mutateSubtasks(originalSubtasks as SubtaskData, { revalidate: false });
+          toast.error('Gagal update status');
+        }
+      } catch (error) {
+        // Revert optimistic update on error
+        await mutateSubtasks(originalSubtasks as SubtaskData, { revalidate: false });
         toast.error('Gagal update status');
       }
-    } catch {
-      toast.error('Gagal update status');
-      // Refetch on error to ensure data consistency
-      refetchSubtasks();
+    } else {
+      // Fallback to refetch if mutate is not available
+      try {
+        const res = await updateTaskStatus(subtask.id, newStatus);
+        if (res) {
+          (refetchSubtasks as () => void)();
+          toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+        } else {
+          toast.error('Gagal update status');
+        }
+      } catch {
+        toast.error('Gagal update status');
+        (refetchSubtasks as () => void)();
+      }
     }
-  }, [refetchSubtasks]);
+  }, [subtasks, refetchSubtasks]);
 
   const handleDeleteSubtask = useCallback(async (id: string, idx: number): Promise<{ newIndex: number; newFocusId?: string }> => {
     // Validasi UUID format untuk Supabase
@@ -125,11 +177,23 @@ export function useSubtaskCRUD(
       toast.success('Subtask berhasil dihapus');
       
       // ✅ Refetch immediately for delete operations (critical for UI consistency)
-      refetchSubtasks();
+      if (typeof refetchSubtasks === 'function' && refetchSubtasks.length === 0) {
+        // SWR mutate function
+        await (refetchSubtasks as KeyedMutator<SubtaskData>)();
+      } else {
+        // Regular function
+        (refetchSubtasks as () => void)();
+      }
     } catch (error) {
       toast.error('Gagal menghapus subtask');
       // Refetch on error to ensure data consistency
-      refetchSubtasks();
+      if (typeof refetchSubtasks === 'function' && refetchSubtasks.length === 0) {
+        // SWR mutate function
+        await (refetchSubtasks as KeyedMutator<SubtaskData>)();
+      } else {
+        // Regular function
+        (refetchSubtasks as () => void)();
+      }
     }
     
     return { 

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { updateTaskStatus } from '../../actions/taskActions';
 import Checkbox from '@/components/form/input/Checkbox';
 import { toast } from 'sonner';
+import { useQuestProgressInvalidation } from '../../Quest/hooks/useQuestProgress';
 
 interface Task {
   id: string;
@@ -44,6 +45,7 @@ export default function TaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [optimisticStatus, setOptimisticStatus] = useState<'TODO' | 'DONE' | null>(null);
   const editInputRef = useRef<HTMLInputElement | null>(null);
+  const { invalidateTasksProgress } = useQuestProgressInvalidation();
 
   const hasContent = task.title.trim().length > 0;
   
@@ -85,6 +87,8 @@ export default function TaskItem({
       const res = await updateTaskStatus(task.id, newStatus);
       if (res) {
         onTaskUpdate?.();
+        // Invalidate quest progress cache to trigger progress bar update
+        invalidateTasksProgress();
         toast.success(`Task ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
       } else {
         toast.error('Gagal update status');
@@ -92,6 +96,7 @@ export default function TaskItem({
     } catch (error) {
       // Revert optimistic update on error
       console.error('Failed to toggle task status:', error);
+      setOptimisticStatus(null);
     }
   };
 

@@ -86,11 +86,13 @@ export default function MainQuestsClient() {
           </div>
         </div>
         <div className="mt-6">
-          {quests.map((quest, idx) => (
-            <div key={quest.id} style={{ display: activeTab === idx ? 'block' : 'none' }}>
-              <Quest quest={quest} showCompletedTasks={showCompletedMainQuest} />
-            </div>
-          ))}
+          {quests.map((quest, idx) => 
+            activeTab === idx ? (
+              <div key={quest.id}>
+                <Quest quest={quest} showCompletedTasks={showCompletedMainQuest} />
+              </div>
+            ) : null
+          )}
         </div>
       </div>
     </div>

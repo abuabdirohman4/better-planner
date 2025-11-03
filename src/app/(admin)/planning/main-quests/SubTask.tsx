@@ -14,6 +14,8 @@ interface Subtask {
   title: string;
   status: 'TODO' | 'DONE';
   display_order: number;
+  parent_task_id?: string | null;
+  milestone_id?: string | null;
 }
 
 // Custom hook for new subtask management - Manual Add System
@@ -110,13 +112,13 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
   // 🔧 FIX: Memoize displaySubtasks to prevent unnecessary re-renders
   const stableDisplaySubtasks = useMemo(() => displaySubtasks, [displaySubtasks]);
 
-  // 🔧 FIX: Use refetchSubtasks to refresh data after CRUD operations
-  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, stableDisplaySubtasks, handleRefetchSubtasks);
+  // 🔧 FIX: Pass SWR mutate function directly to enable optimistic updates
+  const { handleSubtaskEnter, handleCheck, handleDeleteSubtask: handleDeleteSubtaskCRUD } = useSubtaskCRUD(task.id, milestoneId, stableDisplaySubtasks, refetchSubtasks);
   const { handleDraftTitleChange, handleDeleteSubtask, handleDragEnd, handleSubtaskEnterWithFocus } = useSubtaskOperations(
     task.id, 
     milestoneId, 
     stableDisplaySubtasks, 
-    handleRefetchSubtasks, // 🔧 FIX: Use refetchSubtasks to refresh data after operations
+    refetchSubtasks as any, // Type assertion: SWR mutate function is compatible
     draftTitles, 
     setDraftTitles, 
     focusSubtaskId, 
