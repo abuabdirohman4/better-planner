@@ -72,6 +72,19 @@ export default function WorkQuestsPage() {
     setIsModalOpen(true);
   };
 
+  const handleInlineUpdateProject = async (project: WorkQuestProject) => {
+    try {
+      await updateProject(project.id, {
+        title: project.title,
+        description: project.description || ''
+      });
+      toast.success("Project berhasil diperbarui!");
+    } catch (error) {
+      console.error("Failed to update project:", error);
+      toast.error("Gagal memperbarui Project");
+    }
+  };
+
   const handleAddTask = async (projectId: string, formData: any) => {
     try {
       await createTask(projectId, formData);
@@ -173,6 +186,7 @@ export default function WorkQuestsPage() {
         <ProjectList
           projects={projects}
           onEditProject={handleEditProject}
+          onInlineUpdateProject={handleInlineUpdateProject}
           onDeleteProject={handleDeleteProject}
           onAddTask={handleAddTask}
           onEditTask={handleEditTask}

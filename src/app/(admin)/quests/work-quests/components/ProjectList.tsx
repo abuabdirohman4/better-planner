@@ -4,10 +4,12 @@ import { WorkQuestProjectListProps, WorkQuestProject, WorkQuestTask } from "../t
 import TaskForm from "./TaskForm";
 import Checkbox from "@/components/form/input/Checkbox";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   projects,
   onEditProject,
+  onInlineUpdateProject,
   onDeleteProject,
   onAddTask,
   onEditTask,
@@ -23,6 +25,11 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [editingProject, setEditingProject] = useState<WorkQuestProject | null>(null);
+  const [editingProjectTitle, setEditingProjectTitle] = useState<string>('');
+  const [showDeleteProjectModal, setShowDeleteProjectModal] = useState<boolean>(false);
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   const handleToggleProjectStatus = async (projectId: string, currentStatus: string) => {
     try {
@@ -113,20 +120,73 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   };
 
   // Filter projects based on search term and completed status
-  const filteredProjects = projects.filter(project => {
-    // Search filter - check project title, description, and all task titles
-    const matchesSearch = 
-      project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.tasks.some(task => 
-        task.title?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    
-    // Completed filter
-    const matchesCompleted = showCompleted || project.status !== 'DONE';
-    
-    return matchesSearch && matchesCompleted;
-  });
+  const filteredProjects = projects
+    .filter(project => {
+      // Search filter - check project title, description, and all task titles
+      const matchesSearch = 
+        project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.tasks.some(task => 
+          task.title?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      
+      // Completed filter
+      const matchesCompleted = showCompleted || project.status !== 'DONE';
+      
+      return matchesSearch && matchesCompleted;
+    })
+    .sort((a, b) => {
+      // Sort by project title (A-Z)
+      const titleA = (a.title || '').toLowerCase();
+      const titleB = (b.title || '').toLowerCase();
+      return titleA.localeCompare(titleB);
+    });
+
+  // Handle edit project
+  const handleEditProject = (project: WorkQuestProject) => {
+    setEditingProject(project);
+    setEditingProjectTitle(project.title || '');
+  };
+
+  // Handle save project
+  const handleSaveProject = async () => {
+    if (!editingProject || !editingProjectTitle.trim()) return;
+
+    try {
+      await onInlineUpdateProject({ ...editingProject, title: editingProjectTitle.trim() });
+      setEditingProject(null);
+      setEditingProjectTitle('');
+    } catch (error) {
+      console.error("Failed to update project:", error);
+    }
+  };
+
+  // Handle cancel edit project
+  const handleCancelEditProject = () => {
+    setEditingProject(null);
+    setEditingProjectTitle('');
+  };
+
+  // Handle delete project
+  const handleDeleteProject = (projectId: string) => {
+    setDeleteProjectId(projectId);
+    setShowDeleteProjectModal(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!deleteProjectId) return;
+
+    setIsDeletingProject(true);
+    try {
+      await onDeleteProject(deleteProjectId);
+      setShowDeleteProjectModal(false);
+      setDeleteProjectId(null);
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+    } finally {
+      setIsDeletingProject(false);
+    }
+  };
 
   if (projects.length === 0) {
     return (
@@ -190,45 +250,151 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
         </div>
       ) : (
         <div className="space-y-1">
-          {filteredProjects.map((project) => (
-        <div key={project.id} className="bg-white dark:bg-gray-800">
-          {/* Project Item */}
-          <div className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700">
-            {/* Chevron Icon */}
-            <button
-              onClick={() => toggleProject(project.id)}
-              className="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg 
-                className={`w-4 h-4 transition-transform ${expandedProjects.has(project.id) ? 'rotate-90' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+          {filteredProjects.map((project) => {
+            const isEditingProject = editingProject?.id === project.id;
 
-            {/* Checkbox */}
-            <Checkbox
-              checked={project.status === 'DONE'}
-              onChange={() => handleToggleProjectStatus(project.id, project.status)}
-            />
+            return (
+              <div key={project.id} className="bg-white dark:bg-gray-800">
+                {/* Project Item */}
+                {isEditingProject ? (
+                  /* Edit Form */
+                  <div className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    {/* Chevron Icon (disabled for form) */}
+                    <div className="mr-3 text-gray-300">
+                      <svg 
+                        className="w-4 h-4"
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
 
-            {/* Project Title */}
-            <span className={`ml-3 text-sm font-medium ${
-              project.status === 'DONE' 
-                ? 'text-gray-500 line-through dark:text-gray-400' 
-                : 'text-gray-900 dark:text-gray-100'
-            }`}>
-              {project.title}
-            </span>
-          </div>
+                    {/* Checkbox (disabled for form) */}
+                    <Checkbox
+                      checked={false}
+                      onChange={() => {}}
+                      disabled
+                    />
+
+                    {/* Project Input */}
+                    <div className="flex-1 ml-3">
+                      <input
+                        type="text"
+                        value={editingProjectTitle}
+                        onChange={(e) => setEditingProjectTitle(e.target.value)}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                        placeholder="Masukkan project..."
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveProject();
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            handleCancelEditProject();
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-1 ml-2">
+                      {/* Save Button */}
+                      <button
+                        onClick={handleSaveProject}
+                        disabled={!editingProjectTitle.trim()}
+                        className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Save project"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+
+                      {/* Cancel Button */}
+                      <button
+                        onClick={handleCancelEditProject}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Cancel"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Normal Project Item */
+                  <div className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
+                    {/* Chevron Icon */}
+                    <button
+                      onClick={() => toggleProject(project.id)}
+                      className="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <svg 
+                        className={`w-4 h-4 transition-transform ${expandedProjects.has(project.id) ? 'rotate-90' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+
+                    {/* Checkbox */}
+                    <Checkbox
+                      checked={project.status === 'DONE'}
+                      onChange={() => handleToggleProjectStatus(project.id, project.status)}
+                    />
+
+                    {/* Project Title */}
+                    <span className={`ml-3 text-sm font-medium flex-1 ${
+                      project.status === 'DONE' 
+                        ? 'text-gray-500 line-through dark:text-gray-400' 
+                        : 'text-gray-900 dark:text-gray-100'
+                    }`}>
+                      {project.title}
+                    </span>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => handleEditProject(project)}
+                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        title="Edit project"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete project"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
           {/* Tasks */}
-          {expandedProjects.has(project.id) && (
-            <div className="ml-[52px] border-l border-gray-200 dark:border-gray-600">
-              {project.tasks.map((task, index) => (
+          {expandedProjects.has(project.id) && (() => {
+            // Filter tasks based on showCompleted toggle
+            const filteredTasks = showCompleted 
+              ? project.tasks 
+              : project.tasks.filter(task => task.status !== 'DONE');
+            
+            return (
+              <div className="ml-[52px] border-l border-gray-200 dark:border-gray-600" key={`tasks-${project.id}`}>
+                {filteredTasks.map((task, index) => (
                 <div key={task.id}>
                   {/* Show edit form if this task is being edited */}
                   {showTaskForm?.projectId === project.id && showTaskForm?.taskId === task.id ? (
@@ -416,12 +582,31 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                   </button>
                 </div>
               ) : null}
-            </div>
-          )}
-        </div>
-      ))}
+              </div>
+            );
+          })()}
+          </div>
+          );
+        })}
         </div>
       )}
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={showDeleteProjectModal}
+        onClose={() => {
+          setShowDeleteProjectModal(false);
+          setDeleteProjectId(null);
+        }}
+        onConfirm={confirmDeleteProject}
+        title="Hapus Project"
+        message={`Apakah Anda yakin ingin menghapus project ini? Semua task di dalam project ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        confirmVariant="danger"
+        isLoading={isDeletingProject}
+        size="sm"
+      />
     </div>
   );
 };

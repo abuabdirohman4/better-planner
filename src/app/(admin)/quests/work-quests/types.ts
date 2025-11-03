@@ -42,6 +42,7 @@ export interface WorkQuestSubtaskFormData extends WorkQuestTaskFormData {}
 export interface WorkQuestProjectListProps {
   projects: WorkQuestProject[];
   onEditProject: (project: WorkQuestProject) => void;
+  onInlineUpdateProject: (project: WorkQuestProject) => Promise<void>;
   onDeleteProject: (id: string) => void;
   onAddTask: (projectId: string, formData: WorkQuestTaskFormData) => void;
   onEditTask: (projectId: string, task: WorkQuestTask) => void;
