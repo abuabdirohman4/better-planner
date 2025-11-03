@@ -3,6 +3,8 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -64,7 +66,14 @@ export default function SubtaskList({
   handleDragEnd
 }: SubtaskListProps) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { 
+      activationConstraint: { 
+        delay: 250, // Wait 250ms before activation to distinguish from scrolling
+        tolerance: 5 // Allow 5px movement before activation
+      } 
+    }),
+    useSensor(KeyboardSensor)
   );
 
   // Empty state logic
