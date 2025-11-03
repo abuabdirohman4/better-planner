@@ -16,7 +16,9 @@ const MainQuestListSection = ({
   completedSessions, 
   refreshSessionKey, 
   forceRefreshTaskId, 
-  showAddQuestButton 
+  showAddQuestButton,
+  onRemove,
+  onConvertToChecklist
 }: TaskColumnProps) => {
   const { showCompletedMainQuest, toggleShowCompletedMainQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
@@ -67,6 +69,8 @@ const MainQuestListSection = ({
             completedSessions={completedSessions}
             refreshKey={refreshSessionKey?.[item.id]}
             forceRefreshTaskId={forceRefreshTaskId}
+            onRemove={onRemove}
+            onConvertToChecklist={onConvertToChecklist}
           />
         ))}
         {filteredItems.length === 0 ? (

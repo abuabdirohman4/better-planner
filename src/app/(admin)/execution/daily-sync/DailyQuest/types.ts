@@ -42,6 +42,8 @@ export interface TaskColumnProps {
   refreshSessionKey?: Record<string, number>;
   forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
+  onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
+  onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
 }
 
 export interface TaskCardProps {
@@ -54,6 +56,8 @@ export interface TaskCardProps {
   completedSessions: Record<string, number>;
   refreshKey?: number;
   forceRefreshTaskId?: string | null;
+  onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
+  onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
 }
 
 export interface TaskSelectionModalProps {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
-import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus } from '../actions/dailyPlanActions';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist } from '../actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
@@ -398,6 +398,31 @@ export function useDailyPlanManagement(
     }
   };
 
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await removeDailyPlanItem(itemId);
+      await mutateDailyPlan(); // Refresh data
+      toast.success('Item berhasil dihapus dari plan hari ini');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      toast.error('Gagal menghapus item');
+      throw error;
+    }
+  };
+
+  const handleConvertToChecklist = async (itemId: string) => {
+    try {
+      await convertToChecklist(itemId);
+      await mutateDailyPlan(); // Refresh daily plan
+      // TargetFocus akan auto-refresh karena revalidatePath di action
+      toast.success('Task berhasil diubah menjadi checklist');
+    } catch (error) {
+      console.error('Error converting to checklist:', error);
+      toast.error('Gagal mengubah ke checklist');
+      throw error;
+    }
+  };
+
   return {
     // Data
     dailyPlan,
@@ -419,6 +444,8 @@ export function useDailyPlanManagement(
     handleAddSideQuest,
     handleTargetChange,
     handleFocusDurationChange,
+    handleRemoveItem, // NEW: Handler untuk remove item
+    handleConvertToChecklist, // NEW: Handler untuk convert to checklist
     
     // Work Quest state (unified)
     modalState,

@@ -5,11 +5,17 @@ import { useSideQuests } from "../hooks/useSideQuests";
 import { SideQuest } from "../types";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
+import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
 const SideQuestList: React.FC = () => {
-  const { sideQuests, isLoading, error, toggleStatus } = useSideQuests();
+  const { sideQuests, isLoading, error, toggleStatus, updateQuest, deleteQuest } = useSideQuests();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCompleted, setShowCompleted] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [editingQuest, setEditingQuest] = useState<SideQuest | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [deleteQuestId, setDeleteQuestId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Initialize state with data from localStorage
   const getInitialExpandedItems = (): Set<string> => {
@@ -69,6 +75,52 @@ const SideQuestList: React.FC = () => {
       }
       return newSet;
     });
+  };
+
+  // Handle edit quest
+  const handleEditQuest = (quest: SideQuest) => {
+    setEditingQuest(quest);
+    setEditingTitle(quest.title || '');
+  };
+
+  // Handle save quest
+  const handleSaveQuest = async () => {
+    if (!editingQuest || !editingTitle.trim()) return;
+
+    try {
+      await updateQuest(editingQuest.id, { title: editingTitle.trim() });
+      setEditingQuest(null);
+      setEditingTitle('');
+    } catch (error) {
+      console.error("Failed to update quest:", error);
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditingQuest(null);
+    setEditingTitle('');
+  };
+
+  // Handle delete quest
+  const handleDeleteQuest = (questId: string) => {
+    setDeleteQuestId(questId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteQuestId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteQuest(deleteQuestId);
+      setShowDeleteModal(false);
+      setDeleteQuestId(null);
+    } catch (error) {
+      console.error("Failed to delete quest:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (isLoading) {
@@ -131,49 +183,113 @@ const SideQuestList: React.FC = () => {
         <div className="space-y-2">
           {filteredSideQuests.map((quest) => {
             const isExpanded = expandedItems.has(quest.id);
+            const isEditing = editingQuest?.id === quest.id;
             
             return (
               <div key={quest.id} className="space-y-1">
-                <div
-                  className={`group relative flex items-center space-x-3 py-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded`}
-                >
-                  {/* Expand/Collapse Button */}
-                  <button
-                    // onClick={(e) => {
-                    //   e.stopPropagation();
-                    //   toggleExpanded(quest.id);
-                    // }}
-                    className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                  >
-                    <svg
-                      className={`w-3 h-3 transition-all duration-300 ease-in-out ${
-                        isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-
-                  {/* Status Toggle Checkbox */}
-                  <div onClick={(e) => e.stopPropagation()}>
+                {/* Edit Form */}
+                {isEditing ? (
+                  <div className="flex items-center py-2 ml-2 space-x-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                    {/* Checkbox (disabled for form) */}
                     <Checkbox
-                      checked={quest.status === 'DONE'}
-                      onChange={() => toggleStatus(quest.id, quest.status || 'TODO')}
+                      checked={false}
+                      onChange={() => {}}
+                      disabled
                     />
+
+                    {/* Quest Input */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                        placeholder="Masukkan side quest..."
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveQuest();
+                          } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            handleCancelEdit();
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-1">
+                      {/* Save Button */}
+                      <button
+                        onClick={handleSaveQuest}
+                        disabled={!editingTitle.trim()}
+                        className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Save quest"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+
+                      {/* Cancel Button */}
+                      <button
+                        onClick={handleCancelEdit}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Cancel"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  
-                  {/* Quest Title */}
-                  <span className={`flex-1 text-sm font-medium ${
-                    quest.status === 'DONE' 
-                      ? 'text-gray-500 dark:text-gray-400 line-through' 
-                      : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {quest.title || 'Untitled Task'}
-                  </span>
-                </div>
+                ) : (
+                  /* Normal Quest Item */
+                  <div className={`group relative flex items-center space-x-3 py-2 ml-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded`}>
+                    {/* Status Toggle Checkbox */}
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={quest.status === 'DONE'}
+                        onChange={() => toggleStatus(quest.id, quest.status || 'TODO')}
+                      />
+                    </div>
+                    
+                    {/* Quest Title */}
+                    <span className={`flex-1 text-sm font-medium ${
+                      quest.status === 'DONE' 
+                        ? 'text-gray-500 dark:text-gray-400 line-through' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {quest.title || 'Untitled Task'}
+                    </span>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => handleEditQuest(quest)}
+                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                        title="Edit quest"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDeleteQuest(quest.id)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete quest"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Expanded Content with Smooth Animation */}
                 <div 
@@ -205,6 +321,23 @@ const SideQuestList: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteQuestId(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Hapus Side Quest"
+        message={`Apakah Anda yakin ingin menghapus side quest ini? Tindakan ini tidak dapat dibatalkan.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        confirmVariant="danger"
+        isLoading={isDeleting}
+        size="sm"
+      />
     </div>
   );
 };

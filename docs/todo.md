@@ -3,7 +3,7 @@ Main Quest
 - [x] Change Add subtask with button
 - [ ] Fix glitch when edit subtask
 - [ ] Delete subtask with button
-- Fix Progress Bar
+- [ ] Fix Progress Bar
 
 Weekly Sync
 - [ ] Add Progress Per Weekly

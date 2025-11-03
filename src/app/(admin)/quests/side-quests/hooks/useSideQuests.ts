@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { getSideQuests, updateSideQuestStatus } from '../actions/sideQuestActions';
+import { getSideQuests, updateSideQuestStatus, updateSideQuest, deleteSideQuest } from '../actions/sideQuestActions';
 import { SideQuest } from '../types';
 
 export function useSideQuests() {
@@ -40,11 +40,53 @@ export function useSideQuests() {
     }
   };
 
+  const updateQuest = async (taskId: string, updates: { title?: string; description?: string }) => {
+    try {
+      await updateSideQuest(taskId, updates);
+      
+      // Optimistic update
+      mutate((currentData) => 
+        (currentData || []).map(quest => 
+          quest.id === taskId 
+            ? { ...quest, ...updates, updated_at: new Date().toISOString() }
+            : quest
+        ), 
+        false
+      );
+      
+      // Refetch to ensure consistency
+      await mutate();
+    } catch (err) {
+      console.error("Failed to update side quest:", err);
+      throw err;
+    }
+  };
+
+  const deleteQuest = async (taskId: string) => {
+    try {
+      await deleteSideQuest(taskId);
+      
+      // Optimistic update
+      mutate((currentData) => 
+        (currentData || []).filter(quest => quest.id !== taskId),
+        false
+      );
+      
+      // Refetch to ensure consistency
+      await mutate();
+    } catch (err) {
+      console.error("Failed to delete side quest:", err);
+      throw err;
+    }
+  };
+
   return {
     sideQuests,
     isLoading,
     error: error?.message,
     refetch: () => mutate(),
-    toggleStatus
+    toggleStatus,
+    updateQuest,
+    deleteQuest
   };
 }

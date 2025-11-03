@@ -133,3 +133,52 @@ export async function updateDailyPlanItemAndTaskStatus(
     throw error;
   }
 }
+
+export async function removeDailyPlanItem(dailyPlanItemId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    const { error } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .eq('id', dailyPlanItemId);
+
+    if (error) throw error;
+
+    // ✅ CRITICAL: Revalidate all daily sync related paths
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing daily plan item:', error);
+    throw error;
+  }
+}
+
+export async function convertToChecklist(dailyPlanItemId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // Update focus_duration menjadi 0 untuk convert ke checklist mode
+    const { error } = await supabase
+      .from('daily_plan_items')
+      .update({ focus_duration: 0 })
+      .eq('id', dailyPlanItemId);
+
+    if (error) throw error;
+
+    // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error converting to checklist:', error);
+    throw error;
+  }
+}

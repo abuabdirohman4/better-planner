@@ -16,7 +16,9 @@ const WorkQuestListSection = ({
   completedSessions, 
   refreshSessionKey, 
   forceRefreshTaskId, 
-  showAddQuestButton 
+  showAddQuestButton,
+  onRemove,
+  onConvertToChecklist
 }: TaskColumnProps) => {
   const { showCompletedWorkQuest, toggleShowCompletedWorkQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
@@ -59,6 +61,8 @@ const WorkQuestListSection = ({
             completedSessions={completedSessions}
             refreshKey={refreshSessionKey?.[item.id]}
             forceRefreshTaskId={forceRefreshTaskId}
+            onRemove={onRemove}
+            onConvertToChecklist={onConvertToChecklist}
           />
         ))}
         {filteredItems.length === 0 ? (

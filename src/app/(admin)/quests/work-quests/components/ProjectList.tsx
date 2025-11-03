@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { WorkQuestProjectListProps, WorkQuestProject, WorkQuestTask } from "../types";
 import TaskForm from "./TaskForm";
 import Checkbox from "@/components/form/input/Checkbox";
+import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 
 const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   projects,
@@ -20,6 +21,8 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   const [newTaskTitle, setNewTaskTitle] = useState<string>('');
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const handleToggleProjectStatus = async (projectId: string, currentStatus: string) => {
     try {
@@ -109,6 +112,22 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
     }
   };
 
+  // Filter projects based on search term and completed status
+  const filteredProjects = projects.filter(project => {
+    // Search filter - check project title, description, and all task titles
+    const matchesSearch = 
+      project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.tasks.some(task => 
+        task.title?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    
+    // Completed filter
+    const matchesCompleted = showCompleted || project.status !== 'DONE';
+    
+    return matchesSearch && matchesCompleted;
+  });
+
   if (projects.length === 0) {
     return (
       <div className="text-center py-8">
@@ -128,8 +147,50 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
   }
 
   return (
-    <div className="space-y-1">
-      {projects.map((project) => (
+    <div className="space-y-4">
+      {/* Search and Toggle */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Cari project..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+        <button
+          onClick={() => setShowCompleted(!showCompleted)}
+          className={`p-2 rounded-md transition-colors ${
+            showCompleted
+              ? 'bg-brand-100 text-brand-700 hover:bg-brand-200 dark:bg-brand-900/20 dark:text-brand-300 dark:hover:bg-brand-900/30'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+          }`}
+          title={showCompleted ? 'Sembunyikan project yang sudah selesai' : 'Tampilkan project yang sudah selesai'}
+        >
+          {showCompleted ? (
+            <EyeIcon className="w-5 h-5" />
+          ) : (
+            <EyeCloseIcon className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Project List */}
+      {filteredProjects.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400">
+            {searchTerm 
+              ? 'Tidak ada project yang sesuai dengan pencarian' 
+              : !showCompleted
+                ? 'Semua project sudah selesai'
+                : 'Belum ada project'
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {filteredProjects.map((project) => (
         <div key={project.id} className="bg-white dark:bg-gray-800">
           {/* Project Item */}
           <div className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -286,60 +347,60 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
 
               {/* Add Task Form (only show when adding new task, not editing existing) */}
               {showTaskForm?.projectId === project.id && !showTaskForm?.taskId && (
-                  <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                    {/* Checkbox (disabled for form) */}
-                    <Checkbox
-                      checked={false}
-                      onChange={() => {}}
-                      disabled
-                    />
+                <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
+                  {/* Checkbox (disabled for form) */}
+                  <Checkbox
+                    checked={false}
+                    onChange={() => {}}
+                    disabled
+                  />
 
-                    {/* Task Input */}
-                    <div className="flex-1 ml-3">
-                      <input
-                        type="text"
-                        name="title"
-                      value={newTaskTitle || ''}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
-                        placeholder="Masukkan task..."
-                        autoFocus
-                        onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                  {/* Task Input */}
+                  <div className="flex-1 ml-3">
+                    <input
+                      type="text"
+                      name="title"
+                    value={newTaskTitle || ''}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Masukkan task..."
+                      autoFocus
+                      onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleTaskSubmit({ title: newTaskTitle || '' });
+                      } else if (e.key === 'Escape') {
                           e.preventDefault();
-                          handleTaskSubmit({ title: newTaskTitle || '' });
-                        } else if (e.key === 'Escape') {
-                            e.preventDefault();
-                            handleTaskCancel();
-                          }
-                        }}
-                      />
-                    </div>
+                          handleTaskCancel();
+                        }
+                      }}
+                    />
+                  </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-1">
-                      {/* Save Button */}
-                      <button
-                      onClick={() => handleTaskSubmit({ title: newTaskTitle || '' })}
-                      disabled={!(newTaskTitle || '').trim()}
-                        className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Save task"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
+                  {/* Action Buttons */}
+                  <div className="flex items-center space-x-1">
+                    {/* Save Button */}
+                    <button
+                    onClick={() => handleTaskSubmit({ title: newTaskTitle || '' })}
+                    disabled={!(newTaskTitle || '').trim()}
+                      className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Save task"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
 
-                      {/* Cancel Button */}
-                      <button
-                        onClick={handleTaskCancel}
-                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        title="Cancel"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                    {/* Cancel Button */}
+                    <button
+                      onClick={handleTaskCancel}
+                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Cancel"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               )}
@@ -359,6 +420,8 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
           )}
         </div>
       ))}
+        </div>
+      )}
     </div>
   );
 };
