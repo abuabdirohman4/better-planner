@@ -41,3 +41,6 @@ next-env.d.ts
 
 # local
 /templates
+
+# PWA files
+/public/sw.js
