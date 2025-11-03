@@ -61,6 +61,23 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
   const [milestoneChanges, setMilestoneChanges] = React.useState<Record<string, boolean>>({});
   const [activeMilestoneIdx, setActiveMilestoneIdx] = React.useState(0);
 
+  // ✅ CRITICAL: Calculate milestone to render for Task component to maintain hook consistency
+  // This ensures Task component is always rendered with the same structure
+  // Must be after all hooks to avoid "used before declaration" error
+  const milestoneToRender = useMemo(() => {
+    if (!milestones || milestones.length === 0) return null;
+    
+    if (showAllTasks) {
+      // When showAllTasks is true, we'll render all milestones in the map
+      // Return null here, individual tasks will be rendered in map
+      return null;
+    } else {
+      // Find active milestone or fallback to first milestone
+      const activeMilestone = milestones.find((m: Milestone) => m.display_order === activeMilestoneIdx + 1);
+      return activeMilestone || milestones[0] || null;
+    }
+  }, [milestones, showAllTasks, activeMilestoneIdx]);
+
   // Clear active milestone callback
   // const handleClearActiveMilestone = React.useCallback(() => {
   //   // Clear any active editing states
@@ -189,7 +206,7 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
           </div>
         ) : showAllTasks ? (
           // Show all tasks for all milestones
-          milestones.map((milestone: Milestone) => (
+          milestones?.map((milestone: Milestone) => (
             <div key={`milestone-tasks-${milestone.id}`} className="space-y-4">
               <Task
                 key={`task-${milestone.id}`}
@@ -201,22 +218,20 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
               />
             </div>
           ))
-        ) : (
-          // Current behavior: only show active milestone's tasks
-          (() => {
-            const activeMilestone = milestones.find((m: Milestone) => m.display_order === activeMilestoneIdx + 1);
-            return activeMilestone && (
-              <Task
-                key={`task-${questId}`}
-                milestone={activeMilestone}
-                milestoneNumber={activeMilestoneIdx + 1}
-                onOpenSubtask={onOpenSubtask}
-                activeSubTask={activeSubTask}
-                showCompletedTasks={showCompletedTasks}
-              />
-            )
-          })()
-        )}
+        ) : milestoneToRender ? (
+          // ✅ CRITICAL FIX: Always render Task component when milestoneToRender exists
+          // This ensures hooks are called consistently - Task component always rendered with same structure
+          <Task
+            key={`task-${questId}-${milestoneToRender.id}-${activeMilestoneIdx}`}
+            milestone={milestoneToRender}
+            milestoneNumber={activeMilestoneIdx >= 0 && milestones?.some((m: Milestone) => m.display_order === activeMilestoneIdx + 1) 
+              ? activeMilestoneIdx + 1 
+              : milestoneToRender.display_order}
+            onOpenSubtask={onOpenSubtask}
+            activeSubTask={activeSubTask}
+            showCompletedTasks={showCompletedTasks}
+          />
+        ) : null}
       </div>
     </>
   );

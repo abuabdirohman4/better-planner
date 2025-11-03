@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
+import useSWR from 'swr';
 import { useMilestones, useTasks } from '../../hooks/useMainQuestsSWR';
 import { getTasksForMilestone } from '../../actions/taskActions';
 import { getSubtasksForTask } from '../../actions/subTaskActions';
@@ -101,7 +101,9 @@ export function useQuestProgress(questId: string): QuestProgress {
     const unsubscribe = optimisticStore.subscribe(() => {
       setOptimisticVersion(optimisticStore.version); // Trigger re-render when optimistic state changes
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe(); // Cleanup subscription
+    };
   }, []);
 
   // Collect all milestone IDs
@@ -201,18 +203,16 @@ export function useQuestProgress(questId: string): QuestProgress {
     return { total, completed, percentage };
   }, [allSubtasks, optimisticVersion]); // ✅ Include optimisticVersion to force recalculation
 
-  // Calculate overall progress (weighted average)
+  // Calculate overall progress (simple average - all levels have equal weight)
+  // ✅ OPTIMIZED: Simple average is faster than weighted average calculation
   const overallProgress = useMemo(() => {
-    const milestoneWeight = 0.6; // 60% weight for milestones (primary focus)
-    const taskWeight = 0.3;      // 30% weight for tasks
-    const subtaskWeight = 0.1;   // 10% weight for subtasks
+    // Calculate simple average: (milestone% + task% + subtask%) / 3
+    // All 3 levels have equal weight (33.33% each)
+    // If a level has no data, it contributes 0% to the average
+    const sumProgress = milestoneProgress.percentage + taskProgress.percentage + subtaskProgress.percentage;
+    const averageProgress = sumProgress / 3; // All 3 levels have equal weight
     
-    const weightedProgress = 
-      (milestoneProgress.percentage * milestoneWeight) +
-      (taskProgress.percentage * taskWeight) +
-      (subtaskProgress.percentage * subtaskWeight);
-    
-    return Math.round(weightedProgress);
+    return Math.round(averageProgress);
   }, [milestoneProgress.percentage, taskProgress.percentage, subtaskProgress.percentage]);
 
   // Loading state: true if any data is still loading
@@ -327,7 +327,8 @@ const optimisticStore = {
  * Use this after task/subtask status changes to trigger immediate progress bar update
  */
 export function useQuestProgressInvalidation() {
-  const { mutate, cache } = useSWRConfig();
+  // ✅ OPTIMIZED: Removed useSWRConfig() hook - no longer needed since we don't invalidate cache
+  // This prevents "Rendered fewer hooks than expected" error when hook is conditionally called
   
   /**
    * Invalidate quest progress cache for tasks

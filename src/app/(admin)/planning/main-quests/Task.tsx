@@ -114,7 +114,28 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     useSensor(KeyboardSensor)
   );
 
+  // Get all task IDs for SortableContext (only existing tasks, not empty slots)
+  // ✅ CRITICAL: Must be calculated before early return to maintain hook consistency
+  const taskIds = useMemo(() => {
+    return filteredTasks.map(t => t.id);
+  }, [filteredTasks]);
+
+  // Create array of tasks and empty slots (up to 3 slots minimum, or more if there are more tasks)
+  // ✅ CRITICAL: Must be calculated before early return to maintain hook consistency
+  const allSlots = useMemo(() => {
+    const slots: Array<{ task: Task | null; idx: number }> = [];
+    const maxSlots = Math.max(3, filteredTasks.length);
+    
+    for (let idx = 0; idx < maxSlots; idx++) {
+      const task = filteredTasks[idx] || null;
+      slots.push({ task, idx });
+    }
+    
+    return slots;
+  }, [filteredTasks]);
+
   // Handle drag and drop for tasks
+  // ✅ CRITICAL: Must be defined before early return to maintain hook consistency
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -166,6 +187,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     }
   }, [filteredTasks, refetchTasks]);
 
+  // ✅ CRITICAL FIX: Early return must be AFTER all hooks are called
   if (loadingTasks) {
     return (
       <div className="rounded-lg mb-2">
@@ -182,22 +204,6 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
       </div>
     );
   }
-
-  // Get all task IDs for SortableContext (only existing tasks, not empty slots)
-  const taskIds = filteredTasks.map(t => t.id);
-
-  // Create array of tasks and empty slots (up to 3 slots minimum, or more if there are more tasks)
-  const allSlots = useMemo(() => {
-    const slots: Array<{ task: Task | null; idx: number }> = [];
-    const maxSlots = Math.max(3, filteredTasks.length);
-    
-    for (let idx = 0; idx < maxSlots; idx++) {
-      const task = filteredTasks[idx] || null;
-      slots.push({ task, idx });
-    }
-    
-    return slots;
-  }, [filteredTasks]);
 
   return (
     <div className="rounded-lg mb-2">
