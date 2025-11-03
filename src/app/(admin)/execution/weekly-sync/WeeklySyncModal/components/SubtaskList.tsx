@@ -31,7 +31,9 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({
           const isInCurrentSelection = selectedItems.some(item => item.id === subtask.id && (item.type === 'SUBTASK' || item.type === 'TASK'));
           const isInExistingSelection = existingSelectedIds.has(subtask.id);
           const isParentSelectedElsewhere = existingSelectedIds.has(taskId);
-          const isChecked = isInCurrentSelection || isInExistingSelection || parentTaskSelected;
+          // ✅ FIXED: Subtask is only checked if explicitly selected or already in database
+          // NOT automatically checked just because parent task is selected
+          const isChecked = isInCurrentSelection || isInExistingSelection;
           const isDisabled = isParentSelectedElsewhere || parentTaskSelected || isInExistingSelection;
           
           return (

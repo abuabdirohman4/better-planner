@@ -404,6 +404,16 @@ export function useDailyPlanManagement(
       // Force re-fetch from database to get updated data
       await mutateDailyPlan();
       
+      // ✅ CRITICAL: Invalidate weekly-sync SWR cache to ensure status updates are reflected
+      // Weekly-sync SWR key format: ['weekly-sync', year, quarter, weekNumber, startDate, endDate]
+      await globalMutate((key) => {
+        if (Array.isArray(key) && key.length >= 1) {
+          // Invalidate all weekly-sync cache entries regardless of parameters
+          return key[0] === 'weekly-sync';
+        }
+        return false;
+      }, undefined, { revalidate: true });
+      
       // Show success toast
       const statusText = status === 'DONE' ? 'Selesai' : 'Belum Selesai';
       toast.success(`Status tugas diubah menjadi: ${statusText}`);

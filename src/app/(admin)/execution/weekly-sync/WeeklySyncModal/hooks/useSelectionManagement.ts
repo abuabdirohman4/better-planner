@@ -49,13 +49,28 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
           return newItems;
         } else {
           // Add to current selection (check)
-          // ✅ FIXED: Only add non-completed subtasks (matching display logic in SubtaskList.tsx)
+          // ✅ FIXED: Only add subtasks that are already in database (initialSelectedItems) or existing selection
+          // This prevents newly added subtasks from being auto-checked when they don't exist in database yet
+          const subtasksToAdd = subtasks
+            .filter(st => {
+              // Only include subtasks that are:
+              // 1. Not completed (DONE status)
+              // 2. Already in database for this slot (initialSelectedItems)
+              // 3. OR already selected in other slots (existingSelectedIds)
+              const isNotDone = st.status !== 'DONE';
+              const isInInitialSelection = initialSelectedItems.some(
+                item => item.id === st.id && (item.type === 'SUBTASK' || item.type === 'TASK')
+              );
+              const isInExistingSelection = existingSelectedIds.has(st.id);
+              
+              return isNotDone && (isInInitialSelection || isInExistingSelection);
+            })
+            .map(st => ({ id: st.id, type: 'SUBTASK' as const }));
+          
           const newItems = [
             ...prev,
             { id: itemId, type: 'TASK' as const },
-            ...subtasks
-              .filter(st => st.status !== 'DONE') // Only add non-completed subtasks
-              .map(st => ({ id: st.id, type: 'SUBTASK' as const })),
+            ...subtasksToAdd,
           ];
           return newItems;
         }

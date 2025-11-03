@@ -121,6 +121,18 @@ export async function updateDailyPlanItemAndTaskStatus(
       throw error;
     }
 
+    // ✅ CRITICAL: Also update weekly_goal_items.status for all weekly goals containing this task
+    // This ensures weekly-sync page reflects the updated status even when p_goal_slot is null
+    const { error: weeklyGoalItemsError } = await supabase
+      .from('weekly_goal_items')
+      .update({ status })
+      .eq('item_id', taskId);
+
+    if (weeklyGoalItemsError) {
+      // Log error but don't throw - task status is already updated
+      console.warn('Error updating weekly_goal_items status:', weeklyGoalItemsError);
+    }
+
     // ✅ CRITICAL: Revalidate multiple paths to ensure cross-page synchronization
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
