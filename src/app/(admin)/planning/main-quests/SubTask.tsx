@@ -163,6 +163,8 @@ export default function SubTask({ task, onBack, milestoneId, showCompletedTasks 
       >
         <SubtaskList
           subtasks={filteredSubtasks}
+          allSubtasks={displaySubtasks}
+          showCompletedTasks={showCompletedTasks}
           loadingSubtasks={loadingSubtasks}
           newSubtaskTitle={newSubtaskTitle}
           setNewSubtaskTitle={setNewSubtaskTitle}

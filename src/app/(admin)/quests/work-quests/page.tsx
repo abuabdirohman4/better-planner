@@ -75,8 +75,8 @@ export default function WorkQuestsPage() {
   const handleInlineUpdateProject = async (project: WorkQuestProject) => {
     try {
       await updateProject(project.id, {
-        title: project.title,
-        description: project.description || ''
+        title: project.title
+        // description is not needed for inline update (WorkQuestProjectFormData only has title)
       });
       toast.success("Project berhasil diperbarui!");
     } catch (error) {

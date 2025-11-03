@@ -44,7 +44,8 @@ function useAllTasksForQuest(milestoneIds: string[]) {
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 10 * 1000,
+      dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
+      refreshInterval: 1000, // Poll every second for status changes
       errorRetryCount: 3,
     }
   );
@@ -76,7 +77,8 @@ function useAllSubtasksForQuest(taskIds: string[]) {
       revalidateOnFocus: true,
       revalidateIfStale: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 10 * 1000,
+      dedupingInterval: 2000, // Reduced from 10s to 2s for faster updates
+      refreshInterval: 1000, // Poll every second for status changes
       errorRetryCount: 3,
     }
   );

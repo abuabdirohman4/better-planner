@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { toast } from 'sonner';
 import { updateTask, updateTaskDisplayOrder, deleteTask } from '../../actions/taskActions';
 
 interface Subtask {
@@ -26,7 +27,7 @@ export function useSubtaskOperations(
   // Removed debouncedUpdateTask - now using manual save only
   // Removed updateTaskImmediate - now using SWR mutate for optimistic updates
 
-  const handleDraftTitleChange = useCallback((id: string, val: string, immediate = false) => {
+  const handleDraftTitleChange = useCallback(async (id: string, val: string, immediate = false) => {
     setDraftTitles(draft => ({ ...draft, [id]: val }));
     
     // Only make API call if immediate is true (from Edit button)
@@ -35,12 +36,16 @@ export function useSubtaskOperations(
       const hasChanges = currentSubtask && val.trim() !== (currentSubtask.title || '').trim();
       
       if (hasChanges) {
-        // Simply call API - draftTitle already updated, no need for optimistic update
-        updateTask(id, val).catch((error) => {
+        try {
+          // Simply call API - draftTitle already updated, no need for optimistic update
+          await updateTask(id, val);
+          toast.success('Subtask berhasil diperbarui');
+        } catch (error) {
           // Refetch on error to ensure data consistency
           refetchSubtasks();
+          toast.error('Gagal memperbarui subtask');
           throw error;
-        });
+        }
       }
     }
   }, [setDraftTitles, refetchSubtasks, subtasks]);

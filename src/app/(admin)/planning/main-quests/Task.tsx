@@ -79,10 +79,9 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     }
   };
 
-  // Filter tasks based on showCompletedTasks state
-  const filteredTasks = showCompletedTasks 
-    ? tasks 
-    : tasks.filter((task: any) => task.status !== 'DONE');
+  // Always show all tasks (both TODO and DONE)
+  // Filtering only applies to subtasks, not tasks
+  const filteredTasks = tasks;
 
   if (loadingTasks) {
     return (
