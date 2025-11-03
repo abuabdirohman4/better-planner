@@ -1,4 +1,18 @@
 import React from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import MilestoneItem from './MilestoneItem';
 
 interface Milestone {
@@ -22,6 +36,7 @@ interface MilestoneBarProps {
   handleMilestoneChange: (id: string, newTitle: string) => void;
   onStatusToggle?: (id: string, currentStatus: 'TODO' | 'DONE') => void;
   onClearActiveMilestoneIdx?: () => void;
+  handleDragEnd?: (event: DragEndEvent) => void;
 }
 
 export default function MilestoneBar({
@@ -38,14 +53,34 @@ export default function MilestoneBar({
   handleMilestoneChange,
   onStatusToggle,
   onClearActiveMilestoneIdx,
+  handleDragEnd,
 }: MilestoneBarProps) {
-  return (
-    <div className="flex flex-col gap-4 justify-center mb-6">
-      {Array.from({ length: 3 }).map((_, idx) => {
-        // Find milestone with display_order matching this position (1-based)
-        const milestone = milestones.find(m => m.display_order === idx + 1);
-        
-        return (
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5
+      }
+    }),
+    useSensor(KeyboardSensor)
+  );
+
+  // Sort milestones by display_order to ensure correct order
+  const sortedMilestones = [...milestones].sort((a, b) => a.display_order - b.display_order);
+  
+  // Fill empty slots up to 3 - use sorted position instead of display_order value
+  const allSlots = Array.from({ length: 3 }).map((_, idx) => {
+    // Use sorted position: milestone at index idx should be displayed at slot idx
+    const milestone = sortedMilestones[idx] || null;
+    return { milestone, idx };
+  });
+
+  if (!handleDragEnd) {
+    // Fallback: render without drag-and-drop if handler not provided
+    return (
+      <div className="flex flex-col gap-4 justify-center mb-6">
+        {allSlots.map(({ milestone, idx }) => (
           <MilestoneItem
             key={milestone ? milestone.id : `empty-${idx}`}
             milestone={milestone || null}
@@ -63,8 +98,36 @@ export default function MilestoneBar({
             onStatusToggle={onStatusToggle}
             onClearActiveMilestoneIdx={onClearActiveMilestoneIdx}
           />
-        );
-      })}
-    </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={sortedMilestones.map(m => m.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-4 justify-center mb-6">
+          {allSlots.map(({ milestone, idx }) => (
+            <MilestoneItem
+              key={milestone ? milestone.id : `empty-${idx}`}
+              milestone={milestone || null}
+              idx={idx}
+              activeMilestoneIdx={activeMilestoneIdx}
+              newMilestoneInputs={newMilestoneInputs}
+              setNewMilestoneInputs={setNewMilestoneInputs}
+              newMilestoneLoading={newMilestoneLoading}
+              milestoneLoading={milestoneLoading}
+              milestoneChanges={milestoneChanges}
+              setActiveMilestoneIdx={setActiveMilestoneIdx}
+              handleSaveNewMilestone={handleSaveNewMilestone}
+              handleSaveMilestone={handleSaveMilestone}
+              handleMilestoneChange={handleMilestoneChange}
+              onStatusToggle={onStatusToggle}
+              onClearActiveMilestoneIdx={onClearActiveMilestoneIdx}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 }

@@ -184,7 +184,7 @@ export async function deleteTask(taskId: string) {
   return { message: 'Task berhasil dihapus!' };
 }
 
-// Update display_order task
+// Update display_order task (single)
 export async function updateTaskDisplayOrder(taskId: string, display_order: number) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -193,6 +193,26 @@ export async function updateTaskDisplayOrder(taskId: string, display_order: numb
     .eq('id', taskId);
   if (error) throw new Error('Gagal update urutan task: ' + (error.message || ''));
   return { message: 'Urutan task berhasil diupdate!' };
+}
+
+// Update display_order for multiple tasks (batch update)
+export async function updateTasksDisplayOrder(tasks: { id: string; display_order: number }[]) {
+  const supabase = await createClient();
+  try {
+    // Update setiap task satu per satu (bisa dioptimasi dengan upsert jika perlu)
+    for (const task of tasks) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ display_order: task.display_order })
+        .eq('id', task.id);
+      if (error) throw error;
+    }
+    revalidatePath('/planning/main-quests');
+    return { success: true, message: 'Urutan task berhasil diupdate!' };
+  } catch (error) {
+    console.error('Error updating task order:', error);
+    throw new Error('Gagal update urutan task: ' + ((error as Error).message || ''));
+  }
 }
 
 // Update scheduled_date pada task tertentu

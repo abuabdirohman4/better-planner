@@ -122,3 +122,35 @@ export async function deleteMilestone(milestoneId: string) {
   revalidatePath('/planning/main-quests');
   return { message: 'Milestone berhasil dihapus!' };
 }
+
+// Update display_order milestone (single)
+export async function updateMilestoneDisplayOrder(milestoneId: string, display_order: number) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('milestones')
+    .update({ display_order })
+    .eq('id', milestoneId);
+  if (error) throw new Error('Gagal update urutan milestone: ' + (error.message || ''));
+  revalidatePath('/planning/main-quests');
+  return { message: 'Urutan milestone berhasil diupdate!' };
+}
+
+// Update display_order for multiple milestones (batch update)
+export async function updateMilestonesDisplayOrder(milestones: { id: string; display_order: number }[]) {
+  const supabase = await createClient();
+  try {
+    // Update setiap milestone satu per satu (bisa dioptimasi dengan upsert jika perlu)
+    for (const milestone of milestones) {
+      const { error } = await supabase
+        .from('milestones')
+        .update({ display_order: milestone.display_order })
+        .eq('id', milestone.id);
+      if (error) throw error;
+    }
+    revalidatePath('/planning/main-quests');
+    return { success: true, message: 'Urutan milestone berhasil diupdate!' };
+  } catch (error) {
+    console.error('Error updating milestone order:', error);
+    throw new Error('Gagal update urutan milestone: ' + ((error as Error).message || ''));
+  }
+}

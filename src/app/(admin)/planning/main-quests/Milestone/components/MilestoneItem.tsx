@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Checkbox from '@/components/form/input/Checkbox';
 
 interface Milestone {
@@ -153,7 +155,7 @@ export default function MilestoneItem({
     }
   };
 
-  const handleStatusToggle = async () => {
+    const handleStatusToggle = async () => {
     if (!milestone || !onStatusToggle) return;
     
     const currentStatus = optimisticStatus || milestone.status || 'TODO';
@@ -171,8 +173,39 @@ export default function MilestoneItem({
     }
   };
 
+  // Drag and drop setup (only for existing milestones)
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: milestone?.id || `empty-${idx}`,
+    disabled: !milestone, // Disable drag for empty slots
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 20 : 'auto',
+  };
+
+  // Hamburger icon component (same as SubtaskItem)
+  const HamburgerIcon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="cursor-grab text-gray-400 hover:text-gray-600">
+      <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="9.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    </svg>
+  );
+
   return (
     <div
+      ref={milestone ? setNodeRef : undefined}
+      style={milestone ? style : undefined}
       className={`w-full rounded-lg border px-4 py-3 transition-all duration-150 shadow-sm mb-0 bg-white dark:bg-gray-900 flex items-center cursor-pointer gap-2 group hover:shadow-md ${
         isActive 
           ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' 
@@ -183,6 +216,11 @@ export default function MilestoneItem({
         setActiveMilestoneIdx(idx);
       }}
     >
+      {milestone && (
+        <span {...attributes} {...listeners} className="flex items-center cursor-grab select-none">
+          {HamburgerIcon}
+        </span>
+      )}
       <span className="font-bold text-lg w-6 text-center select-none">{idx + 1}.</span>
       
       <div className="flex gap-2 w-full">

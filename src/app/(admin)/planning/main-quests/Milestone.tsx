@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { useMilestones } from './hooks/useMainQuestsSWR';
 import MilestoneBar from './Milestone/components/MilestoneBar';
@@ -6,6 +6,8 @@ import Task from './Task';
 import { TaskItemSkeleton, MilestoneItemSkeleton } from '@/components/ui/skeleton';
 import { addMilestone, updateMilestone, updateMilestoneStatus } from './actions/milestoneActions';
 import { toast } from 'sonner';
+import { useMilestoneOperations } from './Milestone/hooks/useMilestoneOperations';
+import type { KeyedMutator } from 'swr';
 
 interface Task {
   id: string;
@@ -35,6 +37,17 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
     isLoading: loadingMilestones,
     mutate: refetchMilestones,
   } = useMilestones(questId);
+
+  // Sort milestones by display_order for consistent ordering
+  const sortedMilestones = useMemo(() => {
+    return [...(milestones || [])].sort((a, b) => a.display_order - b.display_order);
+  }, [milestones]);
+
+  // Drag and drop operations for milestones
+  const { handleDragEnd: handleMilestoneDragEnd } = useMilestoneOperations(
+    sortedMilestones,
+    refetchMilestones as unknown as KeyedMutator<any[]>
+  );
   
 
   // For now, keep the old state management for milestone editing
@@ -119,7 +132,7 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
         <MilestoneItemSkeleton count={3} />
       ) : (
         <MilestoneBar
-          milestones={milestones}
+          milestones={sortedMilestones}
           newMilestoneInputs={newMilestoneInputs}
           setNewMilestoneInputs={setNewMilestoneInputs}
           newMilestoneLoading={newMilestoneLoading}
@@ -132,6 +145,7 @@ export default function Milestone({ questId, activeSubTask, onOpenSubtask, showC
           handleMilestoneChange={handleMilestoneChange}
           onStatusToggle={handleMilestoneStatusToggle}
           onClearActiveMilestoneIdx={() => setActiveMilestoneIdx(-1)}
+          handleDragEnd={handleMilestoneDragEnd}
         />
       )}
       

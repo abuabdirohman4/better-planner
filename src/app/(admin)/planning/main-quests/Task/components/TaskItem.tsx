@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { updateTaskStatus } from '../../actions/taskActions';
 import Checkbox from '@/components/form/input/Checkbox';
 import { toast } from 'sonner';
@@ -123,8 +125,36 @@ export default function TaskItem({
     }
   };
 
+  // Drag and drop setup
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 20 : 'auto',
+  };
+
+  // Hamburger icon component (same as SubtaskItem and MilestoneItem)
+  const HamburgerIcon = (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="cursor-grab text-gray-400 hover:text-gray-600">
+      <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="9.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    </svg>
+  );
+
   return (
     <div 
+      ref={setNodeRef}
+      style={style}
       className={`flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 px-2 py-2 shadow-sm border transition group hover:shadow-md cursor-pointer ${
         active ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
       }`}
@@ -134,6 +164,9 @@ export default function TaskItem({
       }}
     >
       <div className='flex gap-2 w-full items-center mr-2'>
+        <span {...attributes} {...listeners} className="flex items-center cursor-grab select-none">
+          {HamburgerIcon}
+        </span>
         {orderNumber ? <span className={`font-medium text-lg w-6 text-center select-none ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}>{orderNumber}.</span> : null}
         
         {hasContent && !isEditing ? (

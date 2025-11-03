@@ -1,8 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { arrayMove } from '@dnd-kit/sortable';
+import { toast } from 'sonner';
 import { useTasks } from './hooks/useMainQuestsSWR';
 import TaskItem from './Task/components/TaskItem';
 import { TaskItemSkeleton } from '@/components/ui/skeleton';
-import { addTask, updateTask } from './actions/taskActions';
+import { addTask, updateTask, updateTasksDisplayOrder } from './actions/taskActions';
+import type { KeyedMutator } from 'swr';
 
 interface Task {
   id: string;
@@ -81,7 +98,73 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
 
   // Always show all tasks (both TODO and DONE)
   // Filtering only applies to subtasks, not tasks
-  const filteredTasks = tasks;
+  const filteredTasks = useMemo(() => {
+    return [...(tasks || [])].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+  }, [tasks]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5
+      }
+    }),
+    useSensor(KeyboardSensor)
+  );
+
+  // Handle drag and drop for tasks
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const oldIndex = filteredTasks.findIndex(t => t.id === activeId);
+    const newIndex = filteredTasks.findIndex(t => t.id === overId);
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Reorder tasks array
+    const newTasks = arrayMove(filteredTasks, oldIndex, newIndex);
+    
+    // Assign sequential display_order values (1, 2, 3, ...) based on new positions
+    const tasksWithNewOrder = newTasks.map((task, idx) => ({
+      id: task.id,
+      display_order: idx + 1
+    }));
+    
+    // Save original state for revert
+    const originalTasks = [...filteredTasks];
+    
+    // Update optimistic UI with new order values
+    const updatedTasksForUI = newTasks.map((task, idx) => ({
+      ...task,
+      display_order: idx + 1
+    }));
+    
+    try {
+      // Optimistic update - update UI immediately with new display_order values
+      const mutateTasks = refetchTasks as unknown as KeyedMutator<any[]>;
+      await mutateTasks(updatedTasksForUI as any[], { revalidate: false });
+      
+      // API call - batch update all tasks with sequential display_order
+      await updateTasksDisplayOrder(tasksWithNewOrder);
+      
+      // Show success toast
+      toast.success('Urutan task berhasil diubah');
+      
+      // Small delay to ensure API processed before refetch
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Revalidate to ensure data sync with server
+      await mutateTasks();
+    } catch (error) {
+      // Revert optimistic update on error
+      const mutateTasks = refetchTasks as unknown as KeyedMutator<any[]>;
+      await mutateTasks(originalTasks as any[], { revalidate: false });
+      toast.error('Gagal mengubah urutan task');
+    }
+  }, [filteredTasks, refetchTasks]);
 
   if (loadingTasks) {
     return (
@@ -100,12 +183,29 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
     );
   }
 
+  // Get all task IDs for SortableContext (only existing tasks, not empty slots)
+  const taskIds = filteredTasks.map(t => t.id);
+
+  // Create array of tasks and empty slots (up to 3 slots minimum, or more if there are more tasks)
+  const allSlots = useMemo(() => {
+    const slots: Array<{ task: Task | null; idx: number }> = [];
+    const maxSlots = Math.max(3, filteredTasks.length);
+    
+    for (let idx = 0; idx < maxSlots; idx++) {
+      const task = filteredTasks[idx] || null;
+      slots.push({ task, idx });
+    }
+    
+    return slots;
+  }, [filteredTasks]);
+
   return (
     <div className="rounded-lg mb-2">
       <label className="block mb-2 font-semibold">Langkah selanjutnya untuk mecapai Milestone {milestoneNumber} :</label>
-      <div className="space-y-2 mb-2">
-        {Array.from({ length: 3 }).map((_, idx) => {
-            const task = filteredTasks.find((t: any) => t.display_order === idx + 1);
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2 mb-2">
+            {allSlots.map(({ task, idx }) => {
             if (task) {
               return (
                 <TaskItem
@@ -191,9 +291,10 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
                 </div>
               );
             }
-          })
-        }
-      </div>
+          })}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
