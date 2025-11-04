@@ -31,7 +31,9 @@ export function useWeeklyTaskManagement() {
                  typeof key[3] === 'number';
         },
         (currentData: any) => {
-          if (!currentData?.goals) return currentData;
+          if (!currentData?.goals) {
+            return currentData;
+          }
           
           // Update the specific task status in the goals data
           const updatedGoals = currentData.goals.map((goal: any) => {
@@ -54,6 +56,22 @@ export function useWeeklyTaskManagement() {
       
       // Call the API
       await updateWeeklyTaskStatus(taskId, goalSlot, newStatus as 'TODO' | 'DONE', weekDate);
+      
+      // ✅ FIXED: Revalidate weekly-sync cache after successful update
+      // This ensures cache syncs with database for persistence after refresh
+      // Optimistic update already provides immediate UI feedback
+      await mutate(
+        (key) => {
+          // Match weekly sync SWR keys exactly
+          return Array.isArray(key) && 
+                 key[0] === 'weekly-sync' && 
+                 typeof key[1] === 'number' && 
+                 typeof key[2] === 'number' && 
+                 typeof key[3] === 'number';
+        },
+        undefined, // Don't use updater - let SWR fetch fresh data from database
+        { revalidate: true } // Revalidate to sync with database
+      );
       
       // ✅ CRITICAL: Revalidate related caches for cross-page synchronization
       await mutate(

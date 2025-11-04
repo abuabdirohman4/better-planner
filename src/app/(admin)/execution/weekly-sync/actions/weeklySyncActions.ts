@@ -37,10 +37,10 @@ export async function getWeeklySync(year: number, quarter: number, weekNumber: n
       goals: data?.goals || [],
       rules: data?.rules || []
     };
-
+    
     return optimizedData;
   } catch (error) {
-    console.error("Error in getWeeklySyncUltraFast:", error);
+    console.error("Error in getWeeklySync:", error);
     return {
       goals: [],
       rules: []

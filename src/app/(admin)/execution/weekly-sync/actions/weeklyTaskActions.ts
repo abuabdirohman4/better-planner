@@ -65,6 +65,20 @@ export async function updateWeeklyTaskStatus(
       throw error;
     }
 
+    // ✅ CRITICAL: Also update weekly_goal_items.status for all weekly goals containing this task
+    // This ensures weekly-sync page reflects the updated status correctly
+    // RPC update_task_and_daily_plan_status may not update weekly_goal_items.status
+    // but get_weekly_sync reads from weekly_goal_items.status, so we need to sync it manually
+    const { error: weeklyGoalItemsError } = await supabase
+      .from('weekly_goal_items')
+      .update({ status })
+      .eq('item_id', taskId);
+
+    if (weeklyGoalItemsError) {
+      // Log error but don't throw - task status is already updated
+      console.warn('Error updating weekly_goal_items status:', weeklyGoalItemsError);
+    }
+
     // Revalidate multiple paths to ensure cross-page synchronization
     revalidatePath('/execution/weekly-sync');
     revalidatePath('/planning/main-quests');
