@@ -225,3 +225,31 @@ export async function convertToQuest(dailyPlanItemId: string, defaultFocusDurati
     throw error;
   }
 }
+
+// Update display_order for multiple daily plan items (batch update)
+export async function updateDailyPlanItemsDisplayOrder(
+  items: { id: string; display_order: number }[]
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  try {
+    // Batch update all items
+    for (const item of items) {
+      const { error } = await supabase
+        .from('daily_plan_items')
+        .update({ display_order: item.display_order })
+        .eq('id', item.id);
+      
+      if (error) throw error;
+    }
+    
+    revalidatePath('/execution/daily-sync');
+    revalidatePath('/execution');
+    return { success: true, message: 'Urutan task berhasil diupdate!' };
+  } catch (error) {
+    console.error('Error updating daily plan items order:', error);
+    throw new Error('Gagal update urutan task: ' + ((error as Error).message || ''));
+  }
+}

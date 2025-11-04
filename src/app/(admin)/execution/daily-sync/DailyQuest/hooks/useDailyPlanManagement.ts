@@ -34,8 +34,9 @@ async function getDailyPlan(selectedDate: string) {
     // Then, fetch daily_plan_items separately
     const { data: dailyPlanItems, error: itemsError } = await supabase
       .from('daily_plan_items')
-      .select('id, item_id, item_type, status, daily_session_target, focus_duration, created_at, updated_at')
-      .eq('daily_plan_id', plan.id);
+      .select('id, item_id, item_type, status, daily_session_target, focus_duration, display_order, created_at, updated_at')
+      .eq('daily_plan_id', plan.id)
+      .order('display_order', { ascending: true });
 
     if (itemsError) throw itemsError;
 

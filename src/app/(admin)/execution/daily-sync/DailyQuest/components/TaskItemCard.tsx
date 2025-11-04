@@ -122,7 +122,8 @@ const TaskItemCardContent = ({
   forceRefreshTaskId,
   onRemove,
   onConvertToChecklist,
-  onConvertToQuest
+  onConvertToQuest,
+  dragHandleProps
 }: TaskCardProps) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(
     item, 
@@ -175,9 +176,25 @@ const TaskItemCardContent = ({
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   const isActiveInTimer = activeTask?.id === item.item_id && (timerState === 'FOCUSING' || timerState === 'PAUSED');
   const isVisuallyDisabled = isCompleted || (activeTask && !isActiveInTimer); // Visual disable only - functionality remains normal
+
+  // Hamburger icon for drag handle (only when dragHandleProps is provided)
+  const HamburgerIcon = () => (
+    <svg 
+      width="20" 
+      height="20" 
+      viewBox="0 0 20 20" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg" 
+      className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+    >
+      <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="9.25" width="12" height="1.5" rx="0.75" fill="currentColor" />
+      <rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
+    </svg>
+  );
   
   return (
-    <div className={`rounded-lg p-4 shadow-sm border mb-3 transition-all duration-200 ${
+    <div className={`rounded-lg py-4 px-2 shadow-sm border mb-3 transition-all duration-200 relative ${
       isVisuallyDisabled 
         ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60' 
         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
@@ -186,6 +203,18 @@ const TaskItemCardContent = ({
       {/* Checklist Mode - Simple: Checkbox di kiri + Judul */}
       {isChecklistMode ? (
         <div className="flex items-center gap-3">
+          {/* Drag handle - Hamburger icon (only if dragHandleProps provided) */}
+          {dragHandleProps && (
+            <div 
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+              className="flex items-center justify-center cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+              title="Drag to reorder"
+            >
+              <HamburgerIcon />
+            </div>
+          )}
+          
           {/* Checkbox di kiri - Same styling as normal mode */}
           <button
             type="button"
@@ -264,6 +293,18 @@ const TaskItemCardContent = ({
           {/* Title and Checkbox */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {/* Drag handle - Hamburger icon (only if dragHandleProps provided) */}
+              {dragHandleProps && (
+                <div 
+                  {...dragHandleProps.attributes}
+                  {...dragHandleProps.listeners}
+                  className="flex items-center justify-center cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+                  title="Drag to reorder"
+                >
+                  <HamburgerIcon />
+                </div>
+              )}
+              
               {onSetActiveTask ? (
                 <button
                   className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
@@ -314,57 +355,6 @@ const TaskItemCardContent = ({
               </h4>
             </div>
             <div className="flex items-center space-x-2">
-              {/* Dropdown untuk durasi fokus */}
-              <div className="relative">
-                <select
-                  value={optimisticFocusDuration || item.focus_duration || 25}
-                  onChange={async (e) => {
-                    const newDuration = parseInt(e.target.value);
-                    
-                    // Optimistic update - update UI immediately
-                    setOptimisticFocusDuration(newDuration);
-                    
-                    try {
-                      await onFocusDurationChange(item.id, newDuration);
-                      
-                      // Clear optimistic state after successful update
-                      setOptimisticFocusDuration(null);
-                    } catch (error) {
-                      // Revert optimistic update on error
-                      setOptimisticFocusDuration(null);
-                      console.error('Error updating focus duration:', error);
-                    }
-                  }}
-                  className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
-                    isVisuallyDisabled
-                      ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {/* Testing option - only show in development */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <>
-                      <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
-                      <option value={5} className="text-gray-700 dark:text-gray-200">5m</option>
-                    </>
-                  )}
-                  <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
-                  <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
-                  <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
-                </select>
-                {/* Custom dropdown arrow */}
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg 
-                    className="w-3 h-3 text-gray-400 dark:text-gray-500" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-              
               {/* Custom Checkbox untuk status */}
               <div className="flex items-center">
                 <button
@@ -433,16 +423,15 @@ const TaskItemCardContent = ({
           </div>
 
           {/* Quest & Target - Only in Normal Mode */}
-          <div className="flex items-center justify-between">
-            {item.quest_title && (
+          <div className="flex items-center justify-between mt-2 ml-7">
+            {/* {item.quest_title && (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {item.quest_title}
+                Project: {item.quest_title}
               </div>
-            )}
-            <div className="flex items-center space-x-1">
-              <div className="flex items-center gap-1 text-xs">
-                <button
-                  className={`px-1 text-lg disabled:opacity-50 ${
+            )} */}
+            <div className="flex items-center gap-1 text-xs">
+              <button
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${
                     isCompleted 
                       ? 'text-gray-400 cursor-not-allowed' 
                       : 'text-gray-500 hover:text-brand-600'
@@ -461,21 +450,21 @@ const TaskItemCardContent = ({
                 }}
                   aria-label="Kurangi target"
                 >
-                  –
+                <span className="block leading-none mb-1">-</span>
                 </button>
                 {loading ? (
                   <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
                 ) : (
-                  <span className={`font-semibold ${
+                  <span className={`font-semibold border border-gray-300 rounded-lg px-3 py-1.5 ${
                     isCompleted 
                       ? 'text-gray-400' 
                       : 'text-gray-700 dark:text-gray-300'
                   }`}>
-                    ({completed} / {target})
+                    {completed} / {target}
                   </span>
                 )}
-                <button
-                  className={`px-1 text-lg disabled:opacity-50 ${
+              <button
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${
                     isCompleted 
                       ? 'text-gray-400 cursor-not-allowed' 
                       : 'text-gray-500 hover:text-brand-600'
@@ -494,8 +483,58 @@ const TaskItemCardContent = ({
                 }}
                   aria-label="Tambah target"
                 >
-                  +
+                <span className="block leading-none">+</span>
                 </button>
+            </div>
+
+            {/* Dropdown untuk durasi fokus */}
+            <div className="relative">
+              <select
+                value={optimisticFocusDuration || item.focus_duration || 25}
+                onChange={async (e) => {
+                  const newDuration = parseInt(e.target.value);
+                  
+                  // Optimistic update - update UI immediately
+                  setOptimisticFocusDuration(newDuration);
+                  
+                  try {
+                    await onFocusDurationChange(item.id, newDuration);
+                    
+                    // Clear optimistic state after successful update
+                    setOptimisticFocusDuration(null);
+                  } catch (error) {
+                    // Revert optimistic update on error
+                    setOptimisticFocusDuration(null);
+                    console.error('Error updating focus duration:', error);
+                  }
+                }}
+                className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
+                  isVisuallyDisabled
+                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {/* Testing option - only show in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <>
+                    <option value={1} className="text-gray-700 dark:text-gray-200">1m</option>
+                    <option value={5} className="text-gray-700 dark:text-gray-200">5m</option>
+                  </>
+                )}
+                <option value={25} className="text-gray-700 dark:text-gray-200">25m</option>
+                <option value={60} className="text-gray-700 dark:text-gray-200">60m</option>
+                <option value={90} className="text-gray-700 dark:text-gray-200">90m</option>
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg 
+                  className="w-3 h-3 text-gray-400 dark:text-gray-500" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </div>
           </div>

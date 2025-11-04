@@ -15,6 +15,7 @@ export interface DailyPlanItem {
   quest_title?: string;
   daily_session_target?: number;
   focus_duration?: number;
+  display_order?: number; // For drag-and-drop reordering
 }
 
 export interface DailySyncClientProps {
@@ -60,6 +61,11 @@ export interface TaskCardProps {
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
   onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
+  // Drag handle props (optional, for sortable cards)
+  dragHandleProps?: {
+    listeners?: any;
+    attributes?: any;
+  };
 }
 
 export interface TaskSelectionModalProps {

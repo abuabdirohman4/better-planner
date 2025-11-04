@@ -1,5 +1,6 @@
-import { useState, useTransition, useRef, useEffect, FormEvent } from 'react';
+import { useState, useTransition, useRef, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import TaskItemCard from './components/TaskItemCard';
+import SortableTaskItemCard from './components/SortableTaskItemCard';
 import SideQuestModal from './components/SideQuestModal';
 import { TaskColumnProps } from './types';
 import { SideQuestFormProps } from './types';
@@ -7,6 +8,25 @@ import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { isMac, isModifierKeyPressed, isDesktop } from '@/lib/utils';
 import { SideQuest } from '@/app/(admin)/quests/side-quests/types';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { toast } from 'sonner';
+import { updateDailyPlanItemsDisplayOrder } from './actions/dailyPlanActions';
+import { useSWRConfig } from 'swr';
+import { dailySyncKeys } from '@/lib/swr';
 
 // SideQuestForm component (merged from SideQuestForm.tsx)
 const SideQuestForm = ({ onSubmit, onCancel }: SideQuestFormProps) => {
@@ -128,11 +148,109 @@ const SideQuestListSection = ({
   const [showSideQuestModal, setShowSideQuestModal] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const {showCompletedSideQuest, toggleShowCompletedSideQuest} = useUIPreferencesStore();
+  const { mutate } = useSWRConfig();
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor)
+  );
 
   // Filter items based on showCompletedSideQuest state
   const filteredItems = showCompletedSideQuest 
     ? items 
     : items.filter(item => item.status !== 'DONE');
+
+  // Sort items by display_order
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+  }, [filteredItems]);
+
+  // Handle drag end with optimistic updates
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = sortedItems.findIndex(item => item.id === String(active.id));
+    const newIndex = sortedItems.findIndex(item => item.id === String(over.id));
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Reorder array
+    const newItems = arrayMove(sortedItems, oldIndex, newIndex);
+    
+    // Assign sequential display_order (1, 2, 3, ...)
+    const itemsWithNewOrder = newItems.map((item, idx) => ({
+      id: item.id,
+      display_order: idx + 1
+    }));
+    
+    // Save original for revert
+    const originalItems = [...sortedItems];
+    
+    // Optimistic update
+    const updatedItemsForUI = newItems.map((item, idx) => ({
+      ...item,
+      display_order: idx + 1
+    }));
+    
+    try {
+      // ✅ FIXED: Optimistic update using updater function (no fetch)
+      if (selectedDate) {
+        await mutate(
+          dailySyncKeys.dailyPlan(selectedDate),
+          (currentData: any) => {
+            if (!currentData) return currentData;
+            return {
+              ...currentData,
+              daily_plan_items: (currentData.daily_plan_items || []).map((item: any) => {
+                const updatedItem = updatedItemsForUI.find(ui => ui.id === item.id);
+                if (updatedItem && item.item_type === 'SIDE_QUEST') {
+                  return { ...item, display_order: updatedItem.display_order };
+                }
+                return item;
+              })
+            };
+          },
+          { revalidate: false }
+        );
+      }
+      
+      // API call
+      await updateDailyPlanItemsDisplayOrder(itemsWithNewOrder);
+      
+      toast.success('Urutan task berhasil diubah');
+      
+      // Small delay then revalidate
+      await new Promise(resolve => setTimeout(resolve, 50));
+      if (selectedDate) {
+        await mutate(dailySyncKeys.dailyPlan(selectedDate));
+      }
+    } catch (error) {
+      // ✅ FIXED: Revert using updater function (no fetch)
+      if (selectedDate) {
+        await mutate(
+          dailySyncKeys.dailyPlan(selectedDate),
+          (currentData: any) => {
+            if (!currentData) return currentData;
+            return {
+              ...currentData,
+              daily_plan_items: (currentData.daily_plan_items || []).map((item: any) => {
+                const originalItem = originalItems.find(orig => orig.id === item.id);
+                if (originalItem && item.item_type === 'SIDE_QUEST') {
+                  return { ...item, display_order: originalItem.display_order };
+                }
+                return item;
+              })
+            };
+          },
+          { revalidate: false }
+        );
+      }
+      toast.error('Gagal mengubah urutan task');
+    }
+  }, [sortedItems, mutate, selectedDate]);
 
   const handleAddSideQuest = (title: string) => {
     if (onAddSideQuest) {
@@ -196,26 +314,33 @@ const SideQuestListSection = ({
         </div>
       </div>
 
-      <div className="space-y-3">
-        {filteredItems.map((item) => (
-          <TaskItemCard
-            key={item.id}
-            item={item}
-            onStatusChange={onStatusChange}
-            onSetActiveTask={onSetActiveTask}
-            selectedDate={selectedDate}
-            onTargetChange={onTargetChange}
-            onFocusDurationChange={onFocusDurationChange}
-            completedSessions={completedSessions}
-            refreshKey={refreshSessionKey?.[item.id]}
-            forceRefreshTaskId={forceRefreshTaskId}
-            onRemove={onRemove}
-            onConvertToChecklist={onConvertToChecklist}
-            onConvertToQuest={onConvertToQuest}
-          />
-        ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={sortedItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {sortedItems.map((item) => (
+              <SortableTaskItemCard
+                key={item.id}
+                id={item.id}
+                item={item}
+                onStatusChange={onStatusChange}
+                onSetActiveTask={onSetActiveTask}
+                selectedDate={selectedDate}
+                onTargetChange={onTargetChange}
+                onFocusDurationChange={onFocusDurationChange}
+                completedSessions={completedSessions}
+                refreshKey={refreshSessionKey?.[item.id]}
+                forceRefreshTaskId={forceRefreshTaskId}
+                onRemove={onRemove}
+                onConvertToChecklist={onConvertToChecklist}
+                onConvertToQuest={onConvertToQuest}
+              />
+            ))}
 
-        {filteredItems.length === 0 ? (
+            {sortedItems.length === 0 ? (
           <div className="text-center text-gray-500 dark:text-gray-400">
             <p className="mb-6 py-8">
               {showCompletedSideQuest 
@@ -223,34 +348,36 @@ const SideQuestListSection = ({
                 : 'Tidak ada side quest yang belum selesai'
               }
             </p>
-          </div>
-        ) : null}
+            </div>
+          ) : null}
 
-        {showAddForm && onAddSideQuest ? (
-          <SideQuestForm
-            onSubmit={handleAddSideQuest}
-            onCancel={() => setShowAddForm(false)}
-          />
-        ) : null}
-        
-        {/* Tombol Add Quest di dalam card Side Quest - hanya muncul jika ada task */}
-        {onAddSideQuest ? (
-          <div className="grid grid-cols-4 mt-6 gap-2">
-            <button 
-              className="col-span-3 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-              onClick={() => setShowSideQuestModal(true)}
-            >
-              Select Quest
-            </button>
-            <button 
-              className="col-span-1 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
-              onClick={() => setShowAddForm(!showAddForm)}
-            >
-              Add
-            </button>
+          {showAddForm && onAddSideQuest ? (
+            <SideQuestForm
+              onSubmit={handleAddSideQuest}
+              onCancel={() => setShowAddForm(false)}
+            />
+          ) : null}
+          
+          {/* Tombol Add Quest di dalam card Side Quest - hanya muncul jika ada task */}
+          {onAddSideQuest ? (
+            <div className="grid grid-cols-4 mt-6 gap-2">
+              <button 
+                className="col-span-3 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+                onClick={() => setShowSideQuestModal(true)}
+              >
+                Select Quest
+              </button>
+              <button 
+                className="col-span-1 px-4 py-2 bg-brand-500 text-white font-medium rounded-lg hover:bg-brand-600 transition-colors text-sm"
+                onClick={() => setShowAddForm(!showAddForm)}
+              >
+                Add
+              </button>
+            </div>
+          ) : null}
           </div>
-        ) : null}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Side Quest Modal */}
       <SideQuestModal
