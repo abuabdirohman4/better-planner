@@ -210,6 +210,27 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
     };
   }, [parentTaskTitles, expandedItems]);
 
+  // ✅ FIXED: Move all hooks before conditional return to maintain hook order
+  // Filter out tasks that are not available for selection
+  // Tasks that were completed yesterday are already filtered out in getTasksForWeek
+  // But we need to ensure tasks added today are still available
+  const availableTasks = useMemo(() => {
+    if (!isOpen) return [];
+    return tasks.filter(task => {
+      // Always show tasks that are currently selected (added today)
+      if (selectedTasks[task.id]) {
+        return true;
+      }
+      // Show all other available tasks (filtered by getTasksForWeek)
+      return true;
+    });
+  }, [tasks, selectedTasks, isOpen]);
+
+  const groupedTasks = useMemo(() => {
+    if (!isOpen) return {};
+    return groupByGoalSlot(availableTasks);
+  }, [availableTasks, groupByGoalSlot, isOpen]);
+
   // Toggle expanded state
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
@@ -266,7 +287,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
           )}
           
           {/* Spacer for items without children */}
-          {!hasChildren && <div className="w-2 h-2" />}
+          {!hasChildren && <div className="w-4 h-2" />}
 
           {/* ✅ NEW: Render dash for virtual parent, checkbox for selected items */}
           {isVirtualParent ? (
@@ -322,23 +343,6 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Filter out tasks that are not available for selection
-  // Tasks that were completed yesterday are already filtered out in getTasksForWeek
-  // But we need to ensure tasks added today are still available
-  const availableTasks = useMemo(() => {
-    return tasks.filter(task => {
-      // Always show tasks that are currently selected (added today)
-      if (selectedTasks[task.id]) {
-        return true;
-      }
-      // Show all other available tasks (filtered by getTasksForWeek)
-      return true;
-    });
-  }, [tasks, selectedTasks]);
-
-  const groupedTasks = useMemo(() => {
-    return groupByGoalSlot(availableTasks);
-  }, [availableTasks, groupByGoalSlot]);
   const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
