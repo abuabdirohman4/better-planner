@@ -129,9 +129,25 @@ export function useBackgroundTimer() {
 
     if (remainingSeconds > 0) {
       backgroundTimeoutRef.current = setTimeout(async () => {
-        // Timer completed in background - only show notification
-        // Sound will be handled by Service Worker or main timer completion
-        showCompletionNotification();
+        // ✅ FIXED: Timer completed in background - trigger full completion
+        const { useTimerStore } = await import('@/stores/timerStore');
+        const state = useTimerStore.getState();
+        
+        if (state.activeTask && state.startTime) {
+          const targetDuration = (state.activeTask.focus_duration || 25) * 60;
+          
+          // Complete timer with full handler (sound + modal)
+          await state.completeTimerFromDatabase({
+            taskId: state.activeTask.id,
+            taskTitle: state.activeTask.title,
+            startTime: state.startTime,
+            duration: targetDuration,
+            status: 'COMPLETED'
+          });
+          
+          // Show notification as additional feedback
+          showCompletionNotification();
+        }
       }, remainingSeconds * 1000);
     }
   };
