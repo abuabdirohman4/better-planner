@@ -5,6 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { logTimerEvent } from './timerEventActions';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 export async function completeTimerSession(sessionId: string, deviceId?: string) {
   const supabase = await createClient();
@@ -51,11 +52,16 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
 
     if (!existingLog) {
       // ✅ CRITICAL FIX: Always calculate actual elapsed time from database timestamps
-      const endTime = new Date().toISOString();
+      const endTimeDate = new Date(); // Use local time directly
+      const endTime = endTimeDate.toISOString(); // Convert to ISO for database storage
       const startTimeDate = new Date(session.start_time);
-      const endTimeDate = new Date(endTime);
       const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
       const actualDurationMinutes = Math.max(1, Math.round(actualDurationSeconds / 60));
+      
+      // ✅ FIX: Use local date from endTimeDate instead of UTC to handle timezone correctly
+      // This ensures activity log uses the correct local date even when timer completes before 7 AM
+      // getLocalDateString uses getFullYear(), getMonth(), getDate() which return local timezone values
+      const localDate = getLocalDateString(endTimeDate);
       
       // Only create activity log if it doesn't exist
       const { error: logError } = await supabase
@@ -67,7 +73,7 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
           start_time: session.start_time,
           end_time: endTime,
           duration_minutes: actualDurationMinutes,
-          local_date: new Date().toISOString().slice(0, 10)
+          local_date: localDate
         });
 
       if (logError) {
