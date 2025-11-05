@@ -41,29 +41,20 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
         
         if (isCurrentlyChecked) {
           // Remove from current selection (uncheck)
+          // ✅ PRESERVE SUBTASKS: Only remove the task itself, keep all subtasks selected
           const newItems = prev.filter(
-            item =>
-              !(item.id === itemId && item.type === 'TASK') &&
-              !subtasks.some(st => st.id === item.id && item.type === 'SUBTASK')
+            item => !(item.id === itemId && item.type === 'TASK')
           );
           return newItems;
         } else {
           // Add to current selection (check)
-          // ✅ FIXED: Only add subtasks that are already in database (initialSelectedItems) or existing selection
-          // This prevents newly added subtasks from being auto-checked when they don't exist in database yet
+          // ✅ AUTO-SELECT: Automatically select ALL non-DONE subtasks when task is selected
+          // This ensures all subtasks are included regardless of database status
           const subtasksToAdd = subtasks
             .filter(st => {
-              // Only include subtasks that are:
-              // 1. Not completed (DONE status)
-              // 2. Already in database for this slot (initialSelectedItems)
-              // 3. OR already selected in other slots (existingSelectedIds)
-              const isNotDone = st.status !== 'DONE';
-              const isInInitialSelection = initialSelectedItems.some(
-                item => item.id === st.id && (item.type === 'SUBTASK' || item.type === 'TASK')
-              );
-              const isInExistingSelection = existingSelectedIds.has(st.id);
-              
-              return isNotDone && (isInInitialSelection || isInExistingSelection);
+              // Only include subtasks that are not completed (DONE status)
+              // All non-DONE subtasks are automatically selected
+              return st.status !== 'DONE';
             })
             .map(st => ({ id: st.id, type: 'SUBTASK' as const }));
           
