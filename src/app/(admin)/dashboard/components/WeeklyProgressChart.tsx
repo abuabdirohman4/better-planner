@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -29,6 +29,23 @@ type ChartType = 'line' | 'bar';
 
 export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyProgressChartProps) {
   const [chartType, setChartType] = useState<ChartType>('bar');
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768) // md breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Dynamic chart margin based on screen size
+  const chartMargin = isMobile 
+    ? { top: 25, right: 10, left: -30, bottom: 5 }  // Negative left margin to eliminate gap, more top for labels
+    : { top: 25, right: 30, left: 20, bottom: 5 }   // Normal margin for desktop
 
   if (isLoading) {
     return (
@@ -142,20 +159,21 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
       </div>
 
       {/* Chart */}
-      <div className="w-full h-80">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'line' ? (
-            <LineChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+            <LineChart data={data} margin={chartMargin}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
                 dataKey="weekLabel" 
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fill: 'currentColor' }}
+                tick={{ fontSize: 12 }}
+                tickLine={{ stroke: '#6B7280' }}
               />
               <YAxis 
                 domain={[0, 100]}
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fill: 'currentColor' }}
+                tickLine={{ stroke: '#6B7280' }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Line 
@@ -175,17 +193,20 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
               </Line>
             </LineChart>
           ) : (
-            <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+            <BarChart data={data} margin={chartMargin}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
               <XAxis 
                 dataKey="weekLabel" 
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fill: 'currentColor' }}
+                tick={{ fontSize: 12 }}
+                tickLine={{ stroke: '#6B7280' }}
               />
               <YAxis 
                 domain={[0, 100]}
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fill: 'currentColor' }}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tickLine={{ stroke: '#6B7280' }}
+                width={isMobile ? 40 : 40}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
