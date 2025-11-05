@@ -135,16 +135,16 @@ export function useSubtaskCRUD(
       }
     } else {
       // Fallback to refetch if mutate is not available
-      try {
-        const res = await updateTaskStatus(subtask.id, newStatus);
-        if (res) {
+    try {
+      const res = await updateTaskStatus(subtask.id, newStatus);
+      if (res) {
           (refetchSubtasks as () => void)();
-          toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
-        } else {
-          toast.error('Gagal update status');
-        }
-      } catch {
+        toast.success(`Subtask ${newStatus === 'DONE' ? 'selesai' : 'dibuka kembali'}`);
+      } else {
         toast.error('Gagal update status');
+      }
+    } catch {
+      toast.error('Gagal update status');
         (refetchSubtasks as () => void)();
       }
     }

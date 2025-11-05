@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuestProgress } from '../hooks/useQuestProgress';
+import { getProgressColorClass, getProgressTextColorClass } from '@/lib/utils';
 
 interface QuestProgressBarProps {
   questId: string;
@@ -31,21 +32,7 @@ export default function QuestProgressBar({ questId, className = '' }: QuestProgr
     );
   }
 
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-green-500';
-    if (progress >= 60) return 'bg-blue-500';
-    if (progress >= 40) return 'bg-yellow-500';
-    if (progress >= 20) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  const getProgressTextColor = (progress: number) => {
-    if (progress >= 80) return 'text-green-600 dark:text-green-400';
-    if (progress >= 60) return 'text-blue-600 dark:text-blue-400';
-    if (progress >= 40) return 'text-yellow-600 dark:text-yellow-400';
-    if (progress >= 20) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+  // Use centralized utility functions for consistent colors
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg p-2 px-4 border border-gray-200 dark:border-gray-700 ${className}`}>
@@ -68,11 +55,11 @@ export default function QuestProgressBar({ questId, className = '' }: QuestProgr
         <div className="flex items-center w-full">
           <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 relative">
             <div
-              className={`h-3 rounded-full transition-all duration-500 ease-out ${getProgressColor(overallProgress)}`}
+              className={`h-3 rounded-full transition-all duration-500 ease-out ${getProgressColorClass(overallProgress)}`}
               style={{ width: `${overallProgress}%` }}
             ></div>
           </div>
-          <div className="ml-3 text-sm font-medium">{overallProgress}%</div>
+          <div className={`ml-3 text-sm font-medium ${getProgressTextColorClass(overallProgress)}`}>{overallProgress}%</div>
         </div>
       {/* </div> */}
 

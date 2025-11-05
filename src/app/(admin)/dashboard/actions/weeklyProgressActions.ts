@@ -111,6 +111,15 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
     });
 
     // Calculate progress for each week
+    // NOTE: This calculation differs from Weekly Sync completion rate:
+    // - Weekly Sync: Averages per-goal percentages (equal weight per goal)
+    //   Example: Goal1=50% (10 tasks, 5 done), Goal2=90% (20 tasks, 18 done)
+    //   Completion Rate = (50 + 90) / 2 = 70%
+    // - Dashboard Chart: Aggregates all tasks and calculates overall percentage
+    //   Example: Same goals above
+    //   Chart Percentage = (5 + 18) / (10 + 20) * 100 = 77%
+    // The chart gives more weight to goals with more tasks, while weekly sync
+    // gives equal weight to each goal regardless of task count.
     const progressData: WeeklyProgressData[] = [];
     
     for (let i = 0; i < totalWeeks; i++) {

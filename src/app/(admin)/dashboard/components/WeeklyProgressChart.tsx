@@ -16,7 +16,8 @@ import {
   LabelList
 } from 'recharts';
 import type { WeeklyProgressData } from '../actions/weeklyProgressActions';
-import Spinner from '@/components/ui/spinner/Spinner';
+import Skeleton from '@/components/ui/skeleton/Skeleton';
+import { getProgressColor } from '@/lib/utils';
 
 interface WeeklyProgressChartProps {
   data: WeeklyProgressData[];
@@ -31,8 +32,36 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-        <Spinner className="h-8 w-8" />
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <Skeleton className="h-7 w-48" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+
+        {/* Chart area skeleton */}
+        <div className="w-full h-80 mb-6">
+          <Skeleton className="h-full w-full" />
+        </div>
+
+        {/* Summary stats skeleton */}
+        <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <Skeleton className="h-4 w-20 mx-auto mb-2" />
+            <Skeleton className="h-8 w-16 mx-auto" />
+          </div>
+          <div className="text-center">
+            <Skeleton className="h-4 w-20 mx-auto mb-2" />
+            <Skeleton className="h-8 w-16 mx-auto" />
+          </div>
+          <div className="text-center">
+            <Skeleton className="h-4 w-24 mx-auto mb-2" />
+            <Skeleton className="h-8 w-16 mx-auto" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -79,13 +108,7 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
   };
 
   // Color function for bars based on percentage
-  const getBarColor = (percentage: number) => {
-    if (percentage === 100) return '#10b981'; // green-500
-    if (percentage >= 75) return '#3b82f6'; // blue-500
-    if (percentage >= 50) return '#f59e0b'; // yellow-500
-    if (percentage >= 25) return '#ef4444'; // red-500
-    return '#9ca3af'; // gray-400
-  };
+  // Uses centralized utility function for consistency
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
@@ -167,7 +190,7 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.percentage)} />
+                  <Cell key={`cell-${index}`} fill={getProgressColor(entry.percentage)} />
                 ))}
                 <LabelList 
                   dataKey="percentage" 

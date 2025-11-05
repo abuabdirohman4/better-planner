@@ -1,15 +1,12 @@
 "use client";
 
 import React from 'react';
+import { getProgressStrokeColorClass } from '@/lib/utils';
 
 import type { ProgressIndicatorProps } from '../types';
 
 export default function ProgressIndicator({ progress, slotNumber }: ProgressIndicatorProps) {
-  const getProgressColorBg = (percentage: number) => {
-    if (percentage < 80) return 'stroke-red-500';
-    if (percentage < 100) return 'stroke-yellow-500';
-    return 'stroke-green-500';
-  };
+  // Use centralized utility function for consistent colors
 
   // Calculate circle progress (0-100)
   const circumference = 2 * Math.PI * 45; // radius = 45
@@ -43,7 +40,7 @@ export default function ProgressIndicator({ progress, slotNumber }: ProgressIndi
               strokeDasharray={strokeDasharray}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              className={`${getProgressColorBg(progress.percentage)} transition-all duration-500 ease-in-out`}
+              className={`${getProgressStrokeColorClass(progress.percentage)} transition-all duration-500 ease-in-out`}
             />
           </svg>
           {/* Center text */}
