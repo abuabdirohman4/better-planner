@@ -57,34 +57,15 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
 
     const weeklyGoalIds = weeklyGoals.map(g => g.id);
 
-    // Get all weekly goal items
+    // Get all weekly goal items with status
+    // Use weekly_goal_items.status (same as weekly sync) instead of tasks.status
     const { data: goalItems, error: itemsError } = await supabase
       .from('weekly_goal_items')
-      .select('id, weekly_goal_id, item_id')
+      .select('id, weekly_goal_id, item_id, status')
       .in('weekly_goal_id', weeklyGoalIds);
 
     if (itemsError) {
       throw itemsError;
-    }
-
-    // Get status from tasks table (source of truth)
-    const itemIds = (goalItems || []).map(item => item.item_id);
-    let taskStatusMap = new Map<string, string>();
-    
-    if (itemIds.length > 0) {
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('id, status')
-        .in('id', itemIds);
-
-      if (tasksError) {
-        throw tasksError;
-      }
-
-      // Create map of task_id -> status
-      (tasks || []).forEach(task => {
-        taskStatusMap.set(task.id, task.status);
-      });
     }
 
     // Create a map of week_number -> weekly_goal_ids
@@ -111,15 +92,11 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
     });
 
     // Calculate progress for each week
-    // NOTE: This calculation differs from Weekly Sync completion rate:
-    // - Weekly Sync: Averages per-goal percentages (equal weight per goal)
-    //   Example: Goal1=50% (10 tasks, 5 done), Goal2=90% (20 tasks, 18 done)
+    // Uses same calculation as Weekly Sync completion rate:
+    // - Averages per-goal percentages (equal weight per goal)
+    // - Example: Goal1=50% (10 tasks, 5 done), Goal2=90% (20 tasks, 18 done)
     //   Completion Rate = (50 + 90) / 2 = 70%
-    // - Dashboard Chart: Aggregates all tasks and calculates overall percentage
-    //   Example: Same goals above
-    //   Chart Percentage = (5 + 18) / (10 + 20) * 100 = 77%
-    // The chart gives more weight to goals with more tasks, while weekly sync
-    // gives equal weight to each goal regardless of task count.
+    // - Only counts goals that have items (total > 0)
     const progressData: WeeklyProgressData[] = [];
     
     for (let i = 0; i < totalWeeks; i++) {
@@ -129,18 +106,35 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
       
       let total = 0;
       let completed = 0;
+      const goalPercentages: number[] = [];
       
       weeklyGoalIdsForWeek.forEach(goalId => {
         const items = goalItemsMap.get(goalId) || [];
-        total += items.length;
-        // Get status from tasks table via taskStatusMap
-        completed += items.filter(item => {
-          const taskStatus = taskStatusMap.get(item.item_id) || 'TODO';
-          return taskStatus === 'DONE';
-        }).length;
+        const goalTotal = items.length;
+        
+        // Only process goals that have items
+        if (goalTotal > 0) {
+          // Calculate completed items for this goal
+          // Use status from weekly_goal_items (same as weekly sync)
+          const goalCompleted = items.filter(item => {
+            const itemStatus = item.status || 'TODO';
+            return itemStatus === 'DONE';
+          }).length;
+          
+          // Calculate percentage for this goal
+          const goalPercentage = Math.round((goalCompleted / goalTotal) * 100);
+          goalPercentages.push(goalPercentage);
+          
+          // Add to totals for summary stats
+          total += goalTotal;
+          completed += goalCompleted;
+        }
       });
       
-      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+      // Calculate average percentage (same as weekly sync completion rate)
+      const percentage = goalPercentages.length > 0
+        ? Math.round(goalPercentages.reduce((sum, p) => sum + p, 0) / goalPercentages.length)
+        : 0;
       
       progressData.push({
         weekNumber: weekInQuarter,
