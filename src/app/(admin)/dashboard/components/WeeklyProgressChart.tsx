@@ -167,8 +167,12 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
               <XAxis 
                 dataKey="weekLabel" 
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
                 tickLine={{ stroke: '#6B7280' }}
+                interval={isMobile ? 0 : 'preserveStartEnd'}
+                // angle={isMobile ? -45 : 0}
+                // textAnchor={isMobile ? 'end' : 'middle'}
+                height={isMobile ? 60 : 30}
               />
               <YAxis 
                 domain={[0, 100]}
@@ -198,15 +202,19 @@ export default function WeeklyProgressChart({ data, isLoading, error }: WeeklyPr
               <XAxis 
                 dataKey="weekLabel" 
                 className="text-gray-600 dark:text-gray-400"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
                 tickLine={{ stroke: '#6B7280' }}
+                interval={isMobile ? 0 : 'preserveStartEnd'}
+                // angle={isMobile ? -45 : 0}
+                // textAnchor={isMobile ? 'end' : 'middle'}
+                height={isMobile ? 60 : 30}
               />
               <YAxis 
                 domain={[0, 100]}
                 className="text-gray-600 dark:text-gray-400"
                 tick={{ fontSize: isMobile ? 10 : 12 }}
                 tickLine={{ stroke: '#6B7280' }}
-                width={isMobile ? 40 : 40}
+                width={isMobile ? 55 : 40}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
