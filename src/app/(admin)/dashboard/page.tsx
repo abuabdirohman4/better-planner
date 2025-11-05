@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import QuarterSelector from '@/components/common/QuarterSelector';
+import WeeklyProgressChartWrapper from './components/WeeklyProgressChartWrapper';
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",
@@ -28,6 +29,10 @@ async function DashboardContent() {
     <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <QuarterSelector />
+        </div>
+
+        <div className="col-span-12 mt-4">
+          <WeeklyProgressChartWrapper />
         </div>
 
         <div className="col-span-12">

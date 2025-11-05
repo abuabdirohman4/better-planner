@@ -111,14 +111,14 @@ export default function WeeklySyncTable({
     <>
       <ComponentCard title="" classNameHeader="!p-0">
         {/* Custom Header */}
-        <div className="grid grid-cols-3 items-center my-4 px-4">
-          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+        <div className="grid grid-cols-1 md:grid-cols-3 items-center my-4 px-4">
+          <div className="text-sm font-medium text-gray-600 dark:text-gray-400 order-2 md:order-1 flex justify-center md:justify-start text-center md:text-left mt-2 md:mt-0">
             Completion Rate: {completionRate}%
           </div>
-          <h2 className="text-center text-xl font-extrabold text-gray-900 dark:text-gray-100">
+          <h2 className="text-center text-xl font-extrabold text-gray-900 dark:text-gray-100 md:order-2">
             3 Quest Week {props.weekNumber}
           </h2>
-          <div></div> {/* Empty column for centering */}
+          <div className="md:order-3"></div> {/* Empty column for centering */}
         </div>
         <table className="w-full">
           <tbody>
