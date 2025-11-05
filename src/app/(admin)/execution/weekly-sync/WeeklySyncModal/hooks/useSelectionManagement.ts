@@ -41,11 +41,32 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
         
         if (isCurrentlyChecked) {
           // Remove from current selection (uncheck)
-          // ✅ PRESERVE SUBTASKS: Only remove the task itself, keep all subtasks selected
-          const newItems = prev.filter(
-            item => !(item.id === itemId && item.type === 'TASK')
-          );
-          return newItems;
+          // ✅ SMART UNCHECK: If all subtasks are selected, uncheck all; otherwise preserve subtasks
+          const nonDoneSubtasks = subtasks.filter(st => st.status !== 'DONE');
+          
+          // Check if ALL non-DONE subtasks are currently selected
+          const allSubtasksSelected = nonDoneSubtasks.length > 0 && 
+            nonDoneSubtasks.every(st => {
+              const isInCurrentSelection = prev.some(item => item.id === st.id && item.type === 'SUBTASK');
+              const isInExistingSelection = existingSelectedIds.has(st.id);
+              return isInCurrentSelection || isInExistingSelection;
+            });
+          
+          if (allSubtasksSelected) {
+            // All subtasks are selected → uncheck task AND all subtasks
+            const newItems = prev.filter(
+              item =>
+                !(item.id === itemId && item.type === 'TASK') &&
+                !subtasks.some(st => st.id === item.id && item.type === 'SUBTASK')
+            );
+            return newItems;
+          } else {
+            // Not all subtasks are selected → only remove task, preserve subtasks
+            const newItems = prev.filter(
+              item => !(item.id === itemId && item.type === 'TASK')
+            );
+            return newItems;
+          }
         } else {
           // Add to current selection (check)
           // ✅ AUTO-SELECT: Automatically select ALL non-DONE subtasks when task is selected
