@@ -42,6 +42,19 @@ export default function WeeklySyncTable({
   // 🚀 OPTIMIZED: Use client-side progress calculation
   const clientProgress = useWeeklyGoalsProgress(goals);
 
+  // Calculate completion rate: average percentage of goals that have items
+  const completionRate = useMemo(() => {
+    const goalsWithItems = goals.filter(goal => goal.items && goal.items.length > 0);
+    if (goalsWithItems.length === 0) return 0;
+    
+    const totalPercentage = goalsWithItems.reduce((sum, goal) => {
+      const progress = getSlotProgress(clientProgress, goal.goal_slot);
+      return sum + progress.percentage;
+    }, 0);
+    
+    return Math.round(totalPercentage / goalsWithItems.length);
+  }, [goals, clientProgress]);
+
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
     setIsModalOpen(true);
@@ -98,10 +111,14 @@ export default function WeeklySyncTable({
     <>
       <ComponentCard title="" classNameHeader="!p-0">
         {/* Custom Header */}
-        <div className="flex items-center justify-center my-4">
+        <div className="grid grid-cols-3 items-center my-4 px-4">
+          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            Completion Rate: {completionRate}%
+          </div>
           <h2 className="text-center text-xl font-extrabold text-gray-900 dark:text-gray-100">
             3 Quest Week {props.weekNumber}
           </h2>
+          <div></div> {/* Empty column for centering */}
         </div>
         <table className="w-full">
           <tbody>
