@@ -15,7 +15,7 @@ export interface WeeklyProgressData {
 export async function getWeeklyProgressForQuarter(year: number, quarter: number): Promise<WeeklyProgressData[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
     return [];
   }
@@ -23,7 +23,7 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
   try {
     const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
     const totalWeeks = endWeek - startWeek + 1;
-    
+
     // Get all weekly goals for all weeks in the quarter
     // IMPORTANT: week_number is stored as relative (1-13 per quarter) in weekly_goals table
     const { data: weeklyGoals, error: goalsError } = await supabase
@@ -38,6 +38,7 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
 
     if (goalsError) {
       throw goalsError;
+      console.log('tes')
     }
 
     if (!weeklyGoals || weeklyGoals.length === 0) {
@@ -71,11 +72,11 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
     // Create a map of week_number -> weekly_goal_ids
     // week_number is stored as relative (1-13), so use it directly as key
     const weekGoalsMap = new Map<number, string[]>();
-    
+
     weeklyGoals.forEach(goal => {
       // week_number is relative (1-13), use directly
       const weekKey = goal.week_number;
-      
+
       if (!weekGoalsMap.has(weekKey)) {
         weekGoalsMap.set(weekKey, []);
       }
@@ -98,20 +99,20 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
     //   Completion Rate = (50 + 90) / 2 = 70%
     // - Only counts goals that have items (total > 0)
     const progressData: WeeklyProgressData[] = [];
-    
+
     for (let i = 0; i < totalWeeks; i++) {
       const weekInQuarter = i + 1;
       // Use relative week number (1-13) to look up in weekGoalsMap
       const weeklyGoalIdsForWeek = weekGoalsMap.get(weekInQuarter) || [];
-      
+
       let total = 0;
       let completed = 0;
       const goalPercentages: number[] = [];
-      
+
       weeklyGoalIdsForWeek.forEach(goalId => {
         const items = goalItemsMap.get(goalId) || [];
         const goalTotal = items.length;
-        
+
         // Only process goals that have items
         if (goalTotal > 0) {
           // Calculate completed items for this goal
@@ -120,22 +121,22 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
             const itemStatus = item.status || 'TODO';
             return itemStatus === 'DONE';
           }).length;
-          
+
           // Calculate percentage for this goal
           const goalPercentage = Math.round((goalCompleted / goalTotal) * 100);
           goalPercentages.push(goalPercentage);
-          
+
           // Add to totals for summary stats
           total += goalTotal;
           completed += goalCompleted;
         }
       });
-      
+
       // Calculate average percentage (same as weekly sync completion rate)
       const percentage = goalPercentages.length > 0
         ? Math.round(goalPercentages.reduce((sum, p) => sum + p, 0) / goalPercentages.length)
         : 0;
-      
+
       progressData.push({
         weekNumber: weekInQuarter,
         weekLabel: `W${weekInQuarter}`,
@@ -162,4 +163,3 @@ export async function getWeeklyProgressForQuarter(year: number, quarter: number)
     });
   }
 }
-
