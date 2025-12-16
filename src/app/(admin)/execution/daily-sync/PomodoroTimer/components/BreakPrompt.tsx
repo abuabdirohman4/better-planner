@@ -41,7 +41,7 @@ export default function BreakPrompt({
 
   return (
     <div
-      className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+      className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
     >
       <div className="text-center p-4 flex flex-col items-center gap-3">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">

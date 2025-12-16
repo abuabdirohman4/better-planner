@@ -280,16 +280,17 @@ export default function PomodoroTimer() {
           {activeTask || timerState === 'BREAK' ? (
             <CircularTimer progress={progress} size={90} stroke={5} isBreak={timerState === 'BREAK'} />
           ) : (
-            <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
-              <circle
-                cx={45}
-                cy={45}
-                r={41}
-                stroke="#e5e7eb"
-                strokeWidth={4}
-                fill="none"
-              />
-            </svg>
+            <CircularTimer progress={progress} size={90} stroke={5} isBreak={false} />
+            // <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
+            //   <circle
+            //     cx={45}
+            //     cy={45}
+            //     r={41}
+            //     stroke="#e5e7eb"
+            //     strokeWidth={4}
+            //     fill="none"
+            //   />
+            // </svg>
           )}
           {!activeTask && timerState !== 'BREAK' ? (
             <span className="text-lg select-none">00:00</span>

@@ -23,7 +23,7 @@ export function useGlobalTimer() {
         // App kembali aktif, cek apakah timer perlu di-recover
         const now = Date.now();
         const timeSinceLastActive = now - lastActiveTimeRef.current;
-        
+
         // Jika lebih dari 5 detik, kemungkinan timer terhenti
         if (timeSinceLastActive > 5000) {
           // Timer akan di-recover oleh useTimerPersistence hook
@@ -61,30 +61,31 @@ export function useGlobalTimer() {
       }
       return;
     }
-    
+
     // Clear existing global interval
     if (globalIntervalRef) {
       clearInterval(globalIntervalRef);
       globalIntervalRef = null;
     }
 
-    if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
+    if (timerState === 'FOCUSING' || timerState === 'BREAK') {
       globalIntervalRef = setInterval(() => {
         const state = useTimerStore.getState();
-        
+
         // ✅ TIME-BASED CALCULATION: Calculate elapsed time from startTime
-        if (state.startTime) {
+        // Only calculate if not paused (startTime exists)
+        if (state.startTime && state.timerState !== 'PAUSED') {
           const now = Date.now();
           const startTimeMs = new Date(state.startTime).getTime();
           const elapsedSeconds = Math.floor((now - startTimeMs) / 1000);
-          
+
           // Update secondsElapsed with calculated value
           useTimerStore.setState({ secondsElapsed: elapsedSeconds });
-          
+
           // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
           if (activeTask && startTime && state.timerState === 'FOCUSING') {
             const targetDuration = (activeTask.focus_duration || 25) * 60;
-            
+
             if (elapsedSeconds >= targetDuration) {
               useTimerStore.getState().completeTimerFromDatabase({
                 taskId: activeTask.id,
@@ -120,7 +121,7 @@ export function useGlobalTimer() {
             }
           }
         }
-        
+
         lastActiveTimeRef.current = Date.now();
       }, 1000);
     }
