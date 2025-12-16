@@ -14,9 +14,12 @@ import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTi
 import { checkAudioPermission, initializeAudioContext } from '@/lib/soundUtils';
 import { isTimerDisabled, getTimerDevStatusMessage } from '@/lib/timerDevUtils';
 import DebugTimer from './components/DebugTimer';
+import BreakPrompt from './components/BreakPrompt';
 
-const SHORT_BREAK_DURATION = 5 * 60;
-const LONG_BREAK_DURATION = 15 * 60;
+const isDev = process.env.NODE_ENV === 'development';
+const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60;
+const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60;
+const LONG_BREAK_DURATION = isDev ? 60 : 15 * 60;
 
 const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
@@ -27,11 +30,13 @@ const formatTime = (seconds: number): string => {
 function CircularTimer({
   progress,
   size = 90,
-  stroke = 4
+  stroke = 4,
+  isBreak = false
 }: {
   progress: number;
   size?: number;
   stroke?: number;
+  isBreak?: boolean;
 }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -39,18 +44,18 @@ function CircularTimer({
   return (
     <svg className="absolute top-0 left-0" width={size} height={size}>
       <circle
-        cx={size/2}
-        cy={size/2}
+        cx={size / 2}
+        cy={size / 2}
         r={radius}
         stroke="#e5e7eb" // gray-200
         strokeWidth={stroke}
         fill="none"
       />
       <circle
-        cx={size/2}
-        cy={size/2}
+        cx={size / 2}
+        cy={size / 2}
         r={radius}
-        stroke="#3b82f6" // brand-500 (blue)
+        stroke={isBreak ? "#fb2c36" : "#3b82f6"} // brand-500 (blue)
         strokeWidth={stroke}
         fill="none"
         strokeDasharray={circumference}
@@ -64,13 +69,21 @@ function CircularTimer({
 
 const PlayIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 48 48" fill="none" {...props}>
-    <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2"/>
+    <polygon points="20,16 32, 24 20,32" fill="none" stroke="currentColor" strokeWidth="2" />
   </svg>
 );
 const PauseIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 48 48" fill="none" {...props}>
     <rect x="17" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
     <rect x="27" y="16" width="4" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
+const BreakIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="-12 -12 48 48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M10 2v2" />
+    <path d="M14 2v2" />
+    <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+    <path d="M6 2v2" />
   </svg>
 );
 
@@ -81,10 +94,14 @@ export default function PomodoroTimer() {
     activeTask,
     breakType,
     startFocusSession,
+    startBreak,
     pauseTimer,
     resumeTimer,
     stopTimer,
     isProcessingCompletion,
+    waitingForBreak,
+    lastFocusDuration,
+    dismissBreakPrompt
   } = useTimer();
   
   // Initialize timer persistence
@@ -165,8 +182,10 @@ export default function PomodoroTimer() {
   let totalSeconds = 0;
   if (timerState === 'FOCUSING') totalSeconds = focusDuration;
   else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
+  else if (timerState === 'BREAK' && breakType === 'MEDIUM') totalSeconds = MEDIUM_BREAK_DURATION;
   else if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
   else if (timerState === 'PAUSED' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
+  else if (timerState === 'PAUSED' && breakType === 'MEDIUM') totalSeconds = MEDIUM_BREAK_DURATION;
   else if (timerState === 'PAUSED' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
   else if (timerState === 'PAUSED') totalSeconds = focusDuration;
   else totalSeconds = focusDuration; // fallback/idle
@@ -193,6 +212,10 @@ export default function PomodoroTimer() {
   } else if (timerState === 'PAUSED') {
     IconComponent = PlayIcon;
     iconColor = 'text-brand-500';
+    iconAction = resumeTimer;
+  } else if (timerState === 'BREAK') {
+    IconComponent = BreakIcon;
+    iconColor = 'text-red-500';
     iconAction = resumeTimer;
   }
 
@@ -240,14 +263,22 @@ export default function PomodoroTimer() {
           <Spinner size={14} colorClass='border-green-500' className="mr-2" /> Processing completion...
         </div>
       )}
-      
+
+      {/* Break Prompt Overlay */}
+      <BreakPrompt
+        isVisible={waitingForBreak}
+        lastFocusDuration={lastFocusDuration}
+        onStartBreak={startBreak}
+        onSkip={dismissBreakPrompt}
+      />
+
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className={`flex items-center gap-6`}>
       {/* <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}> */}
         {/* Timer Circle - Fixed position di kiri */}
         <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
-          {activeTask ? (
-            <CircularTimer progress={progress} size={90} stroke={5} />
+          {activeTask || timerState === 'BREAK' ? (
+            <CircularTimer progress={progress} size={90} stroke={5} isBreak={timerState === 'BREAK'} />
           ) : (
             <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
               <circle
@@ -260,7 +291,7 @@ export default function PomodoroTimer() {
               />
             </svg>
           )}
-          {!activeTask ? (
+          {!activeTask && timerState !== 'BREAK' ? (
             <span className="text-lg select-none">00:00</span>
           ) : (
             <>
@@ -275,11 +306,11 @@ export default function PomodoroTimer() {
         {/* Right side content - Task title dan button */}
         <div className="flex-1 flex flex-col justify-center gap-3 min-w-0">
           {/* Task Title */}
-          {activeTask && (
-            <div className="text-left text-base text-gray-500 dark:text-gray-300 font-medium break-words">
-              {activeTask.title}
-            </div>
-          )}
+          <div className="text-left text-base text-gray-500 dark:text-gray-300 font-medium break-words">
+            {timerState === 'BREAK'
+              ? `Break Time (${breakType === 'SHORT' ? '5m' : breakType === 'MEDIUM' ? '10m' : '15m'})`
+              : activeTask?.title || 'Ready to Focus'}
+          </div>
 
           {/* Stop Button */}
           {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
@@ -290,7 +321,7 @@ export default function PomodoroTimer() {
                 className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                 onClick={stopTimer}
               >
-                Stop
+                Cancel
               </Button>
             </div>
           )}

@@ -295,7 +295,7 @@ const SideQuestListSection = ({
         <div className="relative mr-8" onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
           <button
             onClick={toggleShowCompletedSideQuest}
-            className="mt-0.5 p-1.25 text-gray-500 rounded rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
+            className="mt-0.5 p-1.25 text-gray-500 rounded-full hover:text-gray-900 hover:shadow-md transition-colors"
           >
             {showCompletedSideQuest ? (
               <EyeIcon className="w-5 h-5" />
@@ -341,13 +341,13 @@ const SideQuestListSection = ({
             ))}
 
             {sortedItems.length === 0 ? (
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="mb-6 py-8">
-              {showCompletedSideQuest 
-                ? 'Tidak ada side quest hari ini' 
-                : 'Tidak ada side quest yang belum selesai'
-              }
-            </p>
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              <p className="mb-6 py-8">
+                {showCompletedSideQuest 
+                  ? 'Tidak ada side quest hari ini' 
+                  : 'Tidak ada side quest yang belum selesai'
+                }
+              </p>
             </div>
           ) : null}
 

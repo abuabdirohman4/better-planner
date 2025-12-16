@@ -82,7 +82,7 @@ export function useGlobalTimer() {
           useTimerStore.setState({ secondsElapsed: elapsedSeconds });
           
           // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
-          if (activeTask && startTime) {
+          if (activeTask && startTime && state.timerState === 'FOCUSING') {
             const targetDuration = (activeTask.focus_duration || 25) * 60;
             
             if (elapsedSeconds >= targetDuration) {
@@ -92,6 +92,29 @@ export function useGlobalTimer() {
                 startTime: startTime,
                 duration: targetDuration,
                 status: 'COMPLETED'
+              });
+              return;
+            }
+          }
+
+          // ✅ BREAK COMPLETION CHECK
+          if (state.timerState === 'BREAK' && state.breakType) {
+            const isDev = process.env.NODE_ENV === 'development';
+            const shortDur = isDev ? 30 : 5 * 60;
+            const mediumDur = isDev ? 45 : 10 * 60;
+            const longDur = isDev ? 60 : 15 * 60;
+
+            let breakDuration = shortDur; // Default Short
+            if (state.breakType === 'MEDIUM') breakDuration = mediumDur;
+            if (state.breakType === 'LONG') breakDuration = longDur;
+
+            if (elapsedSeconds >= breakDuration) {
+              useTimerStore.getState().stopFocusSound();
+              useTimerStore.setState({
+                timerState: 'IDLE',
+                breakType: null,
+                secondsElapsed: 0,
+                startTime: null
               });
               return;
             }

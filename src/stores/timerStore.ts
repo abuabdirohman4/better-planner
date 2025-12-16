@@ -21,7 +21,7 @@ interface SessionCompleteData {
   taskId: string;
   taskTitle: string;
   duration: number;
-  type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+  type: 'FOCUS' | 'SHORT_BREAK' | 'MEDIUM_BREAK' | 'LONG_BREAK';
   startTime: string;
   endTime: string;
   completed?: boolean; // ✅ Add completed flag for auto-completion
@@ -32,13 +32,16 @@ interface TimerStoreState {
   secondsElapsed: number;
   activeTask: Task | null;
   sessionCount: number;
-  breakType: 'SHORT' | 'LONG' | null;
+  breakType: 'SHORT' | 'MEDIUM' | 'LONG' | null;
   lastSessionComplete: SessionCompleteData | null;
   startTime: string | null;
   isProcessingCompletion: boolean;
   focusSoundPlaying: boolean;
+  waitingForBreak: boolean;
+  lastFocusDuration: number;
   startFocusSession: (task: Task) => void;
-  startBreak: (type: 'SHORT' | 'LONG') => void;
+  startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => void;
+  dismissBreakPrompt: () => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
   stopTimer: () => void;
@@ -66,9 +69,13 @@ interface TimerStoreState {
 }
 
 // Durasi default (detik)
+// Durasi default (detik)
+const isDev = process.env.NODE_ENV === 'development';
 const FOCUS_DURATION = 25 * 60; // 25 menit default
-const SHORT_BREAK_DURATION = 5 * 60;
-const LONG_BREAK_DURATION = 15 * 60;
+// In dev, make breaks 30 seconds for testing
+const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60;
+const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60;
+const LONG_BREAK_DURATION = isDev ? 60 : 15 * 60;
 
 export const useTimerStore = create<TimerStoreState>()(
   persist(
@@ -82,6 +89,8 @@ export const useTimerStore = create<TimerStoreState>()(
       startTime: null,
       isProcessingCompletion: false,
       focusSoundPlaying: false,
+      waitingForBreak: false,
+      lastFocusDuration: 0,
 
       startFocusSession: (task: Task) => {
         set({
@@ -90,12 +99,13 @@ export const useTimerStore = create<TimerStoreState>()(
           secondsElapsed: 0,
           breakType: null,
           startTime: new Date().toISOString(),
+          waitingForBreak: false, // Ensure prompt is closed
         });
         // Start focus sound
         get().startFocusSound().catch(console.error);
       },
 
-      startBreak: (type: 'SHORT' | 'LONG') => {
+      startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => {
         // Stop focus sound when starting break
         get().stopFocusSound();
         set({
@@ -103,7 +113,12 @@ export const useTimerStore = create<TimerStoreState>()(
           breakType: type,
           secondsElapsed: 0,
           startTime: new Date().toISOString(),
+          waitingForBreak: false,
         });
+      },
+
+      dismissBreakPrompt: () => {
+        set({ waitingForBreak: false });
       },
 
       pauseTimer: () => {
@@ -167,6 +182,7 @@ export const useTimerStore = create<TimerStoreState>()(
           secondsElapsed: 0,
           breakType: null,
           activeTask: null,
+          waitingForBreak: false,
         });
       },
 
@@ -233,6 +249,14 @@ export const useTimerStore = create<TimerStoreState>()(
           };
         } else if (state.timerState === 'BREAK' && state.breakType === 'SHORT' && newSeconds >= SHORT_BREAK_DURATION) {
           // Stop focus sound when short break completes
+          get().stopFocusSound();
+          return {
+            timerState: 'IDLE' as TimerState,
+            breakType: null,
+            secondsElapsed: 0,
+          };
+        } else if (state.timerState === 'BREAK' && state.breakType === 'MEDIUM' && newSeconds >= MEDIUM_BREAK_DURATION) {
+          // Stop focus sound when medium break completes
           get().stopFocusSound();
           return {
             timerState: 'IDLE' as TimerState,
@@ -339,6 +363,8 @@ export const useTimerStore = create<TimerStoreState>()(
           activeTask: null,
           startTime: null,
           breakType: null,
+          waitingForBreak: true,
+          lastFocusDuration: sessionData.duration,
         });
       },
 

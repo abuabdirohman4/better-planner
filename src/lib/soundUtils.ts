@@ -413,56 +413,57 @@ export async function playFocusSoundLoop(soundId: string, volume: number = 0.5):
 
     if (soundOption.type === 'custom' && soundOption.filePath) {
       // Load custom audio file
-      const buffer = await loadCustomAudio(soundOption.filePath);
-      
-      // Play sound in loop every 1 second for ticking clock
-      const playTick = () => {
-        if (focusSoundInterval) { // Check if still playing
-          const source = globalAudioContext!.createBufferSource();
-          const gainNode = globalAudioContext!.createGain();
-          
-          source.buffer = buffer;
-          gainNode.gain.value = volume;
-          
-          source.connect(gainNode);
-          gainNode.connect(globalAudioContext!.destination);
-          
-          source.start();
+      const rawBuffer = await loadCustomAudio(soundOption.filePath);
+
+      // ✅ FIX: Create a 1-second buffer to ensure correct rhythm (1 tick per second)
+      // This solves the background throttling issue since we use native Web Audio looping
+      // instead of setInterval which gets throttled by browsers in background tabs.
+      const sampleRate = rawBuffer.sampleRate;
+      const channels = rawBuffer.numberOfChannels;
+      // Ensure exactly 1 second duration (or longer if the sound itself is longer)
+      const duration = Math.max(1, rawBuffer.duration);
+      const length = Math.ceil(sampleRate * duration);
+
+      const loopedBuffer = globalAudioContext!.createBuffer(channels, length, sampleRate);
+
+      // Copy data from raw buffer to looped buffer
+      for (let channel = 0; channel < channels; channel++) {
+        const rawData = rawBuffer.getChannelData(channel);
+        const loopedData = loopedBuffer.getChannelData(channel);
+        loopedData.set(rawData);
+      }
+
+      // Create source
+      const source = globalAudioContext!.createBufferSource();
+      const gainNode = globalAudioContext!.createGain();
+
+      source.buffer = loopedBuffer;
+      source.loop = true; // ✅ Enable native looping
+      gainNode.gain.value = volume;
+
+      source.connect(gainNode);
+      gainNode.connect(globalAudioContext!.destination);
+
+      source.start();
+
+      // Store reference
+      currentAudioSource = source;
+
+      // Clean up reference when manually stopped (loop doesn't end naturally)
+      source.onended = () => {
+        if (currentAudioSource === source) {
+          currentAudioSource = null;
         }
       };
-      
-      // Start the loop
-      focusSoundInterval = setInterval(playTick, 1000); // Every 1 second
-      
+
     } else {
       throw new Error(`Unsupported focus sound type: ${soundOption.type}`);
     }
     
   } catch (error) {
     console.error('Error playing focus sound loop:', error);
-    
-    // Try fallback with HTML5 Audio
-    try {
-      const soundOption = FOCUS_SOUND_OPTIONS.find(option => option.id === soundId);
-      
-      if (soundOption && soundOption.filePath) {
-        const playTick = () => {
-          if (focusSoundInterval) { // Check if still playing
-            const audio = new Audio();
-            audio.src = soundOption.filePath;
-            audio.volume = volume;
-            audio.play().catch(fallbackError => {
-              console.error('HTML5 Audio fallback failed:', fallbackError);
-            });
-          }
-        };
-        
-        // Start the loop
-        focusSoundInterval = setInterval(playTick, 1000); // Every 1 second
-      }
-    } catch (fallbackError) {
-      console.error('HTML5 Audio fallback error:', fallbackError);
-    }
+    // Fallback omitted as complex loop fallback is hard to make robust without interval, 
+    // and we want to avoid interval.
   }
 }
 
