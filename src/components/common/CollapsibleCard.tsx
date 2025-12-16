@@ -21,7 +21,7 @@ const CollapsibleCard = ({
       {/* Collapse Arrow - positioned absolutely */}
       <div className="absolute top-5 right-6 z-10">
         <button
-          className="p-1 text-gray-500 hover:text-gray-900 transition-all duration-300 rounded-full hover:text-gray-700 hover:shadow-md hover:bg-gray-100"
+          className="p-1 text-gray-500 hover:text-gray-900 transition-all duration-300 rounded-full hover:shadow-md hover:bg-gray-100"
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
