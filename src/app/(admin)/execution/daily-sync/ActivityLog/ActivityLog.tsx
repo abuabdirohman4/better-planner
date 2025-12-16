@@ -12,16 +12,16 @@ interface ActivityLogProps {
 
 const ICONS = {
   FOCUS: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-brand-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#3b82f6" opacity="0.15"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-brand-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#3b82f6" opacity="0.15" /><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
   ),
   BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15"/><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15" /><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
   ),
   SHORT_BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15"/><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15" /><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
   ),
   LONG_BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-600"><rect x="2" y="7" width="20" height="10" rx="5" fill="#f59e42" opacity="0.15"/><path d="M7 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-600"><rect x="2" y="7" width="20" height="10" rx="5" fill="#f59e42" opacity="0.15" /><path d="M7 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
   ),
 };
 
@@ -60,7 +60,7 @@ const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
           </div>
         </>
       )}
-      
+
       {/* {log.what_think && (
       )} */}
     </div>
@@ -68,9 +68,9 @@ const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 };
 
 // Komponen collapsible untuk setiap log item
-const CollapsibleLogItem: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
+const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boolean }> = ({ log, showTaskTitle = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const icon = ICONS[log.type] || ICONS.BREAK;
   let title = '';
   if (log.type === 'FOCUS') {
@@ -87,19 +87,18 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 
   return (
     <div className={`${isExpanded ? 'bg-blue-50 rounded-lg border border-blue-200' : ''} rounded px-2 py-1`}>
-      <div 
+      <div
         className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 rounded transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Triangle indicator */}
         <div className="shrink-0">
           {hasJournalEntry ? (
-            <svg 
-              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
-                isExpanded ? 'rotate-90' : ''
-              }`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''
+                }`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -110,15 +109,20 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
             </div>
           )}
         </div>
-        
+
         {/* Content */}
         <div className="flex-1">
           <div className="text-sm py-1 text-gray-500">
             {formatTimeRange(log.start_time, log.end_time)} &bull; {formatDuration(log.duration_minutes)}
+            {showTaskTitle && log.task_title && (
+              <span className="ml-2 text-gray-700 dark:text-gray-300 font-medium">
+                ({log.task_title})
+              </span>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* Collapsible content */}
       {isExpanded && hasJournalEntry && (
         <div className="mt-2 ml-6">
@@ -131,16 +135,18 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [dynamicHeight, setDynamicHeight] = useState('');
+  const [viewMode, setViewMode] = useState<'GROUPED' | 'TIMELINE'>('TIMELINE');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC'); // DESC = Newest first
 
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
-  
+
   // ✅ Use SWR for data fetching instead of manual useEffect
   const { logs, isLoading: loading, error } = useActivityLogs({
     date,
     refreshKey,
     lastActivityTimestamp,
   });
-  
+
   // Calculate dynamic height based on Main Quest + Side Quest + Pomodoro Timer heights
   useEffect(() => {
     const calculateHeight = () => {
@@ -150,7 +156,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         if (!isMdAndAbove) {
           return;
         }
-        
+
         // Get Main Quest + Side Quest + Pomodoro Timer
         const mainQuestCard = document.querySelector('.main-quest-card');
         const sideQuestCard = document.querySelector('.side-quest-card');
@@ -168,16 +174,16 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
 
         // Set dynamic height based on available space
         setDynamicHeight(`${finalHeight}px`);
-        
+
       } catch (error) {
         console.warn('Error calculating dynamic height:', error);
       }
     };
-    
+
     // Calculate height on mount and window resize
-    calculateHeight();
+    setTimeout(calculateHeight, 100);
     window.addEventListener('resize', calculateHeight);
-    
+
     return () => window.removeEventListener('resize', calculateHeight);
   }, [date]); // Recalculate when date changes
 
@@ -197,7 +203,14 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
     return acc;
   }, {} as Record<string, { title: string; sessions: ActivityLogItem[]; totalMinutes: number }>);
   const summary = Object.values(grouped);
-  
+
+  // Sort logs for Timeline view
+  const timelineLogs = [...safeLogs].sort((a, b) => {
+    const timeA = new Date(a.start_time).getTime();
+    const timeB = new Date(b.start_time).getTime();
+    return sortOrder === 'DESC' ? timeB - timeA : timeA - timeB;
+  });
+
   const formatTotal = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
@@ -206,6 +219,47 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 flex flex-col" style={{ height: dynamicHeight }}>
+      {/* View Toggle Header */}
+      <div className="flex items-center gap-2 absolute right-[68px] top-[20px]">
+        {viewMode === 'TIMELINE' && (
+          <button
+            onClick={() => setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')}
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500"
+            title={sortOrder === 'ASC' ? 'Oldest First' : 'Newest First'}
+          >
+            {sortOrder === 'ASC' ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h5m4 0v12m0 0l-4-4m4 4l4-4" />
+              </svg>
+            )}
+          </button>
+        )}
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+          <button
+            onClick={() => setViewMode('TIMELINE')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'TIMELINE'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+          >
+            Timeline
+          </button>
+          <button
+            onClick={() => setViewMode('GROUPED')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'GROUPED'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+          >
+            Quest
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto pr-1">
         {loading ? (
           <div className="space-y-4">
@@ -214,13 +268,13 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
               <div key={`skeleton-${index}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800 animate-pulse">
                 {/* Task title skeleton */}
                 <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                
+
                 {/* Sessions and duration skeleton */}
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
                 </div>
-                
+
                 {/* Session list skeleton */}
                 <div className="space-y-1 ml-2">
                   {Array.from({ length: 2 + (index % 3) }).map((_, sessionIndex) => (
@@ -248,22 +302,32 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {summary.map((item: { title: string; sessions: ActivityLogItem[]; totalMinutes: number }) => (
-              <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
-                <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block bg-brand-100 text-brand-700 px-2 py-1 rounded-full text-xs font-semibold">
-                    {item.sessions.length} sessions
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-300">({formatTotal(item.totalMinutes)})</span>
+            {viewMode === 'GROUPED' ? (
+              // Grouped View (Existing)
+              summary.map((item: { title: string; sessions: ActivityLogItem[]; totalMinutes: number }) => (
+                <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
+                  <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block bg-brand-100 text-brand-700 px-2 py-1 rounded-full text-xs font-semibold">
+                      {item.sessions.length} sessions
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-300">({formatTotal(item.totalMinutes)})</span>
+                  </div>
+                  <div className="space-y-1 ml-2">
+                    {item.sessions.map((log: ActivityLogItem) => (
+                      <CollapsibleLogItem key={log.id} log={log} />
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-1 ml-2">
-                  {item.sessions.map((log: ActivityLogItem) => (
-                    <CollapsibleLogItem key={log.id} log={log} />
-                  ))}
-                </div>
+              ))
+            ) : (
+              // Timeline View (New)
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-2 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+                {timelineLogs.map((log) => (
+                  <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} />
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
