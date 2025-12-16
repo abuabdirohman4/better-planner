@@ -63,7 +63,7 @@ const TargetFocusContent: React.FC<TargetFocusContentProps> = ({
   };
 
   const formatSessions = (sessions: number) => {
-    return `${sessions} session${sessions !== 1 ? 's' : ''}`;
+    return `${sessions}/${totalSessionsTarget} session${sessions !== 1 ? 's' : ''}`;
   };
 
   // Default max sessions target
@@ -209,10 +209,6 @@ const TargetFocus: React.FC<TargetFocusProps> = ({ selectedDate }) => {
     isLoading, 
     error,
   } = useTargetFocus({ selectedDate });
-  
-  // Get Zustand store for optimistic updates
-  const { updateTargetOptimistically } = useTargetFocusStore();
-  
   
   return (
     <TargetFocusContent 
