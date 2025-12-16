@@ -18,6 +18,7 @@ import { useJournal } from './Journal/hooks/useJournal';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import TargetFocus from "./TargetFocus/TargetFocus";
+import DailyStats from "./DailyStats/DailyStats";
 
 export default function DailySyncPage() {
   const {
@@ -53,10 +54,10 @@ export default function DailySyncPage() {
   } = useJournal();
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr, openJournalModal);
-  
+
   // Card collapse states
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
-  
+
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
 
@@ -105,8 +106,9 @@ export default function DailySyncPage() {
             <DailySyncSkeleton />
           ) : (
             <>
-              {/* Target Focus Component */}
-              <div className="block md:hidden mt-4 mb-6">
+              {/* Daily Stats & Target Focus Component */}
+              <div className="block md:hidden mt-4 mb-6 space-y-4">
+                <DailyStats selectedDate={selectedDateStr} dailyPlan={dailyPlan} />
                 <TargetFocus selectedDate={selectedDateStr} />
               </div>
 
@@ -136,6 +138,9 @@ export default function DailySyncPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-6">
+                  <div className="hidden md:block">
+                    <DailyStats selectedDate={selectedDateStr} dailyPlan={dailyPlan} />
+                  </div>
                   <div className="hidden md:block">
                     <TargetFocus selectedDate={selectedDateStr} />
                   </div>
