@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, SVGProps } from 'react';
+import { Ban } from 'lucide-react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
@@ -101,28 +102,30 @@ export default function PomodoroTimer() {
     isProcessingCompletion,
     waitingForBreak,
     lastFocusDuration,
-    dismissBreakPrompt
+    dismissBreakPrompt,
+    lastActiveTask, // ✅ Get last active task
+    resumeLastTask // ✅ New action
   } = useTimer();
-  
+
   // Initialize timer persistence
   const { isOnline, isRecovering } = useTimerPersistence();
-  
+
   // Initialize global timer (this handles the actual timer counting and focus sound)
   useGlobalTimer();
-  
+
   // Initialize background timer for notifications and completion handling
   useBackgroundTimer();
-  
+
   // Initialize live timer notifications for PWA
   useLiveTimerNotification();
-  
+
   // ✅ DEV CONTROL: Check if timer is disabled in development
   const timerDisabled = isTimerDisabled();
   const devStatusMessage = getTimerDevStatusMessage();
-  
+
   // Get sound settings to check if user wants audio
   const { focusSettings, settings, loadSettings } = useSoundStore();
-  
+
   const [showSoundSelector, setShowSoundSelector] = useState(false);
   const [showAudioPermissionPrompt, setShowAudioPermissionPrompt] = useState(false);
   const [audioPermissionChecked, setAudioPermissionChecked] = useState(false);
@@ -133,17 +136,17 @@ export default function PomodoroTimer() {
   //     try {
   //       // Force refresh settings from database first
   //       await loadSettings();
-        
+
   //       // Get fresh settings after refresh
   //       const freshSettings = useSoundStore.getState().settings;
-        
+
   //       // Check if user wants to use focus sound (only this needs browser permission)
   //       const wantsFocusSound = freshSettings.focusSoundId !== 'none';
-        
+
   //       // Only check permission if user wants to use focus sound (background audio)
   //       if (wantsFocusSound) {
   //         const hasPermission = await checkAudioPermission();
-          
+
   //         if (!hasPermission) {
   //           setShowAudioPermissionPrompt(true);
   //         }
@@ -178,7 +181,10 @@ export default function PomodoroTimer() {
   const isLoading = isRecovering || isProcessingCompletion;
 
   // Helper to get total seconds for progress
-  const focusDuration = activeTask?.focus_duration ? activeTask.focus_duration * 60 : 25 * 60; // Default 25 minutes
+  const focusDuration = activeTask?.focus_duration
+    ? activeTask.focus_duration * 60
+    : (lastActiveTask?.focus_duration ? lastActiveTask.focus_duration * 60 : 25 * 60);
+
   let totalSeconds = 0;
   if (timerState === 'FOCUSING') totalSeconds = focusDuration;
   else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
@@ -188,7 +194,7 @@ export default function PomodoroTimer() {
   else if (timerState === 'PAUSED' && breakType === 'MEDIUM') totalSeconds = MEDIUM_BREAK_DURATION;
   else if (timerState === 'PAUSED' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
   else if (timerState === 'PAUSED') totalSeconds = focusDuration;
-  else totalSeconds = focusDuration; // fallback/idle
+  else totalSeconds = focusDuration; // fallback/idle logic uses last active or default
 
   // Progress calculation
   let progress = 0;
@@ -204,7 +210,11 @@ export default function PomodoroTimer() {
   // Pilih ikon & handler sesuai state
   let IconComponent = PlayIcon;
   let iconColor = 'text-brand-500';
-  let iconAction = () => activeTask && startFocusSession(activeTask);
+  let iconAction = () => {
+    if (activeTask) startFocusSession(activeTask);
+    else if (lastActiveTask) resumeLastTask();
+  };
+
   if (timerState === 'FOCUSING') {
     IconComponent = PauseIcon;
     iconColor = 'text-orange-500';
@@ -217,7 +227,24 @@ export default function PomodoroTimer() {
     IconComponent = BreakIcon;
     iconColor = 'text-red-500';
     iconAction = resumeTimer;
+  } else if (timerState === 'IDLE' && lastActiveTask) {
+    // Explicitly handle "Resume Old Task" state
+    IconComponent = PlayIcon;
+    iconColor = 'text-brand-500';
+    iconAction = resumeLastTask;
   }
+
+  // Display Task Title Logic
+  const displayTask = activeTask || lastActiveTask;
+  const displayTitle = timerState === 'BREAK'
+    ? `Break Time (${breakType === 'SHORT' ? '5m' : breakType === 'MEDIUM' ? '10m' : '15m'})`
+    : displayTask?.title || 'Ready to Focus';
+
+  // Display Progress Info
+  const showProgress = !activeTask && lastActiveTask && timerState === 'IDLE';
+  const progressText = displayTask?.completed_sessions !== undefined && displayTask?.target_sessions
+    ? `${displayTask.completed_sessions}/${displayTask.target_sessions} today's target`
+    : null;
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
@@ -274,7 +301,7 @@ export default function PomodoroTimer() {
 
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className={`flex items-center gap-6`}>
-      {/* <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}> */}
+        {/* <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}> */}
         {/* Timer Circle - Fixed position di kiri */}
         <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
           {activeTask || timerState === 'BREAK' ? (
@@ -292,11 +319,11 @@ export default function PomodoroTimer() {
             //   />
             // </svg>
           )}
-          {!activeTask && timerState !== 'BREAK' ? (
+          {(!activeTask && !lastActiveTask && timerState !== 'BREAK') ? (
             <span className="text-lg select-none">00:00</span>
           ) : (
             <>
-              <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer z-10' onClick={iconAction}>
+              <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer' onClick={iconAction}>
                 <IconComponent className={`w-16 h-16 ${iconColor}`} />
               </Button>
               <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
@@ -305,35 +332,41 @@ export default function PomodoroTimer() {
         </div>
 
         {/* Right side content - Task title dan button */}
-        <div className="flex-1 flex flex-col justify-center gap-3 min-w-0">
+        <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
           {/* Task Title */}
-          <div className="text-left text-base text-gray-500 dark:text-gray-300 font-medium break-words">
-            {timerState === 'BREAK'
-              ? `Break Time (${breakType === 'SHORT' ? '5m' : breakType === 'MEDIUM' ? '10m' : '15m'})`
-              : activeTask?.title || 'Ready to Focus'}
+          <div className="text-left text-xl font-medium break-words leading-tight">
+            {displayTitle}
           </div>
+
+          {/* Progress Info (Only in Idle/Resume state) */}
+          {showProgress && progressText && (
+            <div className="text-left text-sm text-gray-600">
+              {progressText}
+            </div>
+          )}
 
           {/* Stop Button */}
           {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
-            <div className="flex justify-start">
+            <div className="flex justify-start mt-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                 onClick={stopTimer}
               >
-                Cancel
+                <Ban className="w-3 h-3" />
+                Stop
               </Button>
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Debug Timer - Only show in development */}
       {process.env.NODE_ENV === 'development' && (
         <DebugTimer />
       )}
-      
+
       {/* Sound Selector Modal */}
       <SoundSelector
         isOpen={showSoundSelector}

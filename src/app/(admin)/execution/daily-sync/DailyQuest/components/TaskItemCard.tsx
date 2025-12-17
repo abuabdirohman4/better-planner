@@ -49,7 +49,7 @@ const TaskItemMenu: React.FC<MenuProps> = ({
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
         </svg>
       </button>
-      
+
       {/* Dropdown Menu */}
       {showMenu && (
         <div className="absolute right-0 top-8 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
@@ -110,15 +110,15 @@ const TaskItemMenu: React.FC<MenuProps> = ({
   );
 };
 
-const TaskItemCardContent = ({ 
-  item, 
-  onStatusChange, 
-  onSetActiveTask, 
+const TaskItemCardContent = ({
+  item,
+  onStatusChange,
+  onSetActiveTask,
   selectedDate,
-  onTargetChange, 
-  onFocusDurationChange, 
-  completedSessions, 
-  refreshKey, 
+  onTargetChange,
+  onFocusDurationChange,
+  completedSessions,
+  refreshKey,
   forceRefreshTaskId,
   onRemove,
   onConvertToChecklist,
@@ -126,13 +126,13 @@ const TaskItemCardContent = ({
   dragHandleProps
 }: TaskCardProps) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(
-    item, 
-    selectedDate || '', 
-    completedSessions, 
-    refreshKey, 
+    item,
+    selectedDate || '',
+    completedSessions,
+    refreshKey,
     forceRefreshTaskId
   );
-  
+
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
   const [optimisticFocusDuration, setOptimisticFocusDuration] = useState<number | null>(null);
   // Auto-detect checklist mode from focus_duration = 0
@@ -149,7 +149,7 @@ const TaskItemCardContent = ({
 
   // Get active task from timer store
   const { activeTask, timerState } = useTimerStore();
-  
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -166,25 +166,25 @@ const TaskItemCardContent = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showMenu]);
-  
+
   // Get task completion sound settings
   const { taskCompletionSettings } = useSoundStore();
-  
+
   // Get target focus store for optimistic updates
   const { updateTargetOptimistically } = useTargetFocusStore();
-  
+
   const isCompleted = (optimisticStatus || item.status) === 'DONE';
   const isActiveInTimer = activeTask?.id === item.item_id && (timerState === 'FOCUSING' || timerState === 'PAUSED');
   const isVisuallyDisabled = isCompleted || (activeTask && !isActiveInTimer); // Visual disable only - functionality remains normal
 
   // Hamburger icon for drag handle (only when dragHandleProps is provided)
   const HamburgerIcon = () => (
-    <svg 
-      width="20" 
-      height="20" 
-      viewBox="0 0 20 20" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg" 
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
     >
       <rect x="4" y="6" width="12" height="1.5" rx="0.75" fill="currentColor" />
@@ -192,20 +192,19 @@ const TaskItemCardContent = ({
       <rect x="4" y="12.5" width="12" height="1.5" rx="0.75" fill="currentColor" />
     </svg>
   );
-  
+
   return (
-    <div className={`rounded-lg py-4 px-2 shadow-sm border mb-3 transition-all duration-200 relative ${
-      isVisuallyDisabled 
-        ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60' 
-        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-    }`}>
-      
+    <div className={`rounded-lg py-4 px-2 shadow-sm border mb-3 transition-all duration-200 relative ${isVisuallyDisabled
+      ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60'
+      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+      }`}>
+
       {/* Checklist Mode - Simple: Checkbox di kiri + Judul */}
       {isChecklistMode ? (
         <div className="flex items-center gap-3">
           {/* Drag handle - Hamburger icon (only if dragHandleProps provided) */}
           {dragHandleProps && (
-            <div 
+            <div
               {...dragHandleProps.attributes}
               {...dragHandleProps.listeners}
               className="flex items-center justify-center cursor-grab active:cursor-grabbing select-none flex-shrink-0"
@@ -214,13 +213,13 @@ const TaskItemCardContent = ({
               <HamburgerIcon />
             </div>
           )}
-          
+
           {/* Checkbox di kiri - Same styling as normal mode */}
           <button
             type="button"
             onClick={async () => {
               const newStatus = isCompleted ? 'TODO' : 'DONE';
-              
+
               // Play completion sound when marking as DONE
               if (newStatus === 'DONE') {
                 try {
@@ -229,10 +228,10 @@ const TaskItemCardContent = ({
                   console.warn('Failed to play completion sound:', error);
                 }
               }
-              
+
               // Optimistic update - update UI immediately
               setOptimisticStatus(newStatus);
-              
+
               try {
                 await onStatusChange(item.id, newStatus);
                 // Clear optimistic status after successful update
@@ -243,36 +242,34 @@ const TaskItemCardContent = ({
                 console.error('Error updating status:', error);
               }
             }}
-            className={`w-8 h-8 rounded focus:ring-2 cursor-pointer flex items-center justify-center transition-colors border border-gray-300 ${
-              isVisuallyDisabled
-                ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
-                : ''
-            }`}
+            className={`w-8 h-8 rounded focus:ring-2 cursor-pointer flex items-center justify-center transition-colors border border-gray-300 ${isVisuallyDisabled
+              ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
+              : ''
+              }`}
           >
             {isCompleted && (
-              <svg 
-                className="w-10 h-10" 
-                fill="currentColor" 
+              <svg
+                className="w-10 h-10"
+                fill="currentColor"
                 viewBox="0 0 20 20"
               >
-                <path 
-                  fillRule="evenodd" 
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                  clipRule="evenodd" 
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
                 />
               </svg>
             )}
           </button>
-          
+
           {/* Judul Task */}
-          <h4 className={`flex-1 font-medium text-sm leading-tight ${
-            isCompleted 
-              ? 'text-gray-500 dark:text-gray-500 line-through' 
-              : 'text-gray-900 dark:text-gray-100'
-          }`}>
+          <h4 className={`flex-1 font-medium text-sm leading-tight ${isCompleted
+            ? 'text-gray-500 dark:text-gray-500 line-through'
+            : 'text-gray-900 dark:text-gray-100'
+            }`}>
             {item.title || `Task ${item.item_id}`}
           </h4>
-          
+
           {/* ✅ NEW: Menu aligned with checkbox */}
           <TaskItemMenu
             showMenu={showMenu}
@@ -295,7 +292,7 @@ const TaskItemCardContent = ({
             <div className="flex items-center gap-2">
               {/* Drag handle - Hamburger icon (only if dragHandleProps provided) */}
               {dragHandleProps && (
-                <div 
+                <div
                   {...dragHandleProps.attributes}
                   {...dragHandleProps.listeners}
                   className="flex items-center justify-center cursor-grab active:cursor-grabbing select-none flex-shrink-0"
@@ -304,53 +301,53 @@ const TaskItemCardContent = ({
                   <HamburgerIcon />
                 </div>
               )}
-              
+
               {onSetActiveTask ? (
                 <button
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
-                    isVisuallyDisabled 
-                      ? 'bg-gray-100 text-gray-400' 
-                      : `${isActiveInTimer 
-                          ? 'bg-gray-50 text-orange-500 hover:bg-orange-100' 
-                          : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                  }`}`}
+                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isVisuallyDisabled
+                    ? 'bg-gray-100 text-gray-400'
+                    : `${isActiveInTimer
+                      ? 'bg-gray-50 text-orange-500 hover:bg-orange-100'
+                      : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                    }`}`}
                   onClick={() => onSetActiveTask({
                     id: item.item_id,
                     title: item.title || `Task ${item.item_id}`,
                     item_type: item.item_type,
-                    focus_duration: item.focus_duration || 25
+                    focus_duration: item.focus_duration || 25,
+                    completed_sessions: completed, // ✅ Pass session progress
+                    target_sessions: target // ✅ Pass session target
                   })}
                   title={
-                    isCompleted 
-                      ? "Quest sudah selesai" 
-                      : isActiveInTimer 
-                        ? "Quest sedang aktif di timer" 
-                        : activeTask 
-                          ? "Ada quest lain yang sedang aktif di timer" 
+                    isCompleted
+                      ? "Quest sudah selesai"
+                      : isActiveInTimer
+                        ? "Quest sedang aktif di timer"
+                        : activeTask
+                          ? "Ada quest lain yang sedang aktif di timer"
                           : "Mulai Pomodoro"
                   }
                 >
                   {isActiveInTimer ? (
                     // Pause icon saat task sedang aktif di timer
                     <svg width="35" height="35" fill="currentColor" viewBox="0 0 20 20">
-                      <circle cx="10" cy="10" r="9" fill="currentColor" className='text-orange-500' opacity="0.15"/>
-                      <rect x="7" y="6" width="2" height="8" rx="1" fill="white" stroke="currentColor"/>
-                      <rect x="11" y="6" width="2" height="8" rx="1" fill="white" stroke="currentColor"/>
+                      <circle cx="10" cy="10" r="9" fill="currentColor" className='text-orange-500' opacity="0.15" />
+                      <rect x="7" y="6" width="2" height="8" rx="1" fill="white" stroke="currentColor" />
+                      <rect x="11" y="6" width="2" height="8" rx="1" fill="white" stroke="currentColor" />
                     </svg>
                   ) : (
                     // Play icon saat task tidak aktif
                     <svg width="35" height="35" fill="currentColor" viewBox="0 0 20 20">
-                      <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15"/>
-                      <polygon points="8,6 14,10 8,14" fill="currentColor"/>
+                      <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15" />
+                      <polygon points="8,6 14,10 8,14" fill="currentColor" />
                     </svg>
                   )}
                 </button>
               ) : null}
-              <h4 className={`mr-1.5 font-medium text-sm leading-tight ${
-                isCompleted 
-                  ? 'text-gray-500 dark:text-gray-500 line-through' 
-                  : 'text-gray-900 dark:text-gray-100'
-              }`}>
+              <h4 className={`mr-1.5 font-medium text-sm leading-tight ${isCompleted
+                ? 'text-gray-500 dark:text-gray-500 line-through'
+                : 'text-gray-900 dark:text-gray-100'
+                }`}>
                 {item.title || `Task ${item.item_id}`}
               </h4>
             </div>
@@ -359,53 +356,52 @@ const TaskItemCardContent = ({
               <div className="flex items-center">
                 <button
                   type="button"
-                    onClick={async () => {
-                      const newStatus = isCompleted ? 'TODO' : 'DONE';
-                      
-                      // Play completion sound when marking as DONE
-                      if (newStatus === 'DONE') {
-                        try {
-                          await playSound(taskCompletionSettings.soundId, taskCompletionSettings.volume);
-                        } catch (error) {
-                          console.warn('Failed to play completion sound:', error);
-                        }
-                      }
-                      
-                      // Optimistic update - update UI immediately
-                      setOptimisticStatus(newStatus);
-                      
+                  onClick={async () => {
+                    const newStatus = isCompleted ? 'TODO' : 'DONE';
+
+                    // Play completion sound when marking as DONE
+                    if (newStatus === 'DONE') {
                       try {
-                        await onStatusChange(item.id, newStatus);
-                        // Clear optimistic status after successful update
-                        setOptimisticStatus(null);
+                        await playSound(taskCompletionSettings.soundId, taskCompletionSettings.volume);
                       } catch (error) {
-                        // Revert optimistic update on error
-                        setOptimisticStatus(null);
-                        console.error('Error updating status:', error);
+                        console.warn('Failed to play completion sound:', error);
                       }
+                    }
+
+                    // Optimistic update - update UI immediately
+                    setOptimisticStatus(newStatus);
+
+                    try {
+                      await onStatusChange(item.id, newStatus);
+                      // Clear optimistic status after successful update
+                      setOptimisticStatus(null);
+                    } catch (error) {
+                      // Revert optimistic update on error
+                      setOptimisticStatus(null);
+                      console.error('Error updating status:', error);
+                    }
                   }}
-                  className={`w-8 h-8 rounded focus:ring-2 cursor-pointer flex items-center justify-center transition-colors border border-gray-300 ${
-                    isVisuallyDisabled
-                      ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
-                      : ''
-                  }`}
+                  className={`w-8 h-8 rounded focus:ring-2 cursor-pointer flex items-center justify-center transition-colors border border-gray-300 ${isVisuallyDisabled
+                    ? 'bg-gray-100 text-gray-400 focus:ring-brand-400'
+                    : ''
+                    }`}
                 >
                   {isCompleted && (
-                    <svg 
-                      className="w-10 h-10" 
-                      fill="currentColor" 
+                    <svg
+                      className="w-10 h-10"
+                      fill="currentColor"
                       viewBox="0 0 20 20"
                     >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                        clipRule="evenodd" 
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
                       />
                     </svg>
                   )}
                 </button>
               </div>
-              
+
               {/* ✅ NEW: Menu aligned with checkbox */}
               <TaskItemMenu
                 showMenu={showMenu}
@@ -431,60 +427,57 @@ const TaskItemCardContent = ({
             )} */}
             <div className="flex items-center gap-1 text-xs">
               <button
-                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${
-                    isCompleted 
-                      ? 'text-gray-400 cursor-not-allowed' 
-                      : 'text-gray-500 hover:text-brand-600'
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${isCompleted
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-brand-600'
                   }`}
-                  disabled={savingTarget || target <= 1 || isCompleted}
+                disabled={savingTarget || target <= 1 || isCompleted}
                 onClick={() => {
                   if (!isCompleted) {
                     const newTarget = target - 1;
-                    
+
                     // Optimistic update to progress bar via Zustand store
                     updateTargetOptimistically(item.item_id, newTarget);
-                    
+
                     // Update the actual target
                     handleTargetChange(newTarget, onTargetChange);
                   }
                 }}
-                  aria-label="Kurangi target"
-                >
+                aria-label="Kurangi target"
+              >
                 <span className="block leading-none mb-1">-</span>
-                </button>
-                {loading ? (
-                  <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
-                ) : (
-                  <span className={`font-semibold border border-gray-300 rounded-lg px-3 py-1.5 ${
-                    isCompleted 
-                      ? 'text-gray-400' 
-                      : 'text-gray-700 dark:text-gray-300'
+              </button>
+              {loading ? (
+                <span className="text-gray-400"><Skeleton className="w-4 h-4 rounded" /></span>
+              ) : (
+                <span className={`font-semibold border border-gray-300 rounded-lg px-3 py-1.5 ${isCompleted
+                  ? 'text-gray-400'
+                  : 'text-gray-700 dark:text-gray-300'
                   }`}>
-                    {completed} / {target}
-                  </span>
-                )}
+                  {completed} / {target}
+                </span>
+              )}
               <button
-                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${
-                    isCompleted 
-                      ? 'text-gray-400 cursor-not-allowed' 
-                      : 'text-gray-500 hover:text-brand-600'
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-sm font-normal hover:bg-gray-100 hover:text-gray-dark disabled:cursor-not-allowed transition-colors ${isCompleted
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-brand-600'
                   }`}
-                  disabled={savingTarget || isCompleted}
+                disabled={savingTarget || isCompleted}
                 onClick={() => {
                   if (!isCompleted) {
                     const newTarget = target + 1;
-                    
+
                     // Optimistic update to progress bar via Zustand store
                     updateTargetOptimistically(item.item_id, newTarget);
-                    
+
                     // Update the actual target
                     handleTargetChange(newTarget, onTargetChange);
                   }
                 }}
-                  aria-label="Tambah target"
-                >
+                aria-label="Tambah target"
+              >
                 <span className="block leading-none">+</span>
-                </button>
+              </button>
             </div>
 
             {/* Dropdown untuk durasi fokus */}
@@ -493,13 +486,13 @@ const TaskItemCardContent = ({
                 value={optimisticFocusDuration || item.focus_duration || 25}
                 onChange={async (e) => {
                   const newDuration = parseInt(e.target.value);
-                  
+
                   // Optimistic update - update UI immediately
                   setOptimisticFocusDuration(newDuration);
-                  
+
                   try {
                     await onFocusDurationChange(item.id, newDuration);
-                    
+
                     // Clear optimistic state after successful update
                     setOptimisticFocusDuration(null);
                   } catch (error) {
@@ -508,11 +501,10 @@ const TaskItemCardContent = ({
                     console.error('Error updating focus duration:', error);
                   }
                 }}
-                className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${
-                  isVisuallyDisabled
-                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`appearance-none h-8 pl-3 pr-8 text-xs font-medium border rounded-lg transition-all duration-200 ${isVisuallyDisabled
+                  ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 dark:hover:border-gray-500'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {/* Testing option - only show in development */}
                 {process.env.NODE_ENV === 'development' && (
@@ -527,10 +519,10 @@ const TaskItemCardContent = ({
               </select>
               {/* Custom dropdown arrow */}
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg 
-                  className="w-3 h-3 text-gray-400 dark:text-gray-500" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-3 h-3 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

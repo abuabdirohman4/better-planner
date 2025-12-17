@@ -9,12 +9,13 @@ let lastCompletedTaskId: string | null = null;
 let lastCompletionTime = 0;
 
 export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
-
 export interface Task {
   id: string;
   title: string;
   item_type: string;
   focus_duration?: number; // Durasi fokus dalam menit
+  completed_sessions?: number; // Sesi yang sudah diselesaikan hari ini
+  target_sessions?: number; // Target sesi hari ini
 }
 
 interface SessionCompleteData {
@@ -39,11 +40,13 @@ interface TimerStoreState {
   focusSoundPlaying: boolean;
   waitingForBreak: boolean;
   lastFocusDuration: number;
+  lastActiveTask: Task | null; // ✅ Persist last active task for idle display
   startFocusSession: (task: Task) => void;
   startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => void;
   dismissBreakPrompt: () => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
+  resumeLastTask: () => void;
   stopTimer: () => void;
   resetTimer: () => void;
   setLastSessionComplete: (data: SessionCompleteData | null) => void;
@@ -91,6 +94,7 @@ export const useTimerStore = create<TimerStoreState>()(
       focusSoundPlaying: false,
       waitingForBreak: false,
       lastFocusDuration: 0,
+      lastActiveTask: null,
 
       startFocusSession: (task: Task) => {
         set({
@@ -100,6 +104,7 @@ export const useTimerStore = create<TimerStoreState>()(
           breakType: null,
           startTime: new Date().toISOString(),
           waitingForBreak: false, // Ensure prompt is closed
+          lastActiveTask: task, // ✅ Save as last active
         });
         // Start focus sound
         get().startFocusSound().catch(console.error);
@@ -147,6 +152,13 @@ export const useTimerStore = create<TimerStoreState>()(
         // Start focus sound when resuming focus session
         if (newState === 'FOCUSING') {
           get().startFocusSound().catch(console.error);
+        }
+      },
+
+      resumeLastTask: () => {
+        const state = get();
+        if (state.lastActiveTask) {
+          get().startFocusSession(state.lastActiveTask);
         }
       },
 
@@ -434,6 +446,7 @@ export const useTimerStore = create<TimerStoreState>()(
         sessionCount: state.sessionCount,
         breakType: state.breakType,
         startTime: state.startTime,
+        lastActiveTask: state.lastActiveTask,
       }),
     }
   )

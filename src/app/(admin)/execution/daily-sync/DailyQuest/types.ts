@@ -22,7 +22,7 @@ export interface DailySyncClientProps {
   year: number;
   weekNumber: number;
   selectedDate: string;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number; completed_sessions?: number; target_sessions?: number }) => void;
   dailyPlan: DailyPlan | null;
   loading: boolean;
   refreshSessionKey?: Record<string, number>;
@@ -35,7 +35,7 @@ export interface TaskColumnProps {
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => Promise<void>;
   onAddSideQuest?: (title: string) => void;
   onSelectTasks?: (newItems: { item_id: string; item_type: string; }[]) => void;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number; completed_sessions?: number; target_sessions?: number }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => Promise<void>;
   onFocusDurationChange: (itemId: string, duration: number) => Promise<void>;
@@ -51,7 +51,7 @@ export interface TaskColumnProps {
 export interface TaskCardProps {
   item: DailyPlanItem;
   onStatusChange: (itemId: string, status: 'TODO' | 'IN_PROGRESS' | 'DONE') => Promise<void>;
-  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number }) => void;
+  onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number; completed_sessions?: number; target_sessions?: number }) => void;
   selectedDate?: string;
   onTargetChange?: (itemId: string, newTarget: number) => Promise<void>;
   onFocusDurationChange: (itemId: string, duration: number) => Promise<void>;
