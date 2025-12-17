@@ -170,7 +170,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         const pomodoroHeight = pomodoroTimer ? pomodoroTimer.getBoundingClientRect().height : 0;
 
         // Calculate heights
-        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight) - pomodoroHeight - 180;
+        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight) - pomodoroHeight - 95;
 
         // Set dynamic height based on available space
         setDynamicHeight(`${finalHeight}px`);

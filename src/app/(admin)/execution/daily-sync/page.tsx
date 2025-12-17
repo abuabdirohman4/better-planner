@@ -126,6 +126,9 @@ export default function DailySyncPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
+                  <div className="hidden md:block mb-6">
+                    <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
+                  </div>
                   <DailySyncClient
                     year={year}
                     weekNumber={displayWeek}
@@ -139,6 +142,9 @@ export default function DailySyncPage() {
                 </div>
                 <div className="flex flex-col gap-6">
                   <div className="hidden md:block">
+                    <TargetFocus selectedDate={selectedDateStr} />
+                  </div>
+                  <div className="hidden md:block">
                     <CollapsibleCard
                       isCollapsed={cardCollapsed.pomodoroTimer}
                       onToggle={() => toggleCardCollapsed('pomodoroTimer')}
@@ -148,12 +154,6 @@ export default function DailySyncPage() {
                         <PomodoroTimer />
                       </div>
                     </CollapsibleCard>
-                  </div>
-                  <div className="hidden md:block">
-                    <TargetFocus selectedDate={selectedDateStr} />
-                  </div>
-                  <div className="hidden md:block">
-                    <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
                   </div>
                   <CollapsibleCard
                     isCollapsed={cardCollapsed.activityLog}

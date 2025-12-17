@@ -40,7 +40,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
   const handleSessionComplete = useCallback(async (sessionData: {
     taskId: string;
     taskTitle: string;
-    type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK';
+    type: 'FOCUS' | 'SHORT_BREAK' | 'MEDIUM_BREAK' | 'LONG_BREAK';
     startTime: string;
     endTime: string;
   }) => {
@@ -49,10 +49,10 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
       console.log('⏸️ Session completion disabled in development mode');
       return;
     }
-    
+
     // ✅ Set loading state
     setProcessingCompletion(true);
-    
+
     startTransition(async () => {
       try {
         if (!sessionData.taskId || !sessionData.type || !sessionData.startTime || !sessionData.endTime) {
@@ -62,7 +62,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
 
         // ✅ FIX: Use completeTimerSession for FOCUS sessions
         let activityLogId: string | undefined = undefined;
-        
+
         if (sessionData.type === 'FOCUS') {
           try {
             // Get active timer session
@@ -70,24 +70,24 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
             if (activeSession) {
               // Get client device ID
               const deviceId = getClientDeviceId();
-              
+
               // ✅ FIX: Add completion lock to prevent multiple database completions
               const completionKey = `${sessionData.taskId}-${sessionData.startTime}`;
               const lastCompletion = sessionStorage.getItem(`completion-${completionKey}`);
               const now = Date.now();
-              
+
               if (lastCompletion && (now - parseInt(lastCompletion)) < 5000) {
                 console.log('🔇 Database completion already processed recently, skipping...');
                 return;
               }
-              
+
               // Complete the timer session (this will create activity log and mark session as completed)
               await completeTimerSession(activeSession.id, deviceId);
               console.log('✅ Timer session completed successfully');
-              
+
               // Mark completion in sessionStorage
               sessionStorage.setItem(`completion-${completionKey}`, now.toString());
-              
+
               // ✅ FIX: Get the activity log ID after creation
               const supabase = await createClient();
               const { data: { user } } = await supabase.auth.getUser();
@@ -102,7 +102,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
                   .order('created_at', { ascending: false })
                   .limit(1)
                   .single();
-                
+
                 if (activityLog) {
                   activityLogId = activityLog.id;
                   console.log('✅ Activity log ID found:', activityLogId);
@@ -154,7 +154,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
 
         setActivityLogRefreshKey((k) => k + 1);
         useActivityStore.getState().triggerRefresh();
-        
+
         // ✅ FIX: Open journal modal for FOCUS sessions only, with activity log ID
         if (sessionData.type === 'FOCUS') {
           const durationInSeconds = Math.round((new Date(sessionData.endTime).getTime() - new Date(sessionData.startTime).getTime()) / 1000);
