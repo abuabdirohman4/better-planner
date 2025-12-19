@@ -755,21 +755,6 @@ export function useDailyPlanManagement(
     }
   };
 
-  const handleArchiveDailyQuest = async (taskId: string) => {
-    try {
-      await createClient()
-        .from('tasks')
-        .update({ is_archived: true })
-        .eq('id', taskId);
-
-      await mutate();
-      toast.success('Daily quest archived successfully');
-    } catch (error) {
-      console.error('Error archiving daily quest:', error);
-      toast.error('Failed to archive daily quest');
-    }
-  };
-
   return {
     // Data
     dailyPlan,
@@ -793,8 +778,7 @@ export function useDailyPlanManagement(
     handleFocusDurationChange,
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
-    handleConvertToQuest, // NEW: Handler untuk convert to quest
-    handleArchiveDailyQuest,
+    handleConvertToQuest,
 
     // Daily Quest selection state
     isDailyQuestModalOpen,

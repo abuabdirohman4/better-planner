@@ -46,7 +46,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
     handleConvertToQuest, // NEW: Handler untuk convert to quest
-    handleArchiveDailyQuest,
     // Daily Quest manual selection state
     isDailyQuestModalOpen,
     setIsDailyQuestModalOpen,
@@ -178,7 +177,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               onRemove={handleRemoveItem}
               onConvertToChecklist={handleConvertToChecklist}
               onConvertToQuest={handleConvertToQuest}
-              onArchiveDailyQuest={handleArchiveDailyQuest}
               showAddQuestButton={true}
               onSelectTasks={() => setIsDailyQuestModalOpen(true)}
             />

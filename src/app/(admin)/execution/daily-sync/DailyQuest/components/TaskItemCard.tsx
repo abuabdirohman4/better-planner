@@ -18,7 +18,6 @@ interface MenuProps {
   onConvertToChecklist?: (itemId: string) => Promise<void>;
   onConvertToQuest?: (itemId: string) => Promise<void>;
   onRemove?: (itemId: string) => Promise<void>;
-  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
   setShowConfirmModal: (show: boolean) => void;
   itemId: string;
   itemType: string;
@@ -33,7 +32,6 @@ const TaskItemMenu: React.FC<MenuProps> = ({
   onConvertToChecklist,
   onConvertToQuest,
   onRemove,
-  onArchiveDailyQuest,
   setShowConfirmModal,
   itemId,
   itemType,
@@ -95,28 +93,7 @@ const TaskItemMenu: React.FC<MenuProps> = ({
             )
           )}
 
-          {itemType === 'DAILY_QUEST' && (
-            <>
-              {onArchiveDailyQuest && (
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    setShowMenu(false);
-                    try {
-                      await onArchiveDailyQuest(itemId);
-                    } catch (error) {
-                      console.error('Error archiving:', error);
-                    }
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  Archive Quest (Permanent)
-                </button>
-              )}
-            </>
-          )}
-
-          {itemType !== 'DAILY_QUEST' && onRemove && (
+          {onRemove && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -147,7 +124,6 @@ const TaskItemCardContent = ({
   onRemove,
   onConvertToChecklist,
   onConvertToQuest,
-  onArchiveDailyQuest,
   dragHandleProps
 }: TaskCardProps) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(
@@ -304,7 +280,6 @@ const TaskItemCardContent = ({
             onConvertToChecklist={onConvertToChecklist}
             onConvertToQuest={onConvertToQuest}
             onRemove={onRemove}
-            onArchiveDailyQuest={onArchiveDailyQuest}
             setShowConfirmModal={setShowConfirmModal}
             itemId={item.id}
             itemType={item.item_type}
@@ -438,7 +413,6 @@ const TaskItemCardContent = ({
                 onConvertToChecklist={onConvertToChecklist}
                 onConvertToQuest={onConvertToQuest}
                 onRemove={onRemove}
-                onArchiveDailyQuest={onArchiveDailyQuest}
                 setShowConfirmModal={setShowConfirmModal}
                 itemId={item.id}
                 itemType={item.item_type}

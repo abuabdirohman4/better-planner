@@ -47,7 +47,11 @@ export interface TaskColumnProps {
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
   onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
-  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
+  // Drag handle props (optional, for sortable cards)
+  dragHandleProps?: {
+    listeners?: any;
+    attributes?: any;
+  };
 }
 
 export interface TaskCardProps {
@@ -63,7 +67,6 @@ export interface TaskCardProps {
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
   onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
-  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
   // Drag handle props (optional, for sortable cards)
   dragHandleProps?: {
     listeners?: any;

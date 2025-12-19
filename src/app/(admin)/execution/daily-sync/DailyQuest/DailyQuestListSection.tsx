@@ -40,8 +40,7 @@ const DailyQuestListSection = ({
   refreshSessionKey,
   onRemove,
   onConvertToChecklist,
-  onConvertToQuest,
-  onArchiveDailyQuest
+  onConvertToQuest
 }: TaskColumnProps) => {
   const { showCompletedDailyQuest, toggleShowCompletedDailyQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
@@ -196,7 +195,6 @@ const DailyQuestListSection = ({
                 onRemove={onRemove}
                 onConvertToChecklist={onConvertToChecklist}
                 onConvertToQuest={onConvertToQuest}
-                onArchiveDailyQuest={onArchiveDailyQuest}
               />
             ))}
             {sortedItems.length === 0 ? (
