@@ -213,7 +213,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Cari project..."
+            placeholder="Cari work quest..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
