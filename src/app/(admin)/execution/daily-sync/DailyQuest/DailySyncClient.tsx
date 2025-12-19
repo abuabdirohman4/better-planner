@@ -78,6 +78,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   return (
     <div className="mx-auto relative">
       <div className="flex flex-col gap-6">
+        {/* Main Quest Section */}
         <CollapsibleCard
           isCollapsed={cardCollapsed.mainQuest}
           onToggle={() => toggleCardCollapsed('mainQuest')}
@@ -104,6 +105,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           </div>
         </CollapsibleCard>
 
+        {/* Work Quest Section */}
         <CollapsibleCard
           isCollapsed={cardCollapsed.workQuest}
           onToggle={() => toggleCardCollapsed('workQuest')}
@@ -123,32 +125,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               refreshSessionKey={refreshSessionKey}
               forceRefreshTaskId={forceRefreshTaskId}
               showAddQuestButton={true}
-              onRemove={handleRemoveItem}
-              onConvertToChecklist={handleConvertToChecklist}
-              onConvertToQuest={handleConvertToQuest}
-            />
-          </div>
-        </CollapsibleCard>
-
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.sideQuest}
-          onToggle={() => toggleCardCollapsed('sideQuest')}
-          className="side-quest-card"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <SideQuestListSection
-              title="Side Quest"
-              items={groupedItems['SIDE_QUEST']}
-              onStatusChange={handleStatusChange}
-              onAddSideQuest={handleAddSideQuest}
-              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
               onRemove={handleRemoveItem}
               onConvertToChecklist={handleConvertToChecklist}
               onConvertToQuest={handleConvertToQuest}
@@ -179,6 +155,33 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               onConvertToQuest={handleConvertToQuest}
               showAddQuestButton={true}
               onSelectTasks={() => setIsDailyQuestModalOpen(true)}
+            />
+          </div>
+        </CollapsibleCard>
+
+        {/* Side Quest Section */}
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.sideQuest}
+          onToggle={() => toggleCardCollapsed('sideQuest')}
+          className="side-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <SideQuestListSection
+              title="Side Quest"
+              items={groupedItems['SIDE_QUEST']}
+              onStatusChange={handleStatusChange}
+              onAddSideQuest={handleAddSideQuest}
+              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
+              onRemove={handleRemoveItem}
+              onConvertToChecklist={handleConvertToChecklist}
+              onConvertToQuest={handleConvertToQuest}
             />
           </div>
         </CollapsibleCard>

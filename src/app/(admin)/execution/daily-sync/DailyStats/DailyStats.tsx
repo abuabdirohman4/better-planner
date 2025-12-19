@@ -35,6 +35,7 @@ export default function DailyStats({ dailyPlan, completedSessions }: DailyStatsP
   const mainStats = calculateStats('MAIN_QUEST');
   const workStats = calculateStats('WORK_QUEST');
   const sideStats = calculateStats('SIDE_QUEST');
+  const dailyStats = calculateStats('DAILY_QUEST');
 
   const questStats = [
     {
@@ -52,6 +53,14 @@ export default function DailyStats({ dailyPlan, completedSessions }: DailyStatsP
       stats: workStats,
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
       barColor: workStats.percentage > 100 ? 'bg-orange-500' : 'bg-blue-500'
+    },
+    {
+      type: 'DAILY_QUEST',
+      label: 'Daily Quest',
+      icon: '⚡',
+      stats: dailyStats,
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+      barColor: 'bg-indigo-500'
     },
     {
       type: 'SIDE_QUEST',

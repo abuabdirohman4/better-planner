@@ -19,7 +19,12 @@ async function getCompletedSessions(selectedDate: string, dailyPlanItems: Array<
   try {
     // Get all task IDs from daily plan items
     const taskIds = dailyPlanItems
-      .filter(item => item.item_type === 'MAIN_QUEST' || item.item_type === 'SIDE_QUEST' || item.item_type === 'WORK_QUEST')
+      .filter(item =>
+        item.item_type === 'MAIN_QUEST' ||
+        item.item_type === 'SIDE_QUEST' ||
+        item.item_type === 'WORK_QUEST' ||
+        item.item_type === 'DAILY_QUEST'
+      )
       .map(item => item.item_id);
 
     if (taskIds.length === 0) return {};
@@ -40,7 +45,7 @@ async function getCompletedSessions(selectedDate: string, dailyPlanItems: Array<
 
     // Count sessions per task
     const sessionCounts: Record<string, number> = {};
-    
+
     // Initialize all daily plan items with 0
     dailyPlanItems.forEach(item => {
       sessionCounts[item.id] = 0;
@@ -64,11 +69,16 @@ async function getCompletedSessions(selectedDate: string, dailyPlanItems: Array<
 
 export function useCompletedSessions({ selectedDate, dailyPlanItems }: CompletedSessionsOptions) {
   const taskIds = dailyPlanItems
-    .filter(item => item.item_type === 'MAIN_QUEST' || item.item_type === 'SIDE_QUEST' || item.item_type === 'WORK_QUEST')
+    .filter(item =>
+      item.item_type === 'MAIN_QUEST' ||
+      item.item_type === 'SIDE_QUEST' ||
+      item.item_type === 'WORK_QUEST' ||
+      item.item_type === 'DAILY_QUEST'
+    )
     .map(item => item.item_id);
 
   const { data: completedSessions = {}, error, isLoading } = useSWR(
-    selectedDate && taskIds.length > 0 
+    selectedDate && taskIds.length > 0
       ? dailySyncKeys.allCompletedSessions(taskIds, selectedDate)
       : null,
     () => getCompletedSessions(selectedDate, dailyPlanItems),
