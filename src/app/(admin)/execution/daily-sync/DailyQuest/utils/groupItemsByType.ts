@@ -5,9 +5,10 @@ export const groupItemsByType = (items: DailyPlanItem[] = []) => {
     'MAIN_QUEST': [] as DailyPlanItem[],
     'WORK': [] as DailyPlanItem[],
     'SIDE_QUEST': [] as DailyPlanItem[],
-    'WORK_QUEST': [] as DailyPlanItem[]
+    'WORK_QUEST': [] as DailyPlanItem[],
+    'DAILY_QUEST': [] as DailyPlanItem[]
   };
-  
+
   items.forEach(item => {
     if (item.item_type === 'MAIN_QUEST') {
       groups['MAIN_QUEST'].push(item);
@@ -15,8 +16,10 @@ export const groupItemsByType = (items: DailyPlanItem[] = []) => {
       groups['SIDE_QUEST'].push(item);
     } else if (item.item_type === 'WORK_QUEST') {
       groups['WORK_QUEST'].push(item);
+    } else if (item.item_type === 'DAILY_QUEST') {
+      groups['DAILY_QUEST'].push(item);
     }
   });
-  
+
   return groups;
 };

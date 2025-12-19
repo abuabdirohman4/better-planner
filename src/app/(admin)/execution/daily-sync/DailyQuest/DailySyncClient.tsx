@@ -6,25 +6,27 @@ import { useDailyPlanManagement } from './hooks/useDailyPlanManagement';
 import MainQuestListSection from './MainQuestListSection';
 import SideQuestListSection from './SideQuestListSection';
 import WorkQuestListSection from './WorkQuestListSection';
+import DailyQuestListSection from './DailyQuestListSection';
 import MainQuestModal from './components/MainQuestModal';
 import WorkQuestModal from './components/WorkQuestModal';
+import DailyQuestModal from './components/DailyQuestModal';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { DailySyncClientProps } from './types';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
-const DailySyncClient: React.FC<DailySyncClientProps> = ({ 
-  year, 
-  weekNumber, 
-  selectedDate, 
-  onSetActiveTask, 
-  dailyPlan, 
-  loading, 
-  refreshSessionKey, 
-  forceRefreshTaskId 
+const DailySyncClient: React.FC<DailySyncClientProps> = ({
+  year,
+  weekNumber,
+  selectedDate,
+  onSetActiveTask,
+  dailyPlan,
+  loading,
+  refreshSessionKey,
+  forceRefreshTaskId
 }) => {
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
-  
+
   const {
     dailyPlan: hookDailyPlan,
     weeklyTasks: hookWeeklyTasks,
@@ -44,6 +46,16 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
     handleConvertToQuest, // NEW: Handler untuk convert to quest
+    handleArchiveDailyQuest,
+    // Daily Quest manual selection state
+    isDailyQuestModalOpen,
+    setIsDailyQuestModalOpen,
+    dailyQuests,
+    selectedDailyQuestIds,
+    handleDailyQuestToggle,
+    handleSaveDailyQuestSelection,
+    isLoadingDailyQuests,
+    isSavingDailyQuests,
     // Work Quest state (unified)
     modalState,
     selectedWorkQuests,
@@ -118,7 +130,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             />
           </div>
         </CollapsibleCard>
-        
+
         <CollapsibleCard
           isCollapsed={cardCollapsed.sideQuest}
           onToggle={() => toggleCardCollapsed('sideQuest')}
@@ -144,8 +156,36 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             />
           </div>
         </CollapsibleCard>
+
+        {/* Daily Quest Section */}
+        <CollapsibleCard
+          isCollapsed={cardCollapsed.dailyQuest}
+          onToggle={() => toggleCardCollapsed('dailyQuest')}
+          className="daily-quest-card"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <DailyQuestListSection
+              title="Daily Quest"
+              items={groupedItems['DAILY_QUEST'] || []}
+              onStatusChange={handleStatusChange}
+              onSetActiveTask={onSetActiveTask}
+              selectedDate={selectedDate || new Date().toISOString().split('T')[0]}
+              onTargetChange={handleTargetChange}
+              onFocusDurationChange={handleFocusDurationChange}
+              completedSessions={completedSessions}
+              refreshSessionKey={refreshSessionKey}
+              forceRefreshTaskId={forceRefreshTaskId}
+              onRemove={handleRemoveItem}
+              onConvertToChecklist={handleConvertToChecklist}
+              onConvertToQuest={handleConvertToQuest}
+              onArchiveDailyQuest={handleArchiveDailyQuest}
+              showAddQuestButton={true}
+              onSelectTasks={() => setIsDailyQuestModalOpen(true)}
+            />
+          </div>
+        </CollapsibleCard>
       </div>
-      
+
       <MainQuestModal
         isOpen={modalState.showModal && modalState.modalType === 'main'}
         onClose={() => setShowModal(false)}
@@ -159,7 +199,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
               item_id: taskId,
               item_type: 'MAIN_QUEST'
             }));
-          
+
           handleSaveSelection(selectedItems, true);
         }}
         isLoading={modalLoading}
@@ -177,12 +217,22 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
             item_id: taskId,
             item_type: 'WORK_QUEST'
           }));
-          
+
           handleSaveSelection(workQuestItems, true);
         }}
         isLoading={modalLoading}
         savingLoading={savingLoading}
         completedTodayCount={groupedItems.WORK_QUEST?.filter((item: any) => item.status === 'DONE').length || 0}
+      />
+      <DailyQuestModal
+        isOpen={isDailyQuestModalOpen}
+        onClose={() => setIsDailyQuestModalOpen(false)}
+        tasks={dailyQuests}
+        selectedTasks={selectedDailyQuestIds}
+        onTaskToggle={handleDailyQuestToggle}
+        onSave={handleSaveDailyQuestSelection}
+        isLoading={isLoadingDailyQuests}
+        savingLoading={isSavingDailyQuests}
       />
     </div>
   );

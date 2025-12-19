@@ -6,24 +6,28 @@ interface UIPreferencesState {
   showCompletedMainQuest: boolean;
   showCompletedSideQuest: boolean;
   showCompletedWorkQuest: boolean;
+  showCompletedDailyQuest: boolean;
   setShowCompletedMainQuest: (show: boolean) => void;
   setShowCompletedSideQuest: (show: boolean) => void;
   setShowCompletedWorkQuest: (show: boolean) => void;
+  setShowCompletedDailyQuest: (show: boolean) => void;
   toggleShowCompletedMainQuest: () => void;
   toggleShowCompletedSideQuest: () => void;
   toggleShowCompletedWorkQuest: () => void;
-  
+  toggleShowCompletedDailyQuest: () => void;
+
   // Show all tasks automatically vs show on milestone select
   showAllTasksAutomatically: boolean; // false by default (current behavior)
   setShowAllTasksAutomatically: (show: boolean) => void;
   toggleShowAllTasksAutomatically: () => void;
-  
+
   // Card collapse states
   cardCollapsed: {
     pomodoroTimer: boolean;
     mainQuest: boolean;
     sideQuest: boolean;
     workQuest: boolean;
+    dailyQuest: boolean;
     activityLog: boolean;
     brainDump: boolean;
   };
@@ -38,43 +42,49 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
       showCompletedMainQuest: true, // Default to show completed main quest tasks
       showCompletedSideQuest: true, // Default to show completed side quest tasks
       showCompletedWorkQuest: true, // Default to show completed work quest tasks
-      setShowCompletedMainQuest: (show: boolean) => 
+      showCompletedDailyQuest: true, // Default to show completed daily quest tasks
+      setShowCompletedMainQuest: (show: boolean) =>
         set({ showCompletedMainQuest: show }),
-      setShowCompletedSideQuest: (show: boolean) => 
+      setShowCompletedSideQuest: (show: boolean) =>
         set({ showCompletedSideQuest: show }),
-      setShowCompletedWorkQuest: (show: boolean) => 
+      setShowCompletedWorkQuest: (show: boolean) =>
         set({ showCompletedWorkQuest: show }),
-      toggleShowCompletedMainQuest: () => 
+      setShowCompletedDailyQuest: (show: boolean) =>
+        set({ showCompletedDailyQuest: show }),
+      toggleShowCompletedMainQuest: () =>
         set((state) => ({ showCompletedMainQuest: !state.showCompletedMainQuest })),
-      toggleShowCompletedSideQuest: () => 
+      toggleShowCompletedSideQuest: () =>
         set((state) => ({ showCompletedSideQuest: !state.showCompletedSideQuest })),
-      toggleShowCompletedWorkQuest: () => 
+      toggleShowCompletedWorkQuest: () =>
         set((state) => ({ showCompletedWorkQuest: !state.showCompletedWorkQuest })),
-      
+      toggleShowCompletedDailyQuest: () =>
+        set((state) => ({ showCompletedDailyQuest: !state.showCompletedDailyQuest })),
+
       // Show all tasks automatically vs show on milestone select
       showAllTasksAutomatically: false, // Default to current behavior (show on milestone select)
-      setShowAllTasksAutomatically: (show: boolean) => 
+      setShowAllTasksAutomatically: (show: boolean) =>
         set({ showAllTasksAutomatically: show }),
-      toggleShowAllTasksAutomatically: () => 
+      toggleShowAllTasksAutomatically: () =>
         set((state) => ({ showAllTasksAutomatically: !state.showAllTasksAutomatically })),
-      
+
       // Card collapse states - all cards start expanded (false = not collapsed)
       cardCollapsed: {
         pomodoroTimer: false,
         mainQuest: false,
         sideQuest: false,
         workQuest: false,
+        dailyQuest: false,
         activityLog: false,
         brainDump: false,
       },
-      setCardCollapsed: (cardId, collapsed) => 
+      setCardCollapsed: (cardId, collapsed) =>
         set((state) => ({
           cardCollapsed: {
             ...state.cardCollapsed,
             [cardId]: collapsed,
           },
         })),
-      toggleCardCollapsed: (cardId) => 
+      toggleCardCollapsed: (cardId) =>
         set((state) => ({
           cardCollapsed: {
             ...state.cardCollapsed,
@@ -85,10 +95,11 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
     {
       name: 'ui-preferences-storage', // unique name for localStorage key
       // Persist both show completed states and cardCollapsed states
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         showCompletedMainQuest: state.showCompletedMainQuest,
         showCompletedSideQuest: state.showCompletedSideQuest,
         showCompletedWorkQuest: state.showCompletedWorkQuest,
+        showCompletedDailyQuest: state.showCompletedDailyQuest,
         showAllTasksAutomatically: state.showAllTasksAutomatically,
         cardCollapsed: state.cardCollapsed,
       }),

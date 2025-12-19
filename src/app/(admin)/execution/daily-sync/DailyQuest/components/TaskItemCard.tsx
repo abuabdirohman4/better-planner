@@ -18,8 +18,10 @@ interface MenuProps {
   onConvertToChecklist?: (itemId: string) => Promise<void>;
   onConvertToQuest?: (itemId: string) => Promise<void>;
   onRemove?: (itemId: string) => Promise<void>;
+  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
   setShowConfirmModal: (show: boolean) => void;
   itemId: string;
+  itemType: string;
   setIsChecklistMode: (mode: boolean) => void;
 }
 
@@ -31,8 +33,10 @@ const TaskItemMenu: React.FC<MenuProps> = ({
   onConvertToChecklist,
   onConvertToQuest,
   onRemove,
+  onArchiveDailyQuest,
   setShowConfirmModal,
   itemId,
+  itemType,
   setIsChecklistMode
 }) => {
   return (
@@ -52,9 +56,8 @@ const TaskItemMenu: React.FC<MenuProps> = ({
 
       {/* Dropdown Menu */}
       {showMenu && (
-        <div className="absolute right-0 top-8 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 top-8 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
           {isChecklistMode ? (
-            // Show "Convert to Quest" when already in checklist mode
             onConvertToQuest && (
               <button
                 onClick={async (e) => {
@@ -67,13 +70,12 @@ const TaskItemMenu: React.FC<MenuProps> = ({
                     console.error('Error converting to quest:', error);
                   }
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Convert to Quest
               </button>
             )
           ) : (
-            // Show "Convert to Checklist" when in normal mode
             onConvertToChecklist && (
               <button
                 onClick={async (e) => {
@@ -86,20 +88,42 @@ const TaskItemMenu: React.FC<MenuProps> = ({
                     console.error('Error converting to checklist:', error);
                   }
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-lg"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Convert to Checklist
               </button>
             )
           )}
-          {onRemove && (
+
+          {itemType === 'DAILY_QUEST' && (
+            <>
+              {onArchiveDailyQuest && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    try {
+                      await onArchiveDailyQuest(itemId);
+                    } catch (error) {
+                      console.error('Error archiving:', error);
+                    }
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Archive Quest (Permanent)
+                </button>
+              )}
+            </>
+          )}
+
+          {itemType !== 'DAILY_QUEST' && onRemove && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(false);
                 setShowConfirmModal(true);
               }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 last:rounded-b-lg"
+              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Remove
             </button>
@@ -123,6 +147,7 @@ const TaskItemCardContent = ({
   onRemove,
   onConvertToChecklist,
   onConvertToQuest,
+  onArchiveDailyQuest,
   dragHandleProps
 }: TaskCardProps) => {
   const { completed, loading, target, savingTarget, handleTargetChange } = useTaskSession(
@@ -279,8 +304,10 @@ const TaskItemCardContent = ({
             onConvertToChecklist={onConvertToChecklist}
             onConvertToQuest={onConvertToQuest}
             onRemove={onRemove}
+            onArchiveDailyQuest={onArchiveDailyQuest}
             setShowConfirmModal={setShowConfirmModal}
             itemId={item.id}
+            itemType={item.item_type}
             setIsChecklistMode={setIsChecklistMode}
           />
         </div>
@@ -411,8 +438,10 @@ const TaskItemCardContent = ({
                 onConvertToChecklist={onConvertToChecklist}
                 onConvertToQuest={onConvertToQuest}
                 onRemove={onRemove}
+                onArchiveDailyQuest={onArchiveDailyQuest}
                 setShowConfirmModal={setShowConfirmModal}
                 itemId={item.id}
+                itemType={item.item_type}
                 setIsChecklistMode={setIsChecklistMode}
               />
             </div>

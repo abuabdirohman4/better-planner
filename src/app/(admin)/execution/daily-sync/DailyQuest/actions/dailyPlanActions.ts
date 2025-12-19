@@ -35,7 +35,7 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
 
     // Get the item types from selectedItems to determine what to delete
     const itemTypesToUpdate = [...new Set(selectedItems.map(item => item.item_type))];
-    
+
     // Delete only existing items of the same types as selectedItems
     if (itemTypesToUpdate.length > 0) {
       await supabase
@@ -49,8 +49,8 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
     if (selectedItems.length > 0) {
       const itemsToInsert = selectedItems.map((item) => {
         const existingItem = existingItemsMap.get(item.item_id);
-        return { 
-          ...item, 
+        return {
+          ...item,
           daily_plan_id,
           status: existingItem?.status || 'TODO', // Preserve existing status
           daily_session_target: existingItem?.daily_session_target || 1, // Preserve existing target
@@ -63,7 +63,7 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
     // ✅ CRITICAL: Revalidate all daily sync related paths
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error setting daily plan:', error);
@@ -87,7 +87,7 @@ export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, 
     // ✅ CRITICAL: Revalidate daily sync paths to ensure UI updates
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error updating focus duration:', error);
@@ -96,14 +96,16 @@ export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, 
 }
 
 export async function updateDailyPlanItemAndTaskStatus(
-  dailyPlanItemId: string, 
-  taskId: string, 
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE'
+  dailyPlanItemId: string,
+  taskId: string,
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE',
+  itemType?: string,
+  date?: string
 ) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -113,8 +115,8 @@ export async function updateDailyPlanItemAndTaskStatus(
       p_status: status,
       p_user_id: user.id,
       p_goal_slot: null, // Not used for daily sync
-      p_date: new Date().toISOString().split('T')[0],
-      p_daily_plan_item_id: dailyPlanItemId
+      p_date: date || new Date().toISOString().split('T')[0],
+      p_daily_plan_item_id: dailyPlanItemId.startsWith('virtual-') ? null : dailyPlanItemId
     });
 
     if (error) {
@@ -138,13 +140,14 @@ export async function updateDailyPlanItemAndTaskStatus(
     revalidatePath('/execution');
     revalidatePath('/planning/main-quests');
     revalidatePath('/execution/weekly-sync');
-    
+
     return data;
   } catch (error) {
     console.error("Error in updateDailyPlanItemAndTaskStatus:", error);
     throw error;
   }
 }
+
 
 export async function removeDailyPlanItem(dailyPlanItemId: string) {
   const supabase = await createClient();
@@ -162,7 +165,7 @@ export async function removeDailyPlanItem(dailyPlanItemId: string) {
     // ✅ CRITICAL: Revalidate all daily sync related paths
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error removing daily plan item:', error);
@@ -179,7 +182,7 @@ export async function convertToChecklist(dailyPlanItemId: string) {
     // ✅ FIXED: Update both focus_duration AND daily_session_target to 0 for checklist mode
     const { error } = await supabase
       .from('daily_plan_items')
-      .update({ 
+      .update({
         focus_duration: 0,
         daily_session_target: 0  // ✅ NEW: Also update daily_session_target
       })
@@ -190,7 +193,7 @@ export async function convertToChecklist(dailyPlanItemId: string) {
     // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error converting to checklist:', error);
@@ -207,7 +210,7 @@ export async function convertToQuest(dailyPlanItemId: string, defaultFocusDurati
     // ✅ NEW: Update focus_duration back to default and restore daily_session_target to 1
     const { error } = await supabase
       .from('daily_plan_items')
-      .update({ 
+      .update({
         focus_duration: defaultFocusDuration,
         daily_session_target: 1  // Restore to default
       })
@@ -218,7 +221,7 @@ export async function convertToQuest(dailyPlanItemId: string, defaultFocusDurati
     // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error converting to quest:', error);
@@ -241,10 +244,10 @@ export async function updateDailyPlanItemsDisplayOrder(
         .from('daily_plan_items')
         .update({ display_order: item.display_order })
         .eq('id', item.id);
-      
+
       if (error) throw error;
     }
-    
+
     revalidatePath('/execution/daily-sync');
     revalidatePath('/execution');
     return { success: true, message: 'Urutan task berhasil diupdate!' };

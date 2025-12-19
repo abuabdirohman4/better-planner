@@ -83,6 +83,11 @@ const questsNav: NavItem[] = [
   },
   {
     icon: <TaskIcon />,
+    name: "Daily Quests",
+    path: "/quests/daily-quests",
+  },
+  {
+    icon: <TaskIcon />,
     name: "Side Quests",
     path: "/quests/side-quests",
   },

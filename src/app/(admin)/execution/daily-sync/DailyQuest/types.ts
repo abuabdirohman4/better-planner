@@ -16,6 +16,7 @@ export interface DailyPlanItem {
   daily_session_target?: number;
   focus_duration?: number;
   display_order?: number; // For drag-and-drop reordering
+  is_archived?: boolean;
 }
 
 export interface DailySyncClientProps {
@@ -46,6 +47,7 @@ export interface TaskColumnProps {
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
   onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
+  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
 }
 
 export interface TaskCardProps {
@@ -61,6 +63,7 @@ export interface TaskCardProps {
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
   onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
   onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
+  onArchiveDailyQuest?: (itemId: string) => Promise<void>;
   // Drag handle props (optional, for sortable cards)
   dragHandleProps?: {
     listeners?: any;
@@ -82,12 +85,13 @@ export interface TaskSelectionModalProps {
 
 export interface WeeklyTaskItem {
   id: string;
-  type: 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING';
+  type: 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING' | 'DAILY_QUEST';
   title: string;
   status: string;
   quest_title: string;
   goal_slot: number;
   parent_task_id?: string | null;
+  is_archived?: boolean;
 }
 
 export interface SideQuestFormProps {

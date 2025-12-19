@@ -115,6 +115,19 @@ async function DashboardContent() {
                 <p className="text-xs text-gray-500 hidden md:block">Tugas pekerjaan</p>
               </div>
             </Link>
+            {/* Daily Quests Card */}
+            <Link 
+              href="/quests/daily-quests"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FDF2FA] group-hover:bg-[#eed4ec] transition-colors md:mr-4">
+                <TaskIcon className="w-6 h-6 text-[#E31B54]" />
+              </div>
+              <div>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Daily Quests</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Tugas harian</p>
+              </div>
+            </Link>
             {/* Side Quests Card */}
             <Link 
               href="/quests/side-quests"

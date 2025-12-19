@@ -8,18 +8,18 @@ export const swrConfig: SWRConfiguration = {
   revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled by default - individual hooks can override if needed
   revalidateOnReconnect: true, // Revalidate when internet comes back
   revalidateIfStale: true, // ✅ ENABLED - Revalidate stale data
-  
+
   // Cache configuration
   dedupingInterval: 2 * 60 * 1000, // ✅ 2 minutes - good default cache time
   focusThrottleInterval: 2000, // ✅ Reduced to 2 seconds for faster updates
-  
+
   // Error handling
   errorRetryCount: 2, // ✅ Increased to 2 retries
   errorRetryInterval: 1000, // ✅ 1 second retry interval
-  
+
   // Keep data in cache longer
   keepPreviousData: true, // Show previous data while revalidating
-  
+
   // Refresh interval (disabled by default, enable per use case)
   refreshInterval: 0,
 };
@@ -30,11 +30,11 @@ export const swrConfig: SWRConfiguration = {
  */
 export const fetcher = async (url: string) => {
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-  
+
   return response.json();
 };
 
@@ -126,6 +126,7 @@ export const dailySyncKeys = {
   dailySyncConditional: (year: number, weekNumber: number, selectedDate: string) => [...dailySyncKeys.all, 'conditional', year, weekNumber, selectedDate] as const,
   targetFocusData: (date: string) => [...dailySyncKeys.all, 'target-focus', date] as const,
   actualFocusTime: (date: string, taskIds: string[]) => [...dailySyncKeys.all, 'actual-focus-time', date, taskIds.sort().join(',')] as const,
+  dailyQuests: () => [...dailySyncKeys.all, 'selectable-daily-quests'] as const,
 };
 
 /**

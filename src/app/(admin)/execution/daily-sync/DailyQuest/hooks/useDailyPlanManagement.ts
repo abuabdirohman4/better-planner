@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
+import { addDailyQuest } from '../actions/dailyQuestActions';
 import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest } from '../actions/dailyPlanActions';
 import { DailyPlanItem } from '../types';
 import useSWR, { mutate as globalMutate } from 'swr';
@@ -27,7 +28,7 @@ async function getDailyPlan(selectedDate: string) {
       .maybeSingle(); // Use maybeSingle to avoid error when no data
 
     if (planError && planError.code !== 'PGRST116') throw planError;
-    
+
     // If no plan exists, return null
     if (!plan) return null;
 
@@ -40,7 +41,9 @@ async function getDailyPlan(selectedDate: string) {
 
     if (itemsError) throw itemsError;
 
-    if (!dailyPlanItems || dailyPlanItems.length === 0) {
+    const allPlanItems = dailyPlanItems || [];
+
+    if (allPlanItems.length === 0) {
       return {
         ...plan,
         daily_plan_items: []
@@ -49,17 +52,18 @@ async function getDailyPlan(selectedDate: string) {
 
     // ✅ OPTIMIZED: Batch queries by item type instead of N+1 queries
     // Group items by type
-    const mainQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'MAIN_QUEST');
-    const sideQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'SIDE_QUEST');
-    const workQuestItems = dailyPlanItems.filter((item: any) => item.item_type === 'WORK_QUEST');
+    const mainQuestItems = allPlanItems.filter((item: any) => item.item_type === 'MAIN_QUEST');
+    const sideQuestItems = allPlanItems.filter((item: any) => item.item_type === 'SIDE_QUEST');
+    const workQuestItems = allPlanItems.filter((item: any) => item.item_type === 'WORK_QUEST');
+    const dailyQuestItems = allPlanItems.filter((item: any) => item.item_type === 'DAILY_QUEST');
 
     // Extract all item_ids for batch fetching
-    const allItemIds = dailyPlanItems.map((item: any) => item.item_id);
+    const allItemIds = allPlanItems.map((item: any) => item.item_id);
 
     // Batch fetch all tasks in one query
     const { data: allTasks, error: tasksError } = await supabase
       .from('tasks')
-      .select('id, title, milestone_id, parent_task_id, status')
+      .select('id, title, milestone_id, parent_task_id, status, type, is_archived')
       .in('id', allItemIds);
 
     if (tasksError) throw tasksError;
@@ -128,7 +132,7 @@ async function getDailyPlan(selectedDate: string) {
     }
 
     // Combine data in-memory (fast, no additional network calls)
-    const itemsWithDetails = dailyPlanItems.map((item: { item_id: string; item_type: string; [key: string]: unknown }) => {
+    const itemsWithDetails = allPlanItems.map((item: any) => {
       let title = '';
       let quest_title = '';
       let task_status = item.status as string; // Preserve existing status
@@ -167,13 +171,20 @@ async function getDailyPlan(selectedDate: string) {
             }
           }
         }
+      } else if (item.item_type === 'DAILY_QUEST') {
+        if (task) {
+          title = task.title || '';
+          // Daily Quest status is independent per day
+          task_status = item.status || 'TODO';
+        }
       }
 
       return {
         ...item,
         title,
         quest_title,
-        status: task_status // Use synced status
+        status: task_status, // Use synced status
+        is_archived: task?.is_archived
       };
     });
 
@@ -187,6 +198,28 @@ async function getDailyPlan(selectedDate: string) {
   }
 }
 
+// Hook to fetch daily quests available for selection
+function useDailyQuestsForSelection(selectedDate: string) {
+  const supabase = createClient();
+
+  const { data: dailyQuests, isLoading, error } = useSWR(
+    dailySyncKeys.dailyQuests(),
+    async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('type', 'DAILY_QUEST')
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    }
+  );
+
+  return { dailyQuests: dailyQuests || [], isLoading, error };
+}
+
 export function useDailyPlanManagement(
   year: number,
   weekNumber: number,
@@ -194,13 +227,13 @@ export function useDailyPlanManagement(
 ) {
   // ✅ NEW: Get optimistic update functions from TargetFocus store
   const { updateChecklistModeOptimistically, removeItemOptimistically } = useTargetFocusStore();
-  
+
   // Data fetching
-  const { 
-    data: dailyPlan, 
-    error: dailyPlanError, 
+  const {
+    data: dailyPlan,
+    error: dailyPlanError,
     isLoading: dailyPlanLoading,
-    mutate: mutateDailyPlan 
+    mutate: mutateDailyPlan
   } = useSWR(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
     () => getDailyPlan(selectedDate),
@@ -213,11 +246,11 @@ export function useDailyPlanManagement(
     }
   );
 
-  const { 
-    tasks: weeklyTasks, 
-    error: tasksError, 
+  const {
+    tasks: weeklyTasks,
+    error: tasksError,
     isLoading: tasksLoading,
-    mutate: mutateTasks 
+    mutate: mutateTasks
   } = useTasksForWeek(year, weekNumber, selectedDate);
 
   // ✅ NEW: Get completed sessions from activity_logs
@@ -230,7 +263,7 @@ export function useDailyPlanManagement(
   // Combine loading states
   const loading = dailyPlanLoading || tasksLoading || completedSessionsLoading;
   const error = dailyPlanError || tasksError;
-  
+
   // Enhanced mutate function that refreshes both and invalidates related caches
   const mutate = async () => {
     await Promise.all([
@@ -240,29 +273,56 @@ export function useDailyPlanManagement(
       globalMutate((key) => {
         if (Array.isArray(key)) {
           // Invalidate daily-sync, weekly-sync, and main-quests related caches
-          return key[0] === 'daily-sync' || 
-                 key[0] === 'weekly-sync' || 
-                 key[0] === 'main-quests' ||
-                 key[0] === 'quests' ||
-                 key[0] === 'milestones' ||
-                 key[0] === 'tasks';
+          return key[0] === 'daily-sync' ||
+            key[0] === 'weekly-sync' ||
+            key[0] === 'main-quests' ||
+            key[0] === 'quests' ||
+            key[0] === 'milestones' ||
+            key[0] === 'tasks';
         }
         return false;
       })
     ]);
   };
 
+  // Add Daily Quest selection state
+  const [isDailyQuestModalOpen, setIsDailyQuestModalOpen] = useState(false);
+  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(selectedDate);
+  const [selectedDailyQuestIds, setSelectedDailyQuestIds] = useState<Record<string, boolean>>({});
+  const [isSavingDailyQuests, setIsSavingDailyQuests] = useState(false);
+
+  // Initialize selectedDailyQuestIds when modal opens
+  useEffect(() => {
+    if (isDailyQuestModalOpen && dailyPlan?.daily_plan_items) {
+      const selections: Record<string, boolean> = {};
+      dailyPlan.daily_plan_items.forEach((item: any) => {
+        if (item.item_type === 'DAILY_QUEST') {
+          selections[item.item_id] = true;
+        }
+      });
+      setSelectedDailyQuestIds(selections);
+    }
+  }, [isDailyQuestModalOpen, dailyPlan]);
+
+  const handleDailyQuestToggle = (taskId: string) => {
+    setSelectedDailyQuestIds(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
   // Unified modal state
   const [modalState, setModalState] = useState({
     showModal: false,
-    modalType: 'main' as 'main' | 'work',
+    modalType: 'main' as 'main' | 'work' | 'daily',
     modalLoading: false,
     savingLoading: false
   });
-  
+
   // Unified selection state - using same structure for both quest types
   const [selectedTasks, setSelectedTasks] = useState<Record<string, boolean>>({});
   const [selectedWorkQuests, setSelectedWorkQuests] = useState<string[]>([]);
+  const [selectedDailyQuests, setSelectedDailyQuests] = useState<string[]>([]);
 
   // ✅ CRITICAL: Periodic revalidation for cross-environment synchronization
   useEffect(() => {
@@ -274,9 +334,9 @@ export function useDailyPlanManagement(
     return () => clearInterval(interval);
   }, [mutate]);
 
-  const getCurrentDailyPlanSelections = (questType: 'main' | 'work' = 'main') => {
-    if (!dailyPlan?.daily_plan_items) return questType === 'main' ? {} : [];
-    
+  const getCurrentDailyPlanSelections = (questType: 'main' | 'work' | 'daily' = 'main') => {
+    if (!dailyPlan?.daily_plan_items) return (questType === 'main' ? {} : []);
+
     if (questType === 'main') {
       const selections: Record<string, boolean> = {};
       dailyPlan.daily_plan_items.forEach((item: DailyPlanItem) => {
@@ -285,29 +345,35 @@ export function useDailyPlanManagement(
         }
       });
       return selections;
-    } else {
+    } else if (questType === 'work') {
       return dailyPlan.daily_plan_items
         .filter((item: DailyPlanItem) => item.item_type === 'WORK_QUEST')
+        .map((item: DailyPlanItem) => item.item_id);
+    } else {
+      return dailyPlan.daily_plan_items
+        .filter((item: DailyPlanItem) => item.item_type === 'DAILY_QUEST')
         .map((item: DailyPlanItem) => item.item_id);
     }
   };
 
-  const handleOpenModal = async (modalType: 'main' | 'work' = 'main') => {
-    setModalState(prev => ({ 
-      ...prev, 
-      showModal: true, 
+  const handleOpenModal = async (modalType: 'main' | 'work' | 'daily' = 'main') => {
+    setModalState(prev => ({
+      ...prev,
+      showModal: true,
       modalType,
-      modalLoading: modalType === 'main' 
+      modalLoading: modalType !== 'daily' // daily fetched via server action possibly, or we can use custom loader
     }));
-    
+
     const currentSelections = getCurrentDailyPlanSelections(modalType);
-    
+
     if (modalType === 'main') {
       setSelectedTasks(currentSelections as Record<string, boolean>);
-    } else {
+    } else if (modalType === 'work') {
       setSelectedWorkQuests(currentSelections as string[]);
+    } else {
+      setSelectedDailyQuests(currentSelections as string[]);
     }
-    
+
     if (modalType === 'main') {
       try {
         // Refresh tasks data if mutate function is available
@@ -322,15 +388,21 @@ export function useDailyPlanManagement(
     }
   };
 
-  const handleTaskToggle = (taskId: string, questType: 'main' | 'work' = 'main') => {
+  const handleTaskToggle = (taskId: string, questType: 'main' | 'work' | 'daily' = 'main') => {
     if (questType === 'main') {
       setSelectedTasks(prev => ({
         ...prev,
         [taskId]: !prev[taskId]
       }));
     } else if (questType === 'work') {
-      setSelectedWorkQuests(prev => 
-        prev.includes(taskId) 
+      setSelectedWorkQuests(prev =>
+        prev.includes(taskId)
+          ? prev.filter(id => id !== taskId)
+          : [...prev, taskId]
+      );
+    } else if (questType === 'daily') {
+      setSelectedDailyQuests(prev =>
+        prev.includes(taskId)
           ? prev.filter(id => id !== taskId)
           : [...prev, taskId]
       );
@@ -339,32 +411,37 @@ export function useDailyPlanManagement(
 
   const handleSaveSelection = async (newItems: { item_id: string; item_type: string }[], preserveOtherTypes: boolean = true) => {
     setModalState(prev => ({ ...prev, savingLoading: true }));
-    
+
     try {
       let allItems = [...newItems];
 
       if (preserveOtherTypes) {
         // Preserve existing items of other types
-        const existingMainQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+        const existingMainQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) =>
           item.item_type === 'MAIN_QUEST'
         ) || [];
-        
-        const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+
+        const existingSideQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) =>
           item.item_type === 'SIDE_QUEST'
         ) || [];
 
-        const existingWorkQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) => 
+        const existingWorkQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) =>
           item.item_type === 'WORK_QUEST'
+        ) || [];
+
+        const existingDailyQuests = dailyPlan?.daily_plan_items?.filter((item: DailyPlanItem) =>
+          item.item_type === 'DAILY_QUEST'
         ) || [];
 
         // Get the types of new items to determine what to preserve
         const newItemTypes = [...new Set(newItems.map(item => item.item_type))];
-        
+
         // Preserve items that are NOT in the new items types
         const itemsToPreserve = [
           ...(newItemTypes.includes('MAIN_QUEST') ? [] : existingMainQuests),
           ...(newItemTypes.includes('SIDE_QUEST') ? [] : existingSideQuests),
-          ...(newItemTypes.includes('WORK_QUEST') ? [] : existingWorkQuests)
+          ...(newItemTypes.includes('WORK_QUEST') ? [] : existingWorkQuests),
+          ...(newItemTypes.includes('DAILY_QUEST') ? [] : existingDailyQuests)
         ];
 
         allItems = [
@@ -375,23 +452,44 @@ export function useDailyPlanManagement(
           ...newItems
         ];
       }
-      
+
       if (allItems.length === 0) return;
-      
+
       await setDailyPlan(selectedDate, allItems);
-      
+
       // ✅ CRITICAL: Force re-fetch both daily plan and weekly tasks to ensure UI updates
       await Promise.all([
         mutateDailyPlan(),
         mutateTasks()
       ]);
-      
+
       setModalState(prev => ({ ...prev, showModal: false }));
     } catch (err) {
       console.error('Error saving selection:', err);
       throw err; // Re-throw error so it can be caught by the calling function
     } finally {
       setModalState(prev => ({ ...prev, savingLoading: false }));
+    }
+  };
+
+  const handleSaveDailyQuestSelection = async () => {
+    setIsSavingDailyQuests(true);
+    try {
+      const selectedItems = Object.entries(selectedDailyQuestIds)
+        .filter(([_, selected]) => selected)
+        .map(([taskId]) => ({
+          item_id: taskId,
+          item_type: 'DAILY_QUEST'
+        }));
+
+      await handleSaveSelection(selectedItems, true);
+      setIsDailyQuestModalOpen(false);
+      toast.success('Daily quests updated successfully');
+    } catch (error) {
+      console.error('Error saving daily quests:', error);
+      toast.error('Failed to save daily quests');
+    } finally {
+      setIsSavingDailyQuests(false);
     }
   };
 
@@ -403,12 +501,18 @@ export function useDailyPlanManagement(
         throw new Error('Daily plan item not found');
       }
 
-      // Update both daily_plan_items and tasks status
-      await updateDailyPlanItemAndTaskStatus(itemId, dailyPlanItem.item_id, status);
-      
+      // Update status with item_type and date for proper DAILY_QUEST handling
+      await updateDailyPlanItemAndTaskStatus(
+        itemId,
+        dailyPlanItem.item_id,
+        status,
+        dailyPlanItem.item_type,
+        selectedDate
+      );
+
       // Force re-fetch from database to get updated data
       await mutateDailyPlan();
-      
+
       // ✅ CRITICAL: Invalidate weekly-sync SWR cache to ensure status updates are reflected
       // Weekly-sync SWR key format: ['weekly-sync', year, quarter, weekNumber, startDate, endDate]
       await globalMutate((key) => {
@@ -418,7 +522,7 @@ export function useDailyPlanManagement(
         }
         return false;
       }, undefined, { revalidate: true });
-      
+
       // Show success toast
       const statusText = status === 'DONE' ? 'Selesai' : 'Belum Selesai';
       toast.success(`Status tugas diubah menjadi: ${statusText}`);
@@ -429,13 +533,14 @@ export function useDailyPlanManagement(
     }
   };
 
+
   const handleAddSideQuest = async (title: string) => {
     try {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('date', selectedDate);
       await addSideQuest(formData);
-      
+
       // ✅ CRITICAL: Force re-fetch daily plan to show new side quest
       await mutateDailyPlan();
     } catch (err) {
@@ -447,10 +552,10 @@ export function useDailyPlanManagement(
   const handleFocusDurationChange = async (itemId: string, duration: number) => {
     try {
       await updateDailyPlanItemFocusDuration(itemId, duration);
-      
+
       // Force re-fetch from database to get updated data
       await mutateDailyPlan();
-      
+
       // Show success toast
       toast.success(`Durasi fokus diubah menjadi: ${duration} menit`);
     } catch (err) {
@@ -487,17 +592,17 @@ export function useDailyPlanManagement(
       // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
       const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
       const taskItemId = dailyPlanItem?.item_id;
-      
+
       // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
       if (taskItemId) {
         removeItemOptimistically(taskItemId);
       }
-      
+
       await removeDailyPlanItem(itemId);
-      
+
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
       await Promise.all([
         // Invalidate specific TargetFocus cache with forced revalidation
@@ -506,7 +611,7 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'target-focus';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
         // Also invalidate actualFocusTime cache
@@ -515,11 +620,11 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
       ]);
-      
+
       await mutateDailyPlan(); // Refresh data
       toast.success('Item berhasil dihapus dari plan hari ini');
     } catch (error) {
@@ -535,17 +640,17 @@ export function useDailyPlanManagement(
       // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
       const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
       const taskItemId = dailyPlanItem?.item_id;
-      
+
       // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
       if (taskItemId) {
         updateChecklistModeOptimistically(taskItemId, true); // true = convert to checklist
       }
-      
+
       await convertToChecklist(itemId);
-      
+
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
       // This ensures fresh data is fetched when daily plan refreshes
       await Promise.all([
@@ -555,7 +660,7 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'target-focus';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
         // ✅ CRITICAL: Invalidate ALL actualFocusTime caches (regardless of taskIds)
@@ -566,14 +671,14 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
       ]);
-      
+
       // Then refresh daily plan
       await mutateDailyPlan();
-      
+
       toast.success('Task berhasil diubah menjadi checklist');
     } catch (error) {
       console.error('Error converting to checklist:', error);
@@ -595,17 +700,17 @@ export function useDailyPlanManagement(
       // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
       const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
       const taskItemId = dailyPlanItem?.item_id;
-      
+
       // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
       if (taskItemId) {
         updateChecklistModeOptimistically(taskItemId, false); // false = convert to quest
       }
-      
+
       await convertToQuest(itemId);
-      
+
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
       // This ensures fresh data is fetched when daily plan refreshes
       await Promise.all([
@@ -615,7 +720,7 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'target-focus';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
         // ✅ CRITICAL: Invalidate ALL actualFocusTime caches (regardless of taskIds)
@@ -626,14 +731,14 @@ export function useDailyPlanManagement(
             return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
           }
           return false;
-        }, undefined, { 
+        }, undefined, {
           revalidate: true,
         }),
       ]);
-      
+
       // Then refresh daily plan
       await mutateDailyPlan();
-      
+
       toast.success('Task berhasil diubah menjadi quest');
     } catch (error) {
       console.error('Error converting to quest:', error);
@@ -650,6 +755,21 @@ export function useDailyPlanManagement(
     }
   };
 
+  const handleArchiveDailyQuest = async (taskId: string) => {
+    try {
+      await createClient()
+        .from('tasks')
+        .update({ is_archived: true })
+        .eq('id', taskId);
+
+      await mutate();
+      toast.success('Daily quest archived successfully');
+    } catch (error) {
+      console.error('Error archiving daily quest:', error);
+      toast.error('Failed to archive daily quest');
+    }
+  };
+
   return {
     // Data
     dailyPlan,
@@ -657,10 +777,10 @@ export function useDailyPlanManagement(
     completedSessions,
     loading,
     initialLoading: loading,
-    
+
     // Business logic
     selectedTasks,
-    showModal: modalState.showModal && modalState.modalType === 'main',
+    showModal: modalState.showModal,
     setShowModal: (show: boolean) => setModalState(prev => ({ ...prev, showModal: show })),
     modalLoading: modalState.modalLoading,
     savingLoading: modalState.savingLoading,
@@ -674,11 +794,23 @@ export function useDailyPlanManagement(
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
     handleConvertToQuest, // NEW: Handler untuk convert to quest
-    
+    handleArchiveDailyQuest,
+
+    // Daily Quest selection state
+    isDailyQuestModalOpen,
+    setIsDailyQuestModalOpen,
+    dailyQuests,
+    selectedDailyQuestIds,
+    handleDailyQuestToggle,
+    handleSaveDailyQuestSelection,
+    isLoadingDailyQuests,
+    isSavingDailyQuests,
+
     // Work Quest state (unified)
     modalState,
     selectedWorkQuests,
-    
+    selectedDailyQuests,
+
     // Utilities
     mutate
   };
