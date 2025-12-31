@@ -20,13 +20,28 @@ export function getQuarterFromWeek(week: number): number {
 
 // Helper: get week of year (menggunakan logika yang sama dengan getDateFromWeek & getQuarterDates)
 export function getWeekOfYear(date: Date): number {
-  const year = date.getFullYear();
-  const planningYearStartDate = getPlanningYearStartDate(year);
+  const currentYear = date.getFullYear();
+
+  // Untuk handle cross-year weeks (contoh: Week 1 Q1 2026 dimulai 29 Des 2025)
+  // Kita perlu cek apakah date ini masuk ke planning year berikutnya
+  const currentYearStart = getPlanningYearStartDate(currentYear);
+  const nextYearStart = getPlanningYearStartDate(currentYear + 1);
+
+  // Tentukan planning year yang tepat
+  // Jika date sebelum next year start, pakai current year
+  // Jika date >= next year start, berarti sudah masuk planning year berikutnya
+  let planningYear = currentYear;
+  let planningYearStartDate = currentYearStart;
+
+  if (date >= nextYearStart) {
+    planningYear = currentYear + 1;
+    planningYearStartDate = nextYearStart;
+  }
 
   // Hitung berapa minggu dari planningYearStartDate ke tanggal target
   const diffInDays = (date.getTime() - planningYearStartDate.getTime()) / 86400000;
   const weekNumber = Math.floor(diffInDays / 7) + 1;
-  
+
   return Math.max(1, weekNumber);
 }
 
