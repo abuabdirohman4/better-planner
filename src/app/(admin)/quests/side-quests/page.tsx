@@ -1,9 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useQuarterStore } from "@/stores/quarterStore";
+import { useSideQuests } from "./hooks/useSideQuests";
 import SideQuestList from "./components/SideQuestList";
 
+// Disable SSR untuk page ini karena menggunakan Zustand store
+export const dynamic = 'force-dynamic';
+
 export default function SideQuestsPage() {
+  const { year, quarter } = useQuarterStore();
+  const { sideQuests, isLoading, error, refetch, toggleStatus, updateQuest, deleteQuest } = useSideQuests(year, quarter);
+
+  // Reactive: Refetch when quarter changes
+  useEffect(() => {
+    refetch();
+  }, [year, quarter, refetch]);
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-4">
@@ -16,7 +29,14 @@ export default function SideQuestsPage() {
         </div>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <SideQuestList />
+        <SideQuestList
+          quests={sideQuests}
+          isLoading={isLoading}
+          error={error}
+          onToggleStatus={toggleStatus}
+          onUpdate={updateQuest}
+          onDelete={deleteQuest}
+        />
       </div>
     </div>
   );

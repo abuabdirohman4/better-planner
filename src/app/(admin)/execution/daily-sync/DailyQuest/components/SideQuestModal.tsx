@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useQuarterStore } from "@/stores/quarterStore";
 import { useSideQuests } from "@/app/(admin)/quests/side-quests/hooks/useSideQuests";
 import { SideQuest } from "@/app/(admin)/quests/side-quests/types";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
@@ -24,7 +25,8 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
   completedTodayCount = 0,
   existingSideQuests = [],
 }) => {
-  const { sideQuests, isLoading, error } = useSideQuests();
+  const { year, quarter } = useQuarterStore();
+  const { sideQuests, isLoading, error } = useSideQuests(year, quarter);
   const [selectedTasks, setSelectedTasks] = useState<SideQuest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompleted, setShowCompleted] = useState(true);

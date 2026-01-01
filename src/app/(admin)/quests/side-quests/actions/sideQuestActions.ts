@@ -2,22 +2,28 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getQuarterDates } from "@/lib/quarterUtils";
 import { SideQuest } from "../types";
 
-export async function getSideQuests(): Promise<SideQuest[]> {
+export async function getSideQuests(year: number, quarter: number): Promise<SideQuest[]> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
+
+    // Get date range for the quarter
+    const { startDate, endDate } = getQuarterDates(year, quarter);
 
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', user.id)
       .eq('type', 'SIDE_QUEST')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
       .order('created_at', { ascending: false });
 
     if (error) {

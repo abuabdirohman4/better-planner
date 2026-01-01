@@ -94,15 +94,15 @@ export function useWorkQuests() {
   };
 }
 
-export function useWorkQuestProjects() {
-  const { 
-    data: projects = [], 
-    error, 
+export function useWorkQuestProjects(year: number, quarter: number) {
+  const {
+    data: projects = [],
+    error,
     isLoading,
-    mutate 
+    mutate
   } = useSWR(
-    'work-quest-projects',
-    () => getWorkQuestProjects(),
+    ['work-quest-projects', year, quarter],
+    () => getWorkQuestProjects(year, quarter),
     {
       revalidateOnFocus: false,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes

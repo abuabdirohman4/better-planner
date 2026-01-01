@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { 
-  WorkQuest, 
-  WorkQuestFormData, 
+import { getQuarterDates } from "@/lib/quarterUtils";
+import {
+  WorkQuest,
+  WorkQuestFormData,
   WorkQuestSubtaskFormData,
   WorkQuestProject,
   WorkQuestProjectFormData,
@@ -279,16 +280,19 @@ export async function deleteWorkQuest(id: string): Promise<void> {
 }
 
 // Project Management Functions
-export async function getWorkQuestProjects(): Promise<WorkQuestProject[]> {
+export async function getWorkQuestProjects(year: number, quarter: number): Promise<WorkQuestProject[]> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Get main work quest projects (parent_task_id is null)
+    // Get date range for the quarter
+    const { startDate, endDate } = getQuarterDates(year, quarter);
+
+    // Get main work quest projects (parent_task_id is null) filtered by quarter
     const { data: projects, error: projectsError } = await supabase
       .from('tasks')
       .select(`
@@ -302,6 +306,8 @@ export async function getWorkQuestProjects(): Promise<WorkQuestProject[]> {
       .eq('user_id', user.id)
       .eq('type', 'WORK_QUEST')
       .is('parent_task_id', null)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
       .order('created_at', { ascending: false });
 
     if (projectsError) {

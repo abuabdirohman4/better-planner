@@ -1,12 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuarterStore } from "@/stores/quarterStore";
 import { useWorkQuestProjects } from "./hooks/useWorkQuests";
 import { ProjectForm, ProjectList, WorkQuestModal } from "./components";
 import { WorkQuestProject, WorkQuestProjectFormData } from "./types";
 import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 
+// Disable SSR untuk page ini karena menggunakan Zustand store
+export const dynamic = 'force-dynamic';
+
 export default function WorkQuestsPage() {
+  const { year, quarter } = useQuarterStore();
   const {
     projects,
     isLoading,
@@ -20,7 +25,12 @@ export default function WorkQuestsPage() {
     toggleProjectStatus,
     toggleTaskStatus,
     mutate
-  } = useWorkQuestProjects();
+  } = useWorkQuestProjects(year, quarter);
+
+  // Reactive: Refetch when quarter changes
+  useEffect(() => {
+    mutate();
+  }, [year, quarter, mutate]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<WorkQuestProject | null>(null);

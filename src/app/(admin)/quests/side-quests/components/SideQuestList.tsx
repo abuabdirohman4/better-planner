@@ -1,14 +1,28 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useSideQuests } from "../hooks/useSideQuests";
 import { SideQuest } from "../types";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 
-const SideQuestList: React.FC = () => {
-  const { sideQuests, isLoading, error, toggleStatus, updateQuest, deleteQuest } = useSideQuests();
+interface SideQuestListProps {
+  quests: SideQuest[];
+  isLoading: boolean;
+  error?: string;
+  onToggleStatus: (taskId: string, currentStatus: 'TODO' | 'IN_PROGRESS' | 'DONE') => Promise<void>;
+  onUpdate: (taskId: string, updates: { title?: string; description?: string }) => Promise<void>;
+  onDelete: (taskId: string) => Promise<void>;
+}
+
+const SideQuestList: React.FC<SideQuestListProps> = ({
+  quests: sideQuests,
+  isLoading,
+  error,
+  onToggleStatus: toggleStatus,
+  onUpdate: updateQuest,
+  onDelete: deleteQuest
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompleted, setShowCompleted] = useState(false);
   const [editingQuest, setEditingQuest] = useState<SideQuest | null>(null);

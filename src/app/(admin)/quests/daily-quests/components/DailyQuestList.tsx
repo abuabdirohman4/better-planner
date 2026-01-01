@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { useDailyQuests } from "../hooks/useDailyQuests";
 import { DailyQuest } from "../types";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
@@ -10,12 +9,28 @@ import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 
 interface DailyQuestListProps {
+  quests: DailyQuest[];
+  isLoading: boolean;
+  error?: string;
   showAddForm?: boolean;
   onAddFormClose?: () => void;
+  onUpdate: (taskId: string, updates: Partial<DailyQuest>) => Promise<void>;
+  onArchive: (taskId: string) => Promise<void>;
+  onDelete: (taskId: string) => Promise<void>;
+  refetch?: () => void;
 }
 
-const DailyQuestList: React.FC<DailyQuestListProps> = ({ showAddForm = false, onAddFormClose }) => {
-  const { dailyQuests, isLoading, error, archiveQuest, updateQuest, deleteQuest, refetch } = useDailyQuests();
+const DailyQuestList: React.FC<DailyQuestListProps> = ({
+  quests: dailyQuests,
+  isLoading,
+  error,
+  showAddForm = false,
+  onAddFormClose,
+  onUpdate: updateQuest,
+  onArchive: archiveQuest,
+  onDelete: deleteQuest,
+  refetch = () => {}
+}) => {
   const [activeTab, setActiveTab] = useState<'session' | 'no-session'>('session');
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");

@@ -5,15 +5,15 @@ import { getDailyQuests, archiveDailyQuest, updateDailyQuest, deleteDailyQuest }
 import { DailyQuest } from '../types';
 import { dailySyncKeys } from "@/lib/swr";
 
-export function useDailyQuests() {
+export function useDailyQuests(year: number, quarter: number) {
   const {
     data: dailyQuests = [],
     error,
     isLoading,
     mutate
   } = useSWR(
-    dailySyncKeys.dailyQuests(),
-    () => getDailyQuests(),
+    ['daily-quests', year, quarter],
+    () => getDailyQuests(year, quarter),
     {
       revalidateOnFocus: false,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes

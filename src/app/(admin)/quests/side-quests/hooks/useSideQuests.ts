@@ -4,15 +4,15 @@ import useSWR from "swr";
 import { getSideQuests, updateSideQuestStatus, updateSideQuest, deleteSideQuest } from '../actions/sideQuestActions';
 import { SideQuest } from '../types';
 
-export function useSideQuests() {
-  const { 
-    data: sideQuests = [], 
-    error, 
+export function useSideQuests(year: number, quarter: number) {
+  const {
+    data: sideQuests = [],
+    error,
     isLoading,
-    mutate 
+    mutate
   } = useSWR(
-    'side-quests',
-    () => getSideQuests(),
+    ['side-quests', year, quarter],
+    () => getSideQuests(year, quarter),
     {
       revalidateOnFocus: false,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes
