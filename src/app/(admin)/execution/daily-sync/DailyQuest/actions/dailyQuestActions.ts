@@ -78,7 +78,25 @@ export async function deleteDailyQuest(taskId: string) {
   if (!user) throw new Error('User not authenticated');
 
   try {
-    // Delete timer sessions first to avoid FK constraint violation
+    // 1. Get all session IDs for this task to delete nested events
+    const { data: sessions } = await supabase
+      .from('timer_sessions')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (sessions && sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      // 2. Delete timer events first (they block timer_sessions)
+      const { error: eventsError } = await supabase
+        .from('timer_events')
+        .delete()
+        .in('session_id', sessionIds);
+
+      if (eventsError) throw eventsError;
+    }
+
+    // 3. Delete timer sessions
     const { error: timerError } = await supabase
       .from('timer_sessions')
       .delete()
@@ -87,7 +105,16 @@ export async function deleteDailyQuest(taskId: string) {
 
     if (timerError) throw timerError;
 
-    // Delete daily_plan_items referencing this task
+    // 4. Delete activity logs (they might block tasks)
+    const { error: activityError } = await supabase
+      .from('activity_logs')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (activityError) throw activityError;
+
+    // 5. Delete daily_plan_items referencing this task
     const { error: planItemsError } = await supabase
       .from('daily_plan_items')
       .delete()
@@ -99,7 +126,8 @@ export async function deleteDailyQuest(taskId: string) {
     const { error } = await supabase
       .from('tasks')
       .delete()
-      .eq('id', taskId);
+      .eq('id', taskId)
+      .eq('user_id', user.id);
 
     if (error) throw error;
 

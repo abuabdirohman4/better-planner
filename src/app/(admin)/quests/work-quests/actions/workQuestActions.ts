@@ -264,26 +264,49 @@ export async function deleteWorkQuest(id: string): Promise<void> {
     const subtaskIds = (subtasks || []).map(s => s.id);
     const allTaskIds = [id, ...subtaskIds];
 
-    // Delete timer sessions for all tasks (main + subtasks)
-    for (const taskId of allTaskIds) {
-      const { error: timerError } = await supabase
-        .from('timer_sessions')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('user_id', user.id);
+    // 1. Get all session IDs for these tasks to delete nested events
+    const { data: sessions } = await supabase
+      .from('timer_sessions')
+      .select('id')
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
 
-      if (timerError) throw timerError;
+    if (sessions && sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      // 2. Delete timer events first (they block timer_sessions)
+      const { error: eventsError } = await supabase
+        .from('timer_events')
+        .delete()
+        .in('session_id', sessionIds);
+
+      if (eventsError) throw eventsError;
     }
 
-    // Delete daily_plan_items for all tasks
-    for (const taskId of allTaskIds) {
-      const { error: planItemsError } = await supabase
-        .from('daily_plan_items')
-        .delete()
-        .eq('item_id', taskId);
+    // 3. Delete timer sessions for all tasks
+    const { error: timerError } = await supabase
+      .from('timer_sessions')
+      .delete()
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
 
-      if (planItemsError) throw planItemsError;
-    }
+    if (timerError) throw timerError;
+
+    // 4. Delete activity logs (they might block tasks)
+    const { error: activityError } = await supabase
+      .from('activity_logs')
+      .delete()
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
+
+    if (activityError) throw activityError;
+
+    // 5. Delete daily_plan_items for all tasks
+    const { error: planItemsError } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .in('item_id', allTaskIds);
+
+    if (planItemsError) throw planItemsError;
 
     // Delete subtasks first
     const { error: deleteSubtasksError } = await supabase
@@ -503,26 +526,49 @@ export async function deleteWorkQuestProject(id: string): Promise<void> {
     const taskIds = (tasks || []).map(t => t.id);
     const allTaskIds = [id, ...taskIds];
 
-    // Delete timer sessions for all tasks (project + tasks)
-    for (const taskId of allTaskIds) {
-      const { error: timerError } = await supabase
-        .from('timer_sessions')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('user_id', user.id);
+    // 1. Get all session IDs for these tasks to delete nested events
+    const { data: sessions } = await supabase
+      .from('timer_sessions')
+      .select('id')
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
 
-      if (timerError) throw timerError;
+    if (sessions && sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      // 2. Delete timer events first (they block timer_sessions)
+      const { error: eventsError } = await supabase
+        .from('timer_events')
+        .delete()
+        .in('session_id', sessionIds);
+
+      if (eventsError) throw eventsError;
     }
 
-    // Delete daily_plan_items for all tasks
-    for (const taskId of allTaskIds) {
-      const { error: planItemsError } = await supabase
-        .from('daily_plan_items')
-        .delete()
-        .eq('item_id', taskId);
+    // 3. Delete timer sessions for all tasks
+    const { error: timerError } = await supabase
+      .from('timer_sessions')
+      .delete()
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
 
-      if (planItemsError) throw planItemsError;
-    }
+    if (timerError) throw timerError;
+
+    // 4. Delete activity logs (they might block tasks)
+    const { error: activityError } = await supabase
+      .from('activity_logs')
+      .delete()
+      .in('task_id', allTaskIds)
+      .eq('user_id', user.id);
+
+    if (activityError) throw activityError;
+
+    // 5. Delete daily_plan_items for all tasks
+    const { error: planItemsError } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .in('item_id', allTaskIds);
+
+    if (planItemsError) throw planItemsError;
 
     // Delete tasks first
     const { error: deleteTasksError } = await supabase
@@ -731,7 +777,25 @@ export async function deleteWorkQuestTask(taskId: string): Promise<void> {
       throw new Error('User not authenticated');
     }
 
-    // Delete timer sessions first to avoid FK constraint violation
+    // 1. Get all session IDs for this task to delete nested events
+    const { data: sessions } = await supabase
+      .from('timer_sessions')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (sessions && sessions.length > 0) {
+      const sessionIds = sessions.map(s => s.id);
+      // 2. Delete timer events first (they block timer_sessions)
+      const { error: eventsError } = await supabase
+        .from('timer_events')
+        .delete()
+        .in('session_id', sessionIds);
+
+      if (eventsError) throw eventsError;
+    }
+
+    // 3. Delete timer sessions
     const { error: timerError } = await supabase
       .from('timer_sessions')
       .delete()
@@ -740,7 +804,16 @@ export async function deleteWorkQuestTask(taskId: string): Promise<void> {
 
     if (timerError) throw timerError;
 
-    // Delete daily_plan_items referencing this task
+    // 4. Delete activity logs (they might block tasks)
+    const { error: activityError } = await supabase
+      .from('activity_logs')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (activityError) throw activityError;
+
+    // 5. Delete daily_plan_items referencing this task
     const { error: planItemsError } = await supabase
       .from('daily_plan_items')
       .delete()

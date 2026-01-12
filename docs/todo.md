@@ -11,6 +11,7 @@ Weekly Sync
 Daily Sync
 - [ ] Add Progress per Day
 - [x] Ask to use regular timer like debug timer
+- [ ] Delete Log Activity
 
 ## Backlog
 Daily Sync
