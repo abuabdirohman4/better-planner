@@ -441,14 +441,15 @@ export const useTimerStore = create<TimerStoreState>()(
       },
 
       checkDailyReset: () => {
-        const today = new Date().toLocaleDateString('id-ID'); // Use consistent format
+        const today = new Date().toISOString().split('T')[0]; // Use safer YYYY-MM-DD
         const { lastUpdatedDay, resetTimer } = get();
-
+  
         if (lastUpdatedDay && lastUpdatedDay !== today) {
           console.log('📅 Day changed, resetting timer state...');
           resetTimer();
           set({
             sessionCount: 0,
+            lastActiveTask: null, // ✅ Clear last active task on day change
             lastUpdatedDay: today
           });
         } else if (!lastUpdatedDay) {
