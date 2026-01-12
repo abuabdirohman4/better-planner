@@ -198,19 +198,119 @@ const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
 - Display user-friendly error messages with toast notifications
 - Implement proper loading states for async operations
 
+## Task Management with Beads
+
+This project uses **Beads** - a git-backed issue tracker designed for AI coding agents. Beads helps maintain context, track progress, and coordinate work between developers and AI assistants.
+
+**Issue Prefix:** `bp-` (Better Planner, e.g., `bp-a3f2dd`)
+
+### Core Beads Commands
+
+```bash
+# View and manage issues
+bd list                    # List all issues
+bd ready                   # Show issues ready to work on
+bd show <issue-id>         # View issue details
+bd status                  # Show project status
+
+# Create and update issues
+bd add "Issue title"       # Create new issue
+bd note <issue-id> "note"  # Add note to issue
+bd done <issue-id>         # Mark issue as done
+bd block <issue-id>        # Mark issue as blocked
+
+# Work on issues
+bd start <issue-id>        # Start working on an issue
+bd stop                    # Stop working on current issue
+
+# Dependencies and relationships
+bd blocks <issue-id> <blocked-id>  # Set dependency
+bd epic <issue-id> <child-id>      # Link to epic
+
+# Sync and maintenance
+bd sync                    # Sync with git
+bd doctor                  # Check for issues
+```
+
+### Workflow for AI Agents (Claude)
+
+**When to use Beads:**
+- Any work that takes longer than 2 minutes
+- Feature development or bug fixes
+- Refactoring tasks
+- Documentation updates
+- Any task that requires tracking or context
+
+**Best Practices:**
+1. **Check ready issues first:** Run `bd ready` at session start
+2. **Start issues explicitly:** Use `bd start <issue-id>` before working
+3. **Write detailed notes:** Document progress, decisions, and blockers
+4. **Update status regularly:** Mark issues done or blocked as appropriate
+5. **Reference in commits:** Include issue ID in commit messages
+6. **Create issues proactively:** When discovering new work, create issues immediately
+
+**Integration with Git:**
+- Beads integrates with git via hooks
+- Issue data is stored in `.beads/issues.jsonl` (committed)
+- SQLite cache in `.beads/beads.db` (not committed)
+- Issue IDs can be referenced in commit messages
+
+### Example Workflow
+
+```bash
+# Start your session
+bd ready                          # Check what's ready to work on
+
+# Start working on an issue
+bd start bp-a3f2dd               # Start the issue
+
+# During work - add notes
+bd comments add bp-a3f2dd "Implemented user authentication with Supabase"
+bd comments add bp-a3f2dd "Added RLS policies for user data isolation"
+
+# If you discover a blocker
+bd create "Fix CORS issue with Supabase"
+bd dep add bp-a3f2dd --blocked-by bp-xyz123  # Mark first issue blocked by new one
+
+# When done
+bd close bp-a3f2dd               # Mark as complete
+git commit -m "feat(auth): implement user authentication (bp-a3f2dd)"
+```
+
+### Issue Organization
+
+**Epics:** Use for large features or initiatives
+```bash
+bd create "School Management System" --type epic
+bd epic add bp-parent bp-child1
+bd epic add bp-parent bp-child2
+```
+
+**Priorities:** Set priority levels (1-5, where 1 is highest)
+```bash
+bd create "Critical bug fix" --priority 1
+bd create "Nice-to-have feature" --priority 4
+```
+
+**Labels:** Organize with labels
+```bash
+bd label add bp-a3f2dd authentication
+bd label add bp-a3f2dd security
+```
+
 ## Git Workflow
 
 **Branch Naming:**
-- Features: `feature/descriptive-name`
-- Bug fixes: `bugfix/issue-description`
+- Features: `feature/descriptive-name` or `feature/bp-<hash>`
+- Bug fixes: `bugfix/issue-description` or `bugfix/bp-<hash>`
 - Chore: `chore/task-description`
 - Docs: `docs/what-changed`
 
 **Commit Messages (Conventional Commits):**
 ```
 feat: add new feature
-feat(scope): add feature with scope
-fix: resolve bug
+feat(scope): add feature with scope (bp-a3f2dd)
+fix: resolve bug (bp-xyz123)
 fix(auth): fix authentication issue
 docs: update documentation
 refactor: improve code structure
