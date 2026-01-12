@@ -13,16 +13,19 @@ import {
   WorkQuestTaskFormData
 } from "../types";
 
-export async function getWorkQuests(): Promise<WorkQuest[]> {
+export async function getWorkQuests(year: number, quarter: number): Promise<WorkQuest[]> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Get main work quests
+    // Get date range for the quarter
+    const { startDate, endDate } = getQuarterDates(year, quarter);
+
+    // Get main work quests filtered by quarter
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -36,6 +39,8 @@ export async function getWorkQuests(): Promise<WorkQuest[]> {
       .eq('user_id', user.id)
       .eq('type', 'WORK_QUEST')
       .is('parent_task_id', null)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
       .order('created_at', { ascending: false });
 
     if (tasksError) {

@@ -24,15 +24,15 @@ import {
   WorkQuestTaskFormData
 } from "../types";
 
-export function useWorkQuests() {
-  const { 
-    data: workQuests = [], 
-    error, 
+export function useWorkQuests(year: number, quarter: number) {
+  const {
+    data: workQuests = [],
+    error,
     isLoading,
-    mutate 
+    mutate
   } = useSWR(
-    'work-quests',
-    () => getWorkQuests(),
+    ['work-quests', year, quarter],
+    () => getWorkQuests(year, quarter),
     {
       revalidateOnFocus: false,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes

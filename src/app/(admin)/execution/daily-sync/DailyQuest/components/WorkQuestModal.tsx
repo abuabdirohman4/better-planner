@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useQuarterStore } from "@/stores/quarterStore";
 import { useWorkQuests } from "@/app/(admin)/quests/work-quests/hooks/useWorkQuests";
 import { WorkQuest } from "@/app/(admin)/quests/work-quests/types";
 import Button from "@/components/ui/button/Button";
@@ -36,7 +37,8 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
   savingLoading,
   completedTodayCount = 0
 }) => {
-  const { workQuests, isLoading: workQuestsLoading } = useWorkQuests();
+  const { year, quarter } = useQuarterStore();
+  const { workQuests, isLoading: workQuestsLoading } = useWorkQuests(year, quarter);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Initialize state with data from localStorage

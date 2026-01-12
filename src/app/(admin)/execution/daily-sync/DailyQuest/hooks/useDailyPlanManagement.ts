@@ -10,6 +10,8 @@ import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';
 import { useCompletedSessions } from './useCompletedSessions';
 import { useTargetFocusStore } from '../../TargetFocus/stores/targetFocusStore';
+import { getQuarterDates } from '@/lib/quarterUtils';
+import { useQuarterStore } from '@/stores/quarterStore';
 
 // Helper function to get daily plan with detailed task information
 async function getDailyPlan(selectedDate: string) {
@@ -199,17 +201,27 @@ async function getDailyPlan(selectedDate: string) {
 }
 
 // Hook to fetch daily quests available for selection
-function useDailyQuestsForSelection(selectedDate: string) {
+function useDailyQuestsForSelection(year: number, quarter: number) {
   const supabase = createClient();
 
   const { data: dailyQuests, isLoading, error } = useSWR(
-    dailySyncKeys.dailyQuests(),
+    dailySyncKeys.dailyQuests(year, quarter),
     async () => {
+      // Get current user for RLS filter
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // Get date range for the quarter
+      const { startDate, endDate } = getQuarterDates(year, quarter);
+
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('user_id', user.id)
         .eq('type', 'DAILY_QUEST')
         .eq('is_archived', false)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -287,7 +299,9 @@ export function useDailyPlanManagement(
 
   // Add Daily Quest selection state
   const [isDailyQuestModalOpen, setIsDailyQuestModalOpen] = useState(false);
-  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(selectedDate);
+  // Use quarterStore directly (same pattern as SideQuestModal) for consistent quarter context
+  const { year: quarterYear, quarter } = useQuarterStore();
+  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(quarterYear, quarter);
   const [selectedDailyQuestIds, setSelectedDailyQuestIds] = useState<Record<string, boolean>>({});
   const [isSavingDailyQuests, setIsSavingDailyQuests] = useState(false);
 
