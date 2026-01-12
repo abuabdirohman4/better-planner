@@ -116,7 +116,7 @@ export async function createWorkQuest(formData: WorkQuestFormData): Promise<Work
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -178,7 +178,7 @@ export async function updateWorkQuest(id: string, formData: WorkQuestFormData): 
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -249,12 +249,43 @@ export async function deleteWorkQuest(id: string): Promise<void> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Delete subtasks first (cascade should handle this, but being explicit)
+    // Get all subtask IDs first
+    const { data: subtasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('parent_task_id', id)
+      .eq('user_id', user.id);
+
+    const subtaskIds = (subtasks || []).map(s => s.id);
+    const allTaskIds = [id, ...subtaskIds];
+
+    // Delete timer sessions for all tasks (main + subtasks)
+    for (const taskId of allTaskIds) {
+      const { error: timerError } = await supabase
+        .from('timer_sessions')
+        .delete()
+        .eq('task_id', taskId)
+        .eq('user_id', user.id);
+
+      if (timerError) throw timerError;
+    }
+
+    // Delete daily_plan_items for all tasks
+    for (const taskId of allTaskIds) {
+      const { error: planItemsError } = await supabase
+        .from('daily_plan_items')
+        .delete()
+        .eq('item_id', taskId);
+
+      if (planItemsError) throw planItemsError;
+    }
+
+    // Delete subtasks first
     const { error: deleteSubtasksError } = await supabase
       .from('tasks')
       .delete()
@@ -321,7 +352,7 @@ export async function getWorkQuestProjects(year: number, quarter: number): Promi
 
     // Get tasks for each project
     const workQuestProjects: WorkQuestProject[] = [];
-    
+
     for (const project of projects || []) {
       const { data: tasks, error: tasksError } = await supabase
         .from('tasks')
@@ -372,7 +403,7 @@ export async function createWorkQuestProject(formData: WorkQuestProjectFormData)
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -415,7 +446,7 @@ export async function updateWorkQuestProject(id: string, formData: WorkQuestProj
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -457,12 +488,43 @@ export async function deleteWorkQuestProject(id: string): Promise<void> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Delete tasks first (cascade should handle this, but being explicit)
+    // Get all task IDs under this project first
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('parent_task_id', id)
+      .eq('user_id', user.id);
+
+    const taskIds = (tasks || []).map(t => t.id);
+    const allTaskIds = [id, ...taskIds];
+
+    // Delete timer sessions for all tasks (project + tasks)
+    for (const taskId of allTaskIds) {
+      const { error: timerError } = await supabase
+        .from('timer_sessions')
+        .delete()
+        .eq('task_id', taskId)
+        .eq('user_id', user.id);
+
+      if (timerError) throw timerError;
+    }
+
+    // Delete daily_plan_items for all tasks
+    for (const taskId of allTaskIds) {
+      const { error: planItemsError } = await supabase
+        .from('daily_plan_items')
+        .delete()
+        .eq('item_id', taskId);
+
+      if (planItemsError) throw planItemsError;
+    }
+
+    // Delete tasks first
     const { error: deleteTasksError } = await supabase
       .from('tasks')
       .delete()
@@ -496,7 +558,7 @@ export async function getWorkQuestProjectById(id: string): Promise<WorkQuestProj
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -574,7 +636,7 @@ export async function createWorkQuestTask(projectId: string, formData: WorkQuest
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -619,7 +681,7 @@ export async function updateWorkQuestTask(taskId: string, formData: WorkQuestTas
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -664,10 +726,27 @@ export async function deleteWorkQuestTask(taskId: string): Promise<void> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
+
+    // Delete timer sessions first to avoid FK constraint violation
+    const { error: timerError } = await supabase
+      .from('timer_sessions')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (timerError) throw timerError;
+
+    // Delete daily_plan_items referencing this task
+    const { error: planItemsError } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .eq('item_id', taskId);
+
+    if (planItemsError) throw planItemsError;
 
     // Delete task
     const { error: deleteTaskError } = await supabase
@@ -692,7 +771,7 @@ export async function toggleWorkQuestProjectStatus(projectId: string, status: 'T
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -725,7 +804,7 @@ export async function toggleWorkQuestTaskStatus(taskId: string, status: 'TODO' |
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -757,7 +836,7 @@ export async function getWorkQuestById(id: string): Promise<WorkQuest | null> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }

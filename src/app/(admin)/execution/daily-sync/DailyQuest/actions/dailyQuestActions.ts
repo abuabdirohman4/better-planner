@@ -78,6 +78,24 @@ export async function deleteDailyQuest(taskId: string) {
   if (!user) throw new Error('User not authenticated');
 
   try {
+    // Delete timer sessions first to avoid FK constraint violation
+    const { error: timerError } = await supabase
+      .from('timer_sessions')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (timerError) throw timerError;
+
+    // Delete daily_plan_items referencing this task
+    const { error: planItemsError } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .eq('item_id', taskId);
+
+    if (planItemsError) throw planItemsError;
+
+    // Delete the task
     const { error } = await supabase
       .from('tasks')
       .delete()

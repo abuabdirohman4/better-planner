@@ -7,7 +7,7 @@ interface ButtonProps {
   variant?: "primary" | "outline" | "plain"; // Button variant
   startIcon?: ReactNode; // Icon before the text
   endIcon?: ReactNode; // Icon after the text
-  onClick?: () => void; // Click handler
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void; // Click handler
   disabled?: boolean; // Disabled state
   loading?: boolean; // Loading state
   loadingText?: string; // Text to show when loading

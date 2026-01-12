@@ -104,7 +104,8 @@ export default function PomodoroTimer() {
     lastFocusDuration,
     dismissBreakPrompt,
     lastActiveTask, // ✅ Get last active task
-    resumeLastTask // ✅ New action
+    resumeLastTask, // ✅ New action
+    checkDailyReset // ✅ New action for daily reset
   } = useTimer();
 
   // Initialize timer persistence
@@ -118,6 +119,11 @@ export default function PomodoroTimer() {
 
   // Initialize live timer notifications for PWA
   useLiveTimerNotification();
+
+  // Reset timer if day changed
+  useEffect(() => {
+    checkDailyReset();
+  }, [checkDailyReset]);
 
   // ✅ DEV CONTROL: Check if timer is disabled in development
   const timerDisabled = isTimerDisabled();
@@ -246,6 +252,9 @@ export default function PomodoroTimer() {
     ? `${displayTask.completed_sessions}/${displayTask.target_sessions} today's target`
     : null;
 
+  // New: Determine if interaction is possible and appropriate
+  const isActionable = timerState !== 'IDLE' || !!lastActiveTask;
+
   return (
     <div className="flex flex-col items-center justify-center w-full">
       {/* Audio Permission Prompt */}
@@ -301,32 +310,30 @@ export default function PomodoroTimer() {
 
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className={`flex items-center gap-6`}>
-        {/* <div className={`flex items-center gap-6 ${isLoading ? 'hidden' : ''}`}> */}
         {/* Timer Circle - Fixed position di kiri */}
-        <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0">
+        <div className="relative w-[90px] h-[90px] flex flex-col items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
           {activeTask || timerState === 'BREAK' ? (
-            <CircularTimer progress={progress} size={90} stroke={5} isBreak={timerState === 'BREAK'} />
+            <div className="pointer-events-none absolute inset-0">
+              <CircularTimer progress={progress} size={90} stroke={5} isBreak={timerState === 'BREAK'} />
+            </div>
           ) : (
-            <CircularTimer progress={progress} size={90} stroke={5} isBreak={false} />
-            // <svg className="absolute top-0 left-0 w-full h-full" width={90} height={90}>
-            //   <circle
-            //     cx={45}
-            //     cy={45}
-            //     r={41}
-            //     stroke="#e5e7eb"
-            //     strokeWidth={4}
-            //     fill="none"
-            //   />
-            // </svg>
+            <div className="pointer-events-none absolute inset-0">
+              <CircularTimer progress={progress} size={90} stroke={5} isBreak={false} />
+            </div>
           )}
           {(!activeTask && !lastActiveTask && timerState !== 'BREAK') ? (
             <span className="text-lg select-none">00:00</span>
           ) : (
             <>
-              <Button variant="plain" size="sm" className='-mt-2 !p-0 cursor-pointer' onClick={iconAction}>
-                <IconComponent className={`w-16 h-16 ${iconColor}`} />
-              </Button>
-              <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+              <div className="flex flex-col items-center justify-center -mt-2">
+                <IconComponent 
+                  className={`w-16 h-16 ${iconColor} ${isActionable ? 'cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95' : ''}`} 
+                  onClick={() => {
+                    if (isActionable) iconAction();
+                  }}
+                />
+                <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+              </div>
             </>
           )}
         </div>
@@ -352,7 +359,10 @@ export default function PomodoroTimer() {
                 variant="outline"
                 size="sm"
                 className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                onClick={stopTimer}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation(); // Prevent triggering parent onClick
+                  stopTimer();
+                }}
               >
                 <Ban className="w-3 h-3" />
                 Stop

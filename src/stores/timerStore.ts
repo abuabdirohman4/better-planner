@@ -41,6 +41,7 @@ interface TimerStoreState {
   waitingForBreak: boolean;
   lastFocusDuration: number;
   lastActiveTask: Task | null; // ✅ Persist last active task for idle display
+  lastUpdatedDay: string | null; // ✅ Track last date for reset
   startFocusSession: (task: Task) => void;
   startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => void;
   dismissBreakPrompt: () => void;
@@ -69,6 +70,7 @@ interface TimerStoreState {
     duration: number;
     status: string;
   }) => void;
+  checkDailyReset: () => void;
 }
 
 // Durasi default (detik)
@@ -95,6 +97,7 @@ export const useTimerStore = create<TimerStoreState>()(
       waitingForBreak: false,
       lastFocusDuration: 0,
       lastActiveTask: null,
+      lastUpdatedDay: null,
 
       startFocusSession: (task: Task) => {
         set({
@@ -436,6 +439,22 @@ export const useTimerStore = create<TimerStoreState>()(
           stopCurrentSound();
         }
       },
+
+      checkDailyReset: () => {
+        const today = new Date().toLocaleDateString('id-ID'); // Use consistent format
+        const { lastUpdatedDay, resetTimer } = get();
+
+        if (lastUpdatedDay && lastUpdatedDay !== today) {
+          console.log('📅 Day changed, resetting timer state...');
+          resetTimer();
+          set({
+            sessionCount: 0,
+            lastUpdatedDay: today
+          });
+        } else if (!lastUpdatedDay) {
+          set({ lastUpdatedDay: today });
+        }
+      },
     }),
     {
       name: 'timer-storage',
@@ -447,6 +466,7 @@ export const useTimerStore = create<TimerStoreState>()(
         breakType: state.breakType,
         startTime: state.startTime,
         lastActiveTask: state.lastActiveTask,
+        lastUpdatedDay: state.lastUpdatedDay,
       }),
     }
   )

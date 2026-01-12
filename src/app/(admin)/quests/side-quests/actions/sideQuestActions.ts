@@ -41,14 +41,14 @@ export async function updateSideQuestStatus(taskId: string, status: 'TODO' | 'IN
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
     const { error } = await supabase
       .from('tasks')
-      .update({ 
+      .update({
         status,
         updated_at: new Date().toISOString()
       })
@@ -70,7 +70,7 @@ export async function updateSideQuest(taskId: string, updates: { title?: string;
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -109,11 +109,33 @@ export async function deleteSideQuest(taskId: string): Promise<void> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
 
+    // Delete timer sessions first to avoid FK constraint violation
+    const { error: timerError } = await supabase
+      .from('timer_sessions')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('user_id', user.id);
+
+    if (timerError) {
+      throw timerError;
+    }
+
+    // Delete daily_plan_items referencing this task
+    const { error: planItemsError } = await supabase
+      .from('daily_plan_items')
+      .delete()
+      .eq('item_id', taskId);
+
+    if (planItemsError) {
+      throw planItemsError;
+    }
+
+    // Delete the task
     const { error } = await supabase
       .from('tasks')
       .delete()
