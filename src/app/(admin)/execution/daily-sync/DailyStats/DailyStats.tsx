@@ -76,6 +76,7 @@ export default function DailyStats({ dailyPlan, completedSessions }: DailyStatsP
     <CollapsibleCard
       isCollapsed={isCollapsed}
       onToggle={() => setIsCollapsed(!isCollapsed)}
+      className="daily-stats-card"
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
         <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Quests Stats</h3>

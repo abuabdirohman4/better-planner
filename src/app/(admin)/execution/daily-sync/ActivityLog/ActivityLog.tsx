@@ -10,23 +10,6 @@ interface ActivityLogProps {
   refreshKey?: number;
 }
 
-const ICONS = {
-  FOCUS: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-brand-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#3b82f6" opacity="0.15" /><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-  ),
-  BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15" /><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-  ),
-  SHORT_BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-500"><rect x="4" y="8" width="16" height="8" rx="4" fill="#f59e42" opacity="0.15" /><path d="M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-  ),
-  LONG_BREAK: (
-    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-amber-600"><rect x="2" y="7" width="20" height="10" rx="5" fill="#f59e42" opacity="0.15" /><path d="M7 12h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-  ),
-};
-
-// ✅ REMOVED: Using utility function instead
-
 function formatDuration(minutes: number) {
   if (minutes < 60) return `${minutes} menit`;
   const h = Math.floor(minutes / 60);
@@ -70,19 +53,6 @@ const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 // Komponen collapsible untuk setiap log item
 const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boolean }> = ({ log, showTaskTitle = false }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const icon = ICONS[log.type] || ICONS.BREAK;
-  let title = '';
-  if (log.type === 'FOCUS') {
-    title = log.task_title ? `Fokus pada: ${log.task_title}` : 'Sesi Fokus';
-  } else if (log.type === 'SHORT_BREAK') {
-    title = 'Istirahat Pendek';
-  } else if (log.type === 'LONG_BREAK') {
-    title = 'Istirahat Panjang';
-  } else {
-    title = 'Istirahat';
-  }
-
   const hasJournalEntry = log.what_done || log.what_think;
 
   return (
@@ -172,7 +142,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         const pomodoroHeight = pomodoroTimer ? pomodoroTimer.getBoundingClientRect().height : 0;
 
         // Calculate heights
-        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight + dailyQuestHeight) - pomodoroHeight - 95;
+        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight + dailyQuestHeight) - pomodoroHeight - 72;
 
         // Set dynamic height based on available space
         setDynamicHeight(`${finalHeight}px`);
