@@ -132,11 +132,9 @@ export default function MilestoneItem({
   };
 
   const handleInputBlur = () => {
-    if (hasChanges) {
-      handleSave();
-    } else {
-      setIsEditing(false);
-    }
+    // Only exit edit mode, don't auto-save
+    // User must explicitly click Save button or press Enter to save
+    setIsEditing(false);
   };
 
   const handleTextClick = () => {

@@ -22,7 +22,7 @@ interface QuestProps {
   motivation?: string;
 }
 
-export default function Quest({ quest, showCompletedTasks, showAllTasks }: { quest: QuestProps; showCompletedTasks: boolean; showAllTasks: boolean }) {
+export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuestUpdate }: { quest: QuestProps; showCompletedTasks: boolean; showAllTasks: boolean; onQuestUpdate?: () => void }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [showSubTask, setShowSubTask] = useState(false);
@@ -44,13 +44,17 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks }: { que
       setHasChanges(false);
       return; // No changes
     }
-    
+
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       await updateQuestMotivation(quest.id, motivationValue);
       setHasChanges(false);
+      // ✅ FIX: Invalidate SWR cache to force refetch fresh data
+      if (onQuestUpdate) {
+        onQuestUpdate();
+      }
     } catch (error) {
     } finally {
       setIsSaving(false);

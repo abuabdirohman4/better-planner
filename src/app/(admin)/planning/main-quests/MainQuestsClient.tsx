@@ -13,7 +13,7 @@ import { useMainQuests } from './hooks/useMainQuestsSWR';
 
 export default function MainQuestsClient() {
   const { year, quarter } = useQuarterStore();
-  const { quests, isLoading } = useMainQuests(year, quarter);
+  const { quests, isLoading, mutate: mutateQuests } = useMainQuests(year, quarter);
   const [activeTab, setActiveTab] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   
@@ -115,10 +115,11 @@ export default function MainQuestsClient() {
           {quests.map((quest, idx) => 
             activeTab === idx ? (
               <div key={quest.id}>
-                <Quest 
-                  quest={quest} 
+                <Quest
+                  quest={quest}
                   showCompletedTasks={showCompletedMainQuest}
                   showAllTasks={showAllTasksAutomatically}
+                  onQuestUpdate={mutateQuests}
                 />
               </div>
             ) : null
