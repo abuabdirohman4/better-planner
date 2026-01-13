@@ -316,7 +316,8 @@ export function useDailyPlanManagement(
       });
       setSelectedDailyQuestIds(selections);
     }
-  }, [isDailyQuestModalOpen, dailyPlan]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDailyQuestModalOpen]);
 
   const handleDailyQuestToggle = (taskId: string) => {
     setSelectedDailyQuestIds(prev => ({
@@ -341,12 +342,15 @@ export function useDailyPlanManagement(
   // ✅ CRITICAL: Periodic revalidation for cross-environment synchronization
   useEffect(() => {
     const interval = setInterval(() => {
-      // Revalidate every 30 seconds to catch changes from other tabs/environments
-      mutate();
+      // Pause revalidation when any modal is open to prevent selection reset
+      if (!modalState.showModal && !isDailyQuestModalOpen) {
+        // Revalidate every 30 seconds to catch changes from other tabs/environments
+        mutate();
+      }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [mutate]);
+  }, [mutate, modalState.showModal, isDailyQuestModalOpen]);
 
   const getCurrentDailyPlanSelections = (questType: 'main' | 'work' | 'daily' = 'main') => {
     if (!dailyPlan?.daily_plan_items) return (questType === 'main' ? {} : []);
