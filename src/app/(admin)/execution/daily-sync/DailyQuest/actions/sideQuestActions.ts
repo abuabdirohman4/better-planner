@@ -46,7 +46,8 @@ export async function addSideQuest(formData: FormData) {
       daily_plan_id: plan.id,
       item_id: task.id,
       item_type: 'SIDE_QUEST',
-      status: 'TODO'
+      status: 'TODO',
+      focus_duration: 25
     });
 
     revalidatePath('/execution/daily-sync');
