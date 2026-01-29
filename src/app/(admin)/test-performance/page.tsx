@@ -178,6 +178,56 @@ export default function TestPerformancePage() {
               </div>
             </div>
 
+            {/* Task Breakdown by Quest Type */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold mb-3">Task Breakdown by Quest Type</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Main Quest */}
+                <div className="bg-blue-50 p-3 rounded">
+                  <p className="text-sm font-medium text-blue-900">Main Quest</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {metrics.taskBreakdown.mainQuest.completed} / {metrics.taskBreakdown.mainQuest.total}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {formatMinutes(metrics.taskBreakdown.mainQuest.focusMinutes)} focus time
+                  </p>
+                </div>
+
+                {/* Work Quest */}
+                <div className="bg-green-50 p-3 rounded">
+                  <p className="text-sm font-medium text-green-900">Work Quest</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {metrics.taskBreakdown.workQuest.completed} / {metrics.taskBreakdown.workQuest.total}
+                  </p>
+                  <p className="text-xs text-green-700">
+                    {formatMinutes(metrics.taskBreakdown.workQuest.focusMinutes)} focus time
+                  </p>
+                </div>
+
+                {/* Side Quest */}
+                <div className="bg-purple-50 p-3 rounded">
+                  <p className="text-sm font-medium text-purple-900">Side Quest</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {metrics.taskBreakdown.sideQuest.completed} / {metrics.taskBreakdown.sideQuest.total}
+                  </p>
+                  <p className="text-xs text-purple-700">
+                    {formatMinutes(metrics.taskBreakdown.sideQuest.focusMinutes)} focus time
+                  </p>
+                </div>
+
+                {/* Daily Quest */}
+                <div className="bg-orange-50 p-3 rounded">
+                  <p className="text-sm font-medium text-orange-900">Daily Quest</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {metrics.taskBreakdown.dailyQuest.completed} / {metrics.taskBreakdown.dailyQuest.total}
+                  </p>
+                  <p className="text-xs text-orange-700">
+                    {formatMinutes(metrics.taskBreakdown.dailyQuest.focusMinutes)} focus time
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Weekly Goals (if applicable) */}
             {metrics.weeklyGoalsTotal !== undefined && (
               <div className="border-b pb-4">

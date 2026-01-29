@@ -12,6 +12,13 @@ import { createClient } from "@/lib/supabase/server";
  * - Quarterly: 13-week summary + goal achievement
  */
 
+export interface TaskBreakdown {
+  mainQuest: { completed: number; total: number; focusMinutes: number };
+  sideQuest: { completed: number; total: number; focusMinutes: number };
+  workQuest: { completed: number; total: number; focusMinutes: number };
+  dailyQuest: { completed: number; total: number; focusMinutes: number };
+}
+
 export interface PerformanceMetrics {
   periodType: "daily" | "weekly" | "monthly" | "quarterly";
   periodStart: string; // ISO date
@@ -22,10 +29,59 @@ export interface PerformanceMetrics {
   tasksCompleted: number;
   tasksTotal: number;
   completionRate: number;
+  taskBreakdown: TaskBreakdown;
   weeklyGoalsCompleted?: number;
   weeklyGoalsTotal?: number;
   previousFocusMinutes: number;
   previousCompletionRate: number;
+}
+
+/**
+ * Helper function to calculate task breakdown by quest type
+ */
+async function getTaskBreakdown(
+  supabase: any,
+  planItems: any[]
+): Promise<TaskBreakdown> {
+  const breakdown: TaskBreakdown = {
+    mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    workQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
+  };
+
+  if (!planItems || planItems.length === 0) return breakdown;
+
+  // Group by item_type
+  planItems.forEach((item) => {
+    const isDone = item.status === "DONE";
+    const focusMinutes = item.focus_duration || 0;
+
+    switch (item.item_type) {
+      case "MAIN_QUEST":
+        breakdown.mainQuest.total++;
+        if (isDone) breakdown.mainQuest.completed++;
+        breakdown.mainQuest.focusMinutes += focusMinutes;
+        break;
+      case "SIDE_QUEST":
+        breakdown.sideQuest.total++;
+        if (isDone) breakdown.sideQuest.completed++;
+        breakdown.sideQuest.focusMinutes += focusMinutes;
+        break;
+      case "WORK_QUEST":
+        breakdown.workQuest.total++;
+        if (isDone) breakdown.workQuest.completed++;
+        breakdown.workQuest.focusMinutes += focusMinutes;
+        break;
+      case "DAILY_QUEST":
+        breakdown.dailyQuest.total++;
+        if (isDone) breakdown.dailyQuest.completed++;
+        breakdown.dailyQuest.focusMinutes += focusMinutes;
+        break;
+    }
+  });
+
+  return breakdown;
 }
 
 /**
@@ -67,16 +123,24 @@ export async function getDailyPerformance(
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let taskBreakdown: TaskBreakdown = {
+    mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    workQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
+  };
 
   if (dailyPlanData) {
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status")
+      .select("id, status, item_type, focus_duration")
       .eq("daily_plan_id", dailyPlanData.id);
 
     tasksTotal = planItems?.length || 0;
     tasksCompleted =
       planItems?.filter((item) => item.status === "DONE").length || 0;
+
+    taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
@@ -129,6 +193,7 @@ export async function getDailyPerformance(
     tasksCompleted,
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
+    taskBreakdown,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
   };
@@ -179,16 +244,25 @@ export async function getWeeklyPerformance(
   let tasksCompleted = 0;
   let tasksTotal = 0;
 
+  let taskBreakdown: TaskBreakdown = {
+    mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    workQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
+  };
+
   if (weeklyPlans && weeklyPlans.length > 0) {
     const planIds = weeklyPlans.map((p) => p.id);
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status")
+      .select("id, status, item_type, focus_duration")
       .in("daily_plan_id", planIds);
 
     tasksTotal = planItems?.length || 0;
     tasksCompleted =
       planItems?.filter((item) => item.status === "DONE").length || 0;
+
+    taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
@@ -259,6 +333,7 @@ export async function getWeeklyPerformance(
     tasksCompleted,
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
+    taskBreakdown,
     weeklyGoalsCompleted,
     weeklyGoalsTotal,
     previousFocusMinutes,
@@ -310,17 +385,25 @@ export async function getMonthlyPerformance(
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let taskBreakdown: TaskBreakdown = {
+    mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    workQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
+  };
 
   if (monthlyPlans && monthlyPlans.length > 0) {
     const planIds = monthlyPlans.map((p) => p.id);
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status")
+      .select("id, status, item_type, focus_duration")
       .in("daily_plan_id", planIds);
 
     tasksTotal = planItems?.length || 0;
     tasksCompleted =
       planItems?.filter((item) => item.status === "DONE").length || 0;
+
+    taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
   }
 
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
@@ -381,6 +464,7 @@ export async function getMonthlyPerformance(
     tasksCompleted,
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
+    taskBreakdown,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
   };
@@ -420,17 +504,36 @@ export async function getQuarterlyPerformance(
 
   const totalSessions = activityData?.length || 0;
 
-  // Get tasks for the quarter
-  const { data: tasksData } = await supabase
-    .from("tasks")
-    .select("id, status")
+  // Get tasks for the quarter from daily_plan_items
+  const { data: quarterlyPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${startStr}T00:00:00`)
-    .lte("updated_at", `${endStr}T23:59:59`);
+    .gte("plan_date", startStr)
+    .lte("plan_date", endStr);
 
-  const tasksCompleted =
-    tasksData?.filter((task) => task.status === "COMPLETED").length || 0;
-  const tasksTotal = tasksData?.length || 0;
+  let tasksCompleted = 0;
+  let tasksTotal = 0;
+  let taskBreakdown: TaskBreakdown = {
+    mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    workQuest: { completed: 0, total: 0, focusMinutes: 0 },
+    dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
+  };
+
+  if (quarterlyPlans && quarterlyPlans.length > 0) {
+    const planIds = quarterlyPlans.map((p) => p.id);
+    const { data: planItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status, item_type, focus_duration")
+      .in("daily_plan_id", planIds);
+
+    tasksTotal = planItems?.length || 0;
+    tasksCompleted =
+      planItems?.filter((item) => item.status === "DONE").length || 0;
+
+    taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
+  }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   // Get weekly goals for the quarter
@@ -499,6 +602,7 @@ export async function getQuarterlyPerformance(
     tasksCompleted,
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
+    taskBreakdown,
     weeklyGoalsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
@@ -526,6 +630,7 @@ export async function savePerformanceSummary(
       tasks_completed: metrics.tasksCompleted,
       tasks_total: metrics.tasksTotal,
       completion_rate: metrics.completionRate,
+      task_breakdown: metrics.taskBreakdown,
       weekly_goals_completed: metrics.weeklyGoalsCompleted || 0,
       weekly_goals_total: metrics.weeklyGoalsTotal || 0,
       previous_focus_minutes: metrics.previousFocusMinutes,
