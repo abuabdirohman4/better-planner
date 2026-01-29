@@ -57,17 +57,27 @@ export async function getDailyPerformance(
 
   const totalSessions = activityData?.length || 0;
 
-  // Get tasks completed on this day
-  const { data: tasksData } = await supabase
-    .from("tasks")
-    .select("id, status, updated_at")
+  // Get tasks completed on this day from daily_plan_items
+  const { data: dailyPlanData } = await supabase
+    .from("daily_plans")
+    .select("id, plan_date")
     .eq("user_id", userId)
-    .gte("updated_at", `${dateStr}T00:00:00`)
-    .lte("updated_at", `${dateStr}T23:59:59`);
+    .eq("plan_date", dateStr)
+    .single();
 
-  const tasksCompleted =
-    tasksData?.filter((task) => task.status === "COMPLETED").length || 0;
-  const tasksTotal = tasksData?.length || 0;
+  let tasksCompleted = 0;
+  let tasksTotal = 0;
+
+  if (dailyPlanData) {
+    const { data: planItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .eq("daily_plan_id", dailyPlanData.id);
+
+    tasksTotal = planItems?.length || 0;
+    tasksCompleted =
+      planItems?.filter((item) => item.status === "DONE").length || 0;
+  }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   // Get previous day data for comparison
@@ -86,16 +96,26 @@ export async function getDailyPerformance(
       ?.filter((log) => log.type === "FOCUS")
       .reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
 
-  const { data: previousTasks } = await supabase
-    .from("tasks")
-    .select("id, status")
+  const { data: previousDailyPlan } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${previousDateStr}T00:00:00`)
-    .lte("updated_at", `${previousDateStr}T23:59:59`);
+    .eq("plan_date", previousDateStr)
+    .single();
 
-  const previousCompleted =
-    previousTasks?.filter((task) => task.status === "COMPLETED").length || 0;
-  const previousTotal = previousTasks?.length || 0;
+  let previousCompleted = 0;
+  let previousTotal = 0;
+
+  if (previousDailyPlan) {
+    const { data: previousPlanItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .eq("daily_plan_id", previousDailyPlan.id);
+
+    previousTotal = previousPlanItems?.length || 0;
+    previousCompleted =
+      previousPlanItems?.filter((item) => item.status === "DONE").length || 0;
+  }
   const previousCompletionRate =
     previousTotal > 0 ? (previousCompleted / previousTotal) * 100 : 0;
 
@@ -148,17 +168,28 @@ export async function getWeeklyPerformance(
 
   const totalSessions = activityData?.length || 0;
 
-  // Get tasks for the week
-  const { data: tasksData } = await supabase
-    .from("tasks")
-    .select("id, status")
+  // Get tasks for the week from daily_plan_items
+  const { data: weeklyPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${startStr}T00:00:00`)
-    .lte("updated_at", `${endStr}T23:59:59`);
+    .gte("plan_date", startStr)
+    .lte("plan_date", endStr);
 
-  const tasksCompleted =
-    tasksData?.filter((task) => task.status === "COMPLETED").length || 0;
-  const tasksTotal = tasksData?.length || 0;
+  let tasksCompleted = 0;
+  let tasksTotal = 0;
+
+  if (weeklyPlans && weeklyPlans.length > 0) {
+    const planIds = weeklyPlans.map((p) => p.id);
+    const { data: planItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .in("daily_plan_id", planIds);
+
+    tasksTotal = planItems?.length || 0;
+    tasksCompleted =
+      planItems?.filter((item) => item.status === "DONE").length || 0;
+  }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   // Get weekly goals progress
@@ -193,16 +224,28 @@ export async function getWeeklyPerformance(
       ?.filter((log) => log.type === "FOCUS")
       .reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
 
-  const { data: previousTasks } = await supabase
-    .from("tasks")
-    .select("id, status")
+  const { data: previousPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${prevStartStr}T00:00:00`)
-    .lte("updated_at", `${prevEndStr}T23:59:59`);
+    .gte("plan_date", prevStartStr)
+    .lte("plan_date", prevEndStr);
 
-  const previousCompleted =
-    previousTasks?.filter((task) => task.status === "COMPLETED").length || 0;
-  const previousTotal = previousTasks?.length || 0;
+  let previousCompleted = 0;
+  let previousTotal = 0;
+
+  if (previousPlans && previousPlans.length > 0) {
+    const prevPlanIds = previousPlans.map((p) => p.id);
+    const { data: prevPlanItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .in("daily_plan_id", prevPlanIds);
+
+    previousTotal = prevPlanItems?.length || 0;
+    previousCompleted =
+      prevPlanItems?.filter((item) => item.status === "DONE").length || 0;
+  }
+
   const previousCompletionRate =
     previousTotal > 0 ? (previousCompleted / previousTotal) * 100 : 0;
 
@@ -257,17 +300,29 @@ export async function getMonthlyPerformance(
 
   const totalSessions = activityData?.length || 0;
 
-  // Get tasks for the month
-  const { data: tasksData } = await supabase
-    .from("tasks")
-    .select("id, status")
+  // Get tasks for the month from daily_plan_items
+  const { data: monthlyPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${startStr}T00:00:00`)
-    .lte("updated_at", `${endStr}T23:59:59`);
+    .gte("plan_date", startStr)
+    .lte("plan_date", endStr);
 
-  const tasksCompleted =
-    tasksData?.filter((task) => task.status === "COMPLETED").length || 0;
-  const tasksTotal = tasksData?.length || 0;
+  let tasksCompleted = 0;
+  let tasksTotal = 0;
+
+  if (monthlyPlans && monthlyPlans.length > 0) {
+    const planIds = monthlyPlans.map((p) => p.id);
+    const { data: planItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .in("daily_plan_id", planIds);
+
+    tasksTotal = planItems?.length || 0;
+    tasksCompleted =
+      planItems?.filter((item) => item.status === "DONE").length || 0;
+  }
+
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   // Get previous month data (previous 4 weeks)
@@ -291,16 +346,28 @@ export async function getMonthlyPerformance(
       ?.filter((log) => log.type === "FOCUS")
       .reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
 
-  const { data: previousTasks } = await supabase
-    .from("tasks")
-    .select("id, status")
+  const { data: previousPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${prevStartStr}T00:00:00`)
-    .lte("updated_at", `${prevEndStr}T23:59:59`);
+    .gte("plan_date", prevStartStr)
+    .lte("plan_date", prevEndStr);
 
-  const previousCompleted =
-    previousTasks?.filter((task) => task.status === "COMPLETED").length || 0;
-  const previousTotal = previousTasks?.length || 0;
+  let previousCompleted = 0;
+  let previousTotal = 0;
+
+  if (previousPlans && previousPlans.length > 0) {
+    const prevPlanIds = previousPlans.map((p) => p.id);
+    const { data: prevPlanItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .in("daily_plan_id", prevPlanIds);
+
+    previousTotal = prevPlanItems?.length || 0;
+    previousCompleted =
+      prevPlanItems?.filter((item) => item.status === "DONE").length || 0;
+  }
+
   const previousCompletionRate =
     previousTotal > 0 ? (previousCompleted / previousTotal) * 100 : 0;
 
@@ -397,16 +464,28 @@ export async function getQuarterlyPerformance(
       ?.filter((log) => log.type === "FOCUS")
       .reduce((sum, log) => sum + (log.duration_minutes || 0), 0) || 0;
 
-  const { data: previousTasks } = await supabase
-    .from("tasks")
-    .select("id, status")
+  const { data: previousPlans } = await supabase
+    .from("daily_plans")
+    .select("id")
     .eq("user_id", userId)
-    .gte("updated_at", `${prevStartStr}T00:00:00`)
-    .lte("updated_at", `${prevEndStr}T23:59:59`);
+    .gte("plan_date", prevStartStr)
+    .lte("plan_date", prevEndStr);
 
-  const previousCompleted =
-    previousTasks?.filter((task) => task.status === "COMPLETED").length || 0;
-  const previousTotal = previousTasks?.length || 0;
+  let previousCompleted = 0;
+  let previousTotal = 0;
+
+  if (previousPlans && previousPlans.length > 0) {
+    const prevPlanIds = previousPlans.map((p) => p.id);
+    const { data: prevPlanItems } = await supabase
+      .from("daily_plan_items")
+      .select("id, status")
+      .in("daily_plan_id", prevPlanIds);
+
+    previousTotal = prevPlanItems?.length || 0;
+    previousCompleted =
+      prevPlanItems?.filter((item) => item.status === "DONE").length || 0;
+  }
+
   const previousCompletionRate =
     previousTotal > 0 ? (previousCompleted / previousTotal) * 100 : 0;
 
