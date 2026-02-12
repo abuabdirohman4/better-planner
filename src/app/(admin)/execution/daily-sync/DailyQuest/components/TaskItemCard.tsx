@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { ConfirmModal } from '@/components/ui/modal';
+import { Clock, Swords, ListChecks, Trash2 } from 'lucide-react';
+import { ScheduleManagementModal } from './ScheduleManagementModal';
+import { useTaskSchedules } from '../hooks/useTaskSchedules';
 import { useTaskSession } from '../hooks/useTaskSession';
 import { TaskCardProps } from '../types';
 import { playSound } from '@/lib/soundUtils';
@@ -22,6 +25,7 @@ interface MenuProps {
   itemId: string;
   itemType: string;
   setIsChecklistMode: (mode: boolean) => void;
+  onSchedule: () => void;
 }
 
 const TaskItemMenu: React.FC<MenuProps> = ({
@@ -35,7 +39,8 @@ const TaskItemMenu: React.FC<MenuProps> = ({
   setShowConfirmModal,
   itemId,
   itemType,
-  setIsChecklistMode
+  setIsChecklistMode,
+  onSchedule
 }) => {
   return (
     <div className="relative" ref={menuRef}>
@@ -55,6 +60,17 @@ const TaskItemMenu: React.FC<MenuProps> = ({
       {/* Dropdown Menu */}
       {showMenu && (
         <div className="absolute right-0 top-8 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSchedule();
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+          >
+            <Clock className="w-4 h-4" />
+            Schedule Time
+          </button>
+
           {isChecklistMode ? (
             onConvertToQuest && (
               <button
@@ -68,8 +84,9 @@ const TaskItemMenu: React.FC<MenuProps> = ({
                     console.error('Error converting to quest:', error);
                   }
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
+                <Swords className="w-4 h-4" />
                 Convert to Quest
               </button>
             )
@@ -86,8 +103,9 @@ const TaskItemMenu: React.FC<MenuProps> = ({
                     console.error('Error converting to checklist:', error);
                   }
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
+                <ListChecks className="w-4 h-4" />
                 Convert to Checklist
               </button>
             )
@@ -100,8 +118,9 @@ const TaskItemMenu: React.FC<MenuProps> = ({
                 setShowMenu(false);
                 setShowConfirmModal(true);
               }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
             >
+              <Trash2 className="w-4 h-4" />
               Remove
             </button>
           )}
@@ -142,6 +161,11 @@ const TaskItemCardContent = ({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const { schedules } = useTaskSchedules(item.item_id);
+  const totalScheduled = schedules?.reduce((acc, s) => acc + s.session_count, 0) || 0;
+  const isScheduled = totalScheduled > 0;
 
   // Update checklist mode when focus_duration changes
   useEffect(() => {
@@ -194,11 +218,61 @@ const TaskItemCardContent = ({
     </svg>
   );
 
+  // New hook for schedules
+  const MenuProps = {
+    showMenu,
+    setShowMenu,
+    menuRef,
+    isChecklistMode,
+    onConvertToChecklist,
+    onConvertToQuest,
+    onRemove,
+    setShowConfirmModal,
+    itemId: item.id,
+    itemType: item.item_type,
+    setIsChecklistMode,
+    onSchedule: () => {
+      setShowMenu(false);
+      setShowScheduleModal(true);
+    }
+  };
+
   return (
-    <div className={`rounded-lg py-4 px-2 shadow-sm border mb-3 transition-all duration-200 relative ${isVisuallyDisabled
-      ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60'
-      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-      }`}>
+    <div
+      draggable={!isChecklistMode}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('application/task-schedule', JSON.stringify({
+          dailyPlanItemId: item.id,
+          itemId: item.item_id,
+          title: item.title || 'Task',
+          focusDuration: item.focus_duration || 25,
+          sessionCount: 1,
+          itemType: item.item_type,
+        }));
+        e.dataTransfer.effectAllowed = 'copy';
+      }}
+      className={`rounded-lg py-4 px-2 shadow-sm border mb-3 transition-all duration-200 relative ${isVisuallyDisabled
+        ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60'
+        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+        }`}>
+
+      {/* Schedule Management Modal */}
+      {showScheduleModal && (
+        <ScheduleManagementModal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          task={{
+            id: item.id,
+            item_id: item.item_id,
+            item_type: item.item_type,
+            status: item.status as any,
+            title: item.title,
+            focus_duration: item.focus_duration,
+            daily_session_target: target
+          }}
+          selectedDate={selectedDate}
+        />
+      )}
 
       {/* Checklist Mode - Simple: Checkbox di kiri + Judul */}
       {isChecklistMode ? (
@@ -264,34 +338,31 @@ const TaskItemCardContent = ({
           </button>
 
           {/* Judul Task */}
-          <h4 className={`flex-1 font-medium text-sm leading-tight ${isCompleted
-            ? 'text-gray-500 dark:text-gray-500 line-through'
-            : 'text-gray-900 dark:text-gray-100'
-            }`}>
-            {item.title || `Task ${item.item_id}`}
-          </h4>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              {isScheduled && (
+                <span className="text-gray-400" title={`Scheduled: ${totalScheduled} sessions`}>
+                  <Clock className="w-3.5 h-3.5" />
+                </span>
+              )}
+              <h4 className={`font-medium text-sm leading-tight truncate ${isCompleted
+                ? 'text-gray-500 dark:text-gray-500 line-through'
+                : 'text-gray-900 dark:text-gray-100'
+                }`}>
+                {item.title || `Task ${item.item_id}`}
+              </h4>
+            </div>
+          </div>
 
           {/* ✅ NEW: Menu aligned with checkbox */}
-          <TaskItemMenu
-            showMenu={showMenu}
-            setShowMenu={setShowMenu}
-            menuRef={menuRef}
-            isChecklistMode={isChecklistMode}
-            onConvertToChecklist={onConvertToChecklist}
-            onConvertToQuest={onConvertToQuest}
-            onRemove={onRemove}
-            setShowConfirmModal={setShowConfirmModal}
-            itemId={item.id}
-            itemType={item.item_type}
-            setIsChecklistMode={setIsChecklistMode}
-          />
+          <TaskItemMenu {...MenuProps} />
         </div>
       ) : (
         <>
           {/* Normal Mode - Original Layout */}
           {/* Title and Checkbox */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               {/* Drag handle - Hamburger icon (only if dragHandleProps provided) */}
               {dragHandleProps && (
                 <div
@@ -306,7 +377,7 @@ const TaskItemCardContent = ({
 
               {onSetActiveTask ? (
                 <button
-                  className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isVisuallyDisabled
+                  className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${isVisuallyDisabled
                     ? 'bg-gray-100 text-gray-400'
                     : `${isActiveInTimer
                       ? 'bg-gray-50 text-orange-500 hover:bg-orange-100'
@@ -346,14 +417,22 @@ const TaskItemCardContent = ({
                   )}
                 </button>
               ) : null}
-              <h4 className={`mr-1.5 font-medium text-sm leading-tight ${isCompleted
-                ? 'text-gray-500 dark:text-gray-500 line-through'
-                : 'text-gray-900 dark:text-gray-100'
-                }`}>
-                {item.title || `Task ${item.item_id}`}
-              </h4>
+
+              <div className="flex items-center gap-1.5 min-w-0">
+                {isScheduled && (
+                  <span className="text-gray-400 flex-shrink-0" title={`Scheduled: ${totalScheduled} sessions`}>
+                    <Clock className="w-4 h-4" />
+                  </span>
+                )}
+                <h4 className={`font-medium text-sm leading-tight truncate ${isCompleted
+                  ? 'text-gray-500 dark:text-gray-500 line-through'
+                  : 'text-gray-900 dark:text-gray-100'
+                  }`}>
+                  {item.title || `Task ${item.item_id}`}
+                </h4>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               {/* Custom Checkbox untuk status */}
               <div className="flex items-center">
                 <button
@@ -405,19 +484,7 @@ const TaskItemCardContent = ({
               </div>
 
               {/* ✅ NEW: Menu aligned with checkbox */}
-              <TaskItemMenu
-                showMenu={showMenu}
-                setShowMenu={setShowMenu}
-                menuRef={menuRef}
-                isChecklistMode={isChecklistMode}
-                onConvertToChecklist={onConvertToChecklist}
-                onConvertToQuest={onConvertToQuest}
-                onRemove={onRemove}
-                setShowConfirmModal={setShowConfirmModal}
-                itemId={item.id}
-                itemType={item.item_type}
-                setIsChecklistMode={setIsChecklistMode}
-              />
+              <TaskItemMenu {...MenuProps} />
             </div>
           </div>
 
@@ -564,6 +631,7 @@ const TaskItemCardContent = ({
     </div>
   );
 };
+
 
 const TaskItemCard = TaskItemCardContent;
 

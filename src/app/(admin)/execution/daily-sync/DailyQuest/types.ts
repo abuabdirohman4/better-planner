@@ -109,3 +109,32 @@ export interface SideQuestItem {
   item_type: string;
   focus_duration?: number;
 }
+
+export type ActivityViewMode = 'PLAN' | 'ACTUAL' | 'CALENDAR';
+
+export interface TaskSchedule {
+  id: string;
+  daily_plan_item_id: string;
+  scheduled_start_time: string;
+  scheduled_end_time: string;
+  duration_minutes: number;
+  session_count: number;
+  created_at?: string;
+  updated_at?: string;
+  daily_plan_item?: DailyPlanItem;
+}
+
+export interface DailyPlanItemWithSchedules extends DailyPlanItem {
+  schedules?: TaskSchedule[];
+  total_scheduled_sessions?: number;
+  remaining_sessions?: number;
+  has_conflict?: boolean;
+}
+
+export interface ScheduleBlockInput {
+  startTime: string;
+  sessionCount: number;
+  duration: number;
+  endTime: string;
+}
+

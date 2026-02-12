@@ -125,6 +125,70 @@ Activities are fetched from `activity_logs` table with fields:
 <ActivityLog date="2025-01-15" refreshKey={timestamp} />
 ```
 
+### Activity Plan - Time Blocking
+
+**Location:** `src/app/(admin)/execution/daily-sync/DailyQuest/`
+
+Activity Plan memungkinkan users untuk schedule tasks di waktu spesifik (time blocking). Terintegrasi dengan ActivityLog melalui segmented control toggle.
+
+**Core Features:**
+- **Multiple Schedules**: Task bisa di-schedule berkali-kali (split time blocks)
+  - Example: Task A → 2 sessions jam 10:00, 1 session jam 14:00
+- **Segmented Control**: Toggle "Plan | Actual" di ActivityLog header
+- **Schedule Management**: Modal untuk add/edit/delete schedule blocks per task
+- **Visual Calendar**: Simplified blocks (icon + title only), waktu & duration dari position & height
+- **Conflict Detection**: Visual warning (yellow border) untuk overlapping schedules
+
+**Database Structure:**
+```sql
+-- task_schedules table
+CREATE TABLE task_schedules (
+  id UUID PRIMARY KEY,
+  daily_plan_item_id UUID REFERENCES daily_plan_items(id) ON DELETE CASCADE,
+  scheduled_start_time TIMESTAMPTZ NOT NULL,
+  scheduled_end_time TIMESTAMPTZ NOT NULL,
+  duration_minutes INT NOT NULL,
+  session_count INT NOT NULL,  -- Sessions allocated to this block
+  ...
+);
+```
+
+**⚠️ CRITICAL: CASCADE Delete Chain**
+```
+daily_plans (DELETE)
+    ↓ ON DELETE CASCADE
+daily_plan_items (AUTO DELETE)
+    ↓ ON DELETE CASCADE
+task_schedules (AUTO DELETE) ← Schedules hilang!
+```
+
+**Operations yang Trigger Cascade:**
+1. `updateDailyPlan()` - Delete & re-insert daily_plan_items by type
+2. `removeDailyPlanItem()` - Delete single task from daily plan
+
+**Best Practice:**
+- When updating daily_plan_items, **backup schedules first** then restore with new IDs
+- See `docs/activity-plan-feature.md` for complete implementation guide
+
+**Key Files:**
+- `actions/scheduleActions.ts` - CRUD operations for schedules
+- `components/ScheduleManagementModal.tsx` - Schedule list & management UI
+- `components/ScheduleBlockForm.tsx` - Add/edit individual blocks
+- `hooks/useTaskSchedules.ts` - Fetch schedules per task
+- `utils/scheduleUtils.ts` - Validation & conflict detection
+
+**Usage:**
+```typescript
+// Create schedule
+await createSchedule(taskId, startTime, endTime, durationMins, sessionCount);
+
+// Get schedules for task
+const schedules = await getTaskSchedules(taskId);
+
+// Get all scheduled tasks for date
+const tasks = await getScheduledTasksByDate('2026-02-12');
+```
+
 ### Key Patterns
 
 **Server Actions (Primary Data Pattern):**
@@ -241,6 +305,12 @@ const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
 - Always check user authentication in server actions
 - Display user-friendly error messages with toast notifications
 - Implement proper loading states for async operations
+
+**Package & Component Management:**
+- **DO NOT** install new packages (npm/yarn) without explicit user confirmation.
+- **ALWAYS** prefer using existing UI components (`src/components/ui`, `src/components/common`) over creating new ones or installing new libraries.
+- **DO NOT** replace existing components with raw HTML (e.g., replacing `Label` with `<label>`). If a component needs to be removed (e.g. Radix), replace it with a custom component implementation, not raw HTML.
+- If a required component is missing, ask the user for direction before proceeding.
 
 ## Task Management with Beads
 

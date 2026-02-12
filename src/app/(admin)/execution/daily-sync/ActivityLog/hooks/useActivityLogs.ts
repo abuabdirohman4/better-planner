@@ -17,6 +17,7 @@ export interface ActivityLogItem {
   quest_title?: string | null;
   what_done?: string | null;
   what_think?: string | null;
+  task_type?: string;
 }
 
 export interface UseActivityLogsOptions {
@@ -33,16 +34,16 @@ export interface UseActivityLogsReturn {
   updateLogJournal: (logId: string, whatDone: string, whatThink: string) => void;
 }
 
-export function useActivityLogs({ 
-  date, 
-  refreshKey, 
-  lastActivityTimestamp 
+export function useActivityLogs({
+  date,
+  refreshKey,
+  lastActivityTimestamp
 }: UseActivityLogsOptions): UseActivityLogsReturn {
-  const { 
-    data: logs = [], 
-    error, 
+  const {
+    data: logs = [],
+    error,
     isLoading,
-    mutate 
+    mutate
   } = useSWR(
     // ✅ FIX: Use stable key that only changes with date
     dailySyncKeys.activityLogs(date),
@@ -71,9 +72,9 @@ export function useActivityLogs({
     mutate(
       (currentLogs) => {
         if (!currentLogs) return currentLogs;
-        
-        return currentLogs.map((log) => 
-          log.id === logId 
+
+        return currentLogs.map((log) =>
+          log.id === logId
             ? { ...log, what_done: whatDone, what_think: whatThink }
             : log
         );
