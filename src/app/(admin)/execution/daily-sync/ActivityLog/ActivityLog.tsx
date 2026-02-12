@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useActivityStore } from '@/stores/activityStore';
 import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
 import { formatTimeRange } from '@/lib/dateUtils';
+import CalendarView from './components/CalendarView';
 
 interface ActivityLogProps {
   date: string;
@@ -18,11 +19,11 @@ function formatDuration(minutes: number) {
 }
 
 // Komponen untuk menampilkan journal entry
-const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
+const JournalEntry: React.FC<{ log: ActivityLogItem; viewMode?: 'GROUPED' | 'TIMELINE' | 'CALENDAR' }> = ({ log, viewMode = 'GROUPED' }) => {
   if (!log.what_done && !log.what_think) return null;
 
   return (
-    <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+    <div className={`mt-2 p-3 ${viewMode === 'GROUPED' ? 'bg-blue-50' : ''} rounded-lg border border-blue-200`}>
       {log.what_done && (
         <>
           <div className="mb-2">
@@ -51,12 +52,12 @@ const JournalEntry: React.FC<{ log: ActivityLogItem }> = ({ log }) => {
 };
 
 // Komponen collapsible untuk setiap log item
-const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boolean }> = ({ log, showTaskTitle = false }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boolean; viewMode?: 'GROUPED' | 'TIMELINE' | 'CALENDAR' }> = ({ log, showTaskTitle = false, viewMode = 'GROUPED' }) => {
+  const [isExpanded, setIsExpanded] = useState(viewMode === 'TIMELINE');
   const hasJournalEntry = log.what_done || log.what_think;
 
   return (
-    <div className={`${isExpanded ? 'bg-blue-50 rounded-lg border border-blue-200' : ''} rounded px-2 py-1`}>
+    <div className={`${isExpanded && viewMode === 'GROUPED' ? 'bg-blue-50 rounded-lg border border-blue-200' : ''} rounded px-2 py-1`}>
       <div
         className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 rounded transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -96,7 +97,7 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boole
       {/* Collapsible content */}
       {isExpanded && hasJournalEntry && (
         <div className="mt-2 ml-6">
-          <JournalEntry log={log} />
+          <JournalEntry log={log} viewMode={viewMode}/>
         </div>
       )}
     </div>
@@ -105,7 +106,7 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boole
 
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   const [dynamicHeight, setDynamicHeight] = useState('');
-  const [viewMode, setViewMode] = useState<'GROUPED' | 'TIMELINE'>('TIMELINE');
+  const [viewMode, setViewMode] = useState<'GROUPED' | 'TIMELINE' | 'CALENDAR'>('CALENDAR');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC'); // DESC = Newest first
 
   const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
@@ -212,13 +213,22 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         )}
         <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
           <button
+            onClick={() => setViewMode('CALENDAR')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'CALENDAR'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+          >
+            Calendar
+          </button>
+          <button
             onClick={() => setViewMode('TIMELINE')}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'TIMELINE'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
               : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
               }`}
           >
-            Timeline
+            List
           </button>
           <button
             onClick={() => setViewMode('GROUPED')}
@@ -273,8 +283,10 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (
-          <div className="space-y-4">
-            {viewMode === 'GROUPED' ? (
+          <div className="space-y-4 h-full">
+            {viewMode === 'CALENDAR' ? (
+              <CalendarView items={safeLogs} currentDate={date} />
+            ) : viewMode === 'GROUPED' ? (
               // Grouped View (Existing)
               summary.map((item: { title: string; sessions: ActivityLogItem[]; totalMinutes: number }) => (
                 <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
@@ -287,7 +299,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
                   </div>
                   <div className="space-y-1 ml-2">
                     {item.sessions.map((log: ActivityLogItem) => (
-                      <CollapsibleLogItem key={log.id} log={log} />
+                      <CollapsibleLogItem key={log.id} log={log} viewMode={viewMode} />
                     ))}
                   </div>
                 </div>
@@ -296,7 +308,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
               // Timeline View (New)
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-2 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                 {timelineLogs.map((log) => (
-                  <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} />
+                  <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} viewMode={viewMode} />
                 ))}
               </div>
             )}
