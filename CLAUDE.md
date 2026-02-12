@@ -81,6 +81,50 @@ src/
 └── types/                        # TypeScript type definitions
 ```
 
+### Activity Log Calendar View
+
+**Location:** `src/app/(admin)/execution/daily-sync/ActivityLog/`
+
+The ActivityLog component displays Pomodoro timer sessions and tracks user productivity throughout the day. It supports three view modes:
+- **GROUPED**: Activities grouped by task/quest with session counts
+- **TIMELINE**: Chronological list of all activities (newest first, toggleable)
+- **CALENDAR**: Visual timeline with hourly blocks (Google Calendar style)
+
+**Calendar View Features:**
+- **Dynamic View**: Shows only hours with activities (discontinuous timeline) - default mode
+- **24h View**: Full 24-hour grid display (00:00 - 23:59)
+- Color-coded blocks by quest type (Main/Work/Side/Daily)
+- Break activities displayed with distinct styling
+- Overlap detection with automatic column layout
+- Click blocks to view task details and journal entries
+
+**Key Components:**
+- `CalendarView.tsx` - Main calendar component with view toggle
+- `components/CalendarBlock.tsx` - Individual activity block rendering
+- `components/HourlyGrid.tsx` - Background timeline grid with hour labels
+- `components/CalendarTaskDetail.tsx` - Modal for task details (what_done, what_think)
+
+**Utilities (`/src/lib/calendarUtils.ts`):**
+- `getVisibleHours(items)` - Calculate hours to display in dynamic view
+- `calculateDiscontinuousStyle(start, end, hours)` - Position blocks in discontinuous timeline
+- `processOverlaps(items)` - Handle overlapping activities with column assignment
+- `generateTimeSlots()` - Generate 24-hour time slots array
+- `calculateBlockStyle(start, duration)` - Calculate block position and height
+
+**Data Structure:**
+Activities are fetched from `activity_logs` table with fields:
+- `start_time`, `end_time` (ISO 8601 timestamps)
+- `duration_minutes` (calculated duration)
+- `type`: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK' | 'BREAK'
+- Links to `task_id`, `milestone_id`, `quest_id`
+- Journal entries: `what_done`, `what_think`
+
+**Usage Pattern:**
+```typescript
+// In daily-sync page
+<ActivityLog date="2025-01-15" refreshKey={timestamp} />
+```
+
 ### Key Patterns
 
 **Server Actions (Primary Data Pattern):**
