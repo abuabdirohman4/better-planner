@@ -12,6 +12,30 @@ import { createClient } from "@/lib/supabase/server";
  * - Quarterly: 13-week summary + goal achievement
  */
 
+export interface TaskDetail {
+  id: string;
+  title: string;
+  questName: string;
+  milestoneName?: string;
+  type: "MAIN_QUEST" | "WORK_QUEST" | "SIDE_QUEST" | "DAILY_QUEST";
+  status: "DONE" | "IN_PROGRESS" | "TODO";
+  focusMinutes: number;
+  daysInProgress?: number;
+  scheduledDate?: string;
+}
+
+export interface MainQuestProgress {
+  questName: string;
+  questId: string;
+  totalTasks: number;
+  completedCount: number;
+  progressPercentage: number;
+  currentMilestone?: string;
+  activeTasks: TaskDetail[];
+  completedTaskDetails: TaskDetail[];
+  blockedOrStuckTasks: TaskDetail[];
+}
+
 export interface TaskBreakdown {
   mainQuest: { completed: number; total: number; focusMinutes: number };
   sideQuest: { completed: number; total: number; focusMinutes: number };
@@ -30,10 +54,174 @@ export interface PerformanceMetrics {
   tasksTotal: number;
   completionRate: number;
   taskBreakdown: TaskBreakdown;
+
+  // Main Quest Focus - THE HERO
+  mainQuestProgress?: MainQuestProgress;
+
+  // Task Details for Context
+  topCompletedTasks: TaskDetail[]; // Top 3-5 wins
+  needsAttention: TaskDetail[]; // Stuck/overdue tasks
+
+  // Other Quests Summary
+  otherQuestsCompleted: number;
+  otherQuestsTotal: number;
+
   weeklyGoalsCompleted?: number;
   weeklyGoalsTotal?: number;
   previousFocusMinutes: number;
   previousCompletionRate: number;
+}
+
+/**
+ * Helper function to get task details with quest and milestone names
+ */
+async function getTaskDetails(
+  supabase: any,
+  planItems: any[],
+  periodStart: string,
+  periodEnd: string
+): Promise<TaskDetail[]> {
+  if (!planItems || planItems.length === 0) return [];
+
+  const taskIds = planItems
+    .map((item) => item.item_id)
+    .filter((id) => id != null);
+
+  if (taskIds.length === 0) return [];
+
+  // Get tasks with milestone and quest info
+  const { data: tasksWithContext } = await supabase
+    .from("tasks")
+    .select(
+      `
+      id,
+      title,
+      status,
+      scheduled_date,
+      created_at,
+      milestone_id,
+      milestones (
+        id,
+        title,
+        quest_id,
+        quests (
+          id,
+          title,
+          type
+        )
+      )
+    `
+    )
+    .in("id", taskIds);
+
+  if (!tasksWithContext) return [];
+
+  // Map to TaskDetail with item_type from planItems
+  const taskDetails: TaskDetail[] = tasksWithContext.map((task: any) => {
+    const planItem = planItems.find((item: any) => item.item_id === task.id);
+    const milestone = task.milestones;
+    const quest = milestone?.quests;
+
+    // Calculate days in progress
+    let daysInProgress: number | undefined;
+    if (task.status === "IN_PROGRESS" && task.created_at) {
+      const createdDate = new Date(task.created_at);
+      const now = new Date();
+      daysInProgress = Math.floor(
+        (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+    }
+
+    return {
+      id: task.id,
+      title: task.title,
+      questName: quest?.title || "No Quest",
+      milestoneName: milestone?.title,
+      type: (planItem?.item_type as TaskDetail["type"]) || "MAIN_QUEST",
+      status: task.status as TaskDetail["status"],
+      focusMinutes: planItem?.focus_duration || 0,
+      daysInProgress,
+      scheduledDate: task.scheduled_date,
+    };
+  });
+
+  return taskDetails;
+}
+
+/**
+ * Helper function to get Main Quest progress
+ */
+async function getMainQuestProgress(
+  supabase: any,
+  userId: string,
+  taskDetails: TaskDetail[]
+): Promise<MainQuestProgress | undefined> {
+  // Filter main quest tasks
+  const mainQuestTasks = taskDetails.filter(
+    (task) => task.type === "MAIN_QUEST"
+  );
+
+  if (mainQuestTasks.length === 0) return undefined;
+
+  // Get the most active main quest (most tasks)
+  const questGroups = mainQuestTasks.reduce(
+    (acc: Record<string, TaskDetail[]>, task: TaskDetail) => {
+      if (!acc[task.questName]) {
+        acc[task.questName] = [];
+      }
+      acc[task.questName].push(task);
+      return acc;
+    },
+    {} as Record<string, TaskDetail[]>
+  );
+
+  // Find primary main quest (with most tasks)
+  const primaryQuestName = Object.keys(questGroups).reduce((a, b) =>
+    questGroups[a].length > questGroups[b].length ? a : b
+  );
+
+  const primaryQuestTasks = questGroups[primaryQuestName];
+
+  // Get quest ID from first task
+  const firstTask = primaryQuestTasks[0];
+  const { data: questData } = await supabase
+    .from("quests")
+    .select("id")
+    .eq("title", primaryQuestName)
+    .eq("user_id", userId)
+    .single();
+
+  const completedTasks = primaryQuestTasks.filter((t) => t.status === "DONE");
+  const activeTasks = primaryQuestTasks.filter(
+    (t) => t.status === "IN_PROGRESS"
+  );
+  const blockedOrStuckTasks = primaryQuestTasks.filter(
+    (t) =>
+      t.status === "IN_PROGRESS" &&
+      t.daysInProgress !== undefined &&
+      t.daysInProgress > 3
+  );
+
+  // Get current milestone (most recent active task's milestone)
+  const currentMilestone =
+    activeTasks.length > 0 ? activeTasks[0].milestoneName : undefined;
+
+  return {
+    questName: primaryQuestName,
+    questId: questData?.id || "",
+    totalTasks: primaryQuestTasks.length,
+    completedCount: completedTasks.length,
+    progressPercentage:
+      primaryQuestTasks.length > 0
+        ? Math.round((completedTasks.length / primaryQuestTasks.length) * 100)
+        : 0,
+    currentMilestone,
+    activeTasks: activeTasks.slice(0, 5), // Top 5 active
+    completedTaskDetails: completedTasks
+      .sort((a, b) => (b.focusMinutes || 0) - (a.focusMinutes || 0))
+      .slice(0, 3), // Top 3 by focus time
+    blockedOrStuckTasks,
+  };
 }
 
 /**
@@ -130,10 +318,16 @@ export async function getDailyPerformance(
     dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
   };
 
+  let mainQuestProgress: MainQuestProgress | undefined;
+  let topCompletedTasks: TaskDetail[] = [];
+  let needsAttention: TaskDetail[] = [];
+  let otherQuestsCompleted = 0;
+  let otherQuestsTotal = 0;
+
   if (dailyPlanData) {
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status, item_type, focus_duration")
+      .select("id, status, item_type, focus_duration, item_id")
       .eq("daily_plan_id", dailyPlanData.id);
 
     tasksTotal = planItems?.length || 0;
@@ -141,6 +335,21 @@ export async function getDailyPerformance(
       planItems?.filter((item) => item.status === "DONE").length || 0;
 
     taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
+
+    // Extract task insights
+    const insights = await extractTaskInsights(
+      supabase,
+      userId,
+      planItems || [],
+      dateStr,
+      dateStr
+    );
+
+    mainQuestProgress = insights.mainQuestProgress;
+    topCompletedTasks = insights.topCompletedTasks;
+    needsAttention = insights.needsAttention;
+    otherQuestsCompleted = insights.otherQuestsCompleted;
+    otherQuestsTotal = insights.otherQuestsTotal;
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
@@ -194,8 +403,70 @@ export async function getDailyPerformance(
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
     taskBreakdown,
+    mainQuestProgress,
+    topCompletedTasks,
+    needsAttention,
+    otherQuestsCompleted,
+    otherQuestsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
+  };
+}
+
+/**
+ * Helper to extract task insights from planItems
+ */
+async function extractTaskInsights(
+  supabase: any,
+  userId: string,
+  planItems: any[],
+  periodStart: string,
+  periodEnd: string
+) {
+  // Get task details with quest/milestone names
+  const taskDetails = await getTaskDetails(
+    supabase,
+    planItems || [],
+    periodStart,
+    periodEnd
+  );
+
+  // Get Main Quest progress
+  const mainQuestProgress = await getMainQuestProgress(
+    supabase,
+    userId,
+    taskDetails
+  );
+
+  // Top completed tasks (all types, sorted by focus time)
+  const topCompletedTasks = taskDetails
+    .filter((task) => task.status === "DONE")
+    .sort((a, b) => b.focusMinutes - a.focusMinutes)
+    .slice(0, 5);
+
+  // Tasks that need attention (stuck > 3 days)
+  const needsAttention = taskDetails.filter(
+    (task) =>
+      task.status === "IN_PROGRESS" &&
+      task.daysInProgress !== undefined &&
+      task.daysInProgress > 3
+  );
+
+  // Calculate other quests summary (non-main quest)
+  const otherQuestTasks = taskDetails.filter(
+    (task) => task.type !== "MAIN_QUEST"
+  );
+  const otherQuestsCompleted = otherQuestTasks.filter(
+    (t) => t.status === "DONE"
+  ).length;
+  const otherQuestsTotal = otherQuestTasks.length;
+
+  return {
+    mainQuestProgress,
+    topCompletedTasks,
+    needsAttention,
+    otherQuestsCompleted,
+    otherQuestsTotal,
   };
 }
 
@@ -243,6 +514,11 @@ export async function getWeeklyPerformance(
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let mainQuestProgress: MainQuestProgress | undefined;
+  let topCompletedTasks: TaskDetail[] = [];
+  let needsAttention: TaskDetail[] = [];
+  let otherQuestsCompleted = 0;
+  let otherQuestsTotal = 0;
 
   let taskBreakdown: TaskBreakdown = {
     mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
@@ -255,7 +531,7 @@ export async function getWeeklyPerformance(
     const planIds = weeklyPlans.map((p) => p.id);
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status, item_type, focus_duration")
+      .select("id, status, item_type, focus_duration, item_id")
       .in("daily_plan_id", planIds);
 
     tasksTotal = planItems?.length || 0;
@@ -263,6 +539,21 @@ export async function getWeeklyPerformance(
       planItems?.filter((item) => item.status === "DONE").length || 0;
 
     taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
+
+    // Extract task insights
+    const insights = await extractTaskInsights(
+      supabase,
+      userId,
+      planItems || [],
+      startStr,
+      endStr
+    );
+
+    mainQuestProgress = insights.mainQuestProgress;
+    topCompletedTasks = insights.topCompletedTasks;
+    needsAttention = insights.needsAttention;
+    otherQuestsCompleted = insights.otherQuestsCompleted;
+    otherQuestsTotal = insights.otherQuestsTotal;
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
@@ -334,6 +625,11 @@ export async function getWeeklyPerformance(
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
     taskBreakdown,
+    mainQuestProgress,
+    topCompletedTasks,
+    needsAttention,
+    otherQuestsCompleted,
+    otherQuestsTotal,
     weeklyGoalsCompleted,
     weeklyGoalsTotal,
     previousFocusMinutes,
@@ -385,6 +681,12 @@ export async function getMonthlyPerformance(
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let mainQuestProgress: MainQuestProgress | undefined;
+  let topCompletedTasks: TaskDetail[] = [];
+  let needsAttention: TaskDetail[] = [];
+  let otherQuestsCompleted = 0;
+  let otherQuestsTotal = 0;
+
   let taskBreakdown: TaskBreakdown = {
     mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
     sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
@@ -396,7 +698,7 @@ export async function getMonthlyPerformance(
     const planIds = monthlyPlans.map((p) => p.id);
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status, item_type, focus_duration")
+      .select("id, status, item_type, focus_duration, item_id")
       .in("daily_plan_id", planIds);
 
     tasksTotal = planItems?.length || 0;
@@ -404,6 +706,21 @@ export async function getMonthlyPerformance(
       planItems?.filter((item) => item.status === "DONE").length || 0;
 
     taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
+
+    // Extract task insights
+    const insights = await extractTaskInsights(
+      supabase,
+      userId,
+      planItems || [],
+      startStr,
+      endStr
+    );
+
+    mainQuestProgress = insights.mainQuestProgress;
+    topCompletedTasks = insights.topCompletedTasks;
+    needsAttention = insights.needsAttention;
+    otherQuestsCompleted = insights.otherQuestsCompleted;
+    otherQuestsTotal = insights.otherQuestsTotal;
   }
 
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
@@ -465,6 +782,11 @@ export async function getMonthlyPerformance(
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
     taskBreakdown,
+    mainQuestProgress,
+    topCompletedTasks,
+    needsAttention,
+    otherQuestsCompleted,
+    otherQuestsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
   };
@@ -514,6 +836,12 @@ export async function getQuarterlyPerformance(
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let mainQuestProgress: MainQuestProgress | undefined;
+  let topCompletedTasks: TaskDetail[] = [];
+  let needsAttention: TaskDetail[] = [];
+  let otherQuestsCompleted = 0;
+  let otherQuestsTotal = 0;
+
   let taskBreakdown: TaskBreakdown = {
     mainQuest: { completed: 0, total: 0, focusMinutes: 0 },
     sideQuest: { completed: 0, total: 0, focusMinutes: 0 },
@@ -525,7 +853,7 @@ export async function getQuarterlyPerformance(
     const planIds = quarterlyPlans.map((p) => p.id);
     const { data: planItems } = await supabase
       .from("daily_plan_items")
-      .select("id, status, item_type, focus_duration")
+      .select("id, status, item_type, focus_duration, item_id")
       .in("daily_plan_id", planIds);
 
     tasksTotal = planItems?.length || 0;
@@ -533,6 +861,21 @@ export async function getQuarterlyPerformance(
       planItems?.filter((item) => item.status === "DONE").length || 0;
 
     taskBreakdown = await getTaskBreakdown(supabase, planItems || []);
+
+    // Extract task insights
+    const insights = await extractTaskInsights(
+      supabase,
+      userId,
+      planItems || [],
+      startStr,
+      endStr
+    );
+
+    mainQuestProgress = insights.mainQuestProgress;
+    topCompletedTasks = insights.topCompletedTasks;
+    needsAttention = insights.needsAttention;
+    otherQuestsCompleted = insights.otherQuestsCompleted;
+    otherQuestsTotal = insights.otherQuestsTotal;
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
@@ -603,6 +946,11 @@ export async function getQuarterlyPerformance(
     tasksTotal,
     completionRate: Math.round(completionRate * 100) / 100,
     taskBreakdown,
+    mainQuestProgress,
+    topCompletedTasks,
+    needsAttention,
+    otherQuestsCompleted,
+    otherQuestsTotal,
     weeklyGoalsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
