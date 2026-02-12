@@ -21,10 +21,10 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
     if (upsertError) throw upsertError;
     const daily_plan_id = plan.id;
 
-    // Get existing items to preserve their status and type
+    // Get existing items to preserve their status, type, and ID
     const { data: existingItems } = await supabase
       .from('daily_plan_items')
-      .select('item_id, status, item_type, daily_session_target, focus_duration')
+      .select('id, item_id, status, item_type, daily_session_target, focus_duration')
       .eq('daily_plan_id', daily_plan_id);
 
     // Create a map of existing items for quick lookup
@@ -35,6 +35,33 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
 
     // Get the item types from selectedItems to determine what to delete
     const itemTypesToUpdate = [...new Set(selectedItems.map(item => item.item_type))];
+
+    // ✅ CRITICAL: Backup task_schedules before CASCADE delete
+    let schedulesToPreserve: any[] = [];
+    if (itemTypesToUpdate.length > 0 && existingItems) {
+      // Get item IDs that will be deleted
+      const itemIdsToDelete = existingItems
+        .filter(item => itemTypesToUpdate.includes(item.item_type))
+        .map(item => item.id);
+
+      // Backup schedules with item_id mapping
+      if (itemIdsToDelete.length > 0) {
+        const { data: schedules } = await supabase
+          .from('task_schedules')
+          .select('*, daily_plan_items!inner(item_id)')
+          .in('daily_plan_item_id', itemIdsToDelete);
+
+        if (schedules) {
+          schedulesToPreserve = schedules.map((s: any) => ({
+            item_id: s.daily_plan_items.item_id,
+            scheduled_start_time: s.scheduled_start_time,
+            scheduled_end_time: s.scheduled_end_time,
+            duration_minutes: s.duration_minutes,
+            session_count: s.session_count,
+          }));
+        }
+      }
+    }
 
     // Delete only existing items of the same types as selectedItems
     if (itemTypesToUpdate.length > 0) {
@@ -57,7 +84,42 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
           focus_duration: existingItem?.focus_duration ?? 25 // Default 25 minutes
         };
       });
-      await supabase.from('daily_plan_items').insert(itemsToInsert);
+
+      const { data: newItems, error: insertError } = await supabase
+        .from('daily_plan_items')
+        .insert(itemsToInsert)
+        .select('id, item_id');
+
+      if (insertError) throw insertError;
+
+      // ✅ CRITICAL: Restore task_schedules with new daily_plan_item_id
+      if (schedulesToPreserve.length > 0 && newItems) {
+        const newItemMap = new Map(newItems.map((i: any) => [i.item_id, i.id]));
+        const schedulesToRestore = schedulesToPreserve
+          .map(s => {
+            const newId = newItemMap.get(s.item_id);
+            if (!newId) return null;
+            return {
+              daily_plan_item_id: newId,
+              scheduled_start_time: s.scheduled_start_time,
+              scheduled_end_time: s.scheduled_end_time,
+              duration_minutes: s.duration_minutes,
+              session_count: s.session_count,
+            };
+          })
+          .filter(Boolean);
+
+        if (schedulesToRestore.length > 0) {
+          const { error: restoreError } = await supabase
+            .from('task_schedules')
+            .insert(schedulesToRestore);
+
+          if (restoreError) {
+            console.error('Error restoring task schedules:', restoreError);
+            // Don't throw - items are saved, schedules can be recreated by user
+          }
+        }
+      }
     }
 
     // ✅ CRITICAL: Revalidate all daily sync related paths

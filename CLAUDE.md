@@ -163,11 +163,16 @@ task_schedules (AUTO DELETE) ← Schedules hilang!
 ```
 
 **Operations yang Trigger Cascade:**
-1. `updateDailyPlan()` - Delete & re-insert daily_plan_items by type
-2. `removeDailyPlanItem()` - Delete single task from daily plan
+1. `setDailyPlan()` - Delete & re-insert daily_plan_items by type (❌ causes data loss - NOW FIXED with backup/restore)
+2. `removeDailyPlanItem()` - Delete single task from daily plan (✅ expected behavior)
+
+**Fix Implemented (bp-7wn):**
+- `setDailyPlan()` now backs up task_schedules before delete, then restores with new daily_plan_item_id
+- Pattern: Backup → Delete (CASCADE) → Insert new items → Restore schedules with new IDs
+- See `dailyPlanActions.ts:24-120` for implementation
 
 **Best Practice:**
-- When updating daily_plan_items, **backup schedules first** then restore with new IDs
+- When updating daily_plan_items with delete-and-reinsert pattern, **backup schedules first** then restore with new IDs
 - See `docs/activity-plan-feature.md` for complete implementation guide
 
 **Key Files:**
