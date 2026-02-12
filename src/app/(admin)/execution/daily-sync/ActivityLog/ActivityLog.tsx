@@ -1,14 +1,21 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import { useActivityStore } from '@/stores/activityStore';
 import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
 import { formatTimeRange } from '@/lib/dateUtils';
-import CalendarView from './components/CalendarView';
+import CalendarView, { CalendarEvent } from './components/CalendarView';
+import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
+import { updateSchedule, createSchedule } from '../DailyQuest/actions/scheduleActions';
+import { SESSION_DURATION_MINUTES } from '../DailyQuest/utils/scheduleUtils';
+import { ScheduleManagementModal } from '../DailyQuest/components/ScheduleManagementModal';
+import { DailyPlanItem } from '../DailyQuest/types';
 
 interface ActivityLogProps {
   date: string;
   refreshKey?: number;
+  onScheduleChange?: () => void;
+  onCalendarModeChange?: (mode: 'BOTH' | 'PLAN' | 'ACTUAL') => void;
 }
 
 function formatDuration(minutes: number) {
@@ -44,9 +51,6 @@ const JournalEntry: React.FC<{ log: ActivityLogItem; viewMode?: 'GROUPED' | 'TIM
           </div>
         </>
       )}
-
-      {/* {log.what_think && (
-      )} */}
     </div>
   );
 };
@@ -97,28 +101,46 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boole
       {/* Collapsible content */}
       {isExpanded && hasJournalEntry && (
         <div className="mt-2 ml-6">
-          <JournalEntry log={log} viewMode={viewMode}/>
+          <JournalEntry log={log} viewMode={viewMode} />
         </div>
       )}
     </div>
   );
 };
 
-const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
-  const [dynamicHeight, setDynamicHeight] = useState('');
-  const [viewMode, setViewMode] = useState<'GROUPED' | 'TIMELINE' | 'CALENDAR'>('CALENDAR');
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC'); // DESC = Newest first
+const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleChange, onCalendarModeChange }) => {
+  type ViewMode = 'GROUPED' | 'TIMELINE' | 'CALENDAR';
+  const [viewMode, setViewMode] = useState<ViewMode>('CALENDAR');
+  const [calendarMode, setCalendarMode] = useState<'BOTH' | 'PLAN' | 'ACTUAL'>('BOTH');
 
-  const lastActivityTimestamp = useActivityStore((state) => state.lastActivityTimestamp);
+  const handleCalendarModeChange = (mode: 'BOTH' | 'PLAN' | 'ACTUAL') => {
+    setCalendarMode(mode);
+    onCalendarModeChange?.(mode);
+  };
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [dynamicHeight, setDynamicHeight] = useState('auto');
 
-  // ✅ Use SWR for data fetching instead of manual useEffect
-  const { logs, isLoading: loading, error } = useActivityLogs({
-    date,
-    refreshKey,
-    lastActivityTimestamp,
-  });
+  const { logs, isLoading, error } = useActivityLogs({ date, refreshKey });
+  const { scheduledTasks, mutate: mutateSchedules } = useScheduledTasks(date);
+  const [selectedScheduleTask, setSelectedScheduleTask] = useState<DailyPlanItem | null>(null);
 
-  // Calculate dynamic height based on Main Quest + Side Quest + Pomodoro Timer heights
+  // Handle schedule click to open edit/delete modal
+  const handleScheduleClick = (scheduleData: any) => {
+    const dailyPlanItem = scheduleData.daily_plan_item;
+    if (dailyPlanItem) {
+      setSelectedScheduleTask({
+        id: dailyPlanItem.id || scheduleData.daily_plan_item_id,
+        item_id: dailyPlanItem.item_id || '',
+        item_type: dailyPlanItem.item_type || 'MAIN_QUEST',
+        status: dailyPlanItem.status || 'TODO',
+        title: dailyPlanItem.title || 'Task',
+        focus_duration: dailyPlanItem.focus_duration || SESSION_DURATION_MINUTES,
+        daily_session_target: dailyPlanItem.daily_session_target || 3,
+      } as DailyPlanItem);
+    }
+  };
+
+  // Dynamic height calculation
   useEffect(() => {
     const calculateHeight = () => {
       try {
@@ -153,12 +175,133 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
       }
     };
 
-    // Calculate height on mount and window resize
     setTimeout(calculateHeight, 100);
     window.addEventListener('resize', calculateHeight);
 
     return () => window.removeEventListener('resize', calculateHeight);
-  }, [date]); // Recalculate when date changes
+  }, [date]);
+
+  // Merge logs + schedules into CalendarEvent[]
+  const calendarEvents: CalendarEvent[] = useMemo(() => {
+    const events: CalendarEvent[] = [];
+
+    // Add activity logs (ACTUAL)
+    if (calendarMode !== 'PLAN') {
+      const safeLogs = Array.isArray(logs) ? logs : [];
+      safeLogs.forEach(log => {
+        events.push({
+          id: log.id,
+          type: 'LOG',
+          subType: log.type as any,
+          title: log.task_title || 'Activity',
+          startTime: log.start_time,
+          endTime: log.end_time,
+          duration: log.duration_minutes,
+          itemType: log.task_type,
+          data: log,
+        });
+      });
+    }
+
+    // Add scheduled tasks (PLAN)
+    if (calendarMode !== 'ACTUAL') {
+      (scheduledTasks || []).forEach((schedule: any) => {
+        const title = schedule.daily_plan_item?.title || 'Scheduled Task';
+        const focusDuration = schedule.daily_plan_item?.focus_duration || SESSION_DURATION_MINUTES;
+        const dailyTarget = schedule.daily_plan_item?.daily_session_target || 4;
+        const maxDuration = dailyTarget * focusDuration;
+
+        events.push({
+          id: schedule.id,
+          type: 'SCHEDULE',
+          title,
+          startTime: schedule.scheduled_start_time,
+          endTime: schedule.scheduled_end_time,
+          duration: schedule.duration_minutes,
+          itemType: schedule.daily_plan_item?.item_type,
+          data: schedule,
+          maxDuration,
+        });
+      });
+    }
+
+    return events;
+  }, [logs, scheduledTasks, calendarMode]);
+
+  // Handle schedule update from drag (with optimistic update)
+  const handleScheduleUpdate = async (
+    scheduleId: string,
+    newStartTime: string,
+    newEndTime: string,
+    newDuration: number
+  ) => {
+    try {
+      const sessionCount = Math.max(1, Math.round(newDuration / SESSION_DURATION_MINUTES));
+
+      // Optimistic update: immediately update UI before server response
+      mutateSchedules(
+        async (currentData) => {
+          // Update schedule in local data
+          if (!currentData) return currentData;
+
+          return currentData.map((schedule: any) => {
+            if (schedule.id === scheduleId) {
+              return {
+                ...schedule,
+                scheduled_start_time: newStartTime,
+                scheduled_end_time: newEndTime,
+                duration_minutes: newDuration,
+                session_count: sessionCount,
+              };
+            }
+            return schedule;
+          });
+        },
+        {
+          // Don't revalidate immediately, let the update complete first
+          revalidate: false,
+        }
+      );
+
+      // Send to server
+      await updateSchedule(scheduleId, newStartTime, newEndTime, newDuration, sessionCount);
+
+      // Revalidate from server after successful update
+      mutateSchedules();
+      onScheduleChange?.();
+    } catch (error) {
+      console.error('Failed to update schedule:', error);
+      // Revert optimistic update on error
+      mutateSchedules();
+    }
+  };
+
+  // Handle task drop from quest card
+  const handleTaskDrop = async (taskData: any, startMinutes: number) => {
+    try {
+      const hours = Math.floor(startMinutes / 60);
+      const mins = startMinutes % 60;
+      const startDate = new Date(date + 'T00:00:00');
+      startDate.setHours(hours, mins, 0, 0);
+
+      const focusDuration = taskData.focusDuration || SESSION_DURATION_MINUTES;
+      const sessionCount = taskData.sessionCount || 1;
+      const totalDuration = sessionCount * focusDuration;
+      const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+
+      await createSchedule(
+        taskData.dailyPlanItemId,
+        startDate.toISOString(),
+        endDate.toISOString(),
+        totalDuration,
+        sessionCount
+      );
+      mutateSchedules();
+      onScheduleChange?.();
+    } catch (error) {
+      console.error('Failed to create schedule from drop:', error);
+    }
+  };
 
   // Group logs by task_id
   const safeLogs = Array.isArray(logs) ? logs : [];
@@ -242,22 +385,16 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-1">
-        {loading ? (
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        {isLoading ? (
           <div className="space-y-4">
-            {/* Skeleton for 3 summary cards */}
             {Array.from({ length: 1 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800 animate-pulse">
-                {/* Task title skeleton */}
                 <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-
-                {/* Sessions and duration skeleton */}
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
                 </div>
-
-                {/* Session list skeleton */}
                 <div className="space-y-1 ml-2">
                   {Array.from({ length: 2 + (index % 3) }).map((_, sessionIndex) => (
                     <div key={`session-${sessionIndex}`} className="flex items-center gap-2">
@@ -278,16 +415,38 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
           <div className="text-red-500 dark:text-red-400 text-center py-8">
             Error loading activity logs: {error}
           </div>
-        ) : summary.length === 0 ? (
+        ) : viewMode === 'CALENDAR' ? (
+          <div className="h-full min-h-0">
+            <CalendarView
+              items={calendarEvents}
+              currentDate={date}
+              calendarMode={calendarMode}
+              onCalendarModeChange={handleCalendarModeChange}
+              onScheduleUpdate={handleScheduleUpdate}
+              onScheduleClick={handleScheduleClick}
+              onTaskDrop={handleTaskDrop}
+            />
+            {/* Schedule click modal */}
+            {selectedScheduleTask && (
+              <ScheduleManagementModal
+                isOpen={!!selectedScheduleTask}
+                onClose={() => setSelectedScheduleTask(null)}
+                task={selectedScheduleTask}
+                selectedDate={date}
+                onScheduleChange={() => {
+                  mutateSchedules();
+                  onScheduleChange?.();
+                }}
+              />
+            )}
+          </div>
+        ) : summary.length === 0 && safeLogs.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 text-center py-8">
             Belum ada aktivitas tercatat hari ini.
           </div>
         ) : (
           <div className="space-y-4 h-full">
-            {viewMode === 'CALENDAR' ? (
-              <CalendarView items={safeLogs} currentDate={date} />
-            ) : viewMode === 'GROUPED' ? (
-              // Grouped View (Existing)
+            {viewMode === 'GROUPED' ? (
               summary.map((item: { title: string; sessions: ActivityLogItem[]; totalMinutes: number }) => (
                 <div key={`summary-${item.title}`} className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 bg-white dark:bg-gray-800">
                   <div className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1">{item.title}</div>
@@ -305,7 +464,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
                 </div>
               ))
             ) : (
-              // Timeline View (New)
+              // Timeline View
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-2 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                 {timelineLogs.map((log) => (
                   <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} viewMode={viewMode} />

@@ -58,6 +58,12 @@ export default function DailySyncPage() {
   // Card collapse states
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
 
+  // Activity Log calendar mode for dynamic title
+  const [activityCalendarMode, setActivityCalendarMode] = useState<'BOTH' | 'PLAN' | 'ACTUAL'>('BOTH');
+  const activityTitle = activityCalendarMode === 'PLAN' ? 'Activity Plan'
+    : activityCalendarMode === 'ACTUAL' ? 'Activity Log'
+      : 'Activity Plan & Log';
+
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
 
@@ -161,9 +167,9 @@ export default function DailySyncPage() {
                     className="h-full flex flex-col"
                   >
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                      <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Activity</h3>
+                      <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">{activityTitle}</h3>
                       <div className="flex-1">
-                        <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
+                        <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} onCalendarModeChange={setActivityCalendarMode} />
                       </div>
                     </div>
                   </CollapsibleCard>

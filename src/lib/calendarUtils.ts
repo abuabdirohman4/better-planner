@@ -19,55 +19,35 @@ export const getVisibleHours = (items: any[]): number[] => {
     const start = new Date(item.start_time);
     const end = new Date(item.end_time);
 
-    // Get start hour
     const startH = start.getHours();
-
-    // Get end hour. If ends at :00, effectively ends at previous hour for grid purposes?
-    // Actually, if task is 8:00-9:00. It occupies slot 8.
-    // If task is 8:30-9:30. It occupies slot 8 and 9.
     let endH = end.getHours();
     if (end.getMinutes() > 0) {
-      // If ends at 9:30, we need to show hour 9.
-      // Loop goes < endH + 1
       endH += 1;
     }
-
-    // Special case: if ends exactly at :00, the task visually ends at the start of that hour.
-    // e.g. 9:00. We don't necessarily need to show hour 9 IF no other task starts there.
-    // But usually we want to show the closing grid line.
 
     for (let h = startH; h < endH; h++) {
       occupied.add(h);
     }
   });
 
-  // Convert to sorted array
   const hours = Array.from(occupied).sort((a, b) => a - b);
 
-  // If no items, return default range
-  if (hours.length === 0) return Array.from({ length: 10 }, (_, i) => i + 8); // 8-17 default
+  if (hours.length === 0) return Array.from({ length: 10 }, (_, i) => i + 8);
 
   return hours;
 };
 
 /**
  * Maps a real date/time to a visual Y position (pixels) based on visible hours.
- * Returns null if the time is completely outside any visible hour block.
  */
 export const getVisualPosition = (dateStr: string, visibleHours: number[]): number | null => {
   const d = new Date(dateStr);
   const hour = d.getHours();
   const minute = d.getMinutes();
 
-  // Find index of this hour in the visible list
   const index = visibleHours.indexOf(hour);
 
   if (index === -1) {
-    // If not found, it might be the end time of a block falling on the next hour?
-    // e.g. Task 8:00-9:00. Visible=[8]. End time is 9:00. 
-    // We want position of start of 9 => (index of 8 + 1) * 60.
-
-    // Check if it's exactly :00 and the previous hour is in list
     if (minute === 0 && visibleHours.includes(hour - 1)) {
       const prevIndex = visibleHours.indexOf(hour - 1);
       return (prevIndex + 1) * 60;
@@ -99,10 +79,6 @@ export const calculateDiscontinuousStyle = (
 
 /**
  * Calculates the top position and height for a calendar block
- * @param startTime ISO string of start time
- * @param durationMinutes Duration in minutes
- * @param hourHeight Height of one hour in pixels
- * @returns CSSProperties for top and height
  */
 export const calculateBlockStyle = (
   startTime: string,
@@ -113,14 +89,9 @@ export const calculateBlockStyle = (
   const hours = date.getHours();
   const minutes = date.getMinutes();
 
-  // Calculate total minutes from midnight
   const startMinute = hours * 60 + minutes;
-
-  // Calculate top position (minutes * pixels per minute)
   const pixelsPerMinute = hourHeight / 60;
   const top = startMinute * pixelsPerMinute;
-
-  // Calculate height
   const height = durationMinutes * pixelsPerMinute;
 
   return {
@@ -130,47 +101,85 @@ export const calculateBlockStyle = (
 };
 
 /**
- * Helper to process overlapping blocks (simple version)
- * Assigns column indices to overlapping blocks
+ * Google Calendar-style overlap processing.
+ * Groups overlapping items into clusters, assigns column indices,
+ * and sets maxCols so each item knows its width fraction.
  */
-export const processOverlaps = <T extends { start_time: string; duration_minutes: number }>(items: T[]): (T & { colIndex: number; maxCols: number })[] => {
-  // Sort by start time
-  const sorted = [...items].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+export const processOverlaps = <T extends { start_time: string; end_time?: string; duration_minutes: number }>(items: T[]): (T & { colIndex: number; maxCols: number })[] => {
+  if (items.length === 0) return [];
 
-  const processed = sorted.map(item => ({ ...item, colIndex: 0, maxCols: 1 }));
+  const sorted = [...items].sort((a, b) => {
+    const diff = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    if (diff !== 0) return diff;
+    return b.duration_minutes - a.duration_minutes;
+  });
 
-  // Simple greedy algorithm for column assignment
-  // This is a basic implementation; for complex schedules a full graph coloring algo might be needed
-  // checking overlaps pairwise
+  type ProcessedItem = T & { colIndex: number; maxCols: number; _startMs: number; _endMs: number };
+
+  const processed: ProcessedItem[] = sorted.map(item => ({
+    ...item,
+    colIndex: 0,
+    maxCols: 1,
+    _startMs: new Date(item.start_time).getTime(),
+    _endMs: item.end_time
+      ? new Date(item.end_time).getTime()
+      : new Date(item.start_time).getTime() + item.duration_minutes * 60000,
+  }));
+
+  const itemOverlaps = (a: ProcessedItem, b: ProcessedItem) =>
+    a._startMs < b._endMs && a._endMs > b._startMs;
+
+  // Group items into overlap clusters via BFS
+  const visited = new Set<number>();
+  const clusters: number[][] = [];
 
   for (let i = 0; i < processed.length; i++) {
-    const current = processed[i];
-    const currentStart = new Date(current.start_time).getTime();
-    const currentEnd = currentStart + current.duration_minutes * 60000;
+    if (visited.has(i)) continue;
+    const cluster: number[] = [];
+    const queue = [i];
+    visited.add(i);
 
-    // Check against previous items to find overlap
-    let overlaps = [];
-    for (let j = 0; j < i; j++) {
-      const prev = processed[j];
-      const prevStart = new Date(prev.start_time).getTime();
-      const prevEnd = prevStart + prev.duration_minutes * 60000;
-
-      if (currentStart < prevEnd && currentEnd > prevStart) {
-        overlaps.push(prev);
+    while (queue.length > 0) {
+      const idx = queue.shift()!;
+      cluster.push(idx);
+      for (let j = 0; j < processed.length; j++) {
+        if (visited.has(j)) continue;
+        if (itemOverlaps(processed[idx], processed[j])) {
+          visited.add(j);
+          queue.push(j);
+        }
       }
     }
+    clusters.push(cluster);
+  }
 
-    if (overlaps.length > 0) {
-      // Find formatting used columns
-      const usedCols = new Set(overlaps.map(o => o.colIndex));
+  // Assign columns within each cluster
+  for (const cluster of clusters) {
+    cluster.sort((a, b) => processed[a]._startMs - processed[b]._startMs);
+    let maxCol = 0;
+
+    for (let ci = 0; ci < cluster.length; ci++) {
+      const idx = cluster[ci];
+      const usedCols = new Set<number>();
+
+      for (let cj = 0; cj < ci; cj++) {
+        const otherIdx = cluster[cj];
+        if (itemOverlaps(processed[idx], processed[otherIdx])) {
+          usedCols.add(processed[otherIdx].colIndex);
+        }
+      }
+
       let col = 0;
       while (usedCols.has(col)) col++;
-      current.colIndex = col;
+      processed[idx].colIndex = col;
+      if (col > maxCol) maxCol = col;
+    }
+
+    const totalCols = maxCol + 1;
+    for (const idx of cluster) {
+      processed[idx].maxCols = totalCols;
     }
   }
 
-  // Calculate maxCols for each group of overlapping items
-  // This part can be improved for "visual groups"
-
-  return processed;
+  return processed.map(({ _startMs, _endMs, ...rest }) => rest as T & { colIndex: number; maxCols: number });
 };
