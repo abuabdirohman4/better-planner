@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: Git Commit Policy
+
+**NEVER commit changes without explicit user approval.**
+
+Before making any git commit:
+1. **ALWAYS explain** what changes you made and why
+2. **WAIT for user confirmation** before running `git commit`
+3. **Show the user** what files will be committed (`git status`, `git diff`)
+4. **Ask permission explicitly**: "Apakah saya boleh commit perubahan ini?"
+
+This rule applies to ALL commits including:
+- Bug fixes
+- Feature implementations
+- Documentation updates
+- Any code changes
+
+**DO NOT commit automatically** even if the user asked you to "fix" something. Fixing code and committing are separate steps that require separate approvals.
+
 ## Project Overview
 
 Better Planner is a productivity and task management web application built with Next.js 15, featuring a unique 13-week quarter planning system. The app helps users transform goals into achievements through strategic planning, daily execution tracking, and comprehensive analytics.
@@ -163,11 +181,16 @@ task_schedules (AUTO DELETE) ← Schedules hilang!
 ```
 
 **Operations yang Trigger Cascade:**
-1. `updateDailyPlan()` - Delete & re-insert daily_plan_items by type
-2. `removeDailyPlanItem()` - Delete single task from daily plan
+1. `setDailyPlan()` - Delete & re-insert daily_plan_items by type (❌ causes data loss - NOW FIXED with backup/restore)
+2. `removeDailyPlanItem()` - Delete single task from daily plan (✅ expected behavior)
+
+**Fix Implemented (bp-7wn):**
+- `setDailyPlan()` now backs up task_schedules before delete, then restores with new daily_plan_item_id
+- Pattern: Backup → Delete (CASCADE) → Insert new items → Restore schedules with new IDs
+- See `dailyPlanActions.ts:24-120` for implementation
 
 **Best Practice:**
-- When updating daily_plan_items, **backup schedules first** then restore with new IDs
+- When updating daily_plan_items with delete-and-reinsert pattern, **backup schedules first** then restore with new IDs
 - See `docs/activity-plan-feature.md` for complete implementation guide
 
 **Key Files:**
