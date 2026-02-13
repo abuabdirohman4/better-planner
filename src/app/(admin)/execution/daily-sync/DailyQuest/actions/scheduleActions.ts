@@ -72,7 +72,7 @@ export async function createSchedule(
     throw new Error("Failed to create schedule");
   }
 
-  revalidatePath("/(admin)/execution/daily-sync");
+  // ✅ Removed: Client Component using SWR does not need revalidatePath
   return data;
 }
 
@@ -115,7 +115,7 @@ export async function updateSchedule(
     throw new Error("Failed to update schedule");
   }
 
-  revalidatePath("/(admin)/execution/daily-sync");
+  // ✅ Removed: Client Component using SWR does not need revalidatePath
   return data;
 }
 
@@ -139,7 +139,7 @@ export async function deleteSchedule(scheduleId: string) {
     throw new Error("Failed to delete schedule");
   }
 
-  revalidatePath("/(admin)/execution/daily-sync");
+  // ✅ Removed: Client Component using SWR does not need revalidatePath
 }
 
 export async function getTaskSchedules(taskId: string) {

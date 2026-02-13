@@ -35,7 +35,8 @@ export async function addDailyQuest(formData: FormData) {
 
     if (taskError) throw taskError;
 
-    revalidatePath('/execution/daily-sync');
+    // ✅ NO revalidatePath for /execution/daily-sync - it's a Client Component using SWR
+    // Only revalidate the quests page (Server Component)
     revalidatePath('/quests/daily-quests');
     return task;
   } catch (error) {
@@ -60,7 +61,7 @@ export async function archiveDailyQuest(taskId: string) {
 
     if (error) throw error;
 
-    revalidatePath('/execution/daily-sync');
+    // ✅ Removed: Client Component using SWR doesn't need revalidatePath
     revalidatePath('/quests/daily-quests');
     return { success: true };
   } catch (error) {
@@ -131,7 +132,7 @@ export async function deleteDailyQuest(taskId: string) {
 
     if (error) throw error;
 
-    revalidatePath('/execution/daily-sync');
+    // ✅ Removed: Client Component using SWR doesn't need revalidatePath
     revalidatePath('/quests/daily-quests');
     return { success: true };
   } catch (error) {
@@ -187,7 +188,7 @@ export async function updateDailyQuest(taskId: string, updates: any) {
 
     if (error) throw error;
 
-    revalidatePath('/execution/daily-sync');
+    // ✅ Removed: Client Component using SWR doesn't need revalidatePath
     revalidatePath('/quests/daily-quests');
     return data;
   } catch (error) {

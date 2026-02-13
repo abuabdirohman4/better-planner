@@ -50,7 +50,7 @@ export async function addSideQuest(formData: FormData) {
       focus_duration: 25
     });
 
-    revalidatePath('/execution/daily-sync');
+    // ✅ Removed: Client Component using SWR doesn't need revalidatePath
     return task;
   } catch (error) {
     console.error('Error adding side quest:', error);
