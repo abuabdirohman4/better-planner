@@ -122,9 +122,9 @@ export async function setDailyPlan(date: string, selectedItems: { item_id: strin
       }
     }
 
-    // ✅ CRITICAL: Revalidate all daily sync related paths
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    // Client pages (/execution/*) use SWR - no server cache revalidation needed
+    revalidatePath('/planning/main-quests');
 
     return { success: true };
   } catch (error) {
@@ -146,9 +146,8 @@ export async function updateDailyPlanItemFocusDuration(dailyPlanItemId: string, 
 
     if (error) throw error;
 
-    // ✅ CRITICAL: Revalidate daily sync paths to ensure UI updates
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    revalidatePath('/planning/main-quests');
 
     return { success: true };
   } catch (error) {
@@ -197,11 +196,8 @@ export async function updateDailyPlanItemAndTaskStatus(
       console.warn('Error updating weekly_goal_items status:', weeklyGoalItemsError);
     }
 
-    // ✅ CRITICAL: Revalidate multiple paths to ensure cross-page synchronization
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
     revalidatePath('/planning/main-quests');
-    revalidatePath('/execution/weekly-sync');
 
     return data;
   } catch (error) {
@@ -224,9 +220,8 @@ export async function removeDailyPlanItem(dailyPlanItemId: string) {
 
     if (error) throw error;
 
-    // ✅ CRITICAL: Revalidate all daily sync related paths
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    revalidatePath('/planning/main-quests');
 
     return { success: true };
   } catch (error) {
@@ -252,9 +247,8 @@ export async function convertToChecklist(dailyPlanItemId: string) {
 
     if (error) throw error;
 
-    // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    revalidatePath('/planning/main-quests');
 
     return { success: true };
   } catch (error) {
@@ -280,9 +274,8 @@ export async function convertToQuest(dailyPlanItemId: string, defaultFocusDurati
 
     if (error) throw error;
 
-    // ✅ CRITICAL: Revalidate paths untuk update TargetFocus dan DailySync
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    revalidatePath('/planning/main-quests');
 
     return { success: true };
   } catch (error) {
@@ -310,8 +303,8 @@ export async function updateDailyPlanItemsDisplayOrder(
       if (error) throw error;
     }
 
-    revalidatePath('/execution/daily-sync');
-    revalidatePath('/execution');
+    // ✅ SELECTIVE REVALIDATE: Only planning pages (Server Components)
+    revalidatePath('/planning/main-quests');
     return { success: true, message: 'Urutan task berhasil diupdate!' };
   } catch (error) {
     console.error('Error updating daily plan items order:', error);

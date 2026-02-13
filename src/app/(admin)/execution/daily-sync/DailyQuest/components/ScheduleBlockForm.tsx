@@ -116,9 +116,13 @@ export function ScheduleBlockForm({
   onSave,
   onCancel,
 }: ScheduleBlockFormProps) {
-  // Initialize with current time rounded to next 15 min if no start time provided
+  // ✅ TIMEZONE-AWARE: Initialize with current WIB time rounded to next 15 min
   const getDefaultStartTime = () => {
-    if (initialStartTime) return new Date(initialStartTime);
+    if (initialStartTime) {
+      // Parse UTC timestamp and convert to local Date object
+      return new Date(initialStartTime);
+    }
+    // Get current local time (WIB in Indonesia)
     const now = new Date();
     const minutes = now.getMinutes();
     const roundedMinutes = Math.ceil(minutes / 15) * 15;
@@ -129,7 +133,10 @@ export function ScheduleBlockForm({
   };
 
   const getDefaultEndTime = () => {
-    if (initialEndTime) return new Date(initialEndTime);
+    if (initialEndTime) {
+      // Parse UTC timestamp and convert to local Date object
+      return new Date(initialEndTime);
+    }
     const start = getDefaultStartTime();
     // Default end time: start + 30 minutes for checklist
     return new Date(start.getTime() + 30 * 60000);
@@ -144,9 +151,12 @@ export function ScheduleBlockForm({
   const endTimeString = format(endDate, "HH:mm");
 
   const handleStartTimeChange = (hours: number, minutes: number) => {
+    // ✅ TIMEZONE FIX: Preserve date, only change time (hours & minutes)
     const newDate = new Date(startDate);
     newDate.setHours(hours);
     newDate.setMinutes(minutes);
+    newDate.setSeconds(0);
+    newDate.setMilliseconds(0);
     setStartDate(newDate);
 
     // For checklist, auto-adjust end time if it's before start
@@ -157,9 +167,12 @@ export function ScheduleBlockForm({
   };
 
   const handleEndTimeChange = (hours: number, minutes: number) => {
+    // ✅ TIMEZONE FIX: Preserve date, only change time (hours & minutes)
     const newDate = new Date(endDate);
     newDate.setHours(hours);
     newDate.setMinutes(minutes);
+    newDate.setSeconds(0);
+    newDate.setMilliseconds(0);
     // Ensure end is after start
     if (newDate > startDate) {
       setEndDate(newDate);
@@ -174,13 +187,21 @@ export function ScheduleBlockForm({
   const currentDuration = isChecklist ? checklistDuration : sessionDuration;
   const currentEndTimeStr = isChecklist ? endDate.toISOString() : sessionEndTime;
 
+  // ✅ TIMEZONE-AWARE: Convert local WIB time to UTC for storage
+  const convertLocalToUTC = (localDate: Date): string => {
+    // localDate is in WIB timezone (browser local time)
+    // toISOString() automatically converts to UTC
+    // This is correct: 17:00 WIB → 10:00 UTC same day
+    return localDate.toISOString();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      startTime: startDate.toISOString(),
+      startTime: convertLocalToUTC(startDate),
       sessionCount: isChecklist ? 1 : sessionCount,
       duration: currentDuration,
-      endTime: currentEndTimeStr,
+      endTime: isChecklist ? convertLocalToUTC(endDate) : currentEndTimeStr,
     });
   };
 

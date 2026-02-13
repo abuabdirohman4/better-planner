@@ -158,7 +158,11 @@ export function ScheduleManagementModal({
                         {formatTimeRange(schedule.scheduled_start_time, schedule.scheduled_end_time)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {schedule.session_count} sessions ({schedule.duration_minutes}m)
+                        {/* ✅ CHECKLIST UI FIX: Show duration only for checklist, sessions for regular tasks */}
+                        {task.focus_duration === 0
+                          ? `${schedule.duration_minutes} minutes`
+                          : `${schedule.session_count} sessions (${schedule.duration_minutes}m)`
+                        }
                       </div>
                     </div>
                     <div className="flex gap-2">

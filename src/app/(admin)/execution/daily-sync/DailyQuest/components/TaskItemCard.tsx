@@ -239,15 +239,16 @@ const TaskItemCardContent = ({
 
   return (
     <div
-      draggable={!isChecklistMode}
+      draggable={true}  // ✅ CHECKLIST DND: Enable drag for all tasks including checklist
       onDragStart={(e) => {
         e.dataTransfer.setData('application/task-schedule', JSON.stringify({
           dailyPlanItemId: item.id,
           itemId: item.item_id,
           title: item.title || 'Task',
-          focusDuration: item.focus_duration || 25,
+          focusDuration: isChecklistMode ? 30 : (item.focus_duration || 25),  // ✅ Default 30 min for checklist
           sessionCount: 1,
           itemType: item.item_type,
+          isChecklist: isChecklistMode,  // ✅ Flag untuk CalendarView handler
         }));
         e.dataTransfer.effectAllowed = 'copy';
       }}

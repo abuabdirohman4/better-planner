@@ -161,14 +161,17 @@ export async function getTaskSchedules(taskId: string) {
 }
 
 export async function getScheduledTasksByDate(date: string) {
-  // Schedule times are stored in UTC. To reliably capture ALL schedules
-  // for any local day regardless of timezone, query a wide UTC range.
-  const prevDay = new Date(`${date}T00:00:00.000Z`);
-  prevDay.setUTCDate(prevDay.getUTCDate() - 1);
-  const startOfDay = prevDay.toISOString();
-  const nextDay = new Date(`${date}T23:59:59.999Z`);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-  const endOfDay = nextDay.toISOString();
+  // ✅ TIMEZONE FIX: Convert WIB date boundaries to UTC for accurate querying
+  // date parameter is in format 'YYYY-MM-DD' representing a WIB date
+  // Example: '2026-02-13' means Feb 13 in WIB timezone
+
+  // Feb 13 00:00:00 WIB = Feb 12 17:00:00 UTC (WIB is UTC+7)
+  const startOfDayWIB = new Date(`${date}T00:00:00+07:00`);
+  const startOfDay = startOfDayWIB.toISOString();
+
+  // Feb 13 23:59:59.999 WIB = Feb 13 16:59:59.999 UTC
+  const endOfDayWIB = new Date(`${date}T23:59:59.999+07:00`);
+  const endOfDay = endOfDayWIB.toISOString();
 
   const supabase = await createClient();
   const {
