@@ -304,6 +304,141 @@ export function useData() {
 - All IDs: UUID v4 format
 - User data is isolated via Row Level Security (RLS)
 
+## ⚠️ CRITICAL: Timezone & Date Handling
+
+**ALWAYS store timestamps in UTC, display in local timezone (WIB/Asia/Jakarta).**
+
+### Core Principles
+
+1. **Database Storage: UTC Only**
+   - All `TIMESTAMPTZ` columns store UTC (Coordinated Universal Time)
+   - Supabase automatically converts to UTC when storing
+   - Example: User creates schedule at `17:00 WIB (GMT+7)` → stored as `10:00 UTC`
+
+2. **Display to User: Local Timezone (WIB)**
+   - Convert UTC to WIB when displaying to user
+   - Use `toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })`
+   - Show timestamps in user-friendly format
+
+3. **User Input: Convert to UTC Before Saving**
+   - User inputs local time (WIB)
+   - Convert to UTC before storing in database
+   - Preserve timezone context during conversion
+
+### Common Pitfalls & How to Avoid
+
+❌ **WRONG: Direct `.toISOString()` on local Date**
+```typescript
+// User selects 17:00 WIB on Feb 13, 2026
+const localDate = new Date('2026-02-13T17:00:00'); // Browser assumes local timezone
+const isoString = localDate.toISOString(); // "2026-02-13T10:00:00.000Z" ❌ Wrong day in UTC!
+
+// Problem: This converts 17:00 WIB → 10:00 UTC (previous day Feb 12)
+```
+
+✅ **CORRECT: Preserve local context, then convert**
+```typescript
+// Method 1: Use date-fns with timezone support
+import { zonedTimeToUtc } from 'date-fns-tz';
+
+const localDate = new Date('2026-02-13T17:00:00');
+const utcDate = zonedTimeToUtc(localDate, 'Asia/Jakarta');
+const isoString = utcDate.toISOString(); // "2026-02-13T10:00:00.000Z" ✅ Correct!
+
+// Method 2: Manual offset calculation (WIB = UTC+7)
+const localDate = new Date('2026-02-13T17:00:00');
+const utcTime = localDate.getTime() - (7 * 60 * 60 * 1000); // Subtract 7 hours
+const utcDate = new Date(utcTime);
+const isoString = utcDate.toISOString(); // "2026-02-13T10:00:00.000Z" ✅ Correct!
+```
+
+❌ **WRONG: Assume database returns local time**
+```typescript
+const { data } = await supabase
+  .from('task_schedules')
+  .select('scheduled_start_time');
+
+// Display directly
+console.log(data.scheduled_start_time); // "2026-02-13T10:00:00.000Z" ❌ Shows UTC to user!
+```
+
+✅ **CORRECT: Convert UTC to local for display**
+```typescript
+const { data } = await supabase
+  .from('task_schedules')
+  .select('scheduled_start_time');
+
+// Convert to local timezone for display
+const localTime = new Date(data.scheduled_start_time).toLocaleString('id-ID', {
+  timeZone: 'Asia/Jakarta',
+  dateStyle: 'medium',
+  timeStyle: 'short'
+}); // "13 Feb 2026, 17.00" ✅ Shows WIB to user!
+```
+
+### Date Range Queries: UTC-Aware Filtering
+
+❌ **WRONG: Query with local date strings**
+```typescript
+// User wants schedules for Feb 13, 2026 (WIB)
+const date = '2026-02-13';
+const { data } = await supabase
+  .from('task_schedules')
+  .gte('scheduled_start_time', `${date}T00:00:00.000Z`) // ❌ This is Feb 13 00:00 UTC!
+  .lte('scheduled_end_time', `${date}T23:59:59.999Z`);  // ❌ Misses WIB events!
+
+// Problem: Feb 13 WIB starts at Feb 12 17:00 UTC, not Feb 13 00:00 UTC
+```
+
+✅ **CORRECT: Convert local date boundaries to UTC**
+```typescript
+// User wants schedules for Feb 13, 2026 (WIB)
+const date = '2026-02-13';
+
+// Feb 13 00:00 WIB = Feb 12 17:00 UTC
+const startOfDayWIB = new Date(`${date}T00:00:00+07:00`);
+const startUTC = startOfDayWIB.toISOString(); // "2026-02-12T17:00:00.000Z"
+
+// Feb 13 23:59 WIB = Feb 13 16:59 UTC
+const endOfDayWIB = new Date(`${date}T23:59:59.999+07:00`);
+const endUTC = endOfDayWIB.toISOString(); // "2026-02-13T16:59:59.999Z"
+
+const { data } = await supabase
+  .from('task_schedules')
+  .gte('scheduled_start_time', startUTC) // ✅ Correct UTC range!
+  .lte('scheduled_end_time', endUTC);
+```
+
+### Timezone Testing Checklist
+
+Before committing any date/time related code, verify:
+
+1. ✅ **Storage Test**: Create event at 17:00 WIB → Check database shows correct UTC (10:00 UTC same day)
+2. ✅ **Display Test**: Database has 10:00 UTC → UI shows 17:00 WIB to user
+3. ✅ **Query Test**: Filter for Feb 13 WIB → Returns events from Feb 12 17:00 UTC to Feb 13 16:59 UTC
+4. ✅ **Edge Cases**: Test midnight (00:00), noon (12:00), end of day (23:59)
+5. ✅ **Cross-Day Events**: Event from 23:00 WIB to 01:00 WIB next day → Spans two UTC days
+
+### Why UTC Storage?
+
+**Benefits:**
+- ✅ **Future-proof**: Ready for multi-timezone support (collaboration features, international users)
+- ✅ **Consistent calculations**: `endTime - startTime` always accurate, no DST issues
+- ✅ **Database portability**: No ambiguity when moving servers or backup/restore
+- ✅ **Standard practice**: Industry standard, well-documented, predictable behavior
+
+**Trade-offs:**
+- ❌ Database values not human-readable (need conversion to check manually)
+- ❌ Slightly more complex code (conversion required on both ends)
+
+**Better Planner's Choice:** UTC storage is the correct approach for this application, despite single-user single-timezone current state, because it prevents technical debt and future refactoring.
+
+### Reference Documentation
+
+For complete implementation guide and examples, see:
+- `docs/timezone-handling.md` (detailed guide with code examples)
+- TLDR: **Store UTC, Display WIB, Test Edge Cases**
+
 ## Coding Standards
 
 **Naming Conventions:**
