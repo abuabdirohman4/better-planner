@@ -92,7 +92,7 @@ export async function updateSchedule(
     throw new Error("User not authenticated");
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("task_schedules")
     .update({
       scheduled_start_time: startTime,
@@ -107,10 +107,16 @@ export async function updateSchedule(
 
   if (error) {
     console.error("Error updating schedule:", error);
+    // If schedule not found (PGRST116), it may have been deleted
+    if (error.code === 'PGRST116') {
+      console.warn(`Schedule ${scheduleId} not found, may have been deleted`);
+      return; // Silently return instead of throwing
+    }
     throw new Error("Failed to update schedule");
   }
 
   revalidatePath("/(admin)/execution/daily-sync");
+  return data;
 }
 
 export async function deleteSchedule(scheduleId: string) {

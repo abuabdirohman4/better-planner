@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState, useMemo } from 'react';
+import { toast } from 'sonner';
 
 import { useActivityStore } from '@/stores/activityStore';
 import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
@@ -134,7 +135,10 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
         item_type: dailyPlanItem.item_type || 'MAIN_QUEST',
         status: dailyPlanItem.status || 'TODO',
         title: dailyPlanItem.title || 'Task',
-        focus_duration: dailyPlanItem.focus_duration || SESSION_DURATION_MINUTES,
+        // ✅ CHECKLIST FIX: Preserve focus_duration=0 for checklist, don't fallback to 25
+        focus_duration: dailyPlanItem.focus_duration !== undefined
+          ? dailyPlanItem.focus_duration
+          : SESSION_DURATION_MINUTES,
         daily_session_target: dailyPlanItem.daily_session_target || 3,
       } as DailyPlanItem);
     }
@@ -289,6 +293,15 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
       const totalDuration = sessionCount * focusDuration;
       const endDate = new Date(startDate.getTime() + totalDuration * 60000);
 
+      console.log('Creating schedule:', {
+        taskId: taskData.dailyPlanItemId,
+        startTime: startDate.toISOString(),
+        endTime: endDate.toISOString(),
+        duration: totalDuration,
+        sessionCount,
+        focusDuration,
+      });
+
       await createSchedule(
         taskData.dailyPlanItemId,
         startDate.toISOString(),
@@ -296,10 +309,13 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
         totalDuration,
         sessionCount
       );
+
+      console.log('Schedule created successfully');
       mutateSchedules();
       onScheduleChange?.();
     } catch (error) {
       console.error('Failed to create schedule from drop:', error);
+      toast.error('Failed to create schedule: ' + (error as Error).message);
     }
   };
 

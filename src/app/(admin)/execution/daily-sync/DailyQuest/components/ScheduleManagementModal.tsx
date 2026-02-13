@@ -30,8 +30,10 @@ export function ScheduleManagementModal({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
+  // ✅ CHECKLIST FIX: Detect checklist mode properly
+  const isChecklistTask = task.focus_duration === 0;
   const dailyTarget = task.daily_session_target || 3;
-  const focusDuration = task.focus_duration || SESSION_DURATION_MINUTES;
+  const focusDuration = isChecklistTask ? 30 : (task.focus_duration || SESSION_DURATION_MINUTES);
   const remainingSessions = getRemainingSessions(schedules, dailyTarget);
   const totalScheduled = dailyTarget - remainingSessions;
   const progress = (totalScheduled / dailyTarget) * 100;
@@ -89,8 +91,8 @@ export function ScheduleManagementModal({
       size="md"
     >
       <div className="space-y-6">
-        {/* Progress Section */}
-        {task.focus_duration !== 0 && (
+        {/* Progress Section - Only for session-based tasks, not checklist */}
+        {!isChecklistTask && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Scheduled: {totalScheduled} / {dailyTarget} sessions</span>
@@ -111,7 +113,7 @@ export function ScheduleManagementModal({
           <ScheduleBlockForm
             maxSessions={remainingSessions}
             focusDuration={focusDuration}
-            isChecklist={task.focus_duration === 0}
+            isChecklist={isChecklistTask}
             onSave={handleSave}
             onCancel={() => setIsAdding(false)}
           />
@@ -143,7 +145,7 @@ export function ScheduleManagementModal({
                     initialSessionCount={schedule.session_count}
                     maxSessions={schedule.session_count + remainingSessions}
                     focusDuration={focusDuration}
-                    isChecklist={task.focus_duration === 0}
+                    isChecklist={isChecklistTask}
                     initialEndTime={schedule.scheduled_end_time}
                     onSave={handleSave}
                     onCancel={() => setEditingId(null)}
@@ -159,7 +161,7 @@ export function ScheduleManagementModal({
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {/* ✅ CHECKLIST UI FIX: Show duration only for checklist, sessions for regular tasks */}
-                        {task.focus_duration === 0
+                        {isChecklistTask
                           ? `${schedule.duration_minutes} minutes`
                           : `${schedule.session_count} sessions (${schedule.duration_minutes}m)`
                         }
@@ -189,7 +191,8 @@ export function ScheduleManagementModal({
           )}
         </div>
 
-        {!isAdding && remainingSessions > 0 && (
+        {/* Add Time Block button - For checklist, always show. For sessions, check remaining */}
+        {!isAdding && (isChecklistTask || remainingSessions > 0) && (
           <Button
             className="w-full mt-4"
             variant="outline"
@@ -199,7 +202,8 @@ export function ScheduleManagementModal({
           </Button>
         )}
 
-        {remainingSessions <= 0 && !isAdding && (
+        {/* Success message - Only for session-based tasks */}
+        {!isChecklistTask && remainingSessions <= 0 && !isAdding && (
           <p className="text-center text-sm text-green-600 font-medium mt-4">
             ✓ All sessions scheduled!
           </p>
