@@ -1,14 +1,48 @@
 # Issue: Page Blink/Flash on Daily Sync Operations
 
 **Issue ID**: Related to `bp-oaa` (Time Blocking Feature)
-**Status**: ❌ UNRESOLVED
+**Status**: ✅ RESOLVED
 **Priority**: HIGH
 **Created**: 2026-02-13
 **Last Updated**: 2026-02-13
 
 ---
 
-## 📋 Problem Description
+## ✅ Final Resolution
+
+**Root Cause Identification:**
+The "blink" was caused by a combination of two factors that triggered a skeleton loader during data mutations:
+
+1.  **Double Skeleton Gates**:
+    -   While the outer skeleton gate in `page.tsx` was fixed, `DailySyncClient.tsx` had its own internal check: `if (loading) return <Skeleton />`.
+    -   This inner gate was being triggered even when the outer one wasn't.
+
+2.  **SWR Key Instability**:
+    -   The `useCompletedSessions` hook used `taskIds` in its SWR key: `['all-completed-sessions', taskIds, date]`.
+    -   Every time a quest was selected/added/removed, the `taskIds` list changed, creating a **new** SWR key.
+    -   SWR treats a new key as a fresh request, setting `isLoading: true` (not just `isValidating`).
+    -   Since `loading` was defined as `dailyPlanLoading || tasksLoading || completedSessionsLoading`, the entire page's loading state flipped to `true`.
+
+**The Fix:**
+
+1.  **Stable Loading State**:
+    -   Modified `useDailyPlanManagement.ts` to exclude `completedSessionsLoading` from the critical `loading` state used for skeletons.
+    -   Skeleton now only depends on `dailyPlanLoading || tasksLoading`.
+
+2.  **Correct Skeleton Logic**:
+    -   Updated `DailySyncClient.tsx` to use the "Initial Load Only" pattern.
+    -   Skeleton is *only* shown if data is undefined *and* loading is true.
+    -   Revalidations (where data exists but is updating) no longer trigger the skeleton.
+
+3.  **Client-Side Mutations (Optimization)**:
+    -   Switched to client-side Supabase calls (`clientMutations.ts`) for `setDailyPlan` and `addSideQuest`.
+    -   This prevents Next.js Server Actions from automatically invalidating the router cache, further reducing unnecessary re-renders.
+
+**Files Modified**:
+-   `src/app/(admin)/execution/daily-sync/DailyQuest/hooks/useDailyPlanManagement.ts`
+-   `src/app/(admin)/execution/daily-sync/DailyQuest/DailySyncClient.tsx`
+-   `src/app/(admin)/execution/daily-sync/DailyQuest/utils/clientMutations.ts` (New file)
+-   `CLAUDE.md` (Added Best Practices)
 
 When performing certain operations on the `/execution/daily-sync` page, the page experiences a visible "blink" or "flash" effect. This is **NOT** a full browser refresh, but rather a brief visual flash where the page appears to reload/re-render.
 

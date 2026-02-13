@@ -273,7 +273,10 @@ export function useDailyPlanManagement(
   });
 
   // Combine loading states
-  const loading = dailyPlanLoading || tasksLoading || completedSessionsLoading;
+  // ✅ FIX BLINK: Exclude completedSessionsLoading from skeleton-triggering loading.
+  // completedSessions SWR key contains taskIds that change on mutation,
+  // causing isLoading=true for new key even though main data is already cached.
+  const loading = dailyPlanLoading || tasksLoading;
   const error = dailyPlanError || tasksError;
 
   // Enhanced mutate function that refreshes both and invalidates related caches
@@ -779,7 +782,7 @@ export function useDailyPlanManagement(
     weeklyTasks,
     completedSessions,
     loading,
-    initialLoading: loading,
+    initialLoading: dailyPlanLoading || tasksLoading,
 
     // Business logic
     selectedTasks,

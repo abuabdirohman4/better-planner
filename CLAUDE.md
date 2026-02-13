@@ -644,3 +644,42 @@ For detailed information, see:
 - `.cursor/rules/database-schema.mdc` - Database schema details
 - `.cursor/rules/api-integration.mdc` - API and Supabase integration
 - `docs/database-schema.md` - Complete database documentation
+
+## Best Practices: Data Fetching & State
+
+### SWR & Loading States (Avoiding "Blink" Issues)
+
+**1. Stable SWR Keys:**
+- ❌ **Avoid** putting specific IDs into list keys if the list changes frequently.
+  ```typescript
+  // BAD: Key changes every time a task is added/removed -> causes isLoading=true
+  useSWR(['sessions', taskIds.join(',')], ...)
+  ```
+- ✅ **Prefer** stable keys and filter client-side, or accept that key changes trigger new requests.
+
+**2. Skeleton Loading Gates:**
+- ❌ **Avoid** inner skeleton gates that trigger on *any* loading state.
+  ```tsx
+  // BAD: Flashes skeleton on every background revalidation
+  if (isLoading) return <Skeleton />
+  ```
+- ✅ **Prefer** initial-only matching.
+  ```tsx
+  // GOOD: Only show skeleton if we have NO data yet
+  const hasData = data !== undefined;
+  const isInitialLoad = !hasData && isLoading;
+  if (isInitialLoad) return <Skeleton />
+  ```
+
+**3. Composition of Loading States:**
+- ❌ **Don't** combine all loading states for the main skeleton.
+  ```typescript
+  // BAD: Secondary data loading triggers main page skeleton
+  const pageLoading = mainDataLoading || secondaryDataLoading;
+  ```
+- ✅ **Separate** critical vs non-critical loading.
+  ```typescript
+  // GOOD: Main skeleton only depends on critical data
+  const pageLoading = mainDataLoading;
+  const secondaryLoading = secondaryDataLoading; // Handle locally or ignore
+  ```

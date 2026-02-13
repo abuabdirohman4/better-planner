@@ -63,9 +63,13 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   // Use hook data
   const effectiveDailyPlan = hookDailyPlan || dailyPlan;
   const effectiveWeeklyTasks = hookWeeklyTasks;
-  const effectiveLoading = hookLoading || loading;
 
-  if (effectiveLoading) {
+  // ✅ FIX BLINK: Only show skeleton on initial load (no data yet),
+  // not during revalidation or mutation where data already exists
+  const hasData = effectiveDailyPlan !== undefined;
+  const isInitialLoad = !hasData && (hookLoading || loading);
+
+  if (isInitialLoad) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
         <DailySyncSkeleton />
