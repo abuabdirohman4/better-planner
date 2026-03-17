@@ -2,27 +2,117 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚠️ CRITICAL: Git Commit Policy
+---
 
-**NEVER commit changes without explicit user approval.**
+## 🚨 CRITICAL: CLAUDE.md MAINTENANCE RULES (PREVENT BLOAT)
 
-Before making any git commit:
-1. **ALWAYS explain** what changes you made and why
-2. **WAIT for user confirmation** before running `git commit`
-3. **Show the user** what files will be committed (`git status`, `git diff`)
-4. **Ask permission explicitly**: "Apakah saya boleh commit perubahan ini?"
+**NEVER append feature-specific documentation, long code snippets, or detailed business logic directly to this file.** This file is strictly a **Master Index** and must remain under 300 lines to optimize the AI context window. When instructed to document new knowledge, you MUST route it to the correct external file:
 
-This rule applies to ALL commits including:
-- Bug fixes
-- Feature implementations
-- Documentation updates
-- Any code changes
+- ❌ **DON'T** add business rules here. ✅ **DO** update `docs/claude/business-rules.md`
+- ❌ **DON'T** add testing/TDD examples here. ✅ **DO** update `docs/claude/testing-guidelines.md`
+- ❌ **DON'T** add architecture edge cases here. ✅ **DO** update `docs/claude/architecture-patterns.md`
+- ❌ **DON'T** add SQL/Supabase queries here. ✅ **DO** update `docs/claude/database-operations.md`
+- ❌ **DON'T** add beads/git workflow details here. ✅ **DO** update `docs/claude/beads-workflow.md`
 
-**DO NOT commit automatically** even if the user asked you to "fix" something. Fixing code and committing are separate steps that require separate approvals.
+**How to update this file correctly:** If you must document a completely new domain, create a new file in `docs/claude/` and add exactly ONE pointer line here (e.g., *"For [Topic], READ `docs/claude/new-topic.md`"*). **Do not dump the content here.**
 
-## Project Overview
+---
 
-Better Planner is a productivity and task management web application built with Next.js 15, featuring a unique 13-week quarter planning system. The app helps users transform goals into achievements through strategic planning, daily execution tracking, and comprehensive analytics.
+## 🚨 MANDATORY: Test-Driven Development (TDD)
+
+**ALL new features, business logic, and permission systems SHOULD be developed using TDD when automated testing is set up.**
+
+- **Zero bugs on first implementation** - Tests catch issues before production
+- **Clear requirements** - Tests serve as executable specifications
+- **Safe refactoring** - Change code with confidence
+- **Better design** - TDD forces modular, testable code
+
+**TDD Workflow**: RED (write failing tests) → GREEN (implement minimal code) → REFACTOR (clean up)
+
+**REQUIRED for**: Business logic, permission systems, data transformations, complex algorithms, integration points, critical features.
+**SKIP for**: Pure presentational UI, trivial getters/setters, config files, type definitions.
+
+**Future Setup**: Vitest for unit tests, Playwright for E2E tests.
+
+**📖 For detailed TDD examples, manual testing checklist, and SWR loading patterns, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
+
+---
+
+## 🤖 Execution Mode Selection (MANDATORY)
+
+**BEFORE implementing ANY feature/refactoring/task**, you MUST ask user:
+
+> "Apakah Anda ingin saya yang langsung mengerjakan kode ini, atau menggunakan Google Antigravity untuk eksekusi?"
+
+**Option A: Claude Code Direct** - Immediate execution (1-3 files, <200 lines)
+**Option B: Google Antigravity** - Create design doc + plan in `docs/plans/`, user executes, Claude reviews (better for 3+ files refactoring)
+
+---
+
+## 🔧 Git Workflow & Commit Protocol
+
+**CRITICAL**: Claude Code MUST NOT execute git operations that modify repository state.
+
+**Allowed (Read-Only)**: `git status`, `git diff`, `git log`, `git show`, `git branch`
+
+**NEVER execute**: `git add`, `git commit`, `git push`, `git pull`, `git merge`, `git rebase`, or anything that modifies `.git/` or working tree.
+
+**After code changes**: Show `git status`/`git diff`, provide suggested commit message (with `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`), and inform user to run git commands manually.
+
+**Exception**: `bd sync` (beads issue tracker) is allowed.
+
+**Commit Message Format (Conventional Commits):**
+```
+feat: add new feature
+feat(scope): add feature with scope (bp-a3f2dd)
+fix: resolve bug (bp-xyz123)
+docs: update documentation
+refactor: improve code structure
+```
+
+**📖 For complete Beads & Git integration guide, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
+
+---
+
+## 📚 Documentation Strategy
+
+**Inline limit**: Keep CLAUDE.md under **300 lines**. Use "READ [`file.md`]" pointers for external docs.
+
+**Inline when**: High-frequency (>50% tasks), short & critical (<50 lines), quick lookup, core conventions.
+**External when**: Low-frequency (<20% tasks), long & detailed (>50 lines), specialized, reference material.
+
+---
+
+## 📋 Beads Issue Management
+
+**Beads Sync Branch:** `beads-sync` (NOT master)
+- Master is normal working branch - checkout anytime without conflicts
+- Beads syncs to dedicated `beads-sync` branch automatically via worktree
+- Work on feature branches normally, beads operates independently
+
+**Key Commands:**
+- `bd ready` - Find ready tasks (no blockers)
+- `bd close <id>` - Close issue (never use `bd delete`)
+- `bd sync` - Sync to remote (commits to beads-sync, not your branch)
+
+**Critical Rules:**
+- Never manually edit `.beads/*.jsonl` files
+- Never change `sync-branch` config in `.beads/config.yaml`
+- Progress files go in `.beads/progress/{issue-id}.md`
+
+**📖 For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
+
+---
+
+## 🚨 CRITICAL: MCP Connection Check
+
+**BEFORE running ANY Supabase operations**, check MCP connection using `mcp__better-planner__list_tables`. If it fails, inform user: "MCP Supabase belum terkoneksi. Silakan aktifkan MCP di settings Claude Code." Do NOT ask to restart.
+
+---
+
+## 📚 Project Overview
+
+**Better Planner** is a productivity and task management web application built with Next.js 15, featuring a unique 13-week quarter planning system. The app helps users transform goals into achievements through strategic planning, daily execution tracking, and comprehensive analytics.
 
 **Tech Stack:**
 - Next.js 15 (App Router) + React 19 + TypeScript
@@ -34,275 +124,40 @@ Better Planner is a productivity and task management web application built with 
 - Sonner for toast notifications
 - Progressive Web App (PWA) enabled
 
-## Development Commands
+**Core Features:**
+- 13-week Quarter Planning System (Q1-Q4)
+- Quest Management (Daily/Work/Side quests)
+- Pomodoro Timer with Activity Tracking
+- Daily Sync for task execution
+- Activity Plan (Time Blocking)
+- Calendar View for activity logs
+
+**📖 For complete application structure, component organization, and architecture patterns, READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)**
+
+---
+
+## 🔧 Development Commands
 
 ```bash
-# Development
-npm run dev              # Start dev server at http://localhost:3000
+npm run dev              # Dev server at localhost:3000
 npm run build            # Production build
-npm start               # Start production server
-
-# Code Quality
-npm run type-check      # TypeScript type checking
-npm run format          # Format code with Prettier
-npm run format:check    # Check code formatting
-npm run fix:all         # Format and type check
-
-# Utilities
-npm run generate:pdf    # Generate PDF guide
+npm run type-check       # TypeScript check (no emit)
+npm run format           # Format with Prettier
+npm run fix:all          # Format + type-check
+npm run generate:pdf     # Generate PDF guide
 ```
 
-## Architecture Overview
+---
 
-### Core Planning Concepts
+## 🏗️ Architecture Quick Reference
 
-**Quarter System (13-week cycles):**
-- The app uses a 13-week quarter planning system (Q1, Q2, Q3, Q4)
-- Users create quarterly goals and break them down into weekly and daily tasks
-- Quarter planning components are in `src/app/(admin)/planning/`
+**App Structure**: `(admin)` for protected pages, `(full-width-pages)` for auth. Features: dashboard, execution, planning, quests, settings.
 
-**Quest System:**
-- "Quests" are major goals/projects within quarters
-- Daily Quests: Day-to-day tasks tracked in daily sync
-- Work Quests: Professional/project tasks
-- Side Quests: Personal development and side projects
-- Quest management is in `src/app/(admin)/quests/`
+**Key Patterns**: Server Actions (`"use server"`), SWR Hooks (caching), Supabase Clients (`server`/`client`), RLS Policies (user isolation).
 
-### Application Structure
+**📖 For detailed patterns, data fetching strategies, and component guidelines, READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)**
 
-```
-src/
-├── app/                          # Next.js App Router
-│   ├── (admin)/                  # Main authenticated pages
-│   │   ├── dashboard/            # User dashboard and analytics
-│   │   ├── execution/            # Daily task execution
-│   │   ├── planning/             # Quarter planning features
-│   │   ├── quests/               # Quest management (daily, work, side)
-│   │   └── settings/             # User settings
-│   ├── (full-width-pages)/       # Auth pages (login, signup)
-│   ├── api/                      # API routes (if needed)
-│   └── layout.tsx                # Root layout with providers
-├── components/                   # Reusable UI components
-│   ├── auth/                     # Authentication components
-│   ├── common/                   # SWRProvider, PreloadProvider
-│   ├── form/                     # Form components
-│   ├── ui/                       # Basic UI components
-│   └── tables/                   # Table components
-├── lib/                          # Utilities and configurations
-│   ├── supabase/                 # Supabase client setup
-│   ├── dateUtils.ts              # Date manipulation
-│   ├── errorUtils.ts             # Error handling
-│   ├── quarterUtils.ts           # Quarter calculations
-│   └── swr.ts                    # SWR configuration
-├── stores/                       # Zustand stores
-│   └── activityStore.ts          # Global state management
-└── types/                        # TypeScript type definitions
-```
-
-### Activity Log Calendar View
-
-**Location:** `src/app/(admin)/execution/daily-sync/ActivityLog/`
-
-The ActivityLog component displays Pomodoro timer sessions and tracks user productivity throughout the day. It supports three view modes:
-- **GROUPED**: Activities grouped by task/quest with session counts
-- **TIMELINE**: Chronological list of all activities (newest first, toggleable)
-- **CALENDAR**: Visual timeline with hourly blocks (Google Calendar style)
-
-**Calendar View Features:**
-- **Dynamic View**: Shows only hours with activities (discontinuous timeline) - default mode
-- **24h View**: Full 24-hour grid display (00:00 - 23:59)
-- Color-coded blocks by quest type (Main/Work/Side/Daily)
-- Break activities displayed with distinct styling
-- Overlap detection with automatic column layout
-- Click blocks to view task details and journal entries
-
-**Key Components:**
-- `CalendarView.tsx` - Main calendar component with view toggle
-- `components/CalendarBlock.tsx` - Individual activity block rendering
-- `components/HourlyGrid.tsx` - Background timeline grid with hour labels
-- `components/CalendarTaskDetail.tsx` - Modal for task details (what_done, what_think)
-
-**Utilities (`/src/lib/calendarUtils.ts`):**
-- `getVisibleHours(items)` - Calculate hours to display in dynamic view
-- `calculateDiscontinuousStyle(start, end, hours)` - Position blocks in discontinuous timeline
-- `processOverlaps(items)` - Handle overlapping activities with column assignment
-- `generateTimeSlots()` - Generate 24-hour time slots array
-- `calculateBlockStyle(start, duration)` - Calculate block position and height
-
-**Data Structure:**
-Activities are fetched from `activity_logs` table with fields:
-- `start_time`, `end_time` (ISO 8601 timestamps)
-- `duration_minutes` (calculated duration)
-- `type`: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK' | 'BREAK'
-- Links to `task_id`, `milestone_id`, `quest_id`
-- Journal entries: `what_done`, `what_think`
-
-**Usage Pattern:**
-```typescript
-// In daily-sync page
-<ActivityLog date="2025-01-15" refreshKey={timestamp} />
-```
-
-### Activity Plan - Time Blocking
-
-**Location:** `src/app/(admin)/execution/daily-sync/DailyQuest/`
-
-Activity Plan memungkinkan users untuk schedule tasks di waktu spesifik (time blocking). Terintegrasi dengan ActivityLog melalui segmented control toggle.
-
-**Core Features:**
-- **Multiple Schedules**: Task bisa di-schedule berkali-kali (split time blocks)
-  - Example: Task A → 2 sessions jam 10:00, 1 session jam 14:00
-- **Segmented Control**: Toggle "Plan | Actual" di ActivityLog header
-- **Schedule Management**: Modal untuk add/edit/delete schedule blocks per task
-- **Visual Calendar**: Simplified blocks (icon + title only), waktu & duration dari position & height
-- **Conflict Detection**: Visual warning (yellow border) untuk overlapping schedules
-
-**Database Structure:**
-```sql
--- task_schedules table
-CREATE TABLE task_schedules (
-  id UUID PRIMARY KEY,
-  daily_plan_item_id UUID REFERENCES daily_plan_items(id) ON DELETE CASCADE,
-  scheduled_start_time TIMESTAMPTZ NOT NULL,
-  scheduled_end_time TIMESTAMPTZ NOT NULL,
-  duration_minutes INT NOT NULL,
-  session_count INT NOT NULL,  -- Sessions allocated to this block
-  ...
-);
-```
-
-**⚠️ CRITICAL: CASCADE Delete Chain**
-```
-daily_plans (DELETE)
-    ↓ ON DELETE CASCADE
-daily_plan_items (AUTO DELETE)
-    ↓ ON DELETE CASCADE
-task_schedules (AUTO DELETE) ← Schedules hilang!
-```
-
-**Operations yang Trigger Cascade:**
-1. `setDailyPlan()` - Delete & re-insert daily_plan_items by type (❌ causes data loss - NOW FIXED with backup/restore)
-2. `removeDailyPlanItem()` - Delete single task from daily plan (✅ expected behavior)
-
-**Fix Implemented (bp-7wn):**
-- `setDailyPlan()` now backs up task_schedules before delete, then restores with new daily_plan_item_id
-- Pattern: Backup → Delete (CASCADE) → Insert new items → Restore schedules with new IDs
-- See `dailyPlanActions.ts:24-120` for implementation
-
-**Best Practice:**
-- When updating daily_plan_items with delete-and-reinsert pattern, **backup schedules first** then restore with new IDs
-- See `docs/activity-plan-feature.md` for complete implementation guide
-
-**Key Files:**
-- `actions/scheduleActions.ts` - CRUD operations for schedules
-- `components/ScheduleManagementModal.tsx` - Schedule list & management UI
-- `components/ScheduleBlockForm.tsx` - Add/edit individual blocks
-- `hooks/useTaskSchedules.ts` - Fetch schedules per task
-- `utils/scheduleUtils.ts` - Validation & conflict detection
-
-**Usage:**
-```typescript
-// Create schedule
-await createSchedule(taskId, startTime, endTime, durationMins, sessionCount);
-
-// Get schedules for task
-const schedules = await getTaskSchedules(taskId);
-
-// Get all scheduled tasks for date
-const tasks = await getScheduledTasksByDate('2026-02-12');
-```
-
-### Key Patterns
-
-**Server Actions (Primary Data Pattern):**
-```typescript
-// actions/example.ts
-"use server";
-
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-
-export async function getData() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('Not authenticated');
-
-  const { data, error } = await supabase
-    .from('table_name')
-    .select('*')
-    .eq('user_id', user.id);
-
-  if (error) throw error;
-  return data || [];
-}
-
-// Always revalidate paths after mutations
-export async function createData(formData: FormData) {
-  // ... mutation logic
-  revalidatePath('/path-to-revalidate');
-}
-```
-
-**SWR for Client-Side Data:**
-```typescript
-import useSWR from 'swr';
-import { getData } from '@/actions/example';
-
-export function useData() {
-  const { data, error, isLoading, mutate } = useSWR(
-    'data-key',
-    getData,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
-    }
-  );
-  return { data, error, isLoading, mutate };
-}
-```
-
-**Supabase Client Setup:**
-- Server components: Use `createClient()` from `@/lib/supabase/server`
-- Client components: Use `createClient()` from `@/lib/supabase/client`
-- Always check authentication before database operations
-- RLS policies enforce user-level data isolation
-
-**Component Patterns:**
-- Functional components with React hooks
-- TypeScript interfaces for all props
-- Loading states with `<Spinner />` component
-- Error states with user-friendly messages
-- Toast notifications via `toast.success()`, `toast.error()` from Sonner
-
-## Database Schema
-
-### Core Tables
-
-**Projects/Quests:**
-- `id`: UUID primary key
-- `title`: String (1-100 chars)
-- `description`: Text (optional)
-- `status`: "planning" | "active" | "completed" | "on-hold"
-- `priority`: "low" | "medium" | "high" | "urgent"
-- `quarter`: "Q1" | "Q2" | "Q3" | "Q4"
-- `user_id`: Foreign key to auth.users
-- `created_at`, `updated_at`: Timestamps
-
-**Tasks:**
-- `id`: UUID primary key
-- `project_id`: Foreign key to projects
-- `title`: String (1-100 chars)
-- `status`: "todo" | "in-progress" | "completed"
-- `priority`: "low" | "medium" | "high" | "urgent"
-- `due_date`: Optional date
-- `completed_at`: Timestamp when completed
-
-**Data Validation:**
-- Dates: ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.sssZ)
-- Colors: Hex format (#1496F6)
-- All IDs: UUID v4 format
-- User data is isolated via Row Level Security (RLS)
+---
 
 ## ⚠️ CRITICAL: Timezone & Date Handling
 
@@ -311,138 +166,67 @@ export function useData() {
 ### Core Principles
 
 1. **Database Storage: UTC Only**
-   - All `TIMESTAMPTZ` columns store UTC (Coordinated Universal Time)
+   - All `TIMESTAMPTZ` columns store UTC
    - Supabase automatically converts to UTC when storing
-   - Example: User creates schedule at `17:00 WIB (GMT+7)` → stored as `10:00 UTC`
 
 2. **Display to User: Local Timezone (WIB)**
-   - Convert UTC to WIB when displaying to user
+   - Convert UTC to WIB when displaying
    - Use `toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })`
-   - Show timestamps in user-friendly format
 
 3. **User Input: Convert to UTC Before Saving**
    - User inputs local time (WIB)
    - Convert to UTC before storing in database
-   - Preserve timezone context during conversion
 
-### Common Pitfalls & How to Avoid
+**📖 For complete timezone guide with code examples, common pitfalls, and testing checklist, READ [`docs/claude/timezone-handling.md`](docs/claude/timezone-handling.md)**
 
-❌ **WRONG: Direct `.toISOString()` on local Date**
-```typescript
-// User selects 17:00 WIB on Feb 13, 2026
-const localDate = new Date('2026-02-13T17:00:00'); // Browser assumes local timezone
-const isoString = localDate.toISOString(); // "2026-02-13T10:00:00.000Z" ❌ Wrong day in UTC!
+---
 
-// Problem: This converts 17:00 WIB → 10:00 UTC (previous day Feb 12)
-```
+## ⚠️ Important Business Rules
 
-✅ **CORRECT: Preserve local context, then convert**
-```typescript
-// Method 1: Use date-fns with timezone support
-import { zonedTimeToUtc } from 'date-fns-tz';
+**Quarter System**: 13-week cycles (Q1-Q4), weekly breakdown, daily task propagation.
 
-const localDate = new Date('2026-02-13T17:00:00');
-const utcDate = zonedTimeToUtc(localDate, 'Asia/Jakarta');
-const isoString = utcDate.toISOString(); // "2026-02-13T10:00:00.000Z" ✅ Correct!
+**Quest Types**: Daily (recurring tasks), Work (professional projects), Side (personal development).
 
-// Method 2: Manual offset calculation (WIB = UTC+7)
-const localDate = new Date('2026-02-13T17:00:00');
-const utcTime = localDate.getTime() - (7 * 60 * 60 * 1000); // Subtract 7 hours
-const utcDate = new Date(utcTime);
-const isoString = utcDate.toISOString(); // "2026-02-13T10:00:00.000Z" ✅ Correct!
-```
+**Pomodoro Timer**: 25-min focus sessions, 5-min short breaks, 15-min long breaks.
 
-❌ **WRONG: Assume database returns local time**
-```typescript
-const { data } = await supabase
-  .from('task_schedules')
-  .select('scheduled_start_time');
+**Daily Sync**: Morning planning → Execution → Evening review with journaling.
 
-// Display directly
-console.log(data.scheduled_start_time); // "2026-02-13T10:00:00.000Z" ❌ Shows UTC to user!
-```
+**Activity Plan**: Time blocking with multiple schedules per task, conflict detection.
 
-✅ **CORRECT: Convert UTC to local for display**
-```typescript
-const { data } = await supabase
-  .from('task_schedules')
-  .select('scheduled_start_time');
+**📖 YOU MUST READ [`docs/claude/business-rules.md`](docs/claude/business-rules.md)** before implementing features related to Quarters, Quests, Timer, or Activity Plan.
 
-// Convert to local timezone for display
-const localTime = new Date(data.scheduled_start_time).toLocaleString('id-ID', {
-  timeZone: 'Asia/Jakarta',
-  dateStyle: 'medium',
-  timeStyle: 'short'
-}); // "13 Feb 2026, 17.00" ✅ Shows WIB to user!
-```
+---
 
-### Date Range Queries: UTC-Aware Filtering
+## 🔒 Database Operations
 
-❌ **WRONG: Query with local date strings**
-```typescript
-// User wants schedules for Feb 13, 2026 (WIB)
-const date = '2026-02-13';
-const { data } = await supabase
-  .from('task_schedules')
-  .gte('scheduled_start_time', `${date}T00:00:00.000Z`) // ❌ This is Feb 13 00:00 UTC!
-  .lte('scheduled_end_time', `${date}T23:59:59.999Z`);  // ❌ Misses WIB events!
+**CASCADE Delete Chain**: `daily_plans` → `daily_plan_items` → `task_schedules`
 
-// Problem: Feb 13 WIB starts at Feb 12 17:00 UTC, not Feb 13 00:00 UTC
-```
+**Fix Pattern**: Backup → Delete → Insert → Restore (see `dailyPlanActions.ts:24-120`)
 
-✅ **CORRECT: Convert local date boundaries to UTC**
-```typescript
-// User wants schedules for Feb 13, 2026 (WIB)
-const date = '2026-02-13';
+**RLS Policies**: All user data isolated via `user_id` foreign key constraint.
 
-// Feb 13 00:00 WIB = Feb 12 17:00 UTC
-const startOfDayWIB = new Date(`${date}T00:00:00+07:00`);
-const startUTC = startOfDayWIB.toISOString(); // "2026-02-12T17:00:00.000Z"
+**Data Validation**: ISO 8601 dates, UUID v4 IDs, hex colors (#1496F6).
 
-// Feb 13 23:59 WIB = Feb 13 16:59 UTC
-const endOfDayWIB = new Date(`${date}T23:59:59.999+07:00`);
-const endUTC = endOfDayWIB.toISOString(); // "2026-02-13T16:59:59.999Z"
+**📖 For CASCADE delete handling, RLS patterns, query examples, and performance tips, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
 
-const { data } = await supabase
-  .from('task_schedules')
-  .gte('scheduled_start_time', startUTC) // ✅ Correct UTC range!
-  .lte('scheduled_end_time', endUTC);
-```
+---
 
-### Timezone Testing Checklist
+## 🧪 Testing & Quality Assurance
 
-Before committing any date/time related code, verify:
+**Manual Testing**: User interactions, error states, loading states, responsive design, drag-and-drop, quarter planning, authentication, real-time updates.
 
-1. ✅ **Storage Test**: Create event at 17:00 WIB → Check database shows correct UTC (10:00 UTC same day)
-2. ✅ **Display Test**: Database has 10:00 UTC → UI shows 17:00 WIB to user
-3. ✅ **Query Test**: Filter for Feb 13 WIB → Returns events from Feb 12 17:00 UTC to Feb 13 16:59 UTC
-4. ✅ **Edge Cases**: Test midnight (00:00), noon (12:00), end of day (23:59)
-5. ✅ **Cross-Day Events**: Event from 23:00 WIB to 01:00 WIB next day → Spans two UTC days
+**SWR Loading Patterns**: Avoid "blink" issues with stable keys, initial-load-only skeletons, separate critical vs non-critical loading.
 
-### Why UTC Storage?
+**Timezone Testing**: Storage test (WIB → UTC), display test (UTC → WIB), query test (date range), edge cases (midnight, noon, end of day), cross-day events.
 
-**Benefits:**
-- ✅ **Future-proof**: Ready for multi-timezone support (collaboration features, international users)
-- ✅ **Consistent calculations**: `endTime - startTime` always accurate, no DST issues
-- ✅ **Database portability**: No ambiguity when moving servers or backup/restore
-- ✅ **Standard practice**: Industry standard, well-documented, predictable behavior
+**📖 For complete testing checklist, SWR patterns, and timezone test cases, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
 
-**Trade-offs:**
-- ❌ Database values not human-readable (need conversion to check manually)
-- ❌ Slightly more complex code (conversion required on both ends)
+---
 
-**Better Planner's Choice:** UTC storage is the correct approach for this application, despite single-user single-timezone current state, because it prevents technical debt and future refactoring.
-
-### Reference Documentation
-
-For complete implementation guide and examples, see:
-- `docs/timezone-handling.md` (detailed guide with code examples)
-- TLDR: **Store UTC, Display WIB, Test Edge Cases**
-
-## Coding Standards
+## 🎨 Coding Standards
 
 **Naming Conventions:**
-- Components: PascalCase (`Button`, `SessionProvider`)
+- Components: PascalCase (`Button`, `ActivityLog`)
 - Files: kebab-case for pages, PascalCase for components
 - Variables: camelCase (`isLoading`, `rememberMe`)
 - Constants: UPPER_SNAKE_CASE (`LOCALKEY`, `API_BASE_URL`)
@@ -451,235 +235,61 @@ For complete implementation guide and examples, see:
 - Use absolute imports with `@/` prefix
 - Example: `import { useAuth } from '@/hooks/useAuth'`
 
-**Form Handling:**
-```typescript
-const [form, setForm] = useState({ field1: "", field2: "" });
-const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
-  setForm({ ...form, [e.target.name]: e.target.value });
-```
+**Component Management:**
+- **DO NOT** install new packages without user confirmation
+- **ALWAYS** prefer existing UI components (`src/components/ui`, `src/components/common`)
+- **DO NOT** replace existing components with raw HTML
 
 **Error Handling:**
 - Centralized error handling with `handleApiError()` from `@/lib/errorUtils`
-- Always check user authentication in server actions
+- Always check authentication before database operations
 - Display user-friendly error messages with toast notifications
-- Implement proper loading states for async operations
 
-**Package & Component Management:**
-- **DO NOT** install new packages (npm/yarn) without explicit user confirmation.
-- **ALWAYS** prefer using existing UI components (`src/components/ui`, `src/components/common`) over creating new ones or installing new libraries.
-- **DO NOT** replace existing components with raw HTML (e.g., replacing `Label` with `<label>`). If a component needs to be removed (e.g. Radix), replace it with a custom component implementation, not raw HTML.
-- If a required component is missing, ask the user for direction before proceeding.
+---
 
-## Task Management with Beads
+## 🌍 Environment & Configuration
 
-This project uses **Beads** - a git-backed issue tracker designed for AI coding agents. Beads helps maintain context, track progress, and coordinate work between developers and AI assistants.
-
-**Issue Prefix:** `bp-` (Better Planner, e.g., `bp-a3f2dd`)
-
-### Core Beads Commands
-
+**Required** `.env.local`:
 ```bash
-# View and manage issues
-bd list                    # List all issues
-bd ready                   # Show issues ready to work on
-bd show <issue-id>         # View issue details
-bd status                  # Show project status
-
-# Create and update issues
-bd add "Issue title"       # Create new issue
-bd note <issue-id> "note"  # Add note to issue
-bd done <issue-id>         # Mark issue as done
-bd block <issue-id>        # Mark issue as blocked
-
-# Work on issues
-bd start <issue-id>        # Start working on an issue
-bd stop                    # Stop working on current issue
-
-# Dependencies and relationships
-bd blocks <issue-id> <blocked-id>  # Set dependency
-bd epic <issue-id> <child-id>      # Link to epic
-
-# Sync and maintenance
-bd sync                    # Sync with git
-bd doctor                  # Check for issues
-```
-
-### Workflow for AI Agents (Claude)
-
-**When to use Beads:**
-- Any work that takes longer than 2 minutes
-- Feature development or bug fixes
-- Refactoring tasks
-- Documentation updates
-- Any task that requires tracking or context
-
-**Best Practices:**
-1. **Check ready issues first:** Run `bd ready` at session start
-2. **Start issues explicitly:** Use `bd start <issue-id>` before working
-3. **Write detailed notes:** Document progress, decisions, and blockers
-4. **Update status regularly:** Mark issues done or blocked as appropriate
-5. **Reference in commits:** Include issue ID in commit messages
-6. **Create issues proactively:** When discovering new work, create issues immediately
-
-**Integration with Git:**
-- Beads integrates with git via hooks
-- Issue data is stored in `.beads/issues.jsonl` (committed)
-- SQLite cache in `.beads/beads.db` (not committed)
-- Issue IDs can be referenced in commit messages
-
-### Example Workflow
-
-```bash
-# Start your session
-bd ready                          # Check what's ready to work on
-
-# Start working on an issue
-bd start bp-a3f2dd               # Start the issue
-
-# During work - add notes
-bd comments add bp-a3f2dd "Implemented user authentication with Supabase"
-bd comments add bp-a3f2dd "Added RLS policies for user data isolation"
-
-# If you discover a blocker
-bd create "Fix CORS issue with Supabase"
-bd dep add bp-a3f2dd --blocked-by bp-xyz123  # Mark first issue blocked by new one
-
-# When done
-bd close bp-a3f2dd               # Mark as complete
-git commit -m "feat(auth): implement user authentication (bp-a3f2dd)"
-```
-
-### Issue Organization
-
-**Epics:** Use for large features or initiatives
-```bash
-bd create "School Management System" --type epic
-bd epic add bp-parent bp-child1
-bd epic add bp-parent bp-child2
-```
-
-**Priorities:** Set priority levels (1-5, where 1 is highest)
-```bash
-bd create "Critical bug fix" --priority 1
-bd create "Nice-to-have feature" --priority 4
-```
-
-**Labels:** Organize with labels
-```bash
-bd label add bp-a3f2dd authentication
-bd label add bp-a3f2dd security
-```
-
-## Git Workflow
-
-**Branch Naming:**
-- Features: `feature/descriptive-name` or `feature/bp-<hash>`
-- Bug fixes: `bugfix/issue-description` or `bugfix/bp-<hash>`
-- Chore: `chore/task-description`
-- Docs: `docs/what-changed`
-
-**Commit Messages (Conventional Commits):**
-```
-feat: add new feature
-feat(scope): add feature with scope (bp-a3f2dd)
-fix: resolve bug (bp-xyz123)
-fix(auth): fix authentication issue
-docs: update documentation
-refactor: improve code structure
-perf: optimize performance
-chore: maintenance tasks
-```
-
-**Main Branch:** `master` (production-ready code)
-
-## Environment Variables
-
-Required environment variables (see `.env.example`):
-```bash
-NEXT_PUBLIC_SUPABASE_URL=          # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Supabase anonymous key
-GOOGLE_CLIENT_SECRET=              # Google OAuth secret
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+GOOGLE_CLIENT_SECRET=your-google-oauth-secret
 NEXT_PUBLIC_ENABLE_TIMER_DEV=true  # Enable timer in dev mode
 ```
 
-## Important Notes
+**Path Alias**: `@/*` maps to `src/*` — always use `@/` imports.
 
-**Authentication:**
-- All authenticated pages are under `(admin)` route group
-- Check user session before data operations
-- Use `createClient()` from appropriate Supabase module (server/client)
+---
 
-**State Management:**
-- Local state: `useState` for component-specific data
-- Server state: SWR for data fetching with caching
-- Global state: Zustand stores (e.g., `activityStore`)
-- Context: `ThemeContext`, `SidebarContext`, `TimerContext`
+## 📖 Additional Documentation
 
-**Styling:**
-- Tailwind CSS v4 is used throughout
-- Primary color: `bg-primary`, `text-primary`
-- Mobile-first responsive design
-- Common button pattern: `<Button color="bg-primary" className="w-full" />`
+All detailed documentation is in `docs/claude/`:
 
-**Performance:**
-- Use `useMemo` for expensive calculations
-- Use `useCallback` for event handlers in lists
-- SWR handles caching and deduplication automatically
-- Lazy load non-critical components
+- **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)
+- **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md)
+- **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
+- **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
+- **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
+- **Timezone Handling**: [`docs/claude/timezone-handling.md`](docs/claude/timezone-handling.md)
 
-**Testing:**
-- Manual testing checklist includes: user interactions, error states, loading states, responsive design, drag-and-drop, quarter planning, authentication, real-time updates
+**Legacy Documentation** (migrate content to `docs/claude/` when updating):
+- `docs/activity-plan-feature.md` - Activity Plan implementation guide
+- `docs/BEADS_GUIDE.md` - Old beads guide
+- `docs/BEADS_WORKFLOW_STRATEGY.md` - Old beads strategy
 
-**PWA:**
-- App is configured as a Progressive Web App
-- Users can install on any device
-- Service worker configured via next-pwa
+---
 
-## Documentation References
+## 🚨 SESSION CLOSE PROTOCOL 🚨
 
-For detailed information, see:
-- `.cursor/rules/project-overview.mdc` - Complete project specifications
-- `.cursor/rules/coding-standards.mdc` - Detailed coding standards
-- `.cursor/rules/component-patterns.mdc` - UI component patterns
-- `.cursor/rules/database-schema.mdc` - Database schema details
-- `.cursor/rules/api-integration.mdc` - API and Supabase integration
-- `docs/database-schema.md` - Complete database documentation
+**CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
 
-## Best Practices: Data Fetching & State
+```
+[ ] 1. git status              (check what changed)
+[ ] 2. git add <files>         (stage code changes)
+[ ] 3. bd sync                 (commit beads changes)
+[ ] 4. git commit -m "..."     (commit code)
+[ ] 5. bd sync                 (commit any new beads changes)
+[ ] 6. git push                (push to remote)
+```
 
-### SWR & Loading States (Avoiding "Blink" Issues)
-
-**1. Stable SWR Keys:**
-- ❌ **Avoid** putting specific IDs into list keys if the list changes frequently.
-  ```typescript
-  // BAD: Key changes every time a task is added/removed -> causes isLoading=true
-  useSWR(['sessions', taskIds.join(',')], ...)
-  ```
-- ✅ **Prefer** stable keys and filter client-side, or accept that key changes trigger new requests.
-
-**2. Skeleton Loading Gates:**
-- ❌ **Avoid** inner skeleton gates that trigger on *any* loading state.
-  ```tsx
-  // BAD: Flashes skeleton on every background revalidation
-  if (isLoading) return <Skeleton />
-  ```
-- ✅ **Prefer** initial-only matching.
-  ```tsx
-  // GOOD: Only show skeleton if we have NO data yet
-  const hasData = data !== undefined;
-  const isInitialLoad = !hasData && isLoading;
-  if (isInitialLoad) return <Skeleton />
-  ```
-
-**3. Composition of Loading States:**
-- ❌ **Don't** combine all loading states for the main skeleton.
-  ```typescript
-  // BAD: Secondary data loading triggers main page skeleton
-  const pageLoading = mainDataLoading || secondaryDataLoading;
-  ```
-- ✅ **Separate** critical vs non-critical loading.
-  ```typescript
-  // GOOD: Main skeleton only depends on critical data
-  const pageLoading = mainDataLoading;
-  const secondaryLoading = secondaryDataLoading; // Handle locally or ignore
-  ```
+**NEVER skip this.** Work is not done until pushed.

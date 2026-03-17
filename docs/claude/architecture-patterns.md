@@ -1,0 +1,362 @@
+# Architecture Patterns
+
+This document contains Better Planner-specific architecture patterns and implementation guidelines.
+
+---
+
+## 📚 Application Structure
+
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── (admin)/                  # Main authenticated pages
+│   │   ├── dashboard/            # User dashboard and analytics
+│   │   ├── execution/            # Daily task execution
+│   │   ├── planning/             # Quarter planning features
+│   │   ├── quests/               # Quest management (daily, work, side)
+│   │   └── settings/             # User settings
+│   ├── (full-width-pages)/       # Auth pages (login, signup)
+│   ├── api/                      # API routes (if needed)
+│   └── layout.tsx                # Root layout with providers
+├── components/                   # Reusable UI components
+│   ├── auth/                     # Authentication components
+│   ├── common/                   # SWRProvider, PreloadProvider
+│   ├── form/                     # Form components
+│   ├── ui/                       # Basic UI components
+│   └── tables/                   # Table components
+├── lib/                          # Utilities and configurations
+│   ├── supabase/                 # Supabase client setup
+│   ├── dateUtils.ts              # Date manipulation
+│   ├── errorUtils.ts             # Error handling
+│   ├── quarterUtils.ts           # Quarter calculations
+│   └── swr.ts                    # SWR configuration
+├── stores/                       # Zustand stores
+│   └── activityStore.ts          # Global state management
+└── types/                        # TypeScript type definitions
+```
+
+---
+
+## 🗓️ Activity Log Calendar View
+
+**Location:** `src/app/(admin)/execution/daily-sync/ActivityLog/`
+
+The ActivityLog component displays Pomodoro timer sessions and tracks user productivity throughout the day.
+
+### View Modes
+
+Three view modes available:
+- **GROUPED**: Activities grouped by task/quest with session counts
+- **TIMELINE**: Chronological list of all activities (newest first, toggleable)
+- **CALENDAR**: Visual timeline with hourly blocks (Google Calendar style)
+
+### Calendar View Features
+
+- **Dynamic View**: Shows only hours with activities (discontinuous timeline) - default mode
+- **24h View**: Full 24-hour grid display (00:00 - 23:59)
+- Color-coded blocks by quest type (Main/Work/Side/Daily)
+- Break activities displayed with distinct styling
+- Overlap detection with automatic column layout
+- Click blocks to view task details and journal entries
+
+### Key Components
+
+- `CalendarView.tsx` - Main calendar component with view toggle
+- `components/CalendarBlock.tsx` - Individual activity block rendering
+- `components/HourlyGrid.tsx` - Background timeline grid with hour labels
+- `components/CalendarTaskDetail.tsx` - Modal for task details (what_done, what_think)
+
+### Utilities (`/src/lib/calendarUtils.ts`)
+
+- `getVisibleHours(items)` - Calculate hours to display in dynamic view
+- `calculateDiscontinuousStyle(start, end, hours)` - Position blocks in discontinuous timeline
+- `processOverlaps(items)` - Handle overlapping activities with column assignment
+- `generateTimeSlots()` - Generate 24-hour time slots array
+- `calculateBlockStyle(start, duration)` - Calculate block position and height
+
+### Data Structure
+
+Activities are fetched from `activity_logs` table with fields:
+- `start_time`, `end_time` (ISO 8601 timestamps)
+- `duration_minutes` (calculated duration)
+- `type`: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK' | 'BREAK'
+- Links to `task_id`, `milestone_id`, `quest_id`
+- Journal entries: `what_done`, `what_think`
+
+### Usage Pattern
+
+```typescript
+// In daily-sync page
+<ActivityLog date="2025-01-15" refreshKey={timestamp} />
+```
+
+---
+
+## ⏰ Activity Plan - Time Blocking
+
+**Location:** `src/app/(admin)/execution/daily-sync/DailyQuest/`
+
+Activity Plan memungkinkan users untuk schedule tasks di waktu spesifik (time blocking). Terintegrasi dengan ActivityLog melalui segmented control toggle.
+
+### Core Features
+
+- **Multiple Schedules**: Task bisa di-schedule berkali-kali (split time blocks)
+  - Example: Task A → 2 sessions jam 10:00, 1 session jam 14:00
+- **Segmented Control**: Toggle "Plan | Actual" di ActivityLog header
+- **Schedule Management**: Modal untuk add/edit/delete schedule blocks per task
+- **Visual Calendar**: Simplified blocks (icon + title only), waktu & duration dari position & height
+- **Conflict Detection**: Visual warning (yellow border) untuk overlapping schedules
+
+### Database Structure
+
+```sql
+-- task_schedules table
+CREATE TABLE task_schedules (
+  id UUID PRIMARY KEY,
+  daily_plan_item_id UUID REFERENCES daily_plan_items(id) ON DELETE CASCADE,
+  scheduled_start_time TIMESTAMPTZ NOT NULL,
+  scheduled_end_time TIMESTAMPTZ NOT NULL,
+  duration_minutes INT NOT NULL,
+  session_count INT NOT NULL,  -- Sessions allocated to this block
+  ...
+);
+```
+
+### Key Files
+
+- `actions/scheduleActions.ts` - CRUD operations for schedules
+- `components/ScheduleManagementModal.tsx` - Schedule list & management UI
+- `components/ScheduleBlockForm.tsx` - Add/edit individual blocks
+- `hooks/useTaskSchedules.ts` - Fetch schedules per task
+- `utils/scheduleUtils.ts` - Validation & conflict detection
+
+### Usage Examples
+
+```typescript
+// Create schedule
+await createSchedule(taskId, startTime, endTime, durationMins, sessionCount);
+
+// Get schedules for task
+const schedules = await getTaskSchedules(taskId);
+
+// Get all scheduled tasks for date
+const tasks = await getScheduledTasksByDate('2026-02-12');
+```
+
+**For CASCADE delete handling and backup/restore pattern, see [`database-operations.md`](database-operations.md#cascade-delete-chain)**
+
+---
+
+## 🎯 Quest System Architecture
+
+### Quest Types
+
+Better Planner organizes work into "Quests" - major goals/projects within quarters:
+
+- **Daily Quests**: Day-to-day tasks tracked in daily sync
+- **Work Quests**: Professional/project tasks
+- **Side Quests**: Personal development and side projects
+
+Quest management is located in `src/app/(admin)/quests/`.
+
+### Quarter System (13-week cycles)
+
+- The app uses a 13-week quarter planning system (Q1, Q2, Q3, Q4)
+- Users create quarterly goals and break them down into weekly and daily tasks
+- Quarter planning components are in `src/app/(admin)/planning/`
+
+**For detailed quarter business rules, see [`business-rules.md#quarter-system`](business-rules.md#quarter-system)**
+
+---
+
+## 🔧 Key Development Patterns
+
+### Server Actions (Primary Data Pattern)
+
+```typescript
+// actions/example.ts
+"use server";
+
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+export async function getData() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('table_name')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Always revalidate paths after mutations
+export async function createData(formData: FormData) {
+  // ... mutation logic
+  revalidatePath('/path-to-revalidate');
+}
+```
+
+### SWR for Client-Side Data
+
+```typescript
+import useSWR from 'swr';
+import { getData } from '@/actions/example';
+
+export function useData() {
+  const { data, error, isLoading, mutate } = useSWR(
+    'data-key',
+    getData,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+    }
+  );
+  return { data, error, isLoading, mutate };
+}
+```
+
+### Supabase Client Setup
+
+- **Server components**: Use `createClient()` from `@/lib/supabase/server`
+- **Client components**: Use `createClient()` from `@/lib/supabase/client`
+- Always check authentication before database operations
+- RLS policies enforce user-level data isolation
+
+### Component Patterns
+
+- Functional components with React hooks
+- TypeScript interfaces for all props
+- Loading states with `<Spinner />` component
+- Error states with user-friendly messages
+- Toast notifications via `toast.success()`, `toast.error()` from Sonner
+
+---
+
+## 📦 Component Organization
+
+### Component Directory Structure
+
+```
+components/
+├── auth/                # Authentication components
+├── common/              # SWRProvider, PreloadProvider
+├── form/                # Form components (inputs, selects, etc.)
+├── ui/                  # Basic UI components (buttons, cards, etc.)
+└── tables/              # Table components
+```
+
+### Import Pattern
+
+Always use absolute imports with `@/` prefix:
+```typescript
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/Button';
+```
+
+### Naming Conventions
+
+- **Components**: PascalCase (`Button`, `SessionProvider`)
+- **Files**: kebab-case for pages, PascalCase for components
+- **Variables**: camelCase (`isLoading`, `rememberMe`)
+- **Constants**: UPPER_SNAKE_CASE (`LOCALKEY`, `API_BASE_URL`)
+
+---
+
+## 🎨 Styling Guidelines
+
+### Tailwind CSS v4
+
+- Tailwind CSS v4 is used throughout the project
+- Primary color: `bg-primary`, `text-primary`
+- Mobile-first responsive design
+- Common button pattern: `<Button color="bg-primary" className="w-full" />`
+
+### Component Management
+
+- **DO NOT** install new packages (npm/yarn) without explicit user confirmation
+- **ALWAYS** prefer using existing UI components (`src/components/ui`, `src/components/common`) over creating new ones
+- **DO NOT** replace existing components with raw HTML (e.g., replacing `Label` with `<label>`)
+- If a component needs to be removed (e.g. Radix), replace it with a custom component implementation, not raw HTML
+- If a required component is missing, ask the user for direction before proceeding
+
+---
+
+## 🗄️ Database Schema Overview
+
+### Core Tables
+
+**Projects/Quests:**
+- `id`: UUID primary key
+- `title`: String (1-100 chars)
+- `description`: Text (optional)
+- `status`: "planning" | "active" | "completed" | "on-hold"
+- `priority`: "low" | "medium" | "high" | "urgent"
+- `quarter`: "Q1" | "Q2" | "Q3" | "Q4"
+- `user_id`: Foreign key to auth.users
+- `created_at`, `updated_at`: Timestamps
+
+**Tasks:**
+- `id`: UUID primary key
+- `project_id`: Foreign key to projects
+- `title`: String (1-100 chars)
+- `status`: "todo" | "in-progress" | "completed"
+- `priority`: "low" | "medium" | "high" | "urgent"
+- `due_date`: Optional date
+- `completed_at`: Timestamp when completed
+
+**Data Validation:**
+- Dates: ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.sssZ)
+- Colors: Hex format (#1496F6)
+- All IDs: UUID v4 format
+- User data is isolated via Row Level Security (RLS)
+
+**For CASCADE delete patterns and migration examples, see [`database-operations.md`](database-operations.md)**
+
+---
+
+## 🔐 Authentication & State Management
+
+### Authentication
+
+- All authenticated pages are under `(admin)` route group
+- Check user session before data operations
+- Use `createClient()` from appropriate Supabase module (server/client)
+
+### State Management
+
+- **Local state**: `useState` for component-specific data
+- **Server state**: SWR for data fetching with caching
+- **Global state**: Zustand stores (e.g., `activityStore`)
+- **Context**: `ThemeContext`, `SidebarContext`, `TimerContext`
+
+### Error Handling
+
+- Centralized error handling with `handleApiError()` from `@/lib/errorUtils`
+- Always check user authentication in server actions
+- Display user-friendly error messages with toast notifications
+- Implement proper loading states for async operations
+
+---
+
+## ⚡ Performance Optimization
+
+### Performance Best Practices
+
+- Use `useMemo` for expensive calculations
+- Use `useCallback` for event handlers in lists
+- SWR handles caching and deduplication automatically
+- Lazy load non-critical components
+
+### Progressive Web App (PWA)
+
+- App is configured as a Progressive Web App
+- Users can install on any device
+- Service worker configured via next-pwa
+
+**For SWR loading state patterns and testing strategies, see [`testing-guidelines.md#swr-loading-states`](testing-guidelines.md#swr-loading-states)**
