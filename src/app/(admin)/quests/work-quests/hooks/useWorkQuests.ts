@@ -14,7 +14,7 @@ import {
   deleteWorkQuestTask,
   toggleWorkQuestProjectStatus,
   toggleWorkQuestTaskStatus
-} from "../actions/workQuestActions";
+} from "../actions";
 import { 
   WorkQuest, 
   WorkQuestFormData,
