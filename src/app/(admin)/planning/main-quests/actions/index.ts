@@ -1,11 +1,14 @@
 // Quest Actions
-export * from './questActions';
+export * from './quests/actions';
 
-// Milestone Actions  
-export * from './milestoneActions';
+// Milestone Actions
+export * from './milestones/actions';
 
 // Task Actions
-export * from './taskActions';
+export * from './tasks/actions';
 
 // SubTask Actions
-export * from './subTaskActions';
+export * from './subtasks/actions';
+
+// Main Quest RPC Actions
+export * from './main-quests-rpc/actions';

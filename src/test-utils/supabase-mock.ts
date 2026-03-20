@@ -18,6 +18,7 @@ export function makeQueryBuilder(resolvedValue: { data: any; error: any } = { da
   b.gte = vi.fn().mockReturnValue(b);
   b.lte = vi.fn().mockReturnValue(b);
   b.order = vi.fn().mockReturnValue(b);
+  b.limit = vi.fn().mockReturnValue(b);
   b.is = vi.fn().mockReturnValue(b);
   b.single = terminal;
   b.maybeSingle = terminal;

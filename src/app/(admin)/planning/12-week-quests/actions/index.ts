@@ -4,4 +4,4 @@ export {
   finalizeQuests,
   getAllQuestsForQuarter,
   getPairwiseResults
-} from './questOperations';
+} from './quest-operations/actions';
