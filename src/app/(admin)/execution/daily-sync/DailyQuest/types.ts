@@ -1,4 +1,4 @@
-import { setDailyPlan } from './actions/dailyPlanActions';
+import { setDailyPlan } from './actions';
 
 export interface DailyPlan {
   id: string;

@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { getScheduledTasksByDate } from "../actions/scheduleActions";
+import { getScheduledTasksByDate } from "../actions";
 
 export function useScheduledTasks(date: string) {
   const { data, error, isLoading, mutate } = useSWR(

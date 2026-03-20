@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { getTaskSchedules } from "../actions/scheduleActions";
+import { getTaskSchedules } from "../actions";
 
 export function useTaskSchedules(taskId: string) {
   const { data, error, isLoading, mutate } = useSWR(

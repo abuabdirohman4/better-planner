@@ -4,9 +4,9 @@ import { format } from "date-fns";
 import Modal from "@/components/ui/modal/Modal";
 import { Button } from "@/components/ui/button";
 import { DailyPlanItem } from "../types";
-import { TaskSchedule } from "../actions/scheduleActions";
+import { TaskSchedule } from "../actions";
 import { useTaskSchedules } from "../hooks/useTaskSchedules";
-import { createSchedule, updateSchedule, deleteSchedule } from "../actions/scheduleActions";
+import { createSchedule, updateSchedule, deleteSchedule } from "../actions";
 import { ScheduleBlockForm } from "./ScheduleBlockForm";
 import { formatTimeRange, getRemainingSessions, SESSION_DURATION_MINUTES } from "../utils/scheduleUtils";
 

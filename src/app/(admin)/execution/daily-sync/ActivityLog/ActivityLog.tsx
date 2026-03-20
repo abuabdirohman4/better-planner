@@ -7,7 +7,7 @@ import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
 import { formatTimeRange } from '@/lib/dateUtils';
 import CalendarView, { CalendarEvent } from './components/CalendarView';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
-import { updateSchedule, createSchedule } from '../DailyQuest/actions/scheduleActions';
+import { updateSchedule, createSchedule } from '../DailyQuest/actions';
 import { SESSION_DURATION_MINUTES } from '../DailyQuest/utils/scheduleUtils';
 import { ScheduleManagementModal } from '../DailyQuest/components/ScheduleManagementModal';
 import { DailyPlanItem } from '../DailyQuest/types';
