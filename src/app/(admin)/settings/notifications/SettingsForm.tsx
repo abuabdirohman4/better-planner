@@ -154,10 +154,10 @@ export function SettingsForm() {
                 value={localSettings.aiCharacter}
                 onChange={(e) => setLocalSettings({...localSettings, aiCharacter: e.target.value as AICharacter})}
               >
-                <option value="BALANCED_MENTOR">Balanced Mentor (Encouraging & Practical)</option>
-                <option value="TOUGH_COACH">Tough Coach (Direct & Demanding)</option>
-                <option value="DATA_ANALYST">Data Analyst (Analytical & Metric-focused)</option>
-                <option value="ZEN_MASTER">Zen Master (Mindful & Process-oriented)</option>
+                <option value="MOTIVATIONAL_COACH">Motivational Coach (Encouraging & Practical)</option>
+                <option value="ANALYTICAL_ADVISOR">Analytical Advisor (Data-driven & Objective)</option>
+                <option value="BALANCED_MENTOR">Balanced Mentor (Mindful & Process-oriented)</option>
+                <option value="FRIENDLY_BUDDY">Friendly Buddy (Casual & Supportive)</option>
               </select>
             </div>
           </>

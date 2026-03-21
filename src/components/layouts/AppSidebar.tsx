@@ -117,6 +117,11 @@ const settingsNav: NavItem[] = [
     name: "Settings",
     path: "/profile",
   },
+  {
+    icon: <PlugInIcon />,
+    name: "Notifications",
+    path: "/settings/notifications",
+  },
 ];
 
 // Submenu Badges Component
@@ -529,11 +534,11 @@ function SidebarContent({
           {/* Divider */}
           {/* <div className="flex-1" /> */}
           {/* SETTINGS */}
-          {/* <div className="mb-2">
+          <div className="mb-2">
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Settings</div>
             <MenuItems 
               navItems={settingsNav} 
-              menuType="main"
+              menuType="others"
               isExpanded={isExpanded}
               isHovered={isHovered}
               isMobileOpen={isMobileOpen}
@@ -542,8 +547,10 @@ function SidebarContent({
               subMenuRefs={subMenuRefs}
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
+              isLoading={isLoading}
+              onNavigate={onNavigate}
             />
-          </div> */}
+          </div>
         </nav>
       </div>
     </aside>

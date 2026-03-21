@@ -176,6 +176,14 @@ export const brainDumpKeys = {
 };
 
 /**
+ * SWR key generator for notifications
+ */
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  settings: () => [...notificationKeys.all, 'settings'] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -190,4 +198,5 @@ export const dataKeys = {
   vision: visionKeys,
   pairwise: pairwiseKeys,
   brainDump: brainDumpKeys,
+  notifications: notificationKeys,
 }; 

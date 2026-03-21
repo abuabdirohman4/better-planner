@@ -58,7 +58,7 @@ export function QuarterlyEmailTemplate({ payload }: QuarterlyEmailTemplateProps)
           <strong>Highlight:</strong> {insight.topWin}
         </Text>
         <Text style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#525f7f' }}>
-          <strong>Area to Imrpove:</strong> {insight.challengeSpotted}
+          <strong>Area to Improve:</strong> {insight.challengeSpotted}
         </Text>
         <Text style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#525f7f' }}>
           <strong>Action for Next Quarter:</strong> {insight.actionTip}

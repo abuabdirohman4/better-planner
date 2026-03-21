@@ -3,12 +3,11 @@
 import useSWR from 'swr'
 import { getNotificationSettings, updateNotificationSettings } from './actions'
 import type { NotificationSettings } from '@/lib/notifications/types'
-
-const NOTIFICATION_SETTINGS_KEY = 'notification_settings'
+import { dataKeys } from '@/lib/swr'
 
 export function useNotificationSettings() {
   const { data: settings, error, isLoading, mutate } = useSWR<NotificationSettings | null>(
-    NOTIFICATION_SETTINGS_KEY,
+    dataKeys.notifications.settings(),
     getNotificationSettings
   )
 
