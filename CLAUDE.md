@@ -45,7 +45,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > "Apakah Anda ingin saya yang langsung mengerjakan kode ini, atau menggunakan Google Antigravity untuk eksekusi?"
 
 **Option A: Claude Code Direct** - Immediate execution (1-3 files, <200 lines)
-**Option B: Google Antigravity** - Create design doc + plan in `docs/plans/`, user executes, Claude reviews (better for 3+ files refactoring)
+**Option B: Google Antigravity** - Create **TWO files** in `docs/plans/`, user executes, Claude reviews (better for 3+ files refactoring):
+  1. `YYYY-MM-DD-<topic>-design.md` — architecture decisions, clash resolution, what goes where
+  2. `YYYY-MM-DD-<topic>-implementation-plan.md` — step-by-step tasks with exact file paths, grep commands, checkpoints
+
+**📖 For Antigravity prompt template and review checklist, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 
 ---
 

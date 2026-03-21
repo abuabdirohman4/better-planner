@@ -1,89 +1,111 @@
 # Type/Interface Management Guidelines
 
-**CRITICAL**: Avoid type fragmentation by centralizing type definitions.
+**CRITICAL**: Semua domain types harus centralized di `src/types/`. Jangan buat type baru di feature folders untuk data/domain types.
 
 ---
 
-## Rules for Type Definitions
+## Aturan Utama
 
-1. **Centralize Shared Types** in `src/types/` directory
-   - Database entities (Quest, DailyPlan, ActivityLog, etc.)
-   - API request/response types
-   - Shared business logic types
-
-2. **NEVER Duplicate Type Definitions** across files
-   - Before creating a type, search: `grep -r "interface MyType" src/` or `grep -r "type MyType" src/`
-   - If type exists, import it—don't recreate
-
-3. **Use Type Hierarchy** for complex entities (extends pattern)
-   ```typescript
-   // Example: Quest types (src/types/quest.ts)
-   export interface QuestBase { id, title, type, status }
-   export interface QuestWithSchedule extends QuestBase { schedule, frequency }
-   export interface QuestWithProgress extends QuestWithSchedule { completedCount, totalCount }
-   ```
-
-4. **Re-export for Backward Compatibility** when migrating types
-   ```typescript
-   // Old location (for backward compatibility)
-   export type { QuestWithProgress } from '@/types/quest'
-   ```
-
-5. **Name Consistently**: Use descriptive, hierarchical names
-   - `QuestBase`, `QuestWithSchedule`, `QuestWithProgress`
-   - NOT `Quest1`, `Quest2`, `QuestV2`
-
-6. **Local Types Are OK For**:
-   - Component-specific props
-   - Form data (internal to component)
-   - Internal state management
-
-7. **Centralize Types For**:
-   - Database entities
-   - API request/response
-   - Shared across 2+ files
-   - Used in multiple modules
+1. **Satu file per domain** di `src/types/` (flat, tanpa subdirectory, tanpa barrel `index.ts`)
+2. **Import eksplisit**: `import type { X } from '@/types/domain'` — jangan dari action/hook/store
+3. **Tidak ada duplikasi** — sebelum buat type, grep dulu
+4. **Tidak ada re-export shims** dari lokasi lama — langsung delete setelah consumers diupdate
 
 ---
 
-## Type Location Structure
+## Struktur `src/types/` (Status: Centralized 2026-03-21, issue bp-rxw)
 
-```
-src/
-├── types/              # Centralized types
-│   ├── quest.ts       # Quest/task types
-│   ├── daily-plan.ts  # DailyPlan/DailyPlanItem types
-│   ├── activity.ts    # Activity/Timer types
-│   └── README.md      # Type documentation
-├── app/
-│   └── (admin)/
-│       └── quests/
-│           └── types.ts  # Re-exports from @/types/quest
-└── lib/
-    └── questPermissions.ts # Imports from @/types/quest
-```
+| File | Domain | Key Types |
+|------|--------|-----------|
+| `activity-log.ts` | Activity tracking | `ActivityLogItem`, `ViewMode`, `CalendarViewMode` |
+| `brain-dump.ts` | Brain dump | `BrainDumpItem` |
+| `calendar.ts` | Calendar display | `CalendarBlock`, `TimeSlot` |
+| `daily-plan.ts` | Daily execution | `DailyPlan`, `DailyPlanItem`, `TaskSchedule`, `ActivityViewMode` |
+| `daily-quest.ts` | Daily quests | `DailyQuest` |
+| `journal.ts` | Journaling | `JournalEntry`, `JournalData` |
+| `planning-quest.ts` | 12-week planning | `PlanningQuest`, `QuarterData`, `RankedQuest`, `QuestInput` |
+| `questContinuity.ts` | Quest continuity | `QuestWithContinuity` |
+| `side-quest.ts` | Side quests | `SideQuest`, `SideQuestFormData` |
+| `sound.ts` | Sound settings | `SoundSettings`, `SoundOption` |
+| `timer.ts` | Pomodoro timer | `TimerState`, `TimerTask`, `TimerSettings`, `TimerSession` |
+| `user-profile.ts` | User profile | `UserProfile` |
+| `vision.ts` | Vision/goals | `Vision`, `VisionEntry` |
+| `weekly-sync.ts` | Weekly planning | `WeeklyGoal`, `GoalItem`, `Quest` (display shape), `Rule` |
+| `work-quest.ts` | Work quests | `WorkQuestProject`, `WorkQuestTask`, form variants |
+
+> **Note**: `src/types/README.md` berisi index lengkap dengan panduan import untuk developer.
 
 ---
 
-## Check Before Creating Types
+## ⚠️ Critical Type Renames (jangan pakai nama lama)
 
-**Before adding `interface MyType` or `type MyType`**:
+| ❌ Nama Lama | Lokasi Lama | ✅ Nama Baru | File Baru |
+|---|---|---|---|
+| `Quest` | `useQuestState.ts` | `PlanningQuest` | `@/types/planning-quest` |
+| `Task` | `timerStore.ts` | `TimerTask` | `@/types/timer` |
+| `ActiveTask` | `PomodoroTimer/types.ts` | `TimerTask` | `@/types/timer` |
 
-1. **Search for existing definitions**:
+---
+
+## Apa yang Centralized vs Collocated
+
+✅ **Masuk `src/types/`**:
+- Database entities
+- Shared domain types (dipakai di 2+ file)
+- API request/response types
+
+❌ **Tetap collocated** (di sebelah komponen/hook):
+- `*Props` types (component props)
+- Hook-return shapes internal
+- Server action DTO yang hanya dipakai di 1 action file
+
+---
+
+## Cara Membuat Type Baru
+
+1. **Cek dulu apakah sudah ada:**
    ```bash
-   grep -r "interface MyType" src/
-   grep -r "type MyType" src/
+   grep -r "interface MyType\|type MyType" src/types/
    ```
 
-2. **If type exists**:
-   - Import it: `import type { MyType } from '@/types/...'`
-   - Don't recreate/duplicate
+2. **Jika sudah ada** — import, jangan buat ulang:
+   ```typescript
+   import type { MyType } from '@/types/domain'
+   ```
 
-3. **If type needs extension**:
-   - Use `extends`: `interface MyTypeExtended extends MyType { ... }`
-   - Don't copy-paste fields
+3. **Jika belum ada dan shared** — buat di `src/types/[domain].ts`
 
-4. **If type doesn't exist and is shared**:
-   - Create in `src/types/[entity].ts`
-   - Export with clear hierarchy
-   - Document in comments
+4. **Jika hanya untuk satu komponen** — boleh collocated
+
+---
+
+## Type Hierarchy Pattern
+
+```typescript
+// src/types/quest.ts — Base → Extended → Full
+export interface QuestBase { id: string; title: string; type: string }
+export interface QuestWithStatus extends QuestBase { status: string; updated_at: string }
+export interface QuestWithProgress extends QuestWithStatus { progress: number; completed_at?: string | null }
+```
+
+---
+
+## Nullable FK Columns
+
+Supabase mengembalikan `null` untuk nullable columns — selalu include `| null`:
+
+```typescript
+// ✅ Benar
+quest_id: string | null
+
+// ❌ Salah
+quest_id?: string
+```
+
+---
+
+## Referensi
+
+- `src/types/README.md` — index semua types dengan panduan import
+- `docs/plans/2026-03-21-type-centralization-design.md` — design doc migrasi lengkap
+- `docs/plans/2026-03-21-type-centralization-implementation-plan.md` — implementation plan untuk Antigravity
