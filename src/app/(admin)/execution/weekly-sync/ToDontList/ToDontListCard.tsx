@@ -9,7 +9,8 @@ import ComponentCard from "@/components/common/ComponentCard";
 import { toast } from 'sonner';
 
 import { addWeeklyRule, updateWeeklyRule, deleteWeeklyRule, updateWeeklyRuleOrder } from "../actions/weeklyRulesActions";
-import type { ToDontListCardProps, Rule } from "./types";
+import type { ToDontListCardProps } from "./types";
+import type { Rule } from "@/types/weekly-sync";
 
 // Custom hook for rule editing management
 function useRuleEditing() {

@@ -1,6 +1,6 @@
 {
   "name": "better-planner",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "fix:all": "npm run format && npm run type-check",
-    "generate:pdf": "node scripts/generate-pdf-guide.js"
+    "generate:pdf": "node scripts/generate-pdf-guide.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -27,7 +30,9 @@
     "@tiptap/react": "^3.5.3",
     "@tiptap/starter-kit": "^3.5.3",
     "autoprefixer": "^10.4.20",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "flatpickr": "^4.6.13",
     "lodash": "^4.17.21",
     "lucide-react": "^0.561.0",
@@ -44,21 +49,26 @@
     "resend": "^6.9.1",
     "sonner": "^2.0.5",
     "swr": "^2.3.4",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^2.6.1",
     "workbox-webpack-plugin": "^7.3.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/lodash": "^4.17.20",
     "@types/next-pwa": "^5.6.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-transition-group": "^4.4.12",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^29.0.0",
     "postcss": "^8",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   },
   "overrides": {
     "@react-jvectormap/core": {

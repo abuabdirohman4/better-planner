@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { DailyQuest } from "../types";
+import type { DailyQuest } from '@/types/daily-quest';
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import { addDailyQuest } from "@/app/(admin)/execution/daily-sync/DailyQuest/actions/dailyQuestActions";

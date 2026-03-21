@@ -21,19 +21,13 @@ import { TaskItemSkeleton } from '@/components/ui/skeleton';
 import { addTask, updateTask, updateTasksDisplayOrder } from './actions/taskActions';
 import type { KeyedMutator } from 'swr';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'TODO' | 'DONE';
-  parent_task_id?: string | null;
-  display_order?: number;
-}
+import type { Task as TaskType } from './types';
 
 interface TaskProps {
   milestone: { id: string; title: string };
   milestoneNumber: number;
-  onOpenSubtask?: (task: Task) => void;
-  activeSubTask: Task | null;
+  onOpenSubtask?: (task: TaskType) => void;
+  activeSubTask: TaskType | null;
   showCompletedTasks: boolean;
 }
 
@@ -123,7 +117,7 @@ export default function Task({ milestone, milestoneNumber, onOpenSubtask, active
   // Create array of tasks and empty slots (up to 3 slots minimum, or more if there are more tasks)
   // ✅ CRITICAL: Must be calculated before early return to maintain hook consistency
   const allSlots = useMemo(() => {
-    const slots: Array<{ task: Task | null; idx: number }> = [];
+    const slots: Array<{ task: TaskType | null; idx: number }> = [];
     const maxSlots = Math.max(3, filteredTasks.length);
     
     for (let idx = 0; idx < maxSlots; idx++) {

@@ -8,15 +8,7 @@ let completionInProgress = false;
 let lastCompletedTaskId: string | null = null;
 let lastCompletionTime = 0;
 
-export type TimerState = 'IDLE' | 'FOCUSING' | 'PAUSED' | 'BREAK';
-export interface Task {
-  id: string;
-  title: string;
-  item_type: string;
-  focus_duration?: number; // Durasi fokus dalam menit
-  completed_sessions?: number; // Sesi yang sudah diselesaikan hari ini
-  target_sessions?: number; // Target sesi hari ini
-}
+import type { TimerState, TimerTask } from '@/types/timer';
 
 interface SessionCompleteData {
   taskId: string;
@@ -31,7 +23,7 @@ interface SessionCompleteData {
 interface TimerStoreState {
   timerState: TimerState;
   secondsElapsed: number;
-  activeTask: Task | null;
+  activeTask: TimerTask | null;
   sessionCount: number;
   breakType: 'SHORT' | 'MEDIUM' | 'LONG' | null;
   lastSessionComplete: SessionCompleteData | null;
@@ -40,9 +32,9 @@ interface TimerStoreState {
   focusSoundPlaying: boolean;
   waitingForBreak: boolean;
   lastFocusDuration: number;
-  lastActiveTask: Task | null; // ✅ Persist last active task for idle display
+  lastActiveTask: TimerTask | null; // ✅ Persist last active task for idle display
   lastUpdatedDay: string | null; // ✅ Track last date for reset
-  startFocusSession: (task: Task) => void;
+  startFocusSession: (task: TimerTask) => void;
   startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => void;
   dismissBreakPrompt: () => void;
   pauseTimer: () => void;
@@ -99,7 +91,7 @@ export const useTimerStore = create<TimerStoreState>()(
       lastActiveTask: null,
       lastUpdatedDay: null,
 
-      startFocusSession: (task: Task) => {
+      startFocusSession: (task: TimerTask) => {
         set({
           activeTask: task,
           timerState: 'FOCUSING',

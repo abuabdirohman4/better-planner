@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useQuarterStore } from "@/stores/quarterStore";
 import { useWorkQuestProjects } from "./hooks/useWorkQuests";
 import { ProjectForm, ProjectList, WorkQuestModal } from "./components";
-import { WorkQuestProject, WorkQuestProjectFormData } from "./types";
+import type { WorkQuestProject, WorkQuestProjectFormData } from "@/types/work-quest";
 import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 

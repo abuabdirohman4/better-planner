@@ -1,5 +1,5 @@
 import Button from '@/components/ui/button/Button';
-import type { Quest } from "../hooks";
+import type { PlanningQuest as Quest } from '@/types/planning-quest';
 
 interface PairwiseCellProps {
   rowQ: Quest;

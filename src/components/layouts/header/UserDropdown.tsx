@@ -6,17 +6,38 @@ import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+
+// --- Avatar Utilities ---
+
+function getInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'U'
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+const AVATAR_COLORS = [
+  '#5B21B6', '#0369A1', '#065F46', '#92400E',
+  '#9F1239', '#1D4ED8', '#7C3AED', '#0F766E',
+]
+
+function getAvatarColor(name: string): string {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  // return AVATAR_COLORS[hash % AVATAR_COLORS.length]
+  return '#465fff';
+}
 
 // Dropdown Menu Items Component
-function DropdownMenuItems({ onClose }: { onClose: () => void }) {
+function DropdownMenuItems({ onClose, fullName, email }: { onClose: () => void; fullName: string; email: string }) {
   return (
     <>
       <div>
         <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          Abu Abdirohman
+          {fullName}
         </span>
         <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-          abuabdirohman4@gmail.com
+          {email}
         </span>
       </div>
 
@@ -126,6 +147,12 @@ function DropdownMenuItems({ onClose }: { onClose: () => void }) {
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isLoading } = useCurrentUser()
+  const fullName = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? 'User'
+  const email = user?.email ?? ''
+  const avatarUrl: string | null = user?.user_metadata?.avatar_url ?? null
+  const initials = getInitials(fullName)
+  const bgColor = getAvatarColor(fullName)
 
   const toggleDropdown = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
@@ -142,16 +169,24 @@ export default function UserDropdown() {
         onClick={toggleDropdown} 
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src="/images/user/owner.png"
-            alt="User"
-          />
+        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 flex-shrink-0">
+          {isLoading ? (
+            <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
+          ) : avatarUrl ? (
+            <Image width={44} height={44} src={avatarUrl} alt={fullName} className="object-cover w-full h-full" />
+          ) : (
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+              style={{ backgroundColor: bgColor }}
+            >
+              {initials}
+            </div>
+          )}
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Abu Abdirohman</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {isLoading ? '...' : fullName}
+        </span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -178,7 +213,7 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <DropdownMenuItems onClose={closeDropdown} />
+        <DropdownMenuItems onClose={closeDropdown} fullName={fullName} email={email} />
       </Dropdown>
     </div>
   );

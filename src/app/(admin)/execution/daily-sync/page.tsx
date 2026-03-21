@@ -58,6 +58,12 @@ export default function DailySyncPage() {
   // Card collapse states
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
 
+  // Activity Log calendar mode for dynamic title
+  const [activityCalendarMode, setActivityCalendarMode] = useState<'BOTH' | 'PLAN' | 'ACTUAL'>('BOTH');
+  const activityTitle = activityCalendarMode === 'PLAN' ? 'Activity Plan'
+    : activityCalendarMode === 'ACTUAL' ? 'Activity Log'
+      : 'Activity Plan & Log';
+
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
 
@@ -102,76 +108,70 @@ export default function DailySyncPage() {
               setSelectedDayIdx={setSelectedDayIdx}
             />
           </div>
-          {loading ? (
-            <DailySyncSkeleton />
-          ) : (
-            <>
-              {/* Daily Stats & Target Focus Component */}
-              <div className="block md:hidden mb-6">
+          {/* Daily Stats & Target Focus Component */}
+          <div className="block md:hidden mb-6">
+            <CollapsibleCard
+              isCollapsed={cardCollapsed.pomodoroTimer}
+              onToggle={() => toggleCardCollapsed('pomodoroTimer')}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
+                <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
+                <PomodoroTimer />
+              </div>
+            </CollapsibleCard>
+          </div>
+
+          <div className="block md:hidden mt-4 mb-6 space-y-4">
+            <TargetFocus selectedDate={selectedDateStr} />
+            <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="hidden md:block mb-6">
+                <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
+              </div>
+              <DailySyncClient
+                year={year}
+                weekNumber={displayWeek}
+                selectedDate={selectedDateStr}
+                onSetActiveTask={handleSetActiveTask}
+                dailyPlan={dailyPlan}
+                loading={loading}
+                refreshSessionKey={{}}
+                forceRefreshTaskId={null}
+              />
+            </div>
+            <div className="flex flex-col gap-6">
+              <div className="hidden md:block">
+                <TargetFocus selectedDate={selectedDateStr} />
+              </div>
+              <div className="hidden md:block">
                 <CollapsibleCard
                   isCollapsed={cardCollapsed.pomodoroTimer}
                   onToggle={() => toggleCardCollapsed('pomodoroTimer')}
                 >
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
                     <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
                     <PomodoroTimer />
                   </div>
                 </CollapsibleCard>
               </div>
-
-              <div className="block md:hidden mt-4 mb-6 space-y-4">
-                <TargetFocus selectedDate={selectedDateStr} />
-                <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="hidden md:block mb-6">
-                    <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
+              <CollapsibleCard
+                isCollapsed={cardCollapsed.activityLog}
+                onToggle={() => toggleCardCollapsed('activityLog')}
+                className="h-full flex flex-col"
+              >
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+                  <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">{activityTitle}</h3>
+                  <div className="flex-1">
+                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} onCalendarModeChange={setActivityCalendarMode} />
                   </div>
-                  <DailySyncClient
-                    year={year}
-                    weekNumber={displayWeek}
-                    selectedDate={selectedDateStr}
-                    onSetActiveTask={handleSetActiveTask}
-                    dailyPlan={dailyPlan}
-                    loading={loading}
-                    refreshSessionKey={{}}
-                    forceRefreshTaskId={null}
-                  />
                 </div>
-                <div className="flex flex-col gap-6">
-                  <div className="hidden md:block">
-                    <TargetFocus selectedDate={selectedDateStr} />
-                  </div>
-                  <div className="hidden md:block">
-                    <CollapsibleCard
-                      isCollapsed={cardCollapsed.pomodoroTimer}
-                      onToggle={() => toggleCardCollapsed('pomodoroTimer')}
-                    >
-                      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
-                        <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                        <PomodoroTimer />
-                      </div>
-                    </CollapsibleCard>
-                  </div>
-                  <CollapsibleCard
-                    isCollapsed={cardCollapsed.activityLog}
-                    onToggle={() => toggleCardCollapsed('activityLog')}
-                    className="h-full flex flex-col"
-                  >
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                      <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Log Activity</h3>
-                      <div className="flex-1">
-                        <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
-                      </div>
-                    </div>
-                  </CollapsibleCard>
-                </div>
-              </div>
-              <BrainDumpSection date={selectedDateStr} />
-            </>
-          )}
+              </CollapsibleCard>
+            </div>
+          </div>
+          <BrainDumpSection date={selectedDateStr} />
         </>
       )}
 

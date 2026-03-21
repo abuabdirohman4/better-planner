@@ -2,16 +2,7 @@
 
 import useSWR from 'swr';
 import { getAllQuestsForQuarter } from "../actions";
-import type { Quest } from "./useQuestState";
-import type { QuestWithContinuity } from "@/types/questContinuity";
-
-export interface QuestHistoryItem {
-  year: number;
-  quarter: number;
-  quarterString: string;
-  quests: Quest[];
-  questCount: number;
-}
+import type { PlanningQuest as Quest, QuestHistoryItem } from '@/types/planning-quest';
 
 /**
  * Custom hook for fetching quest history from previous quarters

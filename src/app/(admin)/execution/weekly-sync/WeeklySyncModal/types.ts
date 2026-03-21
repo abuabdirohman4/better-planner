@@ -1,7 +1,7 @@
 // WeeklySyncModal Types
 // Types specific to WeeklySyncModal functionality
 
-import type { Quest, Milestone, HierarchicalItem, SelectedItem } from '../WeeklySyncClient/types';
+import type { Quest, Milestone, HierarchicalItem, SelectedItem } from '@/types/weekly-sync';
 
 export interface WeeklyFocusModalProps {
   isOpen: boolean;

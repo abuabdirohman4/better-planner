@@ -20,7 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
-import { updateDailyPlanItemsDisplayOrder } from './actions/dailyPlanActions';
+import { updateDailyPlanItemsDisplayOrder } from './actions';
 import { useSWRConfig } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 

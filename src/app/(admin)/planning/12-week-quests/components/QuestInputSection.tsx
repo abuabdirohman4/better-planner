@@ -1,7 +1,7 @@
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import Spinner from '@/components/ui/spinner/Spinner';
-import type { Quest, RankedQuest } from "../hooks";
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 import QuestInput from './QuestInput';
 
 interface QuestInputSectionProps {

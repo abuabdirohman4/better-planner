@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getHierarchicalData } from '../../actions/hierarchicalDataActions';
-import type { Quest } from '../../WeeklySyncClient/types';
+import type { Quest } from '@/types/weekly-sync';
 import { toast } from 'sonner';
 
 export function useHierarchicalData(year: number, quarter: number, isOpen: boolean) {

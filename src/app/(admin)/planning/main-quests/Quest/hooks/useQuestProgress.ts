@@ -6,19 +6,7 @@ import { useMilestones, useTasks } from '../../hooks/useMainQuestsSWR';
 import { getTasksForMilestone } from '../../actions/taskActions';
 import { getSubtasksForTask } from '../../actions/subTaskActions';
 
-interface QuestProgress {
-  totalMilestones: number;
-  completedMilestones: number;
-  totalTasks: number;
-  completedTasks: number;
-  totalSubtasks: number;
-  completedSubtasks: number;
-  overallProgress: number;
-  milestoneProgress: number;
-  taskProgress: number;
-  subtaskProgress: number;
-  isLoading: boolean;
-}
+import type { QuestProgress } from '../../types';
 
 /**
  * Helper hook to fetch all tasks for all milestones in a quest

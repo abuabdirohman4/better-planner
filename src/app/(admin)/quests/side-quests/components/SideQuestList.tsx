@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { SideQuest } from "../types";
+import type { SideQuest } from '@/types/side-quest';
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";

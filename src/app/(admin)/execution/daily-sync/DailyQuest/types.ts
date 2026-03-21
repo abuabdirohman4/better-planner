@@ -1,23 +1,9 @@
-import { setDailyPlan } from './actions/dailyPlanActions';
+import type {
+  DailyPlan,
+  DailyPlanItem,
+  WeeklyTaskItem,
+} from '@/types/daily-plan';
 
-export interface DailyPlan {
-  id: string;
-  plan_date: string;
-  daily_plan_items?: DailyPlanItem[];
-}
-
-export interface DailyPlanItem {
-  id: string;
-  item_id: string;
-  item_type: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-  title?: string;
-  quest_title?: string;
-  daily_session_target?: number;
-  focus_duration?: number;
-  display_order?: number; // For drag-and-drop reordering
-  is_archived?: boolean;
-}
 
 export interface DailySyncClientProps {
   year: number;
@@ -86,26 +72,9 @@ export interface TaskSelectionModalProps {
   completedTodayCount?: number; // Jumlah tugas yang sudah selesai hari ini
 }
 
-export interface WeeklyTaskItem {
-  id: string;
-  type: 'MAIN_QUEST' | 'WORK' | 'SIDE_QUEST' | 'LEARNING' | 'DAILY_QUEST';
-  title: string;
-  status: string;
-  quest_title: string;
-  goal_slot: number;
-  parent_task_id?: string | null;
-  is_archived?: boolean;
-}
 
 export interface SideQuestFormProps {
   onSubmit: (title: string) => void;
   onCancel: () => void;
 }
 
-export interface SideQuestItem {
-  id: string;
-  title: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-  item_type: string;
-  focus_duration?: number;
-}

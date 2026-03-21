@@ -1,11 +1,14 @@
 // Weekly Goals Actions
-export * from './weeklyGoalsActions';
+export * from './weekly-goals/actions';
 
 // Hierarchical Data Actions
-export * from './hierarchicalDataActions';
+export * from './hierarchical-data/actions';
 
 // Weekly Rules Actions
-export * from './weeklyRulesActions';
+export * from './weekly-rules/actions';
+
+// Weekly Task Actions
+export * from './weekly-task/actions';
 
 // Weekly Sync Actions
-export * from './weeklySyncActions';
+export * from './weekly-sync/actions';

@@ -3,11 +3,8 @@ import useSWR from 'swr';
 import { getVisions } from '@/app/(admin)/planning/vision/actions';
 import { visionKeys } from '@/lib/swr';
 
-export interface Vision {
-  life_area: string;
-  vision_3_5_year?: string;
-  vision_10_year?: string;
-}
+import type { Vision } from '@/types/vision';
+export type { Vision };
 
 /**
  * Custom hook for fetching visions

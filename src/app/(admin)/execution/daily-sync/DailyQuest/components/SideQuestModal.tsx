@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuarterStore } from "@/stores/quarterStore";
 import { useSideQuests } from "@/app/(admin)/quests/side-quests/hooks/useSideQuests";
-import { SideQuest } from "@/app/(admin)/quests/side-quests/types";
+import type { SideQuest } from '@/types/side-quest';
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
 import Button from "@/components/ui/button/Button";

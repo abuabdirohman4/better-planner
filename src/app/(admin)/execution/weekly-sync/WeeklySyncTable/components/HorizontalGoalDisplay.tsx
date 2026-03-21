@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import type { GoalItem } from '../../WeeklySyncClient/types';
+import type { GoalItem } from '@/types/weekly-sync';
 import type { HorizontalGoalDisplayProps } from '../types';
 import { useWeeklyTaskManagement } from '../../hooks/useWeeklyTaskManagement';
 

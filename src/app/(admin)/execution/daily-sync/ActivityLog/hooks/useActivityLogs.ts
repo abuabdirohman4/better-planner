@@ -3,21 +3,7 @@ import useSWR from 'swr';
 import { getTodayActivityLogs } from '../actions/activityLoggingActions';
 import { dailySyncKeys } from '@/lib/swr';
 
-export interface ActivityLogItem {
-  id: string;
-  type: 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK' | 'BREAK';
-  task_id?: string;
-  task_title?: string | null;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  milestone_id?: string;
-  milestone_title?: string | null;
-  quest_id?: string;
-  quest_title?: string | null;
-  what_done?: string | null;
-  what_think?: string | null;
-}
+import type { ActivityLogItem } from '@/types/activity-log';
 
 export interface UseActivityLogsOptions {
   date: string;
@@ -33,16 +19,16 @@ export interface UseActivityLogsReturn {
   updateLogJournal: (logId: string, whatDone: string, whatThink: string) => void;
 }
 
-export function useActivityLogs({ 
-  date, 
-  refreshKey, 
-  lastActivityTimestamp 
+export function useActivityLogs({
+  date,
+  refreshKey,
+  lastActivityTimestamp
 }: UseActivityLogsOptions): UseActivityLogsReturn {
-  const { 
-    data: logs = [], 
-    error, 
+  const {
+    data: logs = [],
+    error,
     isLoading,
-    mutate 
+    mutate
   } = useSWR(
     // ✅ FIX: Use stable key that only changes with date
     dailySyncKeys.activityLogs(date),
@@ -71,9 +57,9 @@ export function useActivityLogs({
     mutate(
       (currentLogs) => {
         if (!currentLogs) return currentLogs;
-        
-        return currentLogs.map((log) => 
-          log.id === logId 
+
+        return currentLogs.map((log) =>
+          log.id === logId
             ? { ...log, what_done: whatDone, what_think: whatThink }
             : log
         );

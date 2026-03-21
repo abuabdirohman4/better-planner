@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
-import { BrainDumpItem } from '../types';
+import type { BrainDumpItem } from '@/types/brain-dump';
 import { 
   getBrainDumpByDate, 
   upsertBrainDump

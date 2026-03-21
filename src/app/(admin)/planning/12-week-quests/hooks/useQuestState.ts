@@ -6,17 +6,7 @@ const QUEST_LABELS = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
 ];
 
-export interface Quest {
-  id?: string;
-  label: string;
-  title: string;
-  type?: 'PERSONAL' | 'WORK';
-  // Continuity tracking fields
-  source_quest_id?: string;
-  is_continuation?: boolean;
-  continuation_strategy?: string;
-  continuation_date?: string;
-}
+import type { PlanningQuest as Quest } from '@/types/planning-quest';
 
 /**
  * Custom hook for managing quest state and input handling

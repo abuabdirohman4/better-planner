@@ -1,7 +1,7 @@
 // WeeklySyncTable Types
 // Types specific to WeeklySyncTable functionality
 
-import type { GoalItem, WeeklyGoal, ProgressData } from '../WeeklySyncClient/types';
+import type { GoalItem, WeeklyGoal, ProgressData } from '@/types/weekly-sync';
 
 export interface WeeklyGoalsTableProps {
   year: number;

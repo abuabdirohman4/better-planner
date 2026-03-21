@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
 import { updateMilestone, getMilestonesForQuest, addMilestone } from '../../actions/milestoneActions';
 
-interface Milestone {
-  id: string;
-  title: string;
-  display_order: number;
-  status?: 'TODO' | 'DONE';
-}
+import type { Milestone } from '../../types';
 
 export function useMilestoneState(questId: string) {
   // Milestone state

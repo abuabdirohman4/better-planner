@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import type { SelectedItem, HierarchicalItem, Quest } from '../../WeeklySyncClient/types';
+import type { SelectedItem, HierarchicalItem, Quest } from '@/types/weekly-sync';
 
 export function useSelectionManagement(initialSelectedItems: SelectedItem[], existingSelectedIds: Set<string> = new Set()) {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>(initialSelectedItems);

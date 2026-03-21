@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quest } from './useQuestState';
+import type { PlanningQuest as Quest } from '@/types/planning-quest';
 
 /**
  * Custom hook for managing pairwise comparison state and localStorage persistence

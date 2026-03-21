@@ -1,11 +1,7 @@
 // ToDontList Types
 // Types specific to ToDontList functionality
 
-export interface Rule {
-  id: string;
-  rule_text: string;
-  display_order: number;
-}
+import type { Rule } from '@/types/weekly-sync';
 
 export interface ToDontListCardProps {
   year: number;

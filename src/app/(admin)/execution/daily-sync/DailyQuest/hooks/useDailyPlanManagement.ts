@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { addDailyQuest } from '../actions/dailyQuestActions';
-import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest } from '../actions/dailyPlanActions';
-import { DailyPlanItem } from '../types';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest } from '../actions';
+import type { DailyPlanItem } from '@/types/daily-plan';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';
@@ -273,7 +273,10 @@ export function useDailyPlanManagement(
   });
 
   // Combine loading states
-  const loading = dailyPlanLoading || tasksLoading || completedSessionsLoading;
+  // ✅ FIX BLINK: Exclude completedSessionsLoading from skeleton-triggering loading.
+  // completedSessions SWR key contains taskIds that change on mutation,
+  // causing isLoading=true for new key even though main data is already cached.
+  const loading = dailyPlanLoading || tasksLoading;
   const error = dailyPlanError || tasksError;
 
   // Enhanced mutate function that refreshes both and invalidates related caches
@@ -779,7 +782,7 @@ export function useDailyPlanManagement(
     weeklyTasks,
     completedSessions,
     loading,
-    initialLoading: loading,
+    initialLoading: dailyPlanLoading || tasksLoading,
 
     // Business logic
     selectedTasks,
