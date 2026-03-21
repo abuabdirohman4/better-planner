@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] — 2026-03-21
+
+### Fixed
+- **User Profile Header**: User name, email, and avatar in the header dropdown now display
+  the actual logged-in user's data instead of hardcoded values. Users without a profile
+  photo now see an initials avatar with a consistent color.
+
+---
+
 ## [2.2.0] - 2024-12-19
 
 ### Added
