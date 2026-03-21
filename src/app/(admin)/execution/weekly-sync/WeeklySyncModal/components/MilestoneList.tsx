@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Milestone } from '../../WeeklySyncClient/types';
+import type { Milestone } from '@/types/weekly-sync';
 import { TaskList } from './TaskList';
 
 import type { MilestoneListProps } from '../types';

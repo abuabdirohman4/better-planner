@@ -1,4 +1,4 @@
-import type { Quest, RankedQuest } from "../hooks";
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 
 interface QuestInputProps {
   quest: Quest;

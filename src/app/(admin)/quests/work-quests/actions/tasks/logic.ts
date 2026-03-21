@@ -1,5 +1,5 @@
 // NO "use server"
-import { WorkQuestTask } from '../../types';
+import type { WorkQuestTask } from "@/types/work-quest";
 import { RawTaskRow } from './queries';
 
 export function toWorkQuestTask(row: RawTaskRow): WorkQuestTask {

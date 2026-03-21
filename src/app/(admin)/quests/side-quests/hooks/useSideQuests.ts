@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { getSideQuests, updateSideQuestStatus, updateSideQuest, deleteSideQuest } from '../actions/sideQuestActions';
-import { SideQuest } from '../types';
+import type { SideQuest } from '@/types/side-quest';
 
 export function useSideQuests(year: number, quarter: number) {
   const {

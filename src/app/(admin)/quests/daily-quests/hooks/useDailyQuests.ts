@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import { getDailyQuests, archiveDailyQuest, updateDailyQuest, deleteDailyQuest } from '@/app/(admin)/execution/daily-sync/DailyQuest/actions/dailyQuestActions';
-import { DailyQuest } from '../types';
+import type { DailyQuest } from '@/types/daily-quest';
 import { dailySyncKeys } from "@/lib/swr";
 
 export function useDailyQuests(year: number, quarter: number) {

@@ -1,4 +1,5 @@
-import type { SoundSettings } from './types';
+import type { UserProfile } from '@/types/user-profile';
+import type { SoundSettings } from '@/types/sound';
 
 export const DEFAULT_SOUND_SETTINGS: SoundSettings = {
   soundId: 'children',

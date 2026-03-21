@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { WorkQuestTask, WorkQuestTaskFormData } from "../../types";
+import type { WorkQuestTask, WorkQuestTaskFormData } from "@/types/work-quest";
 import {
   insertTask,
   updateTaskTitle,

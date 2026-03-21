@@ -3,14 +3,15 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { useActivityStore } from '@/stores/activityStore';
-import { useActivityLogs, ActivityLogItem } from './hooks/useActivityLogs';
+import { useActivityLogs } from './hooks/useActivityLogs';
+import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
 import CalendarView, { CalendarEvent } from './components/CalendarView';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
 import { updateSchedule, createSchedule } from '../DailyQuest/actions';
 import { SESSION_DURATION_MINUTES } from '../DailyQuest/utils/scheduleUtils';
 import { ScheduleManagementModal } from '../DailyQuest/components/ScheduleManagementModal';
-import { DailyPlanItem } from '../DailyQuest/types';
+import type { DailyPlanItem } from '@/types/daily-plan';
 
 interface ActivityLogProps {
   date: string;
@@ -334,7 +335,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
     acc[log.task_id].totalMinutes += log.duration_minutes;
     return acc;
   }, {} as Record<string, { title: string; sessions: ActivityLogItem[]; totalMinutes: number }>);
-  const summary = Object.values(grouped);
+  const summary = Object.values(grouped) as { title: string; sessions: ActivityLogItem[]; totalMinutes: number }[];
 
   // Sort logs for Timeline view
   const timelineLogs = [...safeLogs].sort((a, b) => {

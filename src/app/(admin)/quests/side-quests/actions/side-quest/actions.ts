@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getQuarterDates } from "@/lib/quarterUtils";
-import type { SideQuest } from "../../types";
+import type { SideQuest } from '@/types/side-quest';
 import {
   querySideQuests,
   updateSideQuestStatusField,

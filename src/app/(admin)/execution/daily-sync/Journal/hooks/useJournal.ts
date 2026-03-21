@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { updateActivityJournal, logActivityWithJournal } from '../actions/journalActions';
 import { getActivityLogId, updateActivityLogJournal } from '../../PomodoroTimer/actions/timerSessionActions';
-import { JournalData } from '../types';
+import type { JournalData } from '@/types/journal';
 import { createClient } from '@/lib/supabase/client';
 import { useJournalData } from './useJournalData';
 import { mutate as globalMutate } from 'swr';

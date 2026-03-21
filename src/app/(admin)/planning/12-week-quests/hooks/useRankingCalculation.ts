@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quest } from "./useQuestState";
-
-export interface RankedQuest extends Quest {
-  score: number;
-}
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 
 /**
  * Custom hook for calculating quest rankings based on pairwise comparison results

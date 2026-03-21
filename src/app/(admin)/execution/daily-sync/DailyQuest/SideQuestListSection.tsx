@@ -7,7 +7,7 @@ import { SideQuestFormProps } from './types';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { isMac, isModifierKeyPressed, isDesktop } from '@/lib/utils';
-import { SideQuest } from '@/app/(admin)/quests/side-quests/types';
+import type { SideQuest } from '@/types/side-quest';
 import {
   DndContext,
   closestCenter,

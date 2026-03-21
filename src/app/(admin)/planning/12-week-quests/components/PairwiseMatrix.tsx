@@ -1,5 +1,5 @@
 import ComponentCard from '@/components/common/ComponentCard';
-import type { Quest } from "../hooks";
+import type { PlanningQuest as Quest } from '@/types/planning-quest';
 import PairwiseCell from './PairwiseCell';
 
 interface PairwiseMatrixProps {

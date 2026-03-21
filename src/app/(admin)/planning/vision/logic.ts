@@ -1,8 +1,5 @@
-export interface VisionEntry {
-  area: string;
-  vision_3_5_year: string;
-  vision_10_year: string;
-}
+import type { VisionEntry } from '@/types/vision';
+export type { VisionEntry };
 
 export function parseVisionFormData(formData: FormData, lifeAreas: string[]): VisionEntry[] {
   return lifeAreas.map(area => ({

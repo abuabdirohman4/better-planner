@@ -7,10 +7,9 @@ import {
   usePairwiseComparison, 
   useRankingCalculation, 
   useQuestOperations,
-  useQuestHistory,
-  type Quest,
-  type RankedQuest 
+  useQuestHistory
 } from "./hooks";
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 import { useQuarterStore } from "@/stores/quarterStore";
 import QuestHistorySelector from "./components/QuestHistorySelector";
 import QuestInputSection from "./components/QuestInputSection";

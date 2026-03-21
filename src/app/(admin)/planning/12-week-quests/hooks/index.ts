@@ -1,7 +1,7 @@
 // Export all hooks for easy importing
-export { useQuestState, type Quest } from './useQuestState';
+export { useQuestState } from './useQuestState';
 export { usePairwiseComparison } from './usePairwiseComparison';
-export { useRankingCalculation, type RankedQuest } from './useRankingCalculation';
+export { useRankingCalculation } from './useRankingCalculation';
 export { useQuestOperations } from './useQuestOperations';
 export { useQuestsAndPairwise } from './useQuestsAndPairwise';
-export { useQuestHistory, type QuestHistoryItem } from './useQuestHistory';
+export { useQuestHistory } from './useQuestHistory';

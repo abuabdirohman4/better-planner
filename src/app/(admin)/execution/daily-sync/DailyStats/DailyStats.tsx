@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
-import { DailyPlan } from '../DailyQuest/types';
+import type { DailyPlan } from '@/types/daily-plan';
 
 interface DailyStatsProps {
   dailyPlan: DailyPlan | null;

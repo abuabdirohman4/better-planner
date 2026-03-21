@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { WorkQuestProjectListProps, WorkQuestProject, WorkQuestTask } from "../types";
+import type { WorkQuestProjectListProps } from "../types";
+import type { WorkQuestProject, WorkQuestTask } from "@/types/work-quest";
 import TaskForm from "./TaskForm";
 import Checkbox from "@/components/form/input/Checkbox";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";

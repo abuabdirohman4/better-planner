@@ -1,5 +1,5 @@
 import React from 'react';
-import { DailyPlanItem } from '../types';
+import type { DailyPlanItem } from '@/types/daily-plan';
 
 export function useTaskSession(
   item: DailyPlanItem, 

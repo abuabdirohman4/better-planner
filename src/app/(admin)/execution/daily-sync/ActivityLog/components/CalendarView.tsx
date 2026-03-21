@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import HourlyGrid from './HourlyGrid';
 import CalendarBlock from './CalendarBlock';
 import CalendarTaskDetail from './CalendarTaskDetail';
-import { ActivityLogItem } from '../hooks/useActivityLogs';
-import { TaskSchedule } from '../../DailyQuest/types';
+import type { ActivityLogItem } from '@/types/activity-log';
+import type { TaskSchedule } from '@/types/daily-plan';
 import { processOverlaps, getVisibleHours, calculateDiscontinuousStyle } from '@/lib/calendarUtils';
 
 // Unified Event Type

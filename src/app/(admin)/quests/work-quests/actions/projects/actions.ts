@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getQuarterDates } from "@/lib/quarterUtils";
-import { WorkQuestProject, WorkQuestProjectFormData, WorkQuestFormData, WorkQuest } from "../../types";
+import type { WorkQuestProject, WorkQuestProjectFormData, WorkQuestFormData, WorkQuest } from "@/types/work-quest";
 import {
   queryProjectsByQuarter,
   queryTasksByProjectIds,

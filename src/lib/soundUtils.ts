@@ -2,15 +2,7 @@
  * Sound Utilities for Timer Notifications
  * Menggunakan Web Audio API untuk built-in sounds dan custom sounds
  */
-
-export interface SoundOption {
-  id: string;
-  name: string;
-  type: 'custom';
-  description: string;
-  emoji: string;
-  filePath: string; // Path untuk custom audio files
-}
+import type { SoundOption } from '@/types/sound';
 
 // Timer sound options using WAV files (for Pomodoro timer)
 export const TIMER_SOUND_OPTIONS: SoundOption[] = [

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
-import type { BrainDumpItem } from '../../types';
+import type { BrainDumpItem } from '@/types/brain-dump';
 import { queryBrainDumpByDate, upsertBrainDumpRecord, queryBrainDumpByDateRange } from './queries';
 import { validateBrainDumpDate, sanitizeContent } from './logic';
 

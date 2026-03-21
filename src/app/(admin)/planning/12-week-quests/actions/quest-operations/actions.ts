@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
-import type { Quest } from '../../hooks/useQuestState';
-import type { RankedQuest } from '../../hooks/useRankingCalculation';
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 import {
   updateExistingQuest,
   insertNewQuests,

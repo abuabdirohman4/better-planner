@@ -3,7 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { handleApiError } from '@/lib/errorUtils';
-import type { SoundSettings, UserProfile } from './types';
+import type { UserProfile } from '@/types/user-profile';
+import type { SoundSettings } from '@/types/sound';
 import {
   queryUserProfile,
   queryExistingProfile,

@@ -1,4 +1,4 @@
-import { TaskSchedule } from "../types";
+import type { TaskSchedule } from '@/types/daily-plan';
 
 export const SESSION_DURATION_MINUTES = 25; // Default Pomodoro duration
 

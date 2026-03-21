@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { SoundSettings } from './types';
+import type { UserProfile } from '@/types/user-profile';
+import type { SoundSettings } from '@/types/sound';
 
 export async function queryUserProfile(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase

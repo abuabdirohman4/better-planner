@@ -4,7 +4,7 @@ import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { addDailyQuest } from '../actions/dailyQuestActions';
 import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest } from '../actions';
-import { DailyPlanItem } from '../types';
+import type { DailyPlanItem } from '@/types/daily-plan';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';

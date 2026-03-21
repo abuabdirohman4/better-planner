@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityLogItem } from '../hooks/useActivityLogs';
+import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
 
 interface CalendarTaskDetailProps {

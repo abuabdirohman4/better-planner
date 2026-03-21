@@ -15,14 +15,14 @@ import {
   toggleWorkQuestProjectStatus,
   toggleWorkQuestTaskStatus
 } from "../actions";
-import { 
-  WorkQuest, 
+import type {
+  WorkQuest,
   WorkQuestFormData,
   WorkQuestProject,
   WorkQuestProjectFormData,
   WorkQuestTask,
   WorkQuestTaskFormData
-} from "../types";
+} from '@/types/work-quest';
 
 export function useWorkQuests(year: number, quarter: number) {
   const {

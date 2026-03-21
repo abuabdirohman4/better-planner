@@ -3,7 +3,7 @@ import { useSWRConfig } from "swr";
 import { format } from "date-fns";
 import Modal from "@/components/ui/modal/Modal";
 import { Button } from "@/components/ui/button";
-import { DailyPlanItem } from "../types";
+import type { DailyPlanItem } from '@/types/daily-plan';
 import { TaskSchedule } from "../actions";
 import { useTaskSchedules } from "../hooks/useTaskSchedules";
 import { createSchedule, updateSchedule, deleteSchedule } from "../actions";

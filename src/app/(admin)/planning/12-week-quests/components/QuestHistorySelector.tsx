@@ -4,8 +4,7 @@ import { useState } from "react";
 import Button from '@/components/ui/button/Button';
 import ComponentCard from '@/components/common/ComponentCard';
 import Checkbox from '@/components/form/input/Checkbox';
-import type { Quest } from "../hooks/useQuestState";
-import type { QuestHistoryItem } from "../hooks/useQuestHistory";
+import type { PlanningQuest as Quest, QuestHistoryItem } from '@/types/planning-quest';
 
 interface QuestHistorySelectorProps {
   questHistory: QuestHistoryItem[];

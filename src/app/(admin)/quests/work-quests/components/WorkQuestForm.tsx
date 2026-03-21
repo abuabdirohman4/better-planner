@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { WorkQuestFormProps, WorkQuestSubtaskFormData } from "../types";
+import type { WorkQuestFormProps } from "../types";
+import type { WorkQuestSubtaskFormData } from "@/types/work-quest";
 import Button from "@/components/ui/button/Button";
 
 const WorkQuestForm: React.FC<WorkQuestFormProps> = ({

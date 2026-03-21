@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from 'sonner';
-import type { Quest } from './useQuestState';
-import type { RankedQuest } from './useRankingCalculation';
+import type { PlanningQuest as Quest, RankedQuest } from '@/types/planning-quest';
 import { saveQuests, finalizeQuests } from '../actions';
 
 /**

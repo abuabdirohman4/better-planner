@@ -2,12 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { updateSoundSettings, getSoundSettings, resetSoundSettings as resetServerSettings } from '@/app/(admin)/settings/profile/actions/userProfileActions';
 
-export interface SoundSettings {
-  soundId: string;
-  volume: number;
-  taskCompletionSoundId: string;
-  focusSoundId: string;
-}
+import type { SoundSettings } from '@/types/sound';
 
 
 interface SoundStoreState {

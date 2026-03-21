@@ -1,4 +1,4 @@
-import { ActivityLogItem } from '@/app/(admin)/execution/daily-sync/ActivityLog/hooks/useActivityLogs';
+import type { ActivityLogItem } from '@/types/activity-log';
 
 export type ViewMode = 'list' | 'calendar';
 
