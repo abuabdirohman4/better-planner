@@ -96,6 +96,29 @@ function DropdownMenuItems({ onClose, fullName, email }: { onClose: () => void; 
           <DropdownItem
             onItemClick={onClose}
             tag="a"
+            href="/settings/notifications"
+            className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+          >
+            <svg
+              className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2C10.45 2 9.05 2.5 8 3.3C6.4 4.5 5.3 6.45 5 8.7L4.5 13L3.5 15H20.5L19.5 13L19 8.7C18.7 6.45 17.6 4.5 16 3.3C14.95 2.5 13.55 2 12 2ZM9 18C9 19.65 10.35 21 12 21C13.65 21 15 19.65 15 18H9Z"
+                fill=""
+              />
+            </svg>
+            Email Notifications
+          </DropdownItem>
+        </li>
+        <li>
+          <DropdownItem
+            onItemClick={onClose}
+            tag="a"
             href="/profile"
             className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
           >
