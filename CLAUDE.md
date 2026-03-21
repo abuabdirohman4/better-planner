@@ -72,6 +72,8 @@ refactor: improve code structure
 
 **📖 For complete Beads & Git integration guide, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
+**📖 For Google Antigravity execution templates and review checklists, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
+
 ---
 
 ## 📚 Documentation Strategy
@@ -271,6 +273,10 @@ All detailed documentation is in `docs/claude/`:
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Timezone Handling**: [`docs/claude/timezone-handling.md`](docs/claude/timezone-handling.md)
+- **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
+- **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
+- **Release Workflow**: [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
+- **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
 
 **Legacy Documentation** (migrate content to `docs/claude/` when updating):
 - `docs/activity-plan-feature.md` - Activity Plan implementation guide
