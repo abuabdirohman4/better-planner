@@ -1,13 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getTasksForMilestone, addTask, updateTask } from '../../actions/taskActions';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'TODO' | 'DONE';
-  parent_task_id?: string | null;
-  display_order?: number;
-}
+import type { Task } from '../../types';
 
 export function useTaskState(milestoneId: string) {
   // Task state

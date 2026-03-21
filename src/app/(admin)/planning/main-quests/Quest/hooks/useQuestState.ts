@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getQuests } from '../../actions/questActions';
 
-interface Quest {
-  id: string;
-  title: string;
-  motivation?: string;
-}
+import type { Quest } from '../../types';
 
 export function useQuestState(year: number, quarter: number) {
   const [quests, setQuests] = useState<Quest[]>([]);

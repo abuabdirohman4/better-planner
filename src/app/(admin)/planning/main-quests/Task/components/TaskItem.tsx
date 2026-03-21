@@ -7,13 +7,7 @@ import { toast } from 'sonner';
 import { useQuestProgressInvalidation } from '../../Quest/hooks/useQuestProgress';
 import type { KeyedMutator } from 'swr';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'TODO' | 'DONE';
-  parent_task_id?: string | null;
-  display_order?: number;
-}
+import type { Task } from '../../types';
 
 interface TaskItemProps {
   task: Task;

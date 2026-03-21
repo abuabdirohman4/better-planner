@@ -10,12 +10,7 @@ import SubTask from './SubTask';
 import QuestProgressBar from './Quest/components/QuestProgressBar';
 import { useMilestones } from './hooks/useMainQuestsSWR';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'TODO' | 'DONE';
-}
-
+import type { Task } from './types';
 interface QuestProps {
   id: string;
   title: string;

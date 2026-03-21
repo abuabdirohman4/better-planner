@@ -3,12 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Checkbox from '@/components/form/input/Checkbox';
 
-interface Milestone {
-  id: string;
-  title: string;
-  display_order: number;
-  status?: 'TODO' | 'DONE';
-}
+import type { Milestone } from '../../types';
 
 interface MilestoneItemProps {
   milestone: Milestone | null;

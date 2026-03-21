@@ -10,23 +10,12 @@ import { useMilestoneOperations } from './Milestone/hooks/useMilestoneOperations
 import { useQuestProgressInvalidation } from './Quest/hooks/useQuestProgress';
 import type { KeyedMutator } from 'swr';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'TODO' | 'DONE';
-}
-
-interface Milestone {
-  id: string;
-  title: string;
-  display_order: number;
-  status?: 'TODO' | 'DONE';
-}
+import type { Task as TaskType, Milestone } from './types';
 
 interface MilestoneProps {
   questId: string;
-  activeSubTask: Task | null;
-  onOpenSubtask: (task: Task) => void;
+  activeSubTask: TaskType | null;
+  onOpenSubtask: (task: TaskType) => void;
   showCompletedTasks: boolean;
   showAllTasks: boolean;
 }

@@ -15,12 +15,7 @@ import {
 } from '@dnd-kit/sortable';
 import MilestoneItem from './MilestoneItem';
 
-interface Milestone {
-  id: string;
-  title: string;
-  display_order: number;
-  status?: 'TODO' | 'DONE';
-}
+import type { Milestone } from '../../types';
 
 interface MilestoneBarProps {
   milestones: Milestone[];

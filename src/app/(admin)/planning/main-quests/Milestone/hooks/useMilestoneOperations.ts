@@ -5,12 +5,7 @@ import { toast } from 'sonner';
 import { updateMilestonesDisplayOrder } from '../../actions/milestoneActions';
 import type { KeyedMutator } from 'swr';
 
-interface Milestone {
-  id: string;
-  title: string;
-  display_order: number;
-  status?: 'TODO' | 'DONE';
-}
+import type { Milestone } from '../../types';
 
 type MilestoneData = Array<{
   id: any;
