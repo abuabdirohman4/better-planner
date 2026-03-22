@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Performance Aggregation Service
@@ -279,7 +279,7 @@ export async function getDailyPerformance(
   userId: string,
   date: Date
 ): Promise<PerformanceMetrics> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const dateStr = date.toISOString().split("T")[0];
 
   // Get focus time and sessions from activity_logs
@@ -477,7 +477,7 @@ export async function getWeeklyPerformance(
   userId: string,
   weekStartDate: Date
 ): Promise<PerformanceMetrics> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const weekEndDate = new Date(weekStartDate);
   weekEndDate.setDate(weekEndDate.getDate() + 6);
 
@@ -644,7 +644,7 @@ export async function getMonthlyPerformance(
   userId: string,
   monthStartDate: Date
 ): Promise<PerformanceMetrics> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const monthEndDate = new Date(monthStartDate);
   monthEndDate.setDate(monthEndDate.getDate() + 27); // 4 weeks = 28 days
 
@@ -799,7 +799,7 @@ export async function getQuarterlyPerformance(
   userId: string,
   quarterStartDate: Date
 ): Promise<PerformanceMetrics> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const quarterEndDate = new Date(quarterStartDate);
   quarterEndDate.setDate(quarterEndDate.getDate() + 90); // ~13 weeks
 
@@ -964,7 +964,7 @@ export async function savePerformanceSummary(
   userId: string,
   metrics: PerformanceMetrics
 ): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   await supabase.from("performance_summaries").upsert(
     {

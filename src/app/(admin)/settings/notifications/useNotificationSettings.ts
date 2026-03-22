@@ -8,7 +8,8 @@ import { dataKeys } from '@/lib/swr'
 export function useNotificationSettings() {
   const { data: settings, error, isLoading, mutate } = useSWR<NotificationSettings | null>(
     dataKeys.notifications.settings(),
-    getNotificationSettings
+    getNotificationSettings,
+    { revalidateOnFocus: false }
   )
 
   const updateSettings = async (newSettings: NotificationSettings) => {

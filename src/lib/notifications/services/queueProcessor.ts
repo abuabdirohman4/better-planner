@@ -17,11 +17,12 @@ export async function processEmailQueue(
   const result: ProcessQueueResult = { processed: 0, succeeded: 0, failed: 0, errors: [] }
 
   // Fetch pending items
+  const now = new Date().toISOString()
   const { data: items } = await supabase
     .from('notification_queue')
     .select('*')
     .eq('status', 'PENDING')
-    .or('next_retry_at.is.null,next_retry_at.lte.' + new Date().toISOString())
+    .or(`next_retry_at.is.null,next_retry_at.lte.${now}`)
     .limit(batchSize)
 
   if (!items?.length) return result

@@ -1,9 +1,9 @@
 import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { generateInsight } from '@/lib/notifications/services/aiInsightService'
+import { getQuarterlyPerformance } from '@/lib/notifications/services/performanceAggregation'
 import { getLastQuarterStart } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
-import type { PerformanceMetrics } from '@/lib/notifications/services/performanceAggregation'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -16,9 +16,9 @@ export async function POST(request: Request) {
     const supabase = createServiceClient()
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, full_name, email, notification_settings')
-      .eq("notification_settings->frequencies->>'quarterly'", 'true')
-      .eq("notification_settings->>'enabled'", 'true')
+      .select('id, user_id, notification_settings')
+      .filter('notification_settings->frequencies->>quarterly', 'eq', 'true')
+      .filter('notification_settings->>enabled', 'eq', 'true')
 
     if (!users?.length) {
       return Response.json({ success: true, message: 'No users subscribed to quarterly emails' })
@@ -32,25 +32,20 @@ export async function POST(request: Request) {
     let queuedCount = 0
 
     for (const user of users) {
-      const { data: metricsRow } = await supabase
-        .from('performance_summaries')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('period_type', 'quarterly')
-        .eq('period_start', periodStart)
-        .single()
+      const metrics = await getQuarterlyPerformance(user.user_id, quarterStartDate)
 
-      if (!metricsRow) continue
+      if (metrics.totalSessions === 0 && metrics.tasksTotal === 0) continue
 
-      const metrics = metricsRow as unknown as PerformanceMetrics
+      const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id)
+      const email = user.notification_settings?.email || authUser?.user?.email || ''
+      const name = authUser?.user?.user_metadata?.full_name || authUser?.user?.user_metadata?.name || 'Planner'
+
       const char = user.notification_settings?.aiCharacter as AICharacter || 'BALANCED_MENTOR'
-      const name = user.full_name || 'Planner'
-
       const insight = await generateInsight(metrics, char, name)
 
       const payload: EmailPayload = {
-        userId: user.id,
-        email: user.notification_settings?.email || user.email,
+        userId: user.user_id,
+        email,
         userName: name,
         periodType: 'quarterly',
         periodLabel: `Q${prevQuarter + 1} ${prevQuarterYear}`,
@@ -60,7 +55,7 @@ export async function POST(request: Request) {
       }
 
       await supabase.from('notification_queue').upsert({
-        user_id: user.id,
+        user_id: user.user_id,
         period_type: 'quarterly',
         period_start: periodStart,
         payload,

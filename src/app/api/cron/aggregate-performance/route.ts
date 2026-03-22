@@ -12,8 +12,8 @@ export async function POST(request: Request) {
     const supabase = createServiceClient()
     const { data: users } = await supabase
       .from('user_profiles')
-      .select('id, notification_settings')
-      .eq("notification_settings->>'enabled'", 'true')
+      .select('id, user_id, notification_settings')
+      .filter('notification_settings->>enabled', 'eq', 'true')
 
     if (!users?.length) {
       return Response.json({ success: true, message: 'No users with enabled notifications' })
@@ -31,21 +31,21 @@ export async function POST(request: Request) {
 
     for (const user of users) {
       // 1. Daily (always runs for yesterday)
-      await aggregatePerformance(user.id, 'daily', yesterdayDate)
+      await aggregatePerformance(user.user_id,'daily', yesterdayDate)
 
       // 2. Weekly (runs on Mondays for the previous week)
       if (runWeekly) {
-        await aggregatePerformance(user.id, 'weekly', weekStartDate)
+        await aggregatePerformance(user.user_id,'weekly', weekStartDate)
       }
 
       // 3. Monthly (runs on 1st of month for previous month)
       if (runMonthly) {
-        await aggregatePerformance(user.id, 'monthly', monthStartDate)
+        await aggregatePerformance(user.user_id,'monthly', monthStartDate)
       }
 
       // 4. Quarterly (runs on 1st of Jan, Apr, Jul, Oct for previous quarter)
       if (runQuarterly) {
-        await aggregatePerformance(user.id, 'quarterly', quarterStartDate)
+        await aggregatePerformance(user.user_id,'quarterly', quarterStartDate)
       }
     }
 

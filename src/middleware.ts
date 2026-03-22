@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl
 
-    // Skip middleware for PWA files and static assets
+    // Skip middleware for PWA files, static assets, and cron routes
     if (
       pathname === '/manifest.json' ||
       pathname === '/sw.js' ||
@@ -14,7 +14,8 @@ export async function middleware(request: NextRequest) {
       pathname === '/sw-custom.js' ||
       pathname.startsWith('/_next/') ||
       pathname.startsWith('/images/') ||
-      pathname === '/favicon.ico'
+      pathname === '/favicon.ico' ||
+      pathname.startsWith('/api/cron/')
     ) {
       return NextResponse.next()
     }

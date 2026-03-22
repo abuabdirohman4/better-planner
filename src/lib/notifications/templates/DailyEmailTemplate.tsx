@@ -39,7 +39,7 @@ export function DailyEmailTemplate({ payload }: DailyEmailTemplateProps) {
         </Text>
       </Section>
 
-      {metrics.topCompletedTasks.length > 0 && (
+      {(metrics.topCompletedTasks?.length ?? 0) > 0 && (
         <Section style={{ marginBottom: '24px' }}>
           <Heading style={{ fontSize: '18px', color: '#32325d', marginTop: '0', marginBottom: '12px' }}>
             Top Completions
