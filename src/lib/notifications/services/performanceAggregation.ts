@@ -27,6 +27,7 @@ export interface TaskDetail {
 export interface MainQuestProgress {
   questName: string;
   questId: string;
+  motivation?: string;
   totalTasks: number;
   completedCount: number;
   progressPercentage: number;
@@ -186,7 +187,7 @@ async function getMainQuestProgress(
   const firstTask = primaryQuestTasks[0];
   const { data: questData } = await supabase
     .from("quests")
-    .select("id")
+    .select("id, motivation")
     .eq("title", primaryQuestName)
     .eq("user_id", userId)
     .single();
@@ -209,6 +210,7 @@ async function getMainQuestProgress(
   return {
     questName: primaryQuestName,
     questId: questData?.id || "",
+    motivation: questData?.motivation || undefined,
     totalTasks: primaryQuestTasks.length,
     completedCount: completedTasks.length,
     progressPercentage:

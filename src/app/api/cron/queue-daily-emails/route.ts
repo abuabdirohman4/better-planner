@@ -34,18 +34,17 @@ export async function POST(request: Request) {
       // Get full metrics (including topCompletedTasks, needsAttention, etc.)
       const metrics = await getDailyPerformance(user.user_id, yesterday)
 
-      // Skip if no activity data
-      if (metrics.totalSessions === 0 && metrics.tasksTotal === 0) continue
-
       // Get user email and name from auth
       const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id)
       const email = user.notification_settings?.email || authUser?.user?.email || ''
       const name = authUser?.user?.user_metadata?.full_name || authUser?.user?.user_metadata?.name || 'Planner'
 
       const char = user.notification_settings?.aiCharacter as AICharacter || 'BALANCED_MENTOR'
+      const language = user.notification_settings?.language ?? 'id'
+      const mainQuestMotivation = metrics.mainQuestProgress?.motivation
 
-      // Generate insight
-      const insight = await generateInsight(metrics, char, name)
+      // Generate insight (with language and main quest motivation for personalization)
+      const insight = await generateInsight(metrics, char, name, language, mainQuestMotivation)
 
       const payload: EmailPayload = {
         userId: user.user_id,
@@ -56,6 +55,7 @@ export async function POST(request: Request) {
         metrics,
         insight,
         character: char,
+        language,
       }
 
       // Add to queue

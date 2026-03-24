@@ -40,7 +40,8 @@ export async function POST(request: Request) {
       const name = authUser?.user?.user_metadata?.full_name || authUser?.user?.user_metadata?.name || 'Planner'
 
       const char = user.notification_settings?.aiCharacter as AICharacter || 'BALANCED_MENTOR'
-      const insight = await generateInsight(metrics, char, name)
+      const language = user.notification_settings?.language ?? 'id'
+      const insight = await generateInsight(metrics, char, name, language)
 
       const payload: EmailPayload = {
         userId: user.user_id,
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         metrics,
         insight,
         character: char,
+        language,
       }
 
       await supabase.from('notification_queue').upsert({

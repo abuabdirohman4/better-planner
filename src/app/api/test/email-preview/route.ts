@@ -55,6 +55,7 @@ export async function GET(request: Request) {
       mainQuestProgress: {
         questName: 'Setup Notification System',
         questId: 'quest-1',
+        motivation: 'Membangun sistem notifikasi yang memotivasi user untuk tetap konsisten.',
         totalTasks: 10,
         completedCount: 5,
         progressPercentage: 50,
@@ -62,7 +63,8 @@ export async function GET(request: Request) {
         completedTaskDetails: [],
         blockedOrStuckTasks: []
       }
-    }
+    },
+    language: 'id',
   }
 
   try {

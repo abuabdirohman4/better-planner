@@ -4,6 +4,8 @@ export type AICharacter =
   | 'BALANCED_MENTOR'
   | 'FRIENDLY_BUDDY'
 
+export type EmailLanguage = 'id' | 'en'
+
 export interface NotificationSettings {
   enabled: boolean
   frequencies: {
@@ -16,6 +18,7 @@ export interface NotificationSettings {
   preferredTime: string  // "HH:MM" — saat ini fixed 13:00 WIB
   timezone: string       // "Asia/Jakarta"
   email: string | null   // null = gunakan auth email
+  language: EmailLanguage
 }
 
 export interface AIInsight {
@@ -39,4 +42,5 @@ export interface EmailPayload {
   metrics: PerformanceMetrics
   insight: AIInsight
   character: AICharacter
+  language: EmailLanguage
 }

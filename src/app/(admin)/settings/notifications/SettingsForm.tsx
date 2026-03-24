@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useNotificationSettings } from './useNotificationSettings'
-import type { NotificationSettings, AICharacter } from '@/lib/notifications/types'
+import type { NotificationSettings, AICharacter, EmailLanguage } from '@/lib/notifications/types'
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
@@ -16,7 +16,8 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   },
   aiCharacter: 'BALANCED_MENTOR',
   preferredTime: '06:00:00',
-  timezone: 'Asia/Jakarta'
+  timezone: 'Asia/Jakarta',
+  language: 'id'
 }
 
 export function SettingsForm() {
@@ -150,7 +151,7 @@ export function SettingsForm() {
             {/* AI Personality */}
             <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-800">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">AI Personality</label>
-              <select 
+              <select
                 className="w-full px-4 py-2 border border-gray-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                 value={localSettings.aiCharacter}
                 onChange={(e) => setLocalSettings({...localSettings, aiCharacter: e.target.value as AICharacter})}
@@ -159,6 +160,19 @@ export function SettingsForm() {
                 <option value="ANALYTICAL_ADVISOR">Analytical Advisor (Data-driven & Objective)</option>
                 <option value="BALANCED_MENTOR">Balanced Mentor (Mindful & Process-oriented)</option>
                 <option value="FRIENDLY_BUDDY">Friendly Buddy (Casual & Supportive)</option>
+              </select>
+            </div>
+
+            {/* Email Language */}
+            <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Bahasa Email</label>
+              <select
+                className="w-full px-4 py-2 border border-gray-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                value={localSettings.language ?? 'id'}
+                onChange={(e) => setLocalSettings({...localSettings, language: e.target.value as EmailLanguage})}
+              >
+                <option value="id">Bahasa Indonesia</option>
+                <option value="en">English</option>
               </select>
             </div>
           </>
