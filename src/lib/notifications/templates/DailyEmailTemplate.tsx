@@ -11,46 +11,51 @@ const i18n = {
   id: {
     tag: 'Rekap Harian',
     hi: 'Hei',
-    metrics: 'Performa Hari Ini',
+    metrics: 'Rekap Kemarin',
     focusTime: 'Waktu Fokus',
     minutes: 'menit',
     tasksCompleted: 'Tugas Selesai',
     completionRate: 'Tingkat Penyelesaian',
     topCompletions: 'Pencapaian Terbaik',
-    mainQuestMotivation: 'Motivasi Quest Utama',
-    coachSays: 'Coach',
+    committedQuests: 'Main Quest Kuartal Ini',
+    motivation: 'Motivasi',
+    progress: 'Progress',
+    tasks: 'tugas',
     says: 'berkata',
     topWin: 'Kemenangan Terbaik',
     challenge: 'Tantangan',
     actionTip: 'Tips Aksi',
-    noActivity: 'Tidak ada sesi fokus hari ini — besok adalah kesempatanmu!',
+    noActivity: 'Tidak ada sesi fokus kemarin — hari ini adalah kesempatanmu!',
   },
   en: {
     tag: 'Daily Summary',
     hi: 'Hi',
-    metrics: 'Performance Metrics',
+    metrics: "Yesterday's Recap",
     focusTime: 'Focus Time',
     minutes: 'minutes',
     tasksCompleted: 'Tasks Completed',
     completionRate: 'Completion Rate',
     topCompletions: 'Top Completions',
-    mainQuestMotivation: 'Main Quest Motivation',
-    coachSays: 'Coach',
+    committedQuests: 'Main Quests This Quarter',
+    motivation: 'Motivation',
+    progress: 'Progress',
+    tasks: 'tasks',
     says: 'says',
     topWin: 'Top Win',
     challenge: 'Challenge',
     actionTip: 'Action Tip',
-    noActivity: 'No focus sessions today — tomorrow is your chance!',
+    noActivity: 'No focus sessions yesterday — today is your chance!',
   },
 }
 
 export function DailyEmailTemplate({ payload }: DailyEmailTemplateProps) {
-  const { periodLabel, userName, insight, metrics, character, userId, language = 'id' } = payload
+  const { periodLabel, userName, insight, metrics, userId, language = 'id' } = payload
   const t = i18n[language]
-  const mainQuestMotivation = metrics.mainQuestProgress?.motivation
+  const committedQuests = metrics.committedQuests ?? []
 
   return (
     <EmailLayout preview={insight.headline} userId={userId}>
+      {/* Header */}
       <Section style={{ marginBottom: '24px' }}>
         <Text style={{ fontSize: '14px', color: '#8898aa', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
           {t.tag} · {periodLabel}
@@ -63,15 +68,31 @@ export function DailyEmailTemplate({ payload }: DailyEmailTemplateProps) {
         </Text>
       </Section>
 
-      {/* Main Quest Motivation */}
-      {mainQuestMotivation && (
-        <Section style={{ backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', padding: '16px', marginBottom: '24px', borderRadius: '0 8px 8px 0' }}>
-          <Text style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 'bold', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t.mainQuestMotivation}
-          </Text>
-          <Text style={{ margin: '0', fontSize: '15px', color: '#78350f', fontStyle: 'italic' }}>
-            "{mainQuestMotivation}"
-          </Text>
+      {/* Committed Quests — always shown */}
+      {committedQuests.length > 0 && (
+        <Section style={{ marginBottom: '24px' }}>
+          <Heading style={{ fontSize: '18px', color: '#32325d', marginTop: '0', marginBottom: '12px' }}>
+            {t.committedQuests}
+          </Heading>
+          {committedQuests.map((quest) => (
+            <Section key={quest.questId} style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '14px', marginBottom: '10px' }}>
+              <Text style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: 'bold', color: '#78350f' }}>
+                {quest.questName}
+              </Text>
+              {quest.motivation && (
+                <Text style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#92400e', fontStyle: 'italic' }}>
+                  "{quest.motivation}"
+                </Text>
+              )}
+              {/* Progress bar */}
+              <Text style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#78350f' }}>
+                {t.progress}: {quest.completedTasks}/{quest.totalTasks} {t.tasks} ({quest.progressPercentage}%)
+              </Text>
+              <Section style={{ backgroundColor: '#fef3c7', borderRadius: '4px', height: '8px', marginTop: '4px', overflow: 'hidden' }}>
+                <Section style={{ backgroundColor: '#f59e0b', borderRadius: '4px', height: '8px', width: `${quest.progressPercentage}%` }} />
+              </Section>
+            </Section>
+          ))}
         </Section>
       )}
 
@@ -116,7 +137,7 @@ export function DailyEmailTemplate({ payload }: DailyEmailTemplateProps) {
       {/* Coach Insight */}
       <Section style={{ borderLeft: '4px solid #1496F6', paddingLeft: '16px', marginBottom: '24px' }}>
         <Heading style={{ fontSize: '16px', color: '#32325d', marginTop: '0', marginBottom: '8px' }}>
-          {t.coachSays} {insight.characterName} {t.says}:
+          {insight.characterName} {t.says}:
         </Heading>
         <Text style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#525f7f' }}>
           <strong>{t.topWin}:</strong> {insight.topWin}

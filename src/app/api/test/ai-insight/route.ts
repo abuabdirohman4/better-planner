@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     otherQuestsTotal: 3,
     previousFocusMinutes: 100,
     previousCompletionRate: 50,
+    committedQuests: [],
   }
 
   try {

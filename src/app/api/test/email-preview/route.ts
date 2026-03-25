@@ -52,6 +52,16 @@ export async function GET(request: Request) {
       otherQuestsTotal: 3,
       previousFocusMinutes: 100,
       previousCompletionRate: 50,
+      committedQuests: [
+        {
+          questId: 'quest-1',
+          questName: 'Konten Threads/LinkedIn/Twitter',
+          motivation: 'Membangun personal branding di tahun 2026, sehingga bisa mendapatkan circle yang lebih bagus dan opportunity lain yang lebih menjanjikan.',
+          totalTasks: 12,
+          completedTasks: 3,
+          progressPercentage: 25,
+        }
+      ],
       mainQuestProgress: {
         questName: 'Setup Notification System',
         questId: 'quest-1',

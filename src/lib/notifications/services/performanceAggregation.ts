@@ -37,6 +37,15 @@ export interface MainQuestProgress {
   blockedOrStuckTasks: TaskDetail[];
 }
 
+export interface CommittedQuestSummary {
+  questId: string;
+  questName: string;
+  motivation?: string;
+  totalTasks: number;
+  completedTasks: number;
+  progressPercentage: number;
+}
+
 export interface TaskBreakdown {
   mainQuest: { completed: number; total: number; focusMinutes: number };
   sideQuest: { completed: number; total: number; focusMinutes: number };
@@ -71,6 +80,9 @@ export interface PerformanceMetrics {
   weeklyGoalsTotal?: number;
   previousFocusMinutes: number;
   previousCompletionRate: number;
+
+  // Always-present committed quests for current quarter
+  committedQuests: CommittedQuestSummary[];
 }
 
 /**
@@ -355,6 +367,9 @@ export async function getDailyPerformance(
   }
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
+  // Always fetch committed quests for current quarter
+  const committedQuests = await getCommittedQuests(supabase, userId, date)
+
   // Get previous day data for comparison
   const previousDate = new Date(date);
   previousDate.setDate(previousDate.getDate() - 1);
@@ -412,7 +427,105 @@ export async function getDailyPerformance(
     otherQuestsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
+    committedQuests,
   };
+}
+
+/**
+ * Calculate how many consecutive days user had no focus sessions
+ * Returns 0 if yesterday had activity (not on an inactive streak)
+ */
+export async function getInactiveStreak(
+  userId: string,
+  fromDate: Date
+): Promise<number> {
+  const supabase = createServiceClient()
+  let streak = 0
+  const checkDate = new Date(fromDate)
+
+  // Check up to 30 days back
+  for (let i = 0; i < 30; i++) {
+    const dateStr = checkDate.toISOString().split('T')[0]
+    const { data } = await supabase
+      .from('activity_logs')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('local_date', dateStr)
+      .eq('type', 'FOCUS')
+      .limit(1)
+
+    if (data && data.length > 0) break // found activity, streak ends
+    streak++
+    checkDate.setDate(checkDate.getDate() - 1)
+  }
+
+  return streak
+}
+
+/**
+ * Get committed (main) quests for the current quarter with task progress
+ */
+async function getCommittedQuests(
+  supabase: any,
+  userId: string,
+  date: Date
+): Promise<CommittedQuestSummary[]> {
+  const month = date.getMonth() // 0-11
+  const quarter = Math.floor(month / 3) + 1 // 1-4
+  const year = date.getFullYear()
+
+  const { data: quests } = await supabase
+    .from('quests')
+    .select('id, title, motivation')
+    .eq('user_id', userId)
+    .eq('year', year)
+    .eq('quarter', quarter)
+    .eq('is_committed', true)
+
+  if (!quests || quests.length === 0) return []
+
+  const results: CommittedQuestSummary[] = []
+
+  for (const quest of quests) {
+    // Get all tasks under this quest via milestones
+    const { data: milestones } = await supabase
+      .from('milestones')
+      .select('id')
+      .eq('quest_id', quest.id)
+
+    if (!milestones || milestones.length === 0) {
+      results.push({
+        questId: quest.id,
+        questName: quest.title,
+        motivation: quest.motivation || undefined,
+        totalTasks: 0,
+        completedTasks: 0,
+        progressPercentage: 0,
+      })
+      continue
+    }
+
+    const milestoneIds = milestones.map((m: any) => m.id)
+
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id, status')
+      .in('milestone_id', milestoneIds)
+
+    const total = tasks?.length || 0
+    const completed = tasks?.filter((t: any) => t.status === 'DONE').length || 0
+
+    results.push({
+      questId: quest.id,
+      questName: quest.title,
+      motivation: quest.motivation || undefined,
+      totalTasks: total,
+      completedTasks: completed,
+      progressPercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+    })
+  }
+
+  return results
 }
 
 /**
@@ -636,6 +749,7 @@ export async function getWeeklyPerformance(
     weeklyGoalsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
+    committedQuests: [],
   };
 }
 
@@ -791,6 +905,7 @@ export async function getMonthlyPerformance(
     otherQuestsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
+    committedQuests: [],
   };
 }
 
@@ -956,6 +1071,7 @@ export async function getQuarterlyPerformance(
     weeklyGoalsTotal,
     previousFocusMinutes,
     previousCompletionRate: Math.round(previousCompletionRate * 100) / 100,
+    committedQuests: [],
   };
 }
 

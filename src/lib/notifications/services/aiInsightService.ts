@@ -54,46 +54,89 @@ function buildUserPrompt(
   periodType: string,
   userName: string,
   language: EmailLanguage,
-  mainQuestMotivation?: string
+  mainQuestMotivation?: string,
+  inactiveStreak?: number
 ): string {
-  const langInstruction = language === 'id'
-    ? 'Tulis semua teks dalam Bahasa Indonesia yang natural dan memotivasi.'
-    : 'Write all text in English that is natural and motivating.'
+  const isId = language === 'id'
+
+  const langInstruction = isId
+    ? 'Tulis semua teks dalam Bahasa Indonesia yang natural, jujur, dan bermakna.'
+    : 'Write all text in English that is natural, honest, and meaningful.'
 
   const motivationContext = mainQuestMotivation
-    ? language === 'id'
-      ? `\nMotivasi utama user untuk main quest mereka: "${mainQuestMotivation}" — gunakan ini untuk mempersonalisasi pesan.`
-      : `\nUser's main quest motivation: "${mainQuestMotivation}" — use this to personalize your message.`
+    ? isId
+      ? `\nAlasan utama user mengejar tujuan mereka: "${mainQuestMotivation}" — jadikan ini landasan pesanmu, bukan sekadar disebut.`
+      : `\nUser's core reason for pursuing their goal: "${mainQuestMotivation}" — anchor your message to this reason, don't just quote it.`
     : ''
 
-  const noActivityContext = metrics.totalSessions === 0
-    ? language === 'id'
-      ? `\nUser tidak memiliki sesi fokus hari ini. Berikan pesan motivasi yang hangat dan mendorong mereka untuk memulai besok. Jangan membuat mereka merasa bersalah.`
-      : `\nUser had no focus sessions today. Give a warm motivational message encouraging them to start tomorrow. Don't make them feel guilty.`
-    : ''
+  // Build task context for days WITH activity
+  let taskContext = ''
+  if (metrics.totalSessions > 0) {
+    const completedNames = metrics.topCompletedTasks?.map(t => `"${t.title}" (${t.questName})`).join(', ')
+    const activeNames = metrics.mainQuestProgress?.activeTasks?.slice(0, 3).map(t => `"${t.title}"`).join(', ')
+    const stuckNames = metrics.needsAttention?.slice(0, 2).map(t => `"${t.title}" (${t.daysInProgress} hari macet)`).join(', ')
+
+    taskContext = isId
+      ? `\nTugas yang diselesaikan hari ini: ${completedNames || 'tidak ada'}.
+Tugas yang masih berjalan: ${activeNames || 'tidak ada'}.
+Tugas yang perlu perhatian: ${stuckNames || 'tidak ada'}.
+Sebutkan nama tugas/quest spesifik dalam pesanmu agar terasa personal dan relevan.`
+      : `\nTasks completed today: ${completedNames || 'none'}.
+Active tasks in progress: ${activeNames || 'none'}.
+Tasks needing attention: ${stuckNames || 'none'}.
+Reference specific task/quest names in your message to make it feel personal and relevant.`
+  }
+
+  // Build inactive streak context
+  let inactivityContext = ''
+  if (metrics.totalSessions === 0) {
+    if (inactiveStreak && inactiveStreak > 1) {
+      inactivityContext = isId
+        ? `\nUser sudah ${inactiveStreak} hari berturut-turut tidak membuka sesi fokus. Sampaikan dengan jujur bahwa ini berdampak pada momentum mereka menuju tujuan. Gunakan nada yang peduli tapi tegas — bukan menghakimi, tapi juga bukan basa-basi. Tunjukkan konsekuensi nyata dari tidak konsisten terhadap tujuan mereka.`
+        : `\nUser has had ${inactiveStreak} consecutive days with zero focus sessions. Be honest that this is affecting their momentum toward their goal. Use a caring but firm tone — not judgmental, but not empty reassurance either. Show the real consequence of inconsistency on their goal.`
+    } else {
+      inactivityContext = isId
+        ? `\nUser tidak memiliki sesi fokus kemarin. Tunjukkan secara konkret apa yang hilang dari hari ini — dan apa yang bisa mereka mulai besok. Jangan terlalu lembut, tapi tetap suportif.`
+        : `\nUser had no focus sessions yesterday. Concretely show what was missed today — and what they can start tomorrow. Don't be too soft, but stay supportive.`
+    }
+  }
 
   return `
 ${langInstruction}
 
-Analyze user performance for a ${periodType} period. User's name is ${userName}.
+Analyze this ${periodType} performance report. User: ${userName}.
 ${motivationContext}
-${noActivityContext}
+${taskContext}
+${inactivityContext}
 
-Metrics:
-${JSON.stringify(metrics, null, 2)}
+Raw metrics data:
+${JSON.stringify({
+  totalFocusMinutes: metrics.totalFocusMinutes,
+  totalSessions: metrics.totalSessions,
+  tasksCompleted: metrics.tasksCompleted,
+  tasksTotal: metrics.tasksTotal,
+  completionRate: Math.round(metrics.completionRate),
+  mainQuestProgress: metrics.mainQuestProgress ? {
+    questName: metrics.mainQuestProgress.questName,
+    completedCount: metrics.mainQuestProgress.completedCount,
+    totalTasks: metrics.mainQuestProgress.totalTasks,
+    progressPercentage: metrics.mainQuestProgress.progressPercentage,
+    currentMilestone: metrics.mainQuestProgress.currentMilestone,
+  } : null,
+  taskBreakdown: metrics.taskBreakdown,
+  previousFocusMinutes: metrics.previousFocusMinutes,
+  previousCompletionRate: metrics.previousCompletionRate,
+}, null, 2)}
 
-Your goal is to MOTIVATE and ENCOURAGE the user to stay consistent and keep working toward their goals.
-
-Produce a JSON object with this schema:
+Output a JSON object — no markdown, just raw JSON:
 {
-  "headline": "<short catchy motivating headline>",
-  "narrative": "<2-3 sentences explaining their performance with encouragement>",
-  "topWin": "<1 sentence on their best achievement or encouragement if no activity>",
-  "challengeSpotted": "<1 sentence on what they could improve, framed positively>",
-  "actionTip": "<1 specific actionable tip for tomorrow>",
-  "motivationalClose": "<short energizing sign-off phrase>"
+  "headline": "Judul pendek yang menangkap situasi hari ini dengan tepat (bukan generik)",
+  "narrative": "2-3 kalimat yang jujur dan spesifik tentang performa mereka — sebutkan angka, nama quest, atau tugas nyata",
+  "topWin": "1 kalimat pencapaian terbaik yang spesifik (atau dampak nyata jika tidak ada aktivitas)",
+  "challengeSpotted": "1 kalimat tantangan konkret yang perlu diatasi — jujur, bukan basa-basi",
+  "actionTip": "1 tips aksi yang sangat spesifik dan bisa langsung dilakukan besok",
+  "motivationalClose": "1 kalimat penutup yang personal dan berenergi"
 }
-No markdown, just raw JSON.
   `
 }
 
@@ -122,7 +165,8 @@ export async function generateInsight(
   character: AICharacter,
   userName: string,
   language: EmailLanguage = 'id',
-  mainQuestMotivation?: string
+  mainQuestMotivation?: string,
+  inactiveStreak?: number
 ): Promise<AIInsight> {
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
@@ -132,7 +176,7 @@ export async function generateInsight(
       systemInstruction: CHARACTER_PROMPTS[character][language],
     })
     const result = await model.generateContent(
-      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation)
+      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
     )
     return parseGeminiResponse(result.response.text(), character, language)
   } catch (error) {

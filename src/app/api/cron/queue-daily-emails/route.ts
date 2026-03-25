@@ -1,7 +1,7 @@
 import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { generateInsight } from '@/lib/notifications/services/aiInsightService'
-import { getDailyPerformance } from '@/lib/notifications/services/performanceAggregation'
+import { getDailyPerformance, getInactiveStreak } from '@/lib/notifications/services/performanceAggregation'
 import { getYesterday } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
@@ -43,15 +43,30 @@ export async function POST(request: Request) {
       const language = user.notification_settings?.language ?? 'id'
       const mainQuestMotivation = metrics.mainQuestProgress?.motivation
 
-      // Generate insight (with language and main quest motivation for personalization)
-      const insight = await generateInsight(metrics, char, name, language, mainQuestMotivation)
+      // Calculate inactive streak (only if no sessions yesterday)
+      const inactiveStreak = metrics.totalSessions === 0
+        ? await getInactiveStreak(user.user_id, yesterday)
+        : 0
+
+      // Format period label with day name: "Senin, 23 Maret 2026"
+      const locale = language === 'id' ? 'id-ID' : 'en-US'
+      const periodLabel = yesterday.toLocaleDateString(locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta',
+      })
+
+      // Generate insight (with language, main quest motivation, and inactive streak for personalization)
+      const insight = await generateInsight(metrics, char, name, language, mainQuestMotivation, inactiveStreak)
 
       const payload: EmailPayload = {
         userId: user.user_id,
         email,
         userName: name,
         periodType: 'daily',
-        periodLabel: periodStart,
+        periodLabel,
         metrics,
         insight,
         character: char,
