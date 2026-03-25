@@ -112,11 +112,11 @@ const trackingNav: NavItem[] = [
 ];
 
 const settingsNav: NavItem[] = [
-  {
-    icon: <PlugInIcon />,
-    name: "Settings",
-    path: "/profile",
-  },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Settings",
+  //   path: "/profile",
+  // },
   {
     icon: <PlugInIcon />,
     name: "Notifications",
