@@ -40,6 +40,11 @@ function formatPeriodLabel(date: Date, locale: string): string {
   })
 }
 
+// Vercel cron calls with GET, manual trigger uses POST
+export async function GET(request: Request) {
+  return POST(request)
+}
+
 export async function POST(request: Request) {
   if (!verifyCronRequest(request)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
