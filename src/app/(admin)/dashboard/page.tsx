@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { createClient } from '@/lib/supabase/server'
-import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon } from '@/lib/icons';
+import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import QuarterSelector from '@/components/common/QuarterSelector';
 import WeeklyProgressChartWrapper from './components/WeeklyProgressChartWrapper';
@@ -139,6 +139,19 @@ async function DashboardContent() {
               <div>
                 <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Side Quests</h3>
                 <p className="text-xs text-gray-500 hidden md:block">Tugas sampingan</p>
+              </div>
+            </Link>
+            {/* Best Week Card */}
+            <Link 
+              href="/planning/vision"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
+                <ShootingStarIcon className="w-6 h-6 text-[#7F56D9] ps-0.5 pt-0.5" />
+              </div>
+              <div>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Best Week</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Minggu Terbaik</p>
               </div>
             </Link>
           </div>
