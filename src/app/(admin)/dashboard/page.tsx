@@ -143,7 +143,7 @@ async function DashboardContent() {
             </Link>
             {/* Best Week Card */}
             <Link 
-              href="/planning/vision"
+              href="/planning/best-week"
               className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
