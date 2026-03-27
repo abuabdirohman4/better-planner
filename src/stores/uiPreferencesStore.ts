@@ -30,6 +30,7 @@ interface UIPreferencesState {
     dailyQuest: boolean;
     activityLog: boolean;
     brainDump: boolean;
+    bestWeekRef: boolean;
   };
   setCardCollapsed: (cardId: keyof UIPreferencesState['cardCollapsed'], collapsed: boolean) => void;
   toggleCardCollapsed: (cardId: keyof UIPreferencesState['cardCollapsed']) => void;
@@ -76,6 +77,7 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
         dailyQuest: false,
         activityLog: false,
         brainDump: false,
+        bestWeekRef: true,
       },
       setCardCollapsed: (cardId, collapsed) =>
         set((state) => ({

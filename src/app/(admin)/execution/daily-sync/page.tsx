@@ -9,6 +9,7 @@ import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagemen
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
 import BrainDumpSection from './BrainDump/BrainDumpSection';
+import BestWeekReferenceSection from './BestWeekReference/BestWeekReferenceSection';
 import ActivityLog from './ActivityLog/ActivityLog';
 import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
 import DailySyncClient from './DailyQuest/DailySyncClient';
@@ -172,6 +173,7 @@ export default function DailySyncPage() {
             </div>
           </div>
           <BrainDumpSection date={selectedDateStr} />
+          <BestWeekReferenceSection />
         </>
       )}
 

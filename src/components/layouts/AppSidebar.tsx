@@ -16,7 +16,7 @@ import {
   EyeIcon,
   CheckCircleIcon,
   // DocsIcon,
-  // ShootingStarIcon,
+  ShootingStarIcon,
 } from "@/lib/icons";
 import Spinner from "@/components/ui/spinner/Spinner";
 
@@ -68,11 +68,11 @@ const planningNav: NavItem[] = [
   //   name: "Self Development Curriculum",
   //   path: "/planning/curriculum",
   // },
-  // {
-  //   icon: <ShootingStarIcon />,
-  //   name: "Best Week",
-  //   path: "/planning/best-week",
-  // },
+  {
+    icon: <ShootingStarIcon />,
+    name: "Best Week",
+    path: "/planning/best-week",
+  },
 ];
 
 const questsNav: NavItem[] = [
