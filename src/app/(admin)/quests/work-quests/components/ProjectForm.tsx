@@ -53,6 +53,7 @@ const ProjectForm: React.FC<WorkQuestProjectFormProps> = ({
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white text-sm"
           placeholder="Masukkan judul project..."
           required
+          data-testid="project-form-title"
         />
       </div>
 
@@ -74,6 +75,7 @@ const ProjectForm: React.FC<WorkQuestProjectFormProps> = ({
           disabled={!formData.title.trim()}
           loading={isLoading}
           loadingText="Saving..."
+          data-testid="project-form-submit"
         >
           {initialData ? "Perbarui" : "Tambah"}
         </Button>

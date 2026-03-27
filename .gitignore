@@ -9,6 +9,10 @@
 
 # testing
 /coverage
+.env.test
+test-results/
+playwright-report/
+tests/.test-env.json
 
 # next.js
 /.next/

@@ -33,6 +33,7 @@ export default function DailyQuestsPage() {
             className="btn btn-primary"
             size="md"
             variant="primary"
+            data-testid="daily-quest-add-btn"
           >
             Add Task
           </Button>

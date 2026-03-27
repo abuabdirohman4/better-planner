@@ -15,6 +15,7 @@ interface ButtonProps {
   sizeClassName?: string; // Additional CSS classes for size
   type?: "button" | "submit" | "reset"; // Button type
   formAction?: (formData: FormData) => Promise<never>; // Form action
+  "data-testid"?: string; // Test identifier
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -31,6 +32,7 @@ const Button: React.FC<ButtonProps> = ({
   loadingText,
   type = "button",
   formAction,
+  "data-testid": dataTestId,
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -72,6 +74,7 @@ const Button: React.FC<ButtonProps> = ({
       className={`inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${sizeClassName || sizeClasses[size]} ${variantClasses[variant]} ${isDisabled ? "cursor-not-allowed" : ""} ${className}`}
       onClick={onClick}
       disabled={isDisabled}
+      data-testid={dataTestId}
     >
       {loading ? (
         <>

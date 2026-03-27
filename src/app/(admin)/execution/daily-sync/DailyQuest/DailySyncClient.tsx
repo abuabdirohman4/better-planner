@@ -115,7 +115,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onToggle={() => toggleCardCollapsed('workQuest')}
           className="work-quest-card"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div data-testid="daily-sync-work-quest-section" className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
             <WorkQuestListSection
               title="Work Quest"
               items={groupedItems['WORK_QUEST'] || []}
@@ -142,7 +142,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onToggle={() => toggleCardCollapsed('dailyQuest')}
           className="daily-quest-card"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div data-testid="daily-sync-daily-quest-section" className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
             <DailyQuestListSection
               title="Daily Quest"
               items={groupedItems['DAILY_QUEST'] || []}

@@ -326,13 +326,14 @@ export default function PomodoroTimer() {
           ) : (
             <>
               <div className="flex flex-col items-center justify-center -mt-2">
-                <IconComponent 
-                  className={`w-16 h-16 ${iconColor} ${isActionable ? 'cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95' : ''}`} 
+                <IconComponent
+                  data-testid="timer-action-btn"
+                  className={`w-16 h-16 ${iconColor} ${isActionable ? 'cursor-pointer transition-all duration-200 hover:scale-110 active:scale-95' : ''}`}
                   onClick={() => {
                     if (isActionable) iconAction();
                   }}
                 />
-                <span className="-mt-3 text-sm select-none">{timeDisplay}</span>
+                <span data-testid="timer-display" className="-mt-3 text-sm select-none">{timeDisplay}</span>
               </div>
             </>
           )}

@@ -293,6 +293,7 @@ const TaskItemCardContent = ({
           {/* Checkbox di kiri - Same styling as normal mode */}
           <button
             type="button"
+            data-testid={`task-status-${item.id}`}
             onClick={async () => {
               const newStatus = isCompleted ? 'TODO' : 'DONE';
 
@@ -438,6 +439,7 @@ const TaskItemCardContent = ({
               <div className="flex items-center">
                 <button
                   type="button"
+                  data-testid={`task-status-${item.id}`}
                   onClick={async () => {
                     const newStatus = isCompleted ? 'TODO' : 'DONE';
 

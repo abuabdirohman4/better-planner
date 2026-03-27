@@ -281,6 +281,7 @@ All detailed documentation is in `docs/claude/`:
 - **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
 - **Release Workflow**: [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
+- **E2E Testing Patterns**: [`docs/claude/e2e-testing-patterns.md`](docs/claude/e2e-testing-patterns.md)
 
 **Legacy Documentation** (migrate content to `docs/claude/` when updating):
 - `docs/activity-plan-feature.md` - Activity Plan implementation guide

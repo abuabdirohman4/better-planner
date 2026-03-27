@@ -32,7 +32,9 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
               Enter your email and password to sign in!
             </p>
           </div>
-          {message ? <div className={`mb-4 p-3 rounded text-center ${
+          {message ? <div
+            data-testid="signin-message"
+            className={`mb-4 p-3 rounded text-center ${
               isSuccess 
                 ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400" 
                 : "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"

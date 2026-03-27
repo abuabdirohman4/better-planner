@@ -29,6 +29,7 @@ export default function SignInForm() {
           type="email"
           required
           disabled={isPending}
+          data-testid="signin-email"
           className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="Enter your email"
         />
@@ -41,6 +42,7 @@ export default function SignInForm() {
             type={showPassword ? "text" : "password"}
             required
             disabled={isPending}
+            data-testid="signin-password"
             className="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="Enter your password"
           />
@@ -75,9 +77,10 @@ export default function SignInForm() {
           Forgot password?
         </Link>
       </div>
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         disabled={isPending}
+        data-testid="signin-submit"
         className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-500"
       >
         {isPending ? (
