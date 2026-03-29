@@ -78,6 +78,11 @@ const planningNav: NavItem[] = [
     name: "Best Week",
     path: "/planning/best-week",
   },
+  {
+    icon: <CheckCircleIcon />,
+    name: "12 Week Sync",
+    path: "/planning/12-week-sync",
+  },
 ];
 
 const questsNav: NavItem[] = [

@@ -31,6 +31,10 @@ export type ErrorContext =
   | 'membuat work quest task'
   | 'memperbarui work quest task'
   | 'menghapus work quest task'
+  | 'menambah pencapaian'
+  | 'menghapus pencapaian'
+  | 'menyimpan goal review'
+  | 'mengubah sync action'
   | 'unknown';
 
 export interface ErrorInfo {

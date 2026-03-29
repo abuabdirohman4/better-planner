@@ -1,0 +1,1631 @@
+{
+  "user_id": "59076bab-b21c-49ce-a7d1-7b9d69a6001c",
+  "quarters": [
+    {
+      "year": 2020,
+      "quarter": 2,
+      "quests": [
+        {
+          "title": "Menyelesaikan Tugas Akhir / Skripsi",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Khatam Makna Al-Qur'an",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Khatam Makna Al-Hadits (Khotbah & Da'wat)",
+          "label": "C",
+          "type": "PERSONAL",
+          "status": "IN_PROGRESS",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi PHP Dasar & MVC WPU",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi CI WPU",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi Full Stack Designer",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi BWAFWD & BWALARAVUE & BWASTORE",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi ReactJS & React Native",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Online Course Tech in Asia",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Pekerjaan di AGY Business",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2020,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Membangun Bisnis Toko Online Mianstore",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Mangkulan Seluruh Materi Hadits Pondok",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Hafal Qur'an sampai hal 73 (Juz 3 Lebih 6 Lembar)",
+          "label": "C",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Lancar Bahasa Inggris untuk Belajar Programming",
+          "label": "D",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membangun 12 Portofolio Web Developer & Design + Freelance Profile",
+          "label": "E",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Profile Freelance di 3 Situs Freelance",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Dada Berbidang",
+          "label": "G",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Urusan Pembubaran Bisnis Geelia",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Personal Branding",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Memahami dan Merencanakan Investasi",
+          "label": "J",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Membuat Aplikasi ERP Odoo GNBS",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Financial Tracker, Budget & Goals",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Portofolio Website dan Memulai Karir Freelance Programming",
+          "label": "C",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Khatam 5 Hadits (Shoum, Janaiz, Adab, Jihad, Haji)",
+          "label": "D",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Personal Branding dan Menjadi Content Creator",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Bisnis Mondaybasic",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Memulai Bisnis Affiliate Kelas 1M",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Hafal Qur'an sampai hal 61 (Ali Imran)",
+          "label": "H",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Dada Berbidang",
+          "label": "I",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Memulai Bisnis Hermofit",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 2,
+      "quests": [
+        {
+          "title": "Membuat Aplikasi ERP Odoo GNBS",
+          "label": "A",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Portfolio Website",
+          "label": "B",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Khatam 5 Hadits (Shoum, Janaiz, Adab, Jihad & Haji)",
+          "label": "C",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membangun Personal Branding Programming",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Toko Online Wordpress & Odoo",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Memulai Karir Freelance Programming",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan 3 Aplikasi dari Ecourse",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Bisnis Toko Online dengan Yusuf",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Bisnis Toko Online dengan Ryan",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Bisnis Odoo dengan Tomi",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 3,
+      "quests": [
+        {
+          "title": "Menyelesaikan Migrasi Server & Implementasi Modul POS Silingga pada Minimarket",
+          "label": "A",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Website Portfolio",
+          "label": "B",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membangun, Mendapatkan & Menyelesaikan Pekerjaan dari 1 Klien (Macro Hard)",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 15 Konten Instagram tentang Programming",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan & Menyelesaikan 3 Pekerjaan Freelance dari Situs Freelance",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi Ecourse Rahmandi",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi Ecourse BWAFWD, BWALARAVUE & BWASTORE",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Pembuatan Aplikasi PPDB Odoo GNBS",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mengkonfigurasi PC Server Linggajati",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Pembuatan Company Profile GNBS",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project MyDashboard & CO Portal",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Persiapan Pra Nikah",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Website YEA Virtual",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan 2 Aplikasi di Ecourse BWAFWD & BWALARAVUE",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Khatam 3 Hadits Himpunan (Shoum, Jihad & Adab)",
+          "label": "E",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Hafal Qur'an sampai hal 73",
+          "label": "F",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan & Menyelesaikan 3 Pekerjaan Freelance dari Upwork",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Website Portfolio",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 15 Konten Instagram sesuai Personal Branding",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan PIAP Project",
+          "label": "J",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project MyDashboard & CO Portal",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menjadi Content Creator dengan CCBB & DCA",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menjadi Digital Marketer dengan LBM",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mengikuti & Menyelesaikan Target YEA Magang",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Revisi Project Website YEA Virtual",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Job Pertama di Upwork dengan Metode RWID",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Khatam 3 Hadits Himpunan (Shoum, Jihad & Adab)",
+          "label": "G",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan 3 Bulan Program Cakap & Mencatat Semua Materinya",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Sabilillah App",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Hafal & Menguasai Grammar Inggris",
+          "label": "J",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 2,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project Analytic Dashboard, MyDashboard & CO Portal",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Job Pertama di Upwork dengan Metode RWID",
+          "label": "B",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Website YEA Virtual",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 24 Konten dengan CCBB, DCA & IG Hack",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Tempat Kerja Remote Baru dengan Skill React",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Bootcamp Vue 3, Laravel 9, NextJS & DCA",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuka Bisnis dengan Ilmu LBM",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Sabilillah App",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 3,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project MyDelivery, B2B Dashboard, MyDashboard & CO Portal",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Ecourse Udemy PHP Fundamental & Series Artikelnya",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio Dengan BootLaraVue & Repo/Github Reorganize",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Acara Pernikahan Dengan Hanan",
+          "label": "J",
+          "type": "PERSONAL",
+          "status": "DONE",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Metode Jadwal 7 Hari Buku Efektif Inggris",
+          "label": "G",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Bootcamp Vue 3, Laravel 9, MERN, NextJS",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Sabilillah App",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan & Menyelesaikan Upwork Job Laravel",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Tempat Kerja Remote Baru Dengan Skill React",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 24 Konten IG dengan CCBB, DCA & IG Hack",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project MyDelivery, B2B Dashboard, MyDashboard & CO Portal",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Bhawana",
+          "label": "J",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio, Bootcamp MERN, Product, Digitalent, Dicoding",
+          "label": "C",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Ecourse Udemy PHP Fundamental & Series Artikelnya",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Seri Materi di YouTube Programmer Barokah",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Sabilillah App",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Metode Jadwal 7 Hari Buku Efektif Inggris",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Tempat Kerja Remote Baru Dengan Skill React",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan & Menyelesaikan Upwork Job Laravel",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 24 Konten IG dengan CCBB, DCA & IG Hack",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Menyelesaikan Project Kantor",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Inventory Management",
+          "label": "B",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio (FE, Content, BE, API, Deploy)",
+          "label": "C",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Konten Portfolio di Instagram",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Project Skripsi Gerdi",
+          "label": "D",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Materi Bootcamp MERN, Dicoding BE, Node WPU",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Metode Jadwal 7 Hari Buku Efektif Inggris",
+          "label": "J",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Seri Materi di YouTube Programmer Barokah",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Materi Bootcamp Stream, BWAFWD, BWALARAVUE & BWASTORE",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Materi Bootcamp Hacker",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 2,
+      "quests": [
+        {
+          "title": "ODES System (AutoWealth)",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Hafal & Paham 16 Tenses Bahasa Inggris",
+          "label": "G",
+          "type": "PERSONAL",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Inventory Management",
+          "label": "D",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Video Tutorial Odoo",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Monev DPP LDII",
+          "label": "E",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Module GNBS & Hashmicro",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Backend Web Portfolio",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "AutoWealth Web",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 3,
+      "quests": [
+        {
+          "title": "Menyelesaikan AutoWealth Web V3.1 & V3.2",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Istri Hamil & Pindah Rumah",
+          "label": "F",
+          "type": "PERSONAL",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio (BE & API)",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Monev DPP LDII",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Nilai TOEFL 600",
+          "label": "D",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Blog Web Portfolio",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Menyelesaikan AutoWealth Task",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Web Portfolio (BE & API)",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Materi Content Hack",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Seri Materi React di YouTube Programmer Barokah & RWID",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 12 Artikel React",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Mendapatkan Job Pertama di Upwork",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Bisnis dengan Program Affiliate Denny Santoso",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Bisnis Cireng bareng Gerdi",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 12 Artikel Programming",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Membuat Ebook Pemrograman",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Menyelesaikan Web Portfolio (BE & API)",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Materi Mentoring VIP RWID",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "JSM DevOverFlow + Artikel",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "quarter": 3,
+      "quests": [
+        {
+          "title": "Membuat 3 Video untuk Explain In Quick (YouTube)",
+          "label": "A",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menyelesaikan Aplikasi Better Planner",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2024,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Menyelesaikan Video Every MCU Movie",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Membuat 6 Video untuk Explain In Quick (2 Minggu 1 Video)",
+          "label": "B",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Membuat 15 Video untuk Quick In Explain",
+          "label": "A",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mengembalikan Hafalan Juz 1",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "IN_PROGRESS",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Menghatamkan Tadarus 30 Juz",
+          "label": "C",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mencoba Buat Channel ASMR Atigan",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Melanjutkan Pembuatan Better Finance App",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "quarter": 2,
+      "quests": [
+        {
+          "title": "Membuat 15 Video untuk Quick In Explain",
+          "label": "A",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mengembalikan Hafalan Juz 1",
+          "label": "B",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mencoba Buat Channel ASMR Atigan",
+          "label": "C",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Melanjutkan Pembuatan Better Finance App",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "quarter": 3,
+      "quests": [
+        {
+          "title": "Melanjutkan Pembuatan Better Finance App",
+          "label": "A",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Melanjutkan Pembuatan Better Habit App",
+          "label": "B",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Melanjutkan Pembuatan Better Planner App",
+          "label": "C",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "quarter": 4,
+      "quests": [
+        {
+          "title": "Konten Short untuk YouTube",
+          "label": "C",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Melanjutkan Pembuatan Better Planner App",
+          "label": "B",
+          "type": "WORK",
+          "status": "DONE",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Update Aplikasi Better Finance & Habit",
+          "label": "A",
+          "type": "WORK",
+          "status": "IN_PROGRESS",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Mengupdate Web Portfolio",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    },
+    {
+      "year": 2026,
+      "quarter": 1,
+      "quests": [
+        {
+          "title": "Youtube (Time Lapse Bangunan)",
+          "label": "D",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 9,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Konten Threads/LinkedIn/Twitter",
+          "label": "J",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 8,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Better Planner (Habit, Best Week)",
+          "label": "A",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 7,
+          "is_main_quest": true,
+          "milestones": []
+        },
+        {
+          "title": "Generus Mandiri (Rapot, Monitoring, Materi)",
+          "label": "C",
+          "type": "PERSONAL",
+          "status": "TODO",
+          "priority_score": 6,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "YouTube (ASMR)",
+          "label": "H",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 5,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "YouTube (Programmer Barokah)",
+          "label": "G",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 4,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Web Portfolio (Analytics & Blog)",
+          "label": "I",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 3,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "YouTube (Cerita Sejarah)",
+          "label": "F",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 2,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "Better Finance (Supabase)",
+          "label": "B",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 1,
+          "is_main_quest": false,
+          "milestones": []
+        },
+        {
+          "title": "YouTube (Konten Musang)",
+          "label": "E",
+          "type": "WORK",
+          "status": "TODO",
+          "priority_score": 0,
+          "is_main_quest": false,
+          "milestones": []
+        }
+      ]
+    }
+  ]
+}

@@ -199,6 +199,15 @@ export const habitKeys = {
 };
 
 /**
+ * SWR key generator for 12 week sync
+ */
+export const quarterlyReviewKeys = {
+  all: ['quarterly-reviews'] as const,
+  detail: (year: number, quarter: number) => [...quarterlyReviewKeys.all, 'detail', year, quarter] as const,
+  history: () => [...quarterlyReviewKeys.all, 'history'] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -215,4 +224,5 @@ export const dataKeys = {
   brainDump: brainDumpKeys,
   notifications: notificationKeys,
   habits: habitKeys,
+  quarterlyReviews: quarterlyReviewKeys,
 }; 

@@ -1,0 +1,544 @@
+{
+  "user_id": "59076bab-b21c-49ce-a7d1-7b9d69a6001c",
+  "reviews": [
+    {
+      "year": 2020,
+      "quarter": 2,
+      "challenges_faced": "Alhamdulillah tidak, kekuatan fokus benar-benar membuat tugas lebih mudah",
+      "advice_for_next": "Perjelas tujuan, target & jadwal maka semua akan jadi lebih mudah",
+      "reward": "Kemarin-kemarin sudah upload IG, WA sosmed & nonton film Sherlock Holmes",
+      "goals_needing_commitment": "Mangkulan Hadits",
+      "goals_needing_revision": "Yang tentang ecourse & karir setelah kuliah",
+      "is_completed": true,
+      "accomplishments": [
+        "Mangkulan Al Quran Selesai",
+        "Sidang beres dapat A",
+        "Paham React, Mongo, Flask",
+        "Membangun Habit Shalat Sunnah",
+        "Membangun Habit Istighfar",
+        "Membangun Habit Hafalan",
+        "Memperbaiki Fundamental Hidup (Work Life Balance, Time Management)",
+        "Menyelesaikan Administrasi Kuliah",
+        "Menyelesaikan Urusan Dapukan"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Tugas Akhir / Skripsi",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Khatam Makna Al-Qur'an",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Khatam Makna Al-Hadits (Khotbah & Da'wat)",
+          "progress_score": 4,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2020,
+      "quarter": 4,
+      "challenges_faced": "Yang Hadist iya. Merasa malas karena tidak terlalu didukung orang tua",
+      "advice_for_next": "Jangan sampai terkena shiny object syndrome lagi",
+      "reward": "Mentraktir Afi makan soto",
+      "goals_needing_commitment": "Menyelesaikan hadits & mendapatkan penghasilan dari bisnis",
+      "goals_needing_revision": "Menyelesaikan hadits & membangun portfolio",
+      "is_completed": true,
+      "accomplishments": [
+        "Bangun Website Mianstore",
+        "Bangun 2 Portfolio Desain Web",
+        "Paham Imacros, COD & Ongkir",
+        "Jago Rosetta Stone",
+        "Bisa FB Ads, Iklan Shopee, Kata Kunci",
+        "Kerja individu & tim dengan Trello",
+        "Lebih bisa mengatasi overthinking",
+        "Sedikit Mengatasi Perfeksionisme",
+        "Wisuda",
+        "Khatam 6 Hadist Himpunan"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Membangun Bisnis Toko Online Mianstore",
+          "progress_score": 9,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Mangkulan Seluruh Materi Hadits Pondok",
+          "progress_score": 4,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membangun 12 Portofolio Web Developer & Design + Freelance Profile",
+          "progress_score": 10,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 1,
+      "challenges_faced": "2 Goals Utama tidak, yang 1 ya, karena merasa yang pertama lebih penting & lebih urgent",
+      "advice_for_next": "Terus lanjutkan menjalani hidup tanpa sifat perfeksionisme, jalani saja jangan menuntut kesempurnaan",
+      "reward": null,
+      "goals_needing_commitment": "Membangun Web Portfolio",
+      "goals_needing_revision": "Goal Mulai Freelance & Personal Branding - kayaknya perlu fokus dulu ke portfolio",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan Request Backend GNBS",
+        "Menyelesaikan Pondasi Request Front End GNBS",
+        "Menyempurnakan Financial Tracker & Habit Tracker",
+        "Membuat Financial Goals",
+        "Bisa mulai kebiasaan Puasa Sunnah"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Membuat Aplikasi ERP Odoo GNBS",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membuat Financial Tracker, Budget & Goals",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membangun Portofolio Website dan Memulai Karir Freelance Programming",
+          "progress_score": 4,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 2,
+      "challenges_faced": "Ya, kurang bisa adaptasi akan perubahan tugas dari perusahaan",
+      "advice_for_next": "Be nice lah pada diri sendiri, kendalikan lagi diri & hawa nafsunya, ingat orang tua, semangat, insya Allah tahun depan nikah",
+      "reward": "Bermain PES & mencuekkan pekerjaan-pekerjaan untuk 1 minggu",
+      "goals_needing_commitment": "Menambah Portfolio",
+      "goals_needing_revision": "Khatam 5 Hadits karena goal ini tidak relevan dengan musim kehidupan saya sekarang",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan FE Registrasi Odoo",
+        "1/4 SB Admin 2 Odoo",
+        "Bisa Pakai DBeaver",
+        "Paham Konsep FTP Email & gnbs.schild",
+        "Install Silingga dengan Docker",
+        "Sudah punya domain pribadi",
+        "Menyelesaikan Rene Studio 3 Hari",
+        "Lebih Paham Cara Komunikasi yang Baik",
+        "Sukses 5 Ramadhan & Puasa Syawal",
+        "Berani Berhenti Chat Sementara"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Membuat Aplikasi ERP Odoo GNBS",
+          "progress_score": 7,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membangun Portfolio Website",
+          "progress_score": 5,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Khatam 5 Hadits (Shoum, Janaiz, Adab, Jihad & Haji)",
+          "progress_score": 1,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 3,
+      "challenges_faced": "Ya, HFG 1 sudah tidak relevan, HFG 2 tidak dapat prioritas, HFG 3 terfokus pada pelatihannya bukan ke bisnisnya",
+      "advice_for_next": "Sync Planner & segala nasehat produktivitas hanyalah idealnya, cocok tidaknya tetap kamu yang menentukan. Jangan semuanya micro management, jangan lagi selalu mencari validasi dari luar & selalu ingat makna sukses & angka cukupmu",
+      "reward": "Ecamp 2021 & main ke Bandung Seminggu",
+      "goals_needing_commitment": "Tidak Ada",
+      "goals_needing_revision": "Website Portfolio & Rencana bisnis (Fokus 1 sumber income dulu)",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan YEA Virtual dengan ranking 1 & mendapat bonus ecamp gratis",
+        "Menyelamatkan seluruh anggota keluarga dari covid",
+        "Review & menyelesaikan Bacakilat 2 Buku",
+        "Menyelesaikan & mendapat penghasilan dari projek Uty",
+        "Selalu menghadiri coaching PM13 & YEAV4",
+        "Mulai Paham Laravel Development",
+        "Bisa stop chat dengan Hanan",
+        "Diterima kerja di Indosat",
+        "Menyelesaikan 2 page MyDashboard"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Migrasi Server & Implementasi Modul POS Silingga pada Minimarket",
+          "progress_score": 3,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membuat Website Portfolio",
+          "progress_score": 5,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Mendapat Ranking 1 di YEA Virtual",
+          "progress_score": 10,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2021,
+      "quarter": 4,
+      "challenges_faced": "Tidak, karena saya menempatkan bobot kesulitan yang pas, ada yang Hard, medium & Small",
+      "advice_for_next": "Untuk pengeksekusian goal tetap seperti ini, lakukan lagi dopamine detox agar tidak terkontaminasi hal-hal buruk",
+      "reward": "Pantai Ngeboom, Kursi Kerja, Mouse Wireless, Ecamp",
+      "goals_needing_commitment": "Project YEA Virtual, PIAP Project, Revisi MyDashboard",
+      "goals_needing_revision": "Tidak Ada",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan Asmaul Husna Pak Amin",
+        "Menyelesaikan Website PIAP Ajaw"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Project MyDashboard & CO Portal",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Persiapan Pra Nikah",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan PIAP Project",
+          "progress_score": 9,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 1,
+      "challenges_faced": "Untuk goal 1 & 2 iya, untuk goal 1 karena tidak mendapat kejelasan dari klien, goal 2 karena merasa kurang waktunya & pelatihannya tidak sesuai ekspektasi",
+      "advice_for_next": "Harus mulai berani tampil di dunia maya, demi personal branding yang baik secara jangka panjang & coba lakukan dopamine detox lagi",
+      "reward": "Beli stand hanger, Pull Bar, Bola, Wallpaper Dinding & Stand Book",
+      "goals_needing_commitment": "Job Pertama di Upwork dengan RWID",
+      "goals_needing_revision": "Project YEA Virtual",
+      "is_completed": true,
+      "accomplishments": [
+        "Target MyDashboard Tercapai",
+        "Target CO Portal Tercapai",
+        "PIAP Project Beres",
+        "Beres Konten YouTube Pertama - SINAW",
+        "Selesai & Paham Materi OOP & API Laravel Prawito"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Project MyDashboard & CO Portal",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Mendapatkan Job Pertama di Upwork dengan Metode RWID",
+          "progress_score": 3,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Revisi Project Website YEA Virtual",
+          "progress_score": 2,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 2,
+      "challenges_faced": "Untuk goal kantor tidak, untuk job Upwork iya. Karena masih belum pede dengan skill, masih kurang branding diri, masih sulit buat video, artikel maupun postingan",
+      "advice_for_next": "Lebih pedelah dalam mebranding diri sendiri, demi kamu sendiri. Ingat kata-kata Iqbal Farabi: tidak ada yang peduli loe, loe bebas mau share apapun, gak usah geer & overthinking",
+      "reward": "Beli Mic Rode NT USB Mini & Boom Arm Thronmax Zoom S3",
+      "goals_needing_commitment": "Goal Kantor & Job di Upwork",
+      "goals_needing_revision": "Job pertama Upwork dengan RWID (perlu re-strategi) & project website YEA Virtual",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan WPU Laravel (Eps 7-24), PHP MVC & LC 2 Minggu",
+        "Menyelesaikan Revisi CO, Revisi MyDs",
+        "Menyelesaikan Analytic Dashboard Phase 1",
+        "Menyelesaikan Suryokusumo Migration",
+        "Menyelesaikan Wedding Web Teh Nurul"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Project Analytic Dashboard, MyDashboard & CO Portal",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Mendapatkan Job Pertama di Upwork dengan Metode RWID",
+          "progress_score": 4,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Project Website YEA Virtual",
+          "progress_score": 1,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 3,
+      "challenges_faced": "HFG 1 Aman, HFG 2 yang porto agak kurang dapat prioritas, waktu & karena perfeksionisme, HFG 3 tidak dapat waktu karena merasa perlu HFG 2 dulu beres",
+      "advice_for_next": "Harus jaga terus jam tidur dan rutinitas shalat malam agar hari-harinya berjalan dengan baik, untuk content maksimalkan dulu yang ada, jangan perfeksionist",
+      "reward": "Adjustable Desk",
+      "goals_needing_commitment": "Menyelesaikan Ecourse Udemy PHP",
+      "goals_needing_revision": "HFG 3, untuk video atau ecourse perlu reorganized",
+      "is_completed": true,
+      "accomplishments": [
+        "AnDs: Tableau Embed, SSO, User Management & Server",
+        "Revisi MyDs & SMR",
+        "Repo/Github Reorganized",
+        "Bootcamp Vue, MERN, Next, Dicoding, Digitalent",
+        "PHP Dasar, Tailwind, Alpine, Livewire, Node, JS Lanjutan"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Project MyDelivery, B2B Dashboard, MyDashboard & CO Portal",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Ecourse Udemy PHP Fundamental & Series Artikelnya",
+          "progress_score": 1,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Web Portfolio Dengan BootLaraVue & Repo/Github Reorganize",
+          "progress_score": 1,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2022,
+      "quarter": 4,
+      "challenges_faced": "Ya untuk Bootcamp MERN & Portfolio, karena kurang perasaan tertekannya, rasanya selesai bagus, gak selesai gak masalah",
+      "advice_for_next": "Coba buat Best Week lagi, atur agar rutinitas di malam sampai paginya bisa konsisten, selain itu fleksibel saja",
+      "reward": "Beli Treadmill",
+      "goals_needing_commitment": "Web Portfolio & Bootcamp MERN",
+      "goals_needing_revision": "Tidak Ada",
+      "is_completed": true,
+      "accomplishments": [
+        "Indosat: Selesai AnDs, MyDs & MyDeliv",
+        "Bootcamp: REA4, PM, MERN 90% & Dicoding FE",
+        "SDC: Alpine, React Testing, Redux, Try Typescript",
+        "Book: FBB, CCBC, QLOA, WTH Are You",
+        "Project: Panti Rapih, Portfolio Styling, Inventory Management 20%"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Project MyDelivery, B2B Dashboard, MyDashboard & CO Portal",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Project Bhawana",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Web Portfolio, Bootcamp MERN, Product, Digitalent, Dicoding",
+          "progress_score": 7,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 2,
+      "challenges_faced": "Untuk tenses iya, karena tidak terasa tekanannya, bukan kriteria HFG",
+      "advice_for_next": "Bulan depan kamu nikah, nikmatilah, di Q3 nanti, just enjoy it, don't push too hard for now",
+      "reward": "Nikah Bulan Juli Depan",
+      "goals_needing_commitment": "AutoWealth, ODES & SDC untuk Grammar",
+      "goals_needing_revision": "Tenses, pindahkan jadi SDC",
+      "is_completed": true,
+      "accomplishments": [
+        "AW: ODES & AW Web",
+        "Odoo: Sanbercode, Technical Arkana",
+        "Inventory Management",
+        "Inggris: Grammar, Private JagoBahasa, Halena",
+        "Beres Semua Persiapan Wedding"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "ODES System (AutoWealth)",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Inventory Management",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Hafal & Paham 16 Tenses Bahasa Inggris",
+          "progress_score": 5,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 3,
+      "challenges_faced": "Untuk AW tidak, selain itu goal nya tidak jelas",
+      "advice_for_next": "Pelan-pelan saja kembalikan habit menggunakan SP nya, ingat, be nice to yourself",
+      "reward": "Menikmati hidup & berhubungan dengan istri",
+      "goals_needing_commitment": "Kerjaan di AW & Web Portfolio",
+      "goals_needing_revision": "Tidak ada",
+      "is_completed": true,
+      "accomplishments": [
+        "Fixing AutoWealth Web",
+        "Monev DPP LDII",
+        "Wedding",
+        "AW: SRS Form",
+        "AW: v3.2 Custody Account"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan AutoWealth Web V3.1 & V3.2",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Istri Hamil & Pindah Rumah",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Web Portfolio (BE & API)",
+          "progress_score": 1,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2023,
+      "quarter": 4,
+      "challenges_faced": "Ya dalam web portfolio dan content hack, kurang rasa urgensi dan clarity pada goal",
+      "advice_for_next": "Coba selesaikan dan pahami buku Feel Good Productivity untuk mendapatkan insight agar 2024 produktivitas bertambah",
+      "reward": "Maen Dota 67 Jam (2,7 Hari)",
+      "goals_needing_commitment": "Menyelesaikan Web Portfolio (BE & API) (33%)",
+      "goals_needing_revision": "Menyelesaikan Materi Content Hack (11%)",
+      "is_completed": true,
+      "accomplishments": [
+        "Menyelesaikan Semua Task AW",
+        "Progress Web Porto 30%",
+        "Mentoring VIP RWID Sampai Object",
+        "Lebih Tertib Dalam Pengisian Sync Planner"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan AutoWealth Task",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Web Portfolio (BE & API)",
+          "progress_score": 3,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Menyelesaikan Materi Content Hack",
+          "progress_score": 1,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    },
+    {
+      "year": 2024,
+      "quarter": 4,
+      "challenges_faced": "2 bulan terakhir tersibukkan perihal pindah rumah, sehingga rasanya sulit untuk fokus & konsisten urus YouTube",
+      "advice_for_next": "Pikirkan juga akhirat, perbaiki ibadah dan hubungan dengan yang di atas, karena Dialah yang memperlancar semuanya. Coba rutinkan tahajud dan jalani puasa Senin Kamis dan olahraga rutin",
+      "reward": null,
+      "goals_needing_commitment": "Membuat 6 video untuk Explain In Quick. No Need to revised",
+      "goals_needing_revision": null,
+      "is_completed": true,
+      "accomplishments": [
+        "Beres Pindahan ke Bandung",
+        "Bisa buat 2 video untuk QIE",
+        "Bisa memaksimalkan pomodoro dengan spreadsheet & mindfulday"
+      ],
+      "goal_reviews": [
+        {
+          "goal_title": "Menyelesaikan Video Every MCU Movie",
+          "progress_score": 10,
+          "achievement_notes": null
+        },
+        {
+          "goal_title": "Membuat 6 Video untuk Explain In Quick",
+          "progress_score": 6,
+          "achievement_notes": null
+        }
+      ],
+      "sync_actions_completed": [
+        "Review and rate each High Focus Goal",
+        "List accomplishments"
+      ]
+    }
+  ]
+}
