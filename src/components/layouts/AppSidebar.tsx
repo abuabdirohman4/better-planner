@@ -45,6 +45,11 @@ const executionNav: NavItem[] = [
     name: "Weekly Sync",
     path: "/execution/weekly-sync",
   },
+  {
+    icon: <CheckCircleIcon />,
+    name: "Habit Tracker",
+    path: "/habits/monthly",
+  },
 ];
 
 const planningNav: NavItem[] = [
@@ -102,7 +107,7 @@ const trackingNav: NavItem[] = [
   {
     icon: <CheckCircleIcon />,
     name: "Habit Tracker",
-    path: "/habit-tracker",
+    path: "/habits/monthly",
   },
   {
     icon: <PieChartIcon />,
@@ -518,8 +523,8 @@ function SidebarContent({
           {/* TRACKING */}
           {/* <div className="mb-2">
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tracking</div>
-            <MenuItems 
-              navItems={trackingNav} 
+            <MenuItems
+              navItems={trackingNav}
               menuType="main"
               isExpanded={isExpanded}
               isHovered={isHovered}
@@ -529,6 +534,8 @@ function SidebarContent({
               subMenuRefs={subMenuRefs}
               handleSubmenuToggle={handleSubmenuToggle}
               isActive={isActive}
+              isLoading={isLoading}
+              onNavigate={onNavigate}
             />
           </div> */}
           {/* Divider */}
@@ -590,7 +597,7 @@ const AppSidebar: React.FC = () => {
 
   // Prefetch all routes on component mount for better performance
   useEffect(() => {
-    const allNavs = [...executionNav, ...planningNav, ...questsNav];
+    const allNavs = [...executionNav, ...planningNav, ...questsNav, ...trackingNav];
     allNavs.forEach(nav => {
       if (nav.path) {
         router.prefetch(nav.path);

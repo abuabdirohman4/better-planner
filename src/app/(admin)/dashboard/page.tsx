@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { createClient } from '@/lib/supabase/server'
-import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon } from '@/lib/icons';
+import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon, CheckCircleIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import QuarterSelector from '@/components/common/QuarterSelector';
 import WeeklyProgressChartWrapper from './components/WeeklyProgressChartWrapper';
@@ -76,17 +76,17 @@ async function DashboardContent() {
                 <p className="text-xs text-gray-500 hidden md:block">Target utama</p>
               </div>
             </Link>
-            {/* Weekly Sync Card */}
+            {/* Best Week Card */}
             <Link 
-              href="/execution/weekly-sync"
+              href="/planning/best-week"
               className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFF6ED] group-hover:bg-[#ffebd3] transition-colors md:mr-4">
-                <CalenderIcon className="w-6 h-6 text-[#FDB022]" />
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
+                <ShootingStarIcon className="w-6 h-6 text-[#13B176]" />
               </div>
               <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Weekly Sync</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Review mingguan</p>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Best Week</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Minggu Terbaik</p>
               </div>
             </Link>
             {/* Daily Sync Card */}
@@ -102,13 +102,39 @@ async function DashboardContent() {
                 <p className="text-xs text-gray-500 hidden md:block">Rutinitas harian</p>
               </div>
             </Link>
+            {/* Weekly Sync Card */}
+            <Link 
+              href="/execution/weekly-sync"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFF6ED] group-hover:bg-[#ffebd3] transition-colors md:mr-4">
+                <CalenderIcon className="w-6 h-6 text-[#FDB022]" />
+              </div>
+              <div>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Weekly Sync</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Review mingguan</p>
+              </div>
+            </Link>
+            {/* Habit Tracker Card */}
+            <Link 
+              href="/habits/today"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
+                <CheckCircleIcon className="w-6 h-6 text-[#7F56D9]" />
+              </div>
+              <div>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Habit Tracker</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Tracking Habit</p>
+              </div>
+            </Link>
             {/* Work Quests Card */}
             <Link 
               href="/quests/work-quests"
               className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#13B176]" />
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#EFF8FF] group-hover:bg-[#d3eafe] transition-colors md:mr-4">
+                <TaskIcon className="w-6 h-6 text-[#2E90FA]" />
               </div>
               <div>
                 <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Work Quests</h3>
@@ -120,8 +146,8 @@ async function DashboardContent() {
               href="/quests/daily-quests"
               className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FDF2FA] group-hover:bg-[#eed4ec] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#E31B54]" />
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
+                <TaskIcon className="w-6 h-6 text-[#13B176]" />
               </div>
               <div>
                 <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Daily Quests</h3>
@@ -139,19 +165,6 @@ async function DashboardContent() {
               <div>
                 <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Side Quests</h3>
                 <p className="text-xs text-gray-500 hidden md:block">Tugas sampingan</p>
-              </div>
-            </Link>
-            {/* Best Week Card */}
-            <Link 
-              href="/planning/best-week"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
-                <ShootingStarIcon className="w-6 h-6 text-[#7F56D9] ps-0.5 pt-0.5" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Best Week</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Minggu Terbaik</p>
               </div>
             </Link>
           </div>

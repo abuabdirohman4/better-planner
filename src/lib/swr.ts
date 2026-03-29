@@ -184,6 +184,21 @@ export const notificationKeys = {
 };
 
 /**
+ * SWR key generator for habits
+ */
+export const habitKeys = {
+  all: ['habits'] as const,
+  lists: () => [...habitKeys.all, 'list'] as const,
+  list: (includeArchived?: boolean) => [...habitKeys.lists(), includeArchived ?? false] as const,
+  completions: () => [...habitKeys.all, 'completions'] as const,
+  completionsForMonth: (year: number, month: number) =>
+    [...habitKeys.completions(), year, month] as const,
+  monthlyStats: (year: number, month: number) =>
+    [...habitKeys.all, 'monthly-stats', year, month] as const,
+  todayCompletions: (date: string) => [...habitKeys.all, 'today-completions', date] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -199,4 +214,5 @@ export const dataKeys = {
   pairwise: pairwiseKeys,
   brainDump: brainDumpKeys,
   notifications: notificationKeys,
+  habits: habitKeys,
 }; 

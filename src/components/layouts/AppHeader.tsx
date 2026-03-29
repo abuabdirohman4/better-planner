@@ -36,6 +36,10 @@ function PageTitle() {
         return 'Side Quests';
       case '/analytics':
         return 'Analytics';
+      case '/habits/monthly':
+        return 'Habit Tracker';
+      case '/habits/today':
+        return 'Habit Tracker';
       default:
         return 'Better Planner';
     }
@@ -45,7 +49,12 @@ function PageTitle() {
   const needsBackButton = (path: string) => {
     return path === '/planning/vision' || 
            path === '/planning/12-week-quests' || 
-           path === '/planning/main-quests';
+           path === '/planning/work-quests' || 
+           path === '/planning/daily-quests' || 
+           path === '/planning/side-quests' ||
+           path === '/planning/best-week' ||
+           path === '/habits/monthly' ||
+           path === '/habits/today';
   };
 
   if (!mounted) {
