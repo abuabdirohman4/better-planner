@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] — 2026-03-29
+
+### Added
+- **Habit Tracker**: Full monthly challenge habit tracker with grid view, today's view,
+  category grouping, streak tracking, and monthly stats
+- **Habit Grid**: Collapsible week columns with X/7 summary badges (persisted to localStorage),
+  inline edit/archive/delete actions per habit
+- **Best Week**: Interactive weekly grid showing best performance week with daily reference view
+
+### Fixed
+- **Dashboard**: Best Week card now links to the correct route
+
+---
+
 ## [2.2.1] — 2026-03-21
 
 ### Fixed
