@@ -1,18 +1,19 @@
 import { getQuarterlyReviewHistory } from '../actions/quarterly-review/actions';
 import { getQuarterString } from '@/lib/quarterUtils';
+import type { QuarterlyReviewSummary } from '@/types/twelve-week-sync';
 import Link from 'next/link';
 
 export const metadata = {
   title: '12 Week Sync History | Better Planner',
 };
 
-function groupByYear(reviews: any[]) {
+function groupByYear(reviews: QuarterlyReviewSummary[]) {
   return reviews.reduce((acc, r) => {
     const y = r.year;
     if (!acc[y]) acc[y] = [];
     acc[y].push(r);
     return acc;
-  }, {} as Record<number, any[]>);
+  }, {} as Record<number, QuarterlyReviewSummary[]>);
 }
 
 export default async function HistoryPage() {
@@ -52,7 +53,7 @@ export default async function HistoryPage() {
                 {year}
               </h2>
               <div className="space-y-2">
-                {grouped[year].map((r: any) => (
+                {grouped[year].map((r: QuarterlyReviewSummary) => (
                   <Link
                     key={r.id}
                     href={`/planning/12-week-sync?q=${r.year}-Q${r.quarter}`}

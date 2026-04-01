@@ -13,7 +13,7 @@ export default function BestWeekReferenceSection() {
   const { todayBlocks, currentBlock, todayCode, hasTemplate, isLoading } = useTodayBlocks();
 
   return (
-    <div className="mt-6">
+    <div className="mb-6">
       <CollapsibleCard
         isCollapsed={cardCollapsed.bestWeekRef}
         onToggle={() => toggleCardCollapsed('bestWeekRef')}
@@ -55,21 +55,39 @@ export default function BestWeekReferenceSection() {
                   return (
                     <div
                       key={block.id}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-300 ${
                         isActive
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 shadow-sm'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/30 border-l-4 border-transparent'
                       }`}
                     >
-                      <span className="text-gray-400 dark:text-gray-500 text-xs w-24 shrink-0">
+                      <span
+                        className={`text-xs w-24 shrink-0 px-2 py-0.5 rounded-full text-center transition-colors ${
+                          isActive
+                            ? 'font-bold shadow-sm'
+                            : 'text-gray-400 dark:text-gray-500'
+                        }`}
+                        style={isActive ? { backgroundColor: config.bgColor, color: config.color } : {}}
+                      >
                         {block.start_time.substring(0, 5)} - {block.end_time.substring(0, 5)}
                       </span>
-                      <span style={{ color: config.color }} className="shrink-0">{config.icon}</span>
-                      <span className={`flex-1 ${isActive ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                        {isActive ? '► ' : ''}{block.title}
+                      <span
+                        style={{ color: config.color }}
+                        className={`shrink-0 transition-transform duration-300 ${isActive ? 'scale-125' : ''}`}
+                      >
+                        {config.icon}
                       </span>
+                      <span className={`flex-1 truncate ${isActive ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {block.title}
+                      </span>
+                      {isActive && (
+                        <span className="text-[10px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded animate-pulse shrink-0">
+                          NOW
+                        </span>
+                      )}
                     </div>
                   );
+
                 })}
               </div>
               <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">

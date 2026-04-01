@@ -245,6 +245,9 @@ npm run generate:pdf     # Generate PDF guide
 - **DO NOT** install new packages without user confirmation
 - **ALWAYS** prefer existing UI components (`src/components/ui`, `src/components/common`)
 - **DO NOT** replace existing components with raw HTML
+- **BEFORE** writing any UI element (button, input, modal, spinner, badge), check `src/components/ui/` first — if it exists, use it
+- **Key reusable components**: `Button` (`src/components/ui/button/Button.tsx`), `Modal` (`src/components/ui/modal/`), `Spinner` (`src/components/ui/spinner/`), `Skeleton` (`src/components/ui/skeleton/`)
+- **If a new reusable UI element is needed** (will be used in 2+ places), ask user before creating it as a shared component in `src/components/ui/` or `src/components/common/`
 
 **Error Handling:**
 - Centralized error handling with `handleApiError()` from `@/lib/errorUtils`
@@ -292,15 +295,6 @@ All detailed documentation is in `docs/claude/`:
 
 ## 🚨 SESSION CLOSE PROTOCOL 🚨
 
-**CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
+**CRITICAL**: Before saying "done" or "complete", show `git status` + `git diff`, provide commit message, inform user to commit manually. Claude Code MUST NOT run git write operations.
 
-```
-[ ] 1. git status              (check what changed)
-[ ] 2. git add <files>         (stage code changes)
-[ ] 3. bd sync                 (commit beads changes)
-[ ] 4. git commit -m "..."     (commit code)
-[ ] 5. bd sync                 (commit any new beads changes)
-[ ] 6. git push                (push to remote)
-```
-
-**NEVER skip this.** Work is not done until pushed.
+**📖 For complete session close checklist, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**

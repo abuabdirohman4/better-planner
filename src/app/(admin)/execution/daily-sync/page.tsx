@@ -109,6 +109,8 @@ export default function DailySyncPage() {
               setSelectedDayIdx={setSelectedDayIdx}
             />
           </div>
+          {/* <BestWeekReferenceSection /> */}
+
           {/* Daily Stats & Target Focus Component */}
           <div className="block md:hidden mb-6">
             <CollapsibleCard
@@ -145,6 +147,7 @@ export default function DailySyncPage() {
             </div>
             <div className="flex flex-col gap-6">
               <div className="hidden md:block">
+                <BestWeekReferenceSection />
                 <TargetFocus selectedDate={selectedDateStr} />
               </div>
               <div className="hidden md:block">
@@ -173,7 +176,6 @@ export default function DailySyncPage() {
             </div>
           </div>
           <BrainDumpSection date={selectedDateStr} />
-          <BestWeekReferenceSection />
         </>
       )}
 
