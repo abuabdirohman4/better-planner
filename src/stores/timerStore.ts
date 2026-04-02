@@ -297,6 +297,18 @@ export const useTimerStore = create<TimerStoreState>()(
 
       resumeFromDatabase: (sessionData) => {
         const timerState = sessionData.status === 'PAUSED' ? 'PAUSED' : 'FOCUSING';
+
+        // ✅ FIX: Recalculate startTime agar useGlobalTimer menghasilkan elapsed yang benar.
+        // Jangan gunakan sessionData.startTime (timestamp asli DB) — itu bisa menyebabkan
+        // useGlobalTimer menghitung elapsed dari waktu asli sesi (misal 2 jam lalu) bukan
+        // elapsed yang sudah dikoreksi server.
+        // syntheticStartTime = now - currentDuration, sehingga:
+        //   useGlobalTimer menghitung: now - syntheticStartTime = currentDuration ✅
+        // startTime di Supabase tidak berubah.
+        const syntheticStartTime = new Date(
+          Date.now() - sessionData.currentDuration * 1000
+        ).toISOString();
+
         set({
           activeTask: {
             id: sessionData.taskId,
@@ -306,7 +318,7 @@ export const useTimerStore = create<TimerStoreState>()(
           },
           timerState,
           secondsElapsed: sessionData.currentDuration,
-          startTime: sessionData.startTime,
+          startTime: syntheticStartTime,
           breakType: null,
         });
 

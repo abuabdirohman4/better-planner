@@ -83,14 +83,17 @@ export function useGlobalTimer() {
           useTimerStore.setState({ secondsElapsed: elapsedSeconds });
 
           // ✅ AUTO-COMPLETION CHECK: Check if timer should be completed
-          if (activeTask && startTime && state.timerState === 'FOCUSING') {
-            const targetDuration = (activeTask.focus_duration || 25) * 60;
+          // ✅ FIX: Gunakan state.activeTask (live Zustand state) bukan closure activeTask.
+          // Setelah resumeFromDatabase update Zustand, closure lama masih aktif hingga
+          // useEffect re-run. state selalu up-to-date karena diambil via getState() di atas.
+          if (state.activeTask && state.timerState === 'FOCUSING') {
+            const targetDuration = (state.activeTask.focus_duration || 25) * 60;
 
             if (elapsedSeconds >= targetDuration) {
               useTimerStore.getState().completeTimerFromDatabase({
-                taskId: activeTask.id,
-                taskTitle: activeTask.title,
-                startTime: startTime,
+                taskId: state.activeTask.id,
+                taskTitle: state.activeTask.title,
+                startTime: state.startTime!,
                 duration: targetDuration,
                 status: 'COMPLETED'
               });

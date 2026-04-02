@@ -29,13 +29,15 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
     const now = new Date();
     const startTime = new Date(session.start_time);
     const actualElapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-    
+    // ✅ FIX: Cap ke target duration agar tidak catat durasi lebih dari yang ditentukan
+    const cappedDuration = Math.min(actualElapsedSeconds, session.target_duration_seconds);
+
     // Update session with correct duration if there's a significant difference
-    if (Math.abs(actualElapsedSeconds - session.current_duration_seconds) > 5) {
+    if (Math.abs(cappedDuration - session.current_duration_seconds) > 5) {
       await supabase
         .from('timer_sessions')
-        .update({ 
-          current_duration_seconds: actualElapsedSeconds,
+        .update({
+          current_duration_seconds: cappedDuration,
           updated_at: now.toISOString()
         })
         .eq('id', sessionId);
@@ -55,7 +57,9 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       const endTimeDate = new Date(); // Use local time directly
       const endTime = endTimeDate.toISOString(); // Convert to ISO for database storage
       const startTimeDate = new Date(session.start_time);
-      const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
+      const rawDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
+      // ✅ FIX: Cap ke target duration agar activity log tidak catat durasi salah
+      const actualDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
       const actualDurationMinutes = Math.max(1, Math.round(actualDurationSeconds / 60));
       
       // ✅ FIX: Use local date from endTimeDate instead of UTC to handle timezone correctly
@@ -103,17 +107,19 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
     // ✅ FIX: Recompute accurate duration from start_time and end_time
     const startTimeDate = new Date(session.start_time);
     const endTimeDate = new Date(endTime);
-    const actualDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
-    
+    const rawDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
+    // ✅ FIX: Cap ke target duration agar current_duration_seconds tidak melebihi target
+    const cappedDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
+
     // Update with accurate duration
     await supabase
       .from('timer_sessions')
-      .update({ 
-        current_duration_seconds: actualDurationSeconds
+      .update({
+        current_duration_seconds: cappedDurationSeconds
       })
       .eq('id', sessionId);
 
-    console.log(`✅ Timer completed: ${actualDurationSeconds}s (target: ${session.target_duration_seconds}s)`);
+    console.log(`✅ Timer completed: ${cappedDurationSeconds}s (target: ${session.target_duration_seconds}s)`);
 
     // ✅ FIX: Check if stop event already exists to prevent duplicates
     const { data: existingStopEvent } = await supabase
