@@ -30,21 +30,21 @@ const CHARACTER_NAMES: Record<AICharacter, string> = {
 
 const FALLBACK_INSIGHT: Record<EmailLanguage, AIInsight> = {
   id: {
-    headline: 'Tetap semangat!',
-    narrative: 'Setiap langkah kecil yang kamu ambil hari ini adalah investasi untuk masa depanmu. Konsistensi adalah kunci keberhasilan.',
-    topWin: 'Kamu telah hadir dan berusaha hari ini.',
+    headline: 'Rekap Performa Kamu',
+    narrative: 'Berikut adalah ringkasan aktivitas dan progres kamu.',
+    topWin: 'Terus pantau dan tingkatkan performa fokusmu.',
     challengeSpotted: 'Konsistensi setiap hari adalah fondasi mencapai target besar.',
-    actionTip: 'Tentukan 3 prioritas utamamu untuk besok malam ini.',
-    motivationalClose: 'Sampai jumpa besok — terus bergerak maju!',
+    actionTip: 'Tentukan prioritas utamamu untuk langkah selanjutnya.',
+    motivationalClose: 'Terus bergerak maju dan pantang menyerah!',
     characterName: 'Better Planner',
   },
   en: {
-    headline: 'Keep up the great work!',
-    narrative: 'Every small step you take today is an investment in your future. Consistency is the key to success.',
-    topWin: 'You showed up and did the work.',
+    headline: 'Your Performance Recap',
+    narrative: 'Here is a summary of your activities and progress.',
+    topWin: 'Keep tracking and improving your focus performance.',
     challengeSpotted: 'Daily consistency is the foundation for achieving big goals.',
-    actionTip: 'Plan your top 3 priorities for tomorrow tonight.',
-    motivationalClose: 'See you tomorrow — keep moving forward!',
+    actionTip: 'Set your main priorities for the next steps.',
+    motivationalClose: 'Keep moving forward and never give up!',
     characterName: 'Better Planner',
   },
 }
@@ -168,19 +168,22 @@ export async function generateInsight(
   mainQuestMotivation?: string,
   inactiveStreak?: number
 ): Promise<AIInsight> {
-  try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      generationConfig: { responseMimeType: 'application/json' },
-      systemInstruction: CHARACTER_PROMPTS[character][language],
-    })
-    const result = await model.generateContent(
-      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
-    )
-    return parseGeminiResponse(result.response.text(), character, language)
-  } catch (error) {
-    console.error('[aiInsightService] Gemini error:', error)
-    return { ...FALLBACK_INSIGHT[language], characterName: CHARACTER_NAMES[character] }
-  }
+  // Fitur AI dimatikan sementara, gunakan pesan generik
+  //   try {
+  //   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  //   const model = genAI.getGenerativeModel({
+  //     model: 'gemini-2.0-flash',
+  //     generationConfig: { responseMimeType: 'application/json' },
+  //     systemInstruction: CHARACTER_PROMPTS[character][language],
+  //   })
+  //   const result = await model.generateContent(
+  //     buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
+  //   )
+  //   return parseGeminiResponse(result.response.text(), character, language)
+  // } catch (error) {
+  //   console.error('[aiInsightService] Gemini error:', error)
+  //   return { ...FALLBACK_INSIGHT[language], characterName: CHARACTER_NAMES[character] }
+  // }
+  // return parseGeminiResponse(...)
+  return { ...FALLBACK_INSIGHT[language], characterName: 'Better Planner' }
 }
