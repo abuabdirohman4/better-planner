@@ -347,7 +347,7 @@ const TaskItemCardContent = ({
                   <Clock className="w-3.5 h-3.5" />
                 </span>
               )}
-              <h4 className={`font-medium text-sm leading-tight truncate ${isCompleted
+              <h4 className={`font-medium text-sm leading-tight break-words ${isCompleted
                 ? 'text-gray-500 dark:text-gray-500 line-through'
                 : 'text-gray-900 dark:text-gray-100'
                 }`}>
@@ -426,7 +426,7 @@ const TaskItemCardContent = ({
                     <Clock className="w-4 h-4" />
                   </span>
                 )}
-                <h4 className={`font-medium text-sm leading-tight truncate ${isCompleted
+                <h4 className={`font-medium text-sm leading-tight break-words ${isCompleted
                   ? 'text-gray-500 dark:text-gray-500 line-through'
                   : 'text-gray-900 dark:text-gray-100'
                   }`}>
