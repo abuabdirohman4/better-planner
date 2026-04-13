@@ -321,6 +321,43 @@ Implementing time blocking feature for Activity Plan with schedule management.
 
 ---
 
+## 🔗 GitHub Issue Title Convention
+
+**ALL GitHub Issues MUST use `[bp-xxx]` prefix** to link back to local Beads issue.
+
+### Format
+
+```
+[bp-xxx] type: short description
+```
+
+**Examples:**
+- `[bp-0df] feat: habit multi-completion daily target`
+- `[bp-6ka] fix(pomodoro): double activity log recording due to race condition`
+- `[bp-kr9] fix: weekly goal item status cross-week contamination`
+
+### Workflow
+
+```bash
+# Step 1: Create Beads issue first
+bd create --title="feat: my new feature" --type=feature --priority=2
+# → Gets ID like bp-abc
+
+# Step 2: Create GitHub Issue with [bp-abc] prefix
+gh issue create --title "[bp-abc] feat: my new feature" --body "..."
+
+# Step 3: Link GH Issue back to Beads
+bd update bp-abc --notes "GitHub Issue: https://github.com/abuabdirohman4/better-planner/issues/XX (GH-#XX)"
+```
+
+### Why This Convention
+
+- Easy traceability: GH Issue → Beads issue (local context, notes, blockers)
+- Consistent with chat session naming (sessions named `bp-xxx: description`)
+- Public record on GitHub + rich context in Beads
+
+---
+
 ## 🔍 Troubleshooting
 
 ### Sync Conflicts

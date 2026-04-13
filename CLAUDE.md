@@ -74,6 +74,14 @@ docs: update documentation
 refactor: improve code structure
 ```
 
+**GitHub Issue Title Format (MANDATORY):**
+```
+[bp-xxx] type: short description
+```
+- **Always prefix** with Beads issue ID in brackets: `[bp-xxx]`
+- Create Beads issue FIRST → then create GH Issue with this prefix
+- Example: `[bp-0df] feat: habit multi-completion daily target`
+
 **📖 For complete Beads & Git integration guide, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
 **📖 For Google Antigravity execution templates and review checklists, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
