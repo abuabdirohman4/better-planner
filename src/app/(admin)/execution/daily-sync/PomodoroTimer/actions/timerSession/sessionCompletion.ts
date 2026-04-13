@@ -81,8 +81,15 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
         });
 
       if (logError) {
-        console.error('[completeTimerSession] Activity log error:', logError);
-        throw logError;
+        // ✅ FIX: Gracefully handle unique constraint violation (duplicate log).
+        // PostgreSQL error code 23505 = unique_violation.
+        // Happens when two completion paths race — second one can safely skip.
+        if (logError.code === '23505') {
+          console.log('[completeTimerSession] Activity log already exists (unique constraint), skipping duplicate');
+        } else {
+          console.error('[completeTimerSession] Activity log error:', logError);
+          throw logError;
+        }
       }
     } else {
       console.log('[completeTimerSession] Activity log already exists, skipping creation');

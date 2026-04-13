@@ -343,6 +343,17 @@ export const useTimerStore = create<TimerStoreState>()(
         lastCompletedTaskId = sessionData.taskId;
         lastCompletionTime = now;
 
+        // ✅ FIX: Immediately set IDLE state synchronously before any async operation.
+        // This closes the ~1 second race window where useGlobalTimer could still see
+        // timerState === 'FOCUSING' and trigger a second completion on next tick.
+        set({
+          timerState: 'IDLE' as TimerState,
+          secondsElapsed: 0,
+          activeTask: null,
+          startTime: null,
+          breakType: null,
+        });
+
         try {
           // Stop focus sound when completing timer from database
           get().stopFocusSound();
