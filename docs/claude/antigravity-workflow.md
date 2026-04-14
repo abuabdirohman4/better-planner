@@ -6,17 +6,40 @@ This document provides templates and guidelines for executing implementation pla
 
 ## When to Use Antigravity vs Direct Execution
 
-**Use Direct Execution (Claude Code)** when:
-- Small changes (1-3 files, <200 lines)
-- Need real-time feedback and iteration
-- Simple bug fixes or minor features
+This choice directly affects **Claude Sonnet token efficiency**. The wrong choice either wastes tokens (reading unnecessary context) or risks running out mid-implementation.
 
-**Use Google Antigravity** when:
-- Refactoring (3+ files)
-- Type extraction/migration
-- Large features
-- Multi-step implementation plans
-- Need parallel processing or longer context
+### Use Direct Execution (Claude Code) when:
+- **Few files** (1-3 files, <200 lines of changes)
+- **Targeted bug fix** — root cause is clear, exact lines known
+- **Lightweight plan** — e.g. SQL migration + 2 small edits in store/action
+- **Real-time iteration needed** — quick back-and-forth, on-the-fly adjustments
+- **Token estimate: low** — Claude can finish in one session without hitting context limits
+
+> 💡 **How to estimate:** Count files that need to be read + modified. Each large file re-read costs tokens. If plan has ≤5 tasks and total code changes <300 lines, choose Claude direct.
+
+### Use Google Antigravity when:
+- **Many files** (4+ files, >300 lines of changes)
+- **Wide refactoring** — type migration, new architecture, many import updates
+- **Complex feature** with multiple new components
+- **Long multi-step plan** — more than 6-7 tasks
+- **Risk of running out of tokens mid-way** — better to finish in Antigravity than stop mid-implementation
+- **Token estimate: high** — context window may fill before completion
+
+> 💡 **How to estimate:** Count new files to create + files needed for context. If plan requires reading 8+ large files or creating 5+ new files, choose Antigravity.
+
+### Quick Decision Table
+
+| Condition | Choice |
+|-----------|--------|
+| 1-3 files changed, small edits | ✅ Claude direct |
+| Bug fix with clear root cause | ✅ Claude direct |
+| SQL migration + 2-3 small edits | ✅ Claude direct |
+| 4+ files changed or created | 🚀 Antigravity |
+| Refactoring with 10+ import updates | 🚀 Antigravity |
+| New feature with UI + actions + tests | 🚀 Antigravity |
+| Unsure? | Ask Claude to estimate first |
+
+**Claude must always state a token estimate before executing any plan**, so the user can make an informed decision.
 
 ---
 

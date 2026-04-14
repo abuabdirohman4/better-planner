@@ -40,16 +40,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**BEFORE implementing ANY feature/refactoring/task**, you MUST ask user:
+**BEFORE implementing ANY feature/refactoring/task**, you MUST:
+1. **Estimate token cost** — hitung jumlah file yang perlu dibaca + diubah
+2. **Sebutkan estimasi ke user** — jelaskan apakah plan ini ringan atau berat
+3. **Tanya user** mau pakai Claude langsung atau Antigravity
 
-> "Apakah Anda ingin saya yang langsung mengerjakan kode ini, atau menggunakan Google Antigravity untuk eksekusi?"
+**Option A: Claude Code Direct** — ≤3 files changed, <200 lines, targeted bug fix, SQL + small edits
+**Option B: Google Antigravity** — ≥4 files, >300 lines, wide refactoring, new feature with UI+actions+tests
 
-**Option A: Claude Code Direct** - Immediate execution (1-3 files, <200 lines)
-**Option B: Google Antigravity** - Create **TWO files** in `docs/plans/`, user executes, Claude reviews (better for 3+ files refactoring):
+**Token estimate (mandatory before executing):**
+> "This plan is **lightweight** — only X files, ~Y lines of changes. Claude direct is efficient."
+> "This plan is **heavy** — X files, Y+ lines. Antigravity recommended to avoid running out of tokens mid-way."
+
+Plan format (Option B) — buat **DUA file** di `docs/plans/`:
   1. `YYYY-MM-DD-<topic>-design.md` — architecture decisions, clash resolution, what goes where
   2. `YYYY-MM-DD-<topic>-implementation-plan.md` — step-by-step tasks with exact file paths, grep commands, checkpoints
 
-**📖 For Antigravity prompt template and review checklist, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
+**📖 For decision guide, Antigravity prompt template, and review checklist, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 
 ---
 
