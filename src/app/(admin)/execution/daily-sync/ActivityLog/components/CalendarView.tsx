@@ -28,11 +28,12 @@ interface CalendarViewProps {
   onTaskDrop?: (taskData: any, startMinutes: number) => void;
   calendarMode?: 'BOTH' | 'PLAN' | 'ACTUAL';
   onCalendarModeChange?: (mode: 'BOTH' | 'PLAN' | 'ACTUAL') => void;
+  onDeleteLog: (logId: string) => Promise<void>;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
   items, currentDate, onScheduleClick, onScheduleUpdate, onTaskDrop,
-  calendarMode, onCalendarModeChange
+  calendarMode, onCalendarModeChange, onDeleteLog
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const calendarAreaRef = useRef<HTMLDivElement>(null);
@@ -287,6 +288,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <CalendarTaskDetail
           item={selectedTask.data as ActivityLogItem}
           onClose={() => setSelectedTask(null)}
+          onDelete={onDeleteLog}
         />
       )}
     </div>

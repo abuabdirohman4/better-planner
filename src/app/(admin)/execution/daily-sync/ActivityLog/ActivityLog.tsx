@@ -9,6 +9,7 @@ import { formatTimeRange } from '@/lib/dateUtils';
 import CalendarView, { CalendarEvent } from './components/CalendarView';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
 import { updateSchedule, createSchedule } from '../DailyQuest/actions';
+import { deleteActivityLog } from './actions/activityLoggingActions';
 import { SESSION_DURATION_MINUTES } from '../DailyQuest/utils/scheduleUtils';
 import { ScheduleManagementModal } from '../DailyQuest/components/ScheduleManagementModal';
 import type { DailyPlanItem } from '@/types/daily-plan';
@@ -58,14 +59,21 @@ const JournalEntry: React.FC<{ log: ActivityLogItem; viewMode?: 'GROUPED' | 'TIM
 };
 
 // Komponen collapsible untuk setiap log item
-const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boolean; viewMode?: 'GROUPED' | 'TIMELINE' | 'CALENDAR' }> = ({ log, showTaskTitle = false, viewMode = 'GROUPED' }) => {
+const CollapsibleLogItem: React.FC<{
+  log: ActivityLogItem;
+  showTaskTitle?: boolean;
+  viewMode?: 'GROUPED' | 'TIMELINE' | 'CALENDAR';
+  onDelete?: (logId: string) => Promise<void>;
+}> = ({ log, showTaskTitle = false, viewMode = 'GROUPED', onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(viewMode === 'TIMELINE');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const hasJournalEntry = log.what_done || log.what_think;
 
   return (
     <div className={`${isExpanded && viewMode === 'GROUPED' ? 'bg-blue-50 rounded-lg border border-blue-200' : ''} rounded px-2 py-1`}>
       <div
-        className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 rounded transition-colors"
+        className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 rounded transition-colors group"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Triangle indicator */}
@@ -98,6 +106,46 @@ const CollapsibleLogItem: React.FC<{ log: ActivityLogItem; showTaskTitle?: boole
             )}
           </div>
         </div>
+
+        {onDelete && (
+          <div className="shrink-0" onClick={e => e.stopPropagation()}>
+            {confirmDelete ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setIsDeleting(true);
+                    try {
+                      await onDelete(log.id);
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
+                  disabled={isDeleting}
+                  className="text-xs px-1.5 py-0.5 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isDeleting ? '...' : 'Hapus'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                  className="text-xs px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded"
+                >
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                title="Hapus log"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Collapsible content */}
@@ -122,7 +170,25 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [dynamicHeight, setDynamicHeight] = useState('auto');
 
-  const { logs, isLoading, error } = useActivityLogs({ date, refreshKey });
+  const { triggerRefresh, lastActivityTimestamp } = useActivityStore();
+  const { logs, isLoading, error, mutate } = useActivityLogs({ date, refreshKey, lastActivityTimestamp });
+
+  const handleDeleteLog = async (logId: string) => {
+    // Optimistic Update
+    const previousLogs = logs;
+    mutate(logs.filter(l => l.id !== logId), false);
+
+    try {
+      await deleteActivityLog(logId);
+      toast.success('Activity log dihapus');
+      triggerRefresh();
+    } catch {
+      toast.error('Gagal menghapus activity log');
+      // Rollback on error
+      mutate(previousLogs, false);
+    }
+  };
+
   const { scheduledTasks, mutate: mutateSchedules } = useScheduledTasks(date);
   const [selectedScheduleTask, setSelectedScheduleTask] = useState<DailyPlanItem | null>(null);
 
@@ -442,6 +508,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
               onScheduleUpdate={handleScheduleUpdate}
               onScheduleClick={handleScheduleClick}
               onTaskDrop={handleTaskDrop}
+              onDeleteLog={handleDeleteLog}
             />
             {/* Schedule click modal */}
             {selectedScheduleTask && (
@@ -475,7 +542,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
                   </div>
                   <div className="space-y-1 ml-2">
                     {item.sessions.map((log: ActivityLogItem) => (
-                      <CollapsibleLogItem key={log.id} log={log} viewMode={viewMode} />
+                      <CollapsibleLogItem key={log.id} log={log} viewMode={viewMode} onDelete={handleDeleteLog} />
                     ))}
                   </div>
                 </div>
@@ -484,7 +551,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
               // Timeline View
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-2 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                 {timelineLogs.map((log) => (
-                  <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} viewMode={viewMode} />
+                  <CollapsibleLogItem key={log.id} log={log} showTaskTitle={true} viewMode={viewMode} onDelete={handleDeleteLog} />
                 ))}
               </div>
             )}

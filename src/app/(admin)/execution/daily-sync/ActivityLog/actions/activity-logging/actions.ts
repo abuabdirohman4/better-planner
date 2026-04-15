@@ -9,6 +9,7 @@ import {
   queryTasksByIds,
   queryMilestonesByIds,
   queryQuestsByIds,
+  deleteActivityLogQuery,
 } from './queries';
 import {
   parseActivityFormData,
@@ -79,4 +80,15 @@ export async function getTodayActivityLogs(date: string) {
   const allQuests = await queryQuestsByIds(supabase, questIds);
 
   return enrichLogsWithHierarchy(logs, allTasks, allMilestones, allQuests);
+}
+
+export async function deleteActivityLog(logId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  await deleteActivityLogQuery(supabase, logId, user.id);
+  revalidatePath('/execution/daily-sync');
 }

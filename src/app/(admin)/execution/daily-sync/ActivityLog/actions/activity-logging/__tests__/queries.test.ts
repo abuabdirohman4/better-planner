@@ -8,6 +8,7 @@ import {
   queryTasksByIds,
   queryMilestonesByIds,
   queryQuestsByIds,
+  deleteActivityLogQuery,
 } from '../queries';
 
 const makeSupabaseFrom = (builder: any) => ({ from: vi.fn().mockReturnValue(builder) } as any);
@@ -132,3 +133,23 @@ describe('queryQuestsByIds', () => {
     expect(builder.in).toHaveBeenCalledWith('id', ['q-1']);
   });
 });
+
+describe('deleteActivityLogQuery', () => {
+  it('calls delete with correct id and user_id filters', async () => {
+    const builder = makeQueryBuilder({ data: null, error: null });
+    const supabase = makeSupabaseFrom(builder);
+    await deleteActivityLogQuery(supabase, 'log-1', 'user-1');
+    expect(supabase.from).toHaveBeenCalledWith('activity_logs');
+    expect(builder.delete).toHaveBeenCalled();
+    expect(builder.eq).toHaveBeenCalledWith('id', 'log-1');
+    expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
+  });
+
+  it('throws when supabase returns error', async () => {
+    const builder = makeQueryBuilder({ data: null, error: { message: 'delete fail' } });
+    const supabase = makeSupabaseFrom(builder);
+    await expect(deleteActivityLogQuery(supabase, 'log-1', 'user-1'))
+      .rejects.toMatchObject({ message: 'delete fail' });
+  });
+});
+

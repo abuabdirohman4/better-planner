@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import useSWR from 'swr';
+import useSWR, { KeyedMutator } from 'swr';
 import { getTodayActivityLogs } from '../actions/activityLoggingActions';
 import { dailySyncKeys } from '@/lib/swr';
 
@@ -15,7 +15,7 @@ export interface UseActivityLogsReturn {
   logs: ActivityLogItem[];
   isLoading: boolean;
   error: string | null;
-  mutate: () => void;
+  mutate: KeyedMutator<ActivityLogItem[]>;
   updateLogJournal: (logId: string, whatDone: string, whatThink: string) => void;
 }
 

@@ -1,1 +1,1 @@
-export { logActivity, getTodayActivityLogs } from './activity-logging/actions';
+export { logActivity, getTodayActivityLogs, deleteActivityLog } from './activity-logging/actions';

@@ -94,3 +94,16 @@ export async function queryQuestsByIds(
   if (error) throw error;
   return data ?? [];
 }
+
+export async function deleteActivityLogQuery(
+  supabase: SupabaseClient,
+  logId: string,
+  userId: string,
+) {
+  const { error } = await supabase
+    .from('activity_logs')
+    .delete()
+    .eq('id', logId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
