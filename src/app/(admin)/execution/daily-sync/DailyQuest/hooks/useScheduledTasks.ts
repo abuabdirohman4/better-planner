@@ -6,7 +6,8 @@ export function useScheduledTasks(date: string) {
     date ? `scheduled-tasks-${date}` : null,
     () => getScheduledTasksByDate(date),
     {
-      revalidateOnFocus: true, // Auto update when switching tabs/windows
+      revalidateOnFocus: false,
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
     }
   );
 

@@ -147,10 +147,10 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     selectedDate ? dailySyncKeys.targetFocusData(selectedDate) : null,
     () => getDailyPlanTargets(selectedDate),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000, // ✅ OPTIMIZED: 30 seconds cache for fresh data
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
     }
   );
@@ -185,10 +185,10 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
       : null,
     () => getActualFocusTime(selectedDate, taskIds),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 30 * 1000, // ✅ OPTIMIZED: 30 seconds cache for fresh data
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
     }
   );

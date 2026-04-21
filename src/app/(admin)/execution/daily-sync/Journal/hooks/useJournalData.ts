@@ -35,10 +35,10 @@ export function useJournalData({
     enabled && activityId ? dailySyncKeys.journalData(activityId) : null,
     () => getActivityLogById(activityId!),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 5 * 1000, // 5 seconds for very fresh journal data
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
       keepPreviousData: true,
     }

@@ -38,8 +38,9 @@ export function useTimeAnalysis(date: string) {
     date ? timeAnalysisKey(date) : null,
     () => fetchTimeAnalysis(date),
     {
-      refreshInterval: 30000,
-      revalidateOnFocus: true
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
     }
   );
 

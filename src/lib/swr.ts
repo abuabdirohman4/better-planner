@@ -11,7 +11,7 @@ export const swrConfig: SWRConfiguration = {
 
   // Cache configuration
   dedupingInterval: 2 * 60 * 1000, // ✅ 2 minutes - good default cache time
-  focusThrottleInterval: 2000, // ✅ Reduced to 2 seconds for faster updates
+  focusThrottleInterval: 5 * 60 * 1000, // 5 menit — safety net
 
   // Error handling
   errorRetryCount: 2, // ✅ Increased to 2 retries

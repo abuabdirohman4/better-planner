@@ -83,10 +83,10 @@ export function useCompletedSessions({ selectedDate, dailyPlanItems }: Completed
       : null,
     () => getCompletedSessions(selectedDate, dailyPlanItems),
     {
-      revalidateOnFocus: true,
-      revalidateIfStale: true,
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 10 * 1000, // 10 seconds for fresh data
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
     }
   );

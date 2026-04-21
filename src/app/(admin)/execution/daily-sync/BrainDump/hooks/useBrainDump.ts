@@ -26,7 +26,7 @@ export interface UseBrainDumpReturn {
   isSaving: boolean;
 }
 
-export function useBrainDump({ date, autoRefresh = true }: UseBrainDumpOptions): UseBrainDumpReturn {
+export function useBrainDump({ date, autoRefresh = false }: UseBrainDumpOptions): UseBrainDumpReturn {
   const [isSaving, setIsSaving] = useState(false);
 
   // SWR configuration
@@ -34,11 +34,11 @@ export function useBrainDump({ date, autoRefresh = true }: UseBrainDumpOptions):
     dataKeys.brainDump.byDate(date),
     () => getBrainDumpByDate(date),
     {
-      revalidateOnFocus: autoRefresh,
-      revalidateOnReconnect: autoRefresh,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 10 * 60 * 1000, // 10 menit — brain dump jarang berubah
       errorRetryCount: 3,
-      refreshInterval: autoRefresh ? 30000 : 0, // 30 seconds if auto refresh enabled
+      refreshInterval: 0,
     }
   );
 

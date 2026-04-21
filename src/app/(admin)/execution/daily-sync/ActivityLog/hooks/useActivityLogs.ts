@@ -34,10 +34,10 @@ export function useActivityLogs({
     dailySyncKeys.activityLogs(date),
     () => getTodayActivityLogs(date),
     {
-      revalidateOnFocus: true, // ✅ ENABLED - Allow revalidation on focus for fresh data
-      revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data
+      revalidateOnFocus: false, // Data di-refresh via mutate() setelah Pomodoro selesai
+      revalidateIfStale: false, // Jangan auto-stale — data valid selama 5 menit
       revalidateOnReconnect: true,
-      dedupingInterval: 10 * 1000, // ✅ 10 seconds for very fresh activity data
+      dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
       // Keep previous data while revalidating for smooth UX
       keepPreviousData: true,
