@@ -323,12 +323,20 @@ function MenuItem({
     
     return (
       <li key={nav.name || index}>
-        <button
-          onClick={() => onNavigate(nav.path!)}
-          disabled={isRouteLoading}
+        <Link
+          href={nav.path}
+          onClick={(e) => {
+            // Middle-click never reaches onClick; browser handles it natively.
+            // Allow Ctrl+click / Cmd+click to open in a new tab.
+            if (e.ctrlKey || e.metaKey) return;
+            e.preventDefault();
+            onNavigate(nav.path!);
+          }}
+          tabIndex={isRouteLoading ? -1 : undefined}
           className={`menu-item group ${
             isRouteActive ? "menu-item-active" : "menu-item-inactive"
-          } ${isRouteLoading ? "opacity-70 cursor-wait" : ""}`}
+          } ${isRouteLoading ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
+          aria-disabled={isRouteLoading}
         >
           <span
             className={
@@ -342,7 +350,7 @@ function MenuItem({
             )}
           </span>
           {showText && nav.name ? <span className="menu-item-text">{nav.name}</span> : null}
-        </button>
+        </Link>
       </li>
     );
   }
