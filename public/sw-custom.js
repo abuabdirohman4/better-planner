@@ -109,18 +109,15 @@ function handleTimerStarted(data) {
       startTime: Date.now()
     }
   });
-
-  // Start live countdown in notification
-  startLiveCountdown(data);
 }
 
 // Handle timer updated (every minute)
 function handleTimerUpdated(data) {
   const { taskTitle, remainingSeconds, totalDuration } = data;
-  
+
   // Calculate elapsed time for display
   const elapsedSeconds = totalDuration - remainingSeconds;
-  
+
   // Update the existing notification
   self.registration.showNotification('Timer Running ⏱️', {
     body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
@@ -151,18 +148,12 @@ function handleTimerUpdated(data) {
       startTime: Date.now()
     }
   });
-
-  // Restart live countdown with updated data
-  startLiveCountdown(data);
 }
 
 // Handle timer paused
 function handleTimerPaused(data) {
   const { taskTitle, remainingSeconds, totalDuration } = data;
-  
-  // Stop live countdown when paused
-  stopLiveCountdown();
-  
+
   // Calculate elapsed time for display
   const elapsedSeconds = totalDuration - remainingSeconds;
   
@@ -200,9 +191,6 @@ function handleTimerPaused(data) {
 
 // Handle timer stopped
 function handleTimerStopped() {
-  // Stop live countdown
-  stopLiveCountdown();
-  
   // Clear the live timer notification
   self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
     notifications.forEach(notification => notification.close());
@@ -222,77 +210,6 @@ function requestNotificationPermission() {
   });
 }
 
-// Live countdown variables
-let countdownInterval = null;
-let currentTimerData = null;
-
-// Start live countdown in notification
-function startLiveCountdown(data) {
-  // Stop existing countdown
-  stopLiveCountdown();
-  
-  currentTimerData = data;
-  const { taskTitle, remainingSeconds, totalDuration } = data;
-  
-  if (!remainingSeconds || remainingSeconds <= 0) {
-    return;
-  }
-  
-  // Calculate elapsed time (count up)
-  const elapsedSeconds = totalDuration - remainingSeconds;
-  let currentElapsed = elapsedSeconds;
-  
-  // Update notification every second
-  countdownInterval = setInterval(() => {
-    // Check if timer should be completed
-    if (currentElapsed >= totalDuration) {
-      stopLiveCountdown();
-      return;
-    }
-    
-    // Update notification with live count up
-    self.registration.showNotification('Timer Running ⏱️', {
-      body: `${taskTitle || 'Focus Session'} - ${formatTime(currentElapsed)} / ${formatTime(totalDuration)}`,
-      icon: '/images/logo/logo-icon.svg',
-      badge: '/images/logo/logo-icon.svg',
-      tag: 'live-timer',
-      requireInteraction: false,
-      silent: true,
-      actions: [
-        {
-          action: 'pause',
-          title: '⏸️ Pause'
-        },
-        {
-          action: 'stop',
-          title: '⏹️ Stop'
-        },
-        {
-          action: 'view',
-          title: '👁️ View'
-        }
-      ],
-      data: {
-        taskTitle,
-        elapsedSeconds: currentElapsed,
-        remainingSeconds: totalDuration - currentElapsed,
-        totalDuration,
-        startTime: Date.now()
-      }
-    });
-    
-    currentElapsed++;
-  }, 1000);
-}
-
-// Stop live countdown
-function stopLiveCountdown() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-  currentTimerData = null;
-}
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
@@ -323,11 +240,6 @@ self.addEventListener('notificationclick', (event) => {
           });
         });
       });
-      
-      // Restart live countdown after resume
-      if (currentTimerData) {
-        startLiveCountdown(currentTimerData);
-      }
       break;
       
     case 'stop':
