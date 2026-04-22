@@ -19,258 +19,180 @@ self.addEventListener('activate', (event) => {
 // Handle messages from the main thread
 self.addEventListener('message', (event) => {
   const { type, data } = event.data;
-  
+
   switch (type) {
+    // OS notifications temporarily disabled — re-enable when needed for mobile PWA
+    // case 'TIMER_COMPLETED':
+    //   handleTimerCompletion(data);
+    //   break;
+    // case 'TIMER_STARTED':
+    //   handleTimerStarted(data);
+    //   break;
+    // case 'TIMER_UPDATED':
+    //   handleTimerUpdated(data);
+    //   break;
+    // case 'TIMER_PAUSED':
+    //   handleTimerPaused(data);
+    //   break;
+    // case 'TIMER_STOPPED':
+    //   handleTimerStopped();
+    //   break;
+    // case 'REQUEST_NOTIFICATION_PERMISSION':
+    //   requestNotificationPermission();
+    //   break;
     case 'TIMER_COMPLETED':
-      handleTimerCompletion(data);
-      break;
     case 'TIMER_STARTED':
-      handleTimerStarted(data);
-      break;
     case 'TIMER_UPDATED':
-      handleTimerUpdated(data);
-      break;
     case 'TIMER_PAUSED':
-      handleTimerPaused(data);
-      break;
     case 'TIMER_STOPPED':
-      handleTimerStopped();
-      break;
     case 'REQUEST_NOTIFICATION_PERMISSION':
-      requestNotificationPermission();
+      // OS notifications disabled — no-op for now
       break;
     default:
-      console.log('Unknown message type:', type);
-  }
-});
-
-// Handle timer completion
-function handleTimerCompletion(data) {
-  const { taskTitle, soundId } = data;
-  
-  // Show notification
-  self.registration.showNotification('Timer Completed! 🎉', {
-    body: `Your ${taskTitle || 'focus session'} is complete!`,
-    icon: '/images/logo/logo-icon.svg',
-    badge: '/images/logo/logo-icon.svg',
-    tag: 'timer-completion',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'view',
-        title: 'View Results'
-      }
-    ]
-  });
-
-  // Play completion sound
-  if (soundId && soundId !== 'none') {
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'PLAY_COMPLETION_SOUND',
-          data: { soundId }
-        });
-      });
-    });
-  }
-}
-
-// Handle timer started
-function handleTimerStarted(data) {
-  const { taskTitle, duration, soundId } = data;
-  
-  // Show persistent notification with timer
-  self.registration.showNotification('Timer Running ⏱️', {
-    body: `${taskTitle || 'Focus Session'} - 00:00 / ${formatTime(duration)}`,
-    icon: '/images/logo/logo-icon.svg',
-    badge: '/images/logo/logo-icon.svg',
-    tag: 'live-timer',
-    requireInteraction: false,
-    silent: true,
-    actions: [
-      {
-        action: 'pause',
-        title: '⏸️ Pause'
-      },
-      {
-        action: 'stop',
-        title: '⏹️ Stop'
-      },
-      {
-        action: 'view',
-        title: '👁️ View'
-      }
-    ],
-    data: {
-      taskTitle,
-      duration,
-      soundId,
-      startTime: Date.now()
-    }
-  });
-}
-
-// Handle timer updated (every minute)
-function handleTimerUpdated(data) {
-  const { taskTitle, remainingSeconds, totalDuration } = data;
-
-  // Calculate elapsed time for display
-  const elapsedSeconds = totalDuration - remainingSeconds;
-
-  // Update the existing notification
-  self.registration.showNotification('Timer Running ⏱️', {
-    body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
-    icon: '/images/logo/logo-icon.svg',
-    badge: '/images/logo/logo-icon.svg',
-    tag: 'live-timer',
-    requireInteraction: false,
-    silent: true,
-    actions: [
-      {
-        action: 'pause',
-        title: '⏸️ Pause'
-      },
-      {
-        action: 'stop',
-        title: '⏹️ Stop'
-      },
-      {
-        action: 'view',
-        title: '👁️ View'
-      }
-    ],
-    data: {
-      taskTitle,
-      remainingSeconds,
-      elapsedSeconds,
-      totalDuration,
-      startTime: Date.now()
-    }
-  });
-}
-
-// Handle timer paused
-function handleTimerPaused(data) {
-  const { taskTitle, remainingSeconds, totalDuration } = data;
-
-  // Calculate elapsed time for display
-  const elapsedSeconds = totalDuration - remainingSeconds;
-  
-  // Update notification to show paused state
-  self.registration.showNotification('Timer Paused ⏸️', {
-    body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
-    icon: '/images/logo/logo-icon.svg',
-    badge: '/images/logo/logo-icon.svg',
-    tag: 'live-timer',
-    requireInteraction: false,
-    silent: true,
-    actions: [
-      {
-        action: 'resume',
-        title: '▶️ Resume'
-      },
-      {
-        action: 'stop',
-        title: '⏹️ Stop'
-      },
-      {
-        action: 'view',
-        title: '👁️ View'
-      }
-    ],
-    data: {
-      taskTitle,
-      remainingSeconds,
-      elapsedSeconds,
-      totalDuration,
-      paused: true
-    }
-  });
-}
-
-// Handle timer stopped
-function handleTimerStopped() {
-  // Clear the live timer notification
-  self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
-    notifications.forEach(notification => notification.close());
-  });
-}
-
-// Request notification permission
-function requestNotificationPermission() {
-  // Service Workers can't request permission directly
-  // The main thread must handle this
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'REQUEST_NOTIFICATION_PERMISSION'
-      });
-    });
-  });
-}
-
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  const { action, data } = event;
-  
-  switch (action) {
-    case 'pause':
-      // Send pause command to main thread
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'TIMER_ACTION',
-            action: 'pause'
-          });
-        });
-      });
-      break;
-      
-    case 'resume':
-      // Send resume command to main thread
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'TIMER_ACTION',
-            action: 'resume'
-          });
-        });
-      });
-      break;
-      
-    case 'stop':
-      // Send stop command to main thread
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'TIMER_ACTION',
-            action: 'stop'
-          });
-        });
-      });
-      break;
-      
-    case 'view':
-    default:
-      // Focus the app window
-      event.waitUntil(
+      // Play sound messages are still forwarded to clients
+      if (type === 'PLAY_COMPLETION_SOUND') {
         self.clients.matchAll().then(clients => {
-          if (clients.length > 0) {
-            return clients[0].focus();
-          } else {
-            return self.clients.openWindow(data?.url || '/execution/daily-sync');
-          }
-        })
-      );
-      break;
+          clients.forEach(client => client.postMessage(event.data));
+        });
+      }
   }
 });
 
-// Format time helper
+// ─── OS Notification handlers (disabled — uncomment to re-enable for mobile PWA) ───
+
+// // Handle timer completion
+// function handleTimerCompletion(data) {
+//   const { taskTitle, soundId } = data;
+//
+//   // Show notification
+//   self.registration.showNotification('Timer Completed! 🎉', {
+//     body: `Your ${taskTitle || 'focus session'} is complete!`,
+//     icon: '/images/logo/logo-icon.svg',
+//     badge: '/images/logo/logo-icon.svg',
+//     tag: 'timer-completion',
+//     requireInteraction: true,
+//     actions: [{ action: 'view', title: 'View Results' }]
+//   });
+//
+//   // Play completion sound
+//   if (soundId && soundId !== 'none') {
+//     self.clients.matchAll().then(clients => {
+//       clients.forEach(client => {
+//         client.postMessage({ type: 'PLAY_COMPLETION_SOUND', data: { soundId } });
+//       });
+//     });
+//   }
+// }
+
+// // Handle timer started
+// function handleTimerStarted(data) {
+//   const { taskTitle, duration, soundId } = data;
+//   self.registration.showNotification('Timer Running ⏱️', {
+//     body: `${taskTitle || 'Focus Session'} - 00:00 / ${formatTime(duration)}`,
+//     icon: '/images/logo/logo-icon.svg',
+//     badge: '/images/logo/logo-icon.svg',
+//     tag: 'live-timer',
+//     requireInteraction: false,
+//     silent: true,
+//     actions: [
+//       { action: 'pause', title: '⏸️ Pause' },
+//       { action: 'stop', title: '⏹️ Stop' },
+//       { action: 'view', title: '👁️ View' }
+//     ],
+//     data: { taskTitle, duration, soundId, startTime: Date.now() }
+//   });
+// }
+
+// // Handle timer updated (every minute)
+// function handleTimerUpdated(data) {
+//   const { taskTitle, remainingSeconds, totalDuration } = data;
+//   const elapsedSeconds = totalDuration - remainingSeconds;
+//   self.registration.showNotification('Timer Running ⏱️', {
+//     body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
+//     icon: '/images/logo/logo-icon.svg',
+//     badge: '/images/logo/logo-icon.svg',
+//     tag: 'live-timer',
+//     requireInteraction: false,
+//     silent: true,
+//     actions: [
+//       { action: 'pause', title: '⏸️ Pause' },
+//       { action: 'stop', title: '⏹️ Stop' },
+//       { action: 'view', title: '👁️ View' }
+//     ],
+//     data: { taskTitle, remainingSeconds, elapsedSeconds, totalDuration, startTime: Date.now() }
+//   });
+// }
+
+// // Handle timer paused
+// function handleTimerPaused(data) {
+//   const { taskTitle, remainingSeconds, totalDuration } = data;
+//   const elapsedSeconds = totalDuration - remainingSeconds;
+//   self.registration.showNotification('Timer Paused ⏸️', {
+//     body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
+//     icon: '/images/logo/logo-icon.svg',
+//     badge: '/images/logo/logo-icon.svg',
+//     tag: 'live-timer',
+//     requireInteraction: false,
+//     silent: true,
+//     actions: [
+//       { action: 'resume', title: '▶️ Resume' },
+//       { action: 'stop', title: '⏹️ Stop' },
+//       { action: 'view', title: '👁️ View' }
+//     ],
+//     data: { taskTitle, remainingSeconds, elapsedSeconds, totalDuration, paused: true }
+//   });
+// }
+
+// // Handle timer stopped
+// function handleTimerStopped() {
+//   self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
+//     notifications.forEach(notification => notification.close());
+//   });
+// }
+
+// // Request notification permission
+// function requestNotificationPermission() {
+//   self.clients.matchAll().then(clients => {
+//     clients.forEach(client => {
+//       client.postMessage({ type: 'REQUEST_NOTIFICATION_PERMISSION' });
+//     });
+//   });
+// }
+
+// ─── Notification click handler (disabled — uncomment with handlers above) ───
+
+// self.addEventListener('notificationclick', (event) => {
+//   event.notification.close();
+//   const { action, data } = event;
+//   switch (action) {
+//     case 'pause':
+//       self.clients.matchAll().then(clients => {
+//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'pause' }));
+//       });
+//       break;
+//     case 'resume':
+//       self.clients.matchAll().then(clients => {
+//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'resume' }));
+//       });
+//       break;
+//     case 'stop':
+//       self.clients.matchAll().then(clients => {
+//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'stop' }));
+//       });
+//       break;
+//     case 'view':
+//     default:
+//       event.waitUntil(
+//         self.clients.matchAll().then(clients => {
+//           if (clients.length > 0) return clients[0].focus();
+//           return self.clients.openWindow(data?.url || '/execution/daily-sync');
+//         })
+//       );
+//       break;
+//   }
+// });
+
+// Format time helper (keep for when notifications are re-enabled)
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -281,7 +203,6 @@ function formatTime(seconds) {
 self.addEventListener('sync', (event) => {
   if (event.tag === 'timer-sync') {
     console.log('🔄 Timer background sync triggered');
-    // Handle any background timer sync logic here
   }
 });
 

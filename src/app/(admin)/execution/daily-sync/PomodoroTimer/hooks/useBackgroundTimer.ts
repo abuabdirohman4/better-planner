@@ -67,37 +67,25 @@ export function useBackgroundTimer() {
   };
 
   const showCompletionNotification = () => {
-    if ('Notification' in window && notificationPermissionRef.current === 'granted') {
-      // Try to use Service Worker first, fallback to direct notification
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'TIMER_COMPLETED',
-          data: {
-            taskTitle: activeTask?.title,
-            soundId: settings.soundId
-          }
-        });
-      } else {
-        // Fallback to direct notification
-        const notification = new Notification('Timer Completed! 🎉', {
-          body: `Your ${activeTask?.title || 'focus session'} is complete!`,
-          icon: '/images/logo/logo-icon.svg',
-          badge: '/images/logo/logo-icon.svg',
-          tag: 'timer-completion',
-          requireInteraction: true
-        });
-
-        notification.onclick = () => {
-          window.focus();
-          notification.close();
-        };
-
-        // Auto-close after 10 seconds
-        setTimeout(() => {
-          notification.close();
-        }, 10000);
-      }
-    }
+    // OS notifications disabled — re-enable for mobile PWA when needed
+    // if ('Notification' in window && notificationPermissionRef.current === 'granted') {
+    //   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    //     navigator.serviceWorker.controller.postMessage({
+    //       type: 'TIMER_COMPLETED',
+    //       data: { taskTitle: activeTask?.title, soundId: settings.soundId }
+    //     });
+    //   } else {
+    //     const notification = new Notification('Timer Completed! 🎉', {
+    //       body: `Your ${activeTask?.title || 'focus session'} is complete!`,
+    //       icon: '/images/logo/logo-icon.svg',
+    //       badge: '/images/logo/logo-icon.svg',
+    //       tag: 'timer-completion',
+    //       requireInteraction: true
+    //     });
+    //     notification.onclick = () => { window.focus(); notification.close(); };
+    //     setTimeout(() => { notification.close(); }, 10000);
+    //   }
+    // }
   };
 
   const playCompletionSound = async (soundId?: string) => {
