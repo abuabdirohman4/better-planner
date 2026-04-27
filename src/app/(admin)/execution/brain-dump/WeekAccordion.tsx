@@ -16,6 +16,7 @@ interface WeekAccordionProps {
   dumpsByDate: Map<string, BrainDumpItem>;
   saveDump: (date: string, content: string) => Promise<void>;
   isSaving: boolean;
+  hideEmpty: boolean;
 }
 
 const WeekAccordion: React.FC<WeekAccordionProps> = ({
@@ -27,12 +28,15 @@ const WeekAccordion: React.FC<WeekAccordionProps> = ({
   dumpsByDate,
   saveDump,
   isSaving,
+  hideEmpty,
 }) => {
   // Hitung 7 tanggal untuk minggu ini (Senin=1 s.d. Minggu=7)
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = getDateFromWeek(year, weekNumber, i + 1);
     return getLocalDateString(date);
   });
+
+  const visibleDays = hideEmpty ? days.filter(d => dumpsByDate.has(d)) : days;
 
   // Subtitle rentang tanggal: "28 Apr – 4 Mei"
   const firstDay = new Date(days[0] + 'T12:00:00');
@@ -77,7 +81,7 @@ const WeekAccordion: React.FC<WeekAccordionProps> = ({
         }`}
       >
         <div className="px-5 pb-5 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-          {days.map((date) => (
+          {visibleDays.map((date) => (
             <DayBrainDump
               key={date}
               date={date}

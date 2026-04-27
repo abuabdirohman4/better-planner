@@ -9,7 +9,9 @@ import {
   formatQParam,
   getPrevQuarter,
   getNextQuarter,
+  getDateFromWeek,
 } from '@/lib/quarterUtils';
+import { getLocalDateString } from '@/lib/dateUtils';
 import { useBrainDumpQuarter } from './hooks/useBrainDumpQuarter';
 import WeekAccordion from './WeekAccordion';
 
@@ -36,6 +38,8 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
     Array.from({ length: totalWeeks }, (_, i) => i === currentWeekIndex)
   );
 
+  const [hideEmpty, setHideEmpty] = useState(false);
+
   const toggleWeek = (index: number) => {
     setOpenStates((prev) => prev.map((v, i) => (i === index ? !v : v)));
   };
@@ -54,13 +58,33 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
     weekNumber: startWeek + i,       // absolute week number
   }));
 
+  const visibleWeeks = hideEmpty
+    ? weeks.filter(({ weekNumber }) =>
+        Array.from({ length: 7 }, (_, i) =>
+          getLocalDateString(getDateFromWeek(year, weekNumber, i + 1))
+        ).some(d => dumpsByDate.has(d))
+      )
+    : weeks;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       {/* Quarter header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Brain Dump
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Brain Dump
+          </h1>
+          <button
+            onClick={() => setHideEmpty(v => !v)}
+            className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+              hideEmpty
+                ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            {hideEmpty ? 'Tampilkan semua' : 'Sembunyikan kosong'}
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateQuarter('prev')}
@@ -97,7 +121,9 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
       {/* 13 Week Accordions */}
       {!isLoading && (
         <div className="space-y-3">
-          {weeks.map(({ weekInQuarter, weekNumber }, index) => (
+          {visibleWeeks.map(({ weekInQuarter, weekNumber }) => {
+            const index = weekNumber - startWeek;
+            return (
             <WeekAccordion
               key={weekNumber}
               weekInQuarter={weekInQuarter}
@@ -108,8 +134,10 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
               dumpsByDate={dumpsByDate}
               saveDump={saveDump}
               isSaving={isSaving}
+              hideEmpty={hideEmpty}
             />
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
