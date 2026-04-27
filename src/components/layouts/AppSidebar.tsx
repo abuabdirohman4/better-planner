@@ -15,6 +15,7 @@ import {
   TaskIcon,
   EyeIcon,
   CheckCircleIcon,
+  PencilIcon,
   // DocsIcon,
   ShootingStarIcon,
 } from "@/lib/icons";
@@ -39,6 +40,11 @@ const executionNav: NavItem[] = [
     icon: <TaskIcon />,
     name: "Daily Sync",
     path: "/execution/daily-sync",
+  },
+  {
+    icon: <PencilIcon />,
+    name: "Brain Dump",
+    path: "/execution/brain-dump",
   },
   {
     icon: <CalenderIcon />,
