@@ -42,11 +42,6 @@ const executionNav: NavItem[] = [
     path: "/execution/daily-sync",
   },
   {
-    icon: <PencilIcon />,
-    name: "Brain Dump",
-    path: "/execution/brain-dump",
-  },
-  {
     icon: <CalenderIcon />,
     name: "Weekly Sync",
     path: "/execution/weekly-sync",
@@ -55,6 +50,11 @@ const executionNav: NavItem[] = [
     icon: <CheckCircleIcon />,
     name: "Habit Tracker",
     path: "/habits/monthly",
+  },
+  {
+    icon: <PencilIcon />,
+    name: "Brain Dump",
+    path: "/execution/brain-dump",
   },
 ];
 

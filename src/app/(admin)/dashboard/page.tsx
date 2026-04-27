@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { createClient } from '@/lib/supabase/server'
-import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon, CheckCircleIcon } from '@/lib/icons';
+import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon, CheckCircleIcon, PencilIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import QuarterSelector from '@/components/common/QuarterSelector';
 import WeeklyProgressChartWrapper from './components/WeeklyProgressChartWrapper';
@@ -126,6 +126,19 @@ async function DashboardContent() {
               <div>
                 <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Habit Tracker</h3>
                 <p className="text-xs text-gray-500 hidden md:block">Tracking Habit</p>
+              </div>
+            </Link>
+            {/* Brain Dump Card */}
+            <Link 
+              href="/execution/brain-dump"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+            >
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
+                <PencilIcon className="w-6 h-6 text-[#7F56D9]" />
+              </div>
+              <div>
+                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Brain Dump</h3>
+                <p className="text-xs text-gray-500 hidden md:block">Ide dan refleksi</p>
               </div>
             </Link>
             {/* Work Quests Card */}
