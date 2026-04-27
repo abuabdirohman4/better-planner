@@ -528,7 +528,10 @@ export function useDailyPlanManagement(
         dailyPlanItem.item_id,
         status,
         dailyPlanItem.item_type,
-        selectedDate
+        selectedDate,
+        year,
+        quarter,
+        weekNumber
       );
 
       // Force re-fetch from database to get updated data

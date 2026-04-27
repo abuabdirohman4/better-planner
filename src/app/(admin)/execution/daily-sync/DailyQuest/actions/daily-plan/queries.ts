@@ -130,15 +130,33 @@ export async function updatePlanItemStatusRpc(
   return data;
 }
 
+export async function queryWeeklyGoalIdsForWeek(
+  supabase: SupabaseClient,
+  userId: string,
+  year: number,
+  weekNumber: number
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('weekly_goals')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('year', year)
+    .eq('week_number', weekNumber);
+  return (data || []).map((r: { id: string }) => r.id);
+}
+
 export async function updateWeeklyGoalItemsStatus(
   supabase: SupabaseClient,
   taskId: string,
-  status: string
+  status: string,
+  weeklyGoalIds: string[]
 ): Promise<void> {
+  if (weeklyGoalIds.length === 0) return;
   const { error } = await supabase
     .from('weekly_goal_items')
     .update({ status })
-    .eq('item_id', taskId);
+    .eq('item_id', taskId)
+    .in('weekly_goal_id', weeklyGoalIds);
   if (error) console.warn('Error updating weekly_goal_items status:', error);
   // Don't throw — task status is already updated
 }

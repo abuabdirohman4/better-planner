@@ -64,7 +64,7 @@ describe('updateWeeklyGoalItemsStatus', () => {
   it('calls update on weekly_goal_items', async () => {
     const b = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabase({ fromBuilder: b });
-    await updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE');
+    await updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE', 'goal-1');
     expect(supabase.from).toHaveBeenCalledWith('weekly_goal_items');
     expect(b.update).toHaveBeenCalledWith({ status: 'DONE' });
   });
@@ -73,7 +73,7 @@ describe('updateWeeklyGoalItemsStatus', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const b = makeQueryBuilder({ data: null, error: { message: 'warn error' } });
     const supabase = makeSupabase({ fromBuilder: b });
-    await expect(updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE')).resolves.toBeUndefined();
+    await expect(updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE', 'goal-1')).resolves.toBeUndefined();
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });

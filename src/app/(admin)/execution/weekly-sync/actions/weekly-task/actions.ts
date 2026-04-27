@@ -7,7 +7,9 @@ import {
   rpcUpdateTaskStatus,
   updateWeeklyGoalItemsStatus,
 } from './queries';
+import { queryExistingWeeklyGoal } from '../weekly-goals/queries';
 import { buildTitleMap, resolveWeekDate } from './logic';
+import { getWeekAndYearFromDate } from '@/lib/quarterUtils';
 
 export async function getTaskTitles(taskIds: string[]): Promise<Record<string, string>> {
   try {
@@ -39,8 +41,16 @@ export async function updateWeeklyTaskStatus(
     if (!user) throw new Error('User not authenticated');
 
     const resolvedDate = resolveWeekDate(weekDate);
+
+    // Resolve weeklyGoalId agar update hanya menyentuh minggu yang aktif
+    const { year, weekNumber } = getWeekAndYearFromDate(new Date(resolvedDate));
+    const weeklyGoal = await queryExistingWeeklyGoal(supabase, user.id, year, weekNumber, goalSlot);
+
     const data = await rpcUpdateTaskStatus(supabase, taskId, status, user.id, goalSlot, resolvedDate);
-    await updateWeeklyGoalItemsStatus(supabase, taskId, status);
+
+    if (weeklyGoal) {
+      await updateWeeklyGoalItemsStatus(supabase, taskId, status, weeklyGoal.id);
+    }
 
     revalidatePath('/execution/weekly-sync');
     revalidatePath('/planning/main-quests');

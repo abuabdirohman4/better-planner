@@ -34,12 +34,14 @@ export async function rpcUpdateTaskStatus(
 export async function updateWeeklyGoalItemsStatus(
   supabase: SupabaseClient,
   taskId: string,
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE'
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE',
+  weeklyGoalId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('weekly_goal_items')
     .update({ status })
-    .eq('item_id', taskId);
+    .eq('item_id', taskId)
+    .eq('weekly_goal_id', weeklyGoalId);
   if (error) console.warn('Error updating weekly_goal_items status:', error);
   // Don't throw — task status already updated by RPC
 }

@@ -12,6 +12,7 @@ import {
   updatePlanItemField,
   updatePlanItemStatusRpc,
   updateWeeklyGoalItemsStatus,
+  queryWeeklyGoalIdsForWeek,
   deletePlanItem,
   updatePlanItemsDisplayOrderBatch,
 } from './queries';
@@ -89,7 +90,10 @@ export async function updateDailyPlanItemAndTaskStatus(
   taskId: string,
   status: 'TODO' | 'IN_PROGRESS' | 'DONE',
   itemType?: string,
-  date?: string
+  date?: string,
+  year?: number,
+  quarter?: number,
+  weekNumber?: number
 ) {
   try {
     const supabase = await createClient();
@@ -100,7 +104,14 @@ export async function updateDailyPlanItemAndTaskStatus(
     const resolvedItemId = dailyPlanItemId.startsWith('virtual-') ? null : dailyPlanItemId;
 
     const data = await updatePlanItemStatusRpc(supabase, taskId, status, user.id, resolvedDate, resolvedItemId);
-    await updateWeeklyGoalItemsStatus(supabase, taskId, status);
+
+    // Scope update ke minggu yang sedang aktif menggunakan year+quarter+weekNumber dari caller
+    // weekNumber di sini adalah week-of-quarter (1-13), konsisten dengan yang tersimpan di DB
+    if (year !== undefined && quarter !== undefined && weekNumber !== undefined) {
+      const weeklyGoalIds = await queryWeeklyGoalIdsForWeek(supabase, user.id, year, weekNumber);
+      await updateWeeklyGoalItemsStatus(supabase, taskId, status, weeklyGoalIds);
+    }
+
     revalidatePlanning();
     return data;
   } catch (error) {

@@ -180,15 +180,22 @@ describe('updateWeeklyGoalItemsStatus', () => {
     const builder = makeQueryBuilder({ data: null, error: { message: 'warn fail' } });
     const supabase = makeSupabaseFrom(builder);
     // Should NOT throw
-    await expect(updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE')).resolves.toBeUndefined();
+    await expect(updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE', ['goal-1'])).resolves.toBeUndefined();
   });
 
-  it('updates with correct filter on item_id', async () => {
+  it('updates with correct filter on item_id and weekly_goal_id', async () => {
     const builder = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabaseFrom(builder);
-    await updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE');
+    await updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE', ['goal-1', 'goal-2']);
     expect(builder.update).toHaveBeenCalledWith({ status: 'DONE' });
     expect(builder.eq).toHaveBeenCalledWith('item_id', 'task-1');
+  });
+
+  it('skips update when weeklyGoalIds is empty', async () => {
+    const builder = makeQueryBuilder({ data: null, error: null });
+    const supabase = makeSupabaseFrom(builder);
+    await updateWeeklyGoalItemsStatus(supabase, 'task-1', 'DONE', []);
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });
 
