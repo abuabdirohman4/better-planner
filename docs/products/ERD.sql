@@ -70,7 +70,7 @@ CREATE TABLE "weekly_goals" (
   "goal_slot" INTEGER NOT NULL, -- 1, 2, atau 3
   "created_at" TIMESTAMPTZ DEFAULT now(),
   "updated_at" TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, year, week_number, goal_slot)
+  UNIQUE(user_id, year, quarter, week_number, goal_slot)
 );
 
 -- Tabel Weekly Goal Items (Item-item dalam setiap Goal Slot)

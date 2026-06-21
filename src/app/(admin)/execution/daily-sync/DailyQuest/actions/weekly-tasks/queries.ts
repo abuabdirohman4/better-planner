@@ -44,6 +44,7 @@ export async function queryWeeklyGoals(
   supabase: SupabaseClient,
   userId: string,
   year: number,
+  quarter: number,
   weekNumber: number
 ): Promise<RawWeeklyGoal[]> {
   const { data, error } = await supabase
@@ -51,6 +52,7 @@ export async function queryWeeklyGoals(
     .select('id, goal_slot')
     .eq('user_id', userId)
     .eq('year', year)
+    .eq('quarter', quarter)
     .eq('week_number', weekNumber);
   if (error) throw error;
   return data || [];

@@ -48,6 +48,7 @@ export async function setWeeklyGoalItems(data: {
       supabase,
       user.id,
       data.year,
+      data.quarter,
       data.weekNumber,
       data.goalSlot
     );

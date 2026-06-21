@@ -20,6 +20,7 @@ import {
 
 export async function getTasksForWeek(
   year: number,
+  quarter: number,
   weekNumber: number,
   selectedDate?: string
 ) {
@@ -29,7 +30,7 @@ export async function getTasksForWeek(
   const userId = user.id;
 
   // 1. Get weekly goals
-  const weeklyGoals = await queryWeeklyGoals(supabase, userId, year, weekNumber);
+  const weeklyGoals = await queryWeeklyGoals(supabase, userId, year, quarter, weekNumber);
   if (!weeklyGoals.length) return [];
 
   const weeklyGoalIds = weeklyGoals.map(g => g.id);

@@ -19,11 +19,12 @@ describe('queryWeeklyGoals', () => {
     const builder = makeQueryBuilder({ data: goals, error: null });
     const supabase = makeSupabaseFrom(builder);
 
-    const result = await queryWeeklyGoals(supabase, 'user-1', 2026, 12);
+    const result = await queryWeeklyGoals(supabase, 'user-1', 2026, 1, 12);
 
     expect(supabase.from).toHaveBeenCalledWith('weekly_goals');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(builder.eq).toHaveBeenCalledWith('year', 2026);
+    expect(builder.eq).toHaveBeenCalledWith('quarter', 1);
     expect(builder.eq).toHaveBeenCalledWith('week_number', 12);
     expect(result).toEqual(goals);
   });
@@ -31,14 +32,14 @@ describe('queryWeeklyGoals', () => {
   it('returns empty array when data is null', async () => {
     const builder = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabaseFrom(builder);
-    const result = await queryWeeklyGoals(supabase, 'user-1', 2026, 12);
+    const result = await queryWeeklyGoals(supabase, 'user-1', 2026, 1, 12);
     expect(result).toEqual([]);
   });
 
   it('throws on error', async () => {
     const builder = makeQueryBuilder({ data: null, error: { message: 'db fail' } });
     const supabase = makeSupabaseFrom(builder);
-    await expect(queryWeeklyGoals(supabase, 'user-1', 2026, 12)).rejects.toMatchObject({ message: 'db fail' });
+    await expect(queryWeeklyGoals(supabase, 'user-1', 2026, 1, 12)).rejects.toMatchObject({ message: 'db fail' });
   });
 });
 

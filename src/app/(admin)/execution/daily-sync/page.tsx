@@ -41,7 +41,7 @@ export default function DailySyncPage() {
   const selectedDateStr = getLocalDateString(selectedDate);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-  const { loading, initialLoading, dailyPlan, mutate, completedSessions } = useDailyPlanManagement(year, displayWeek, selectedDateStr);
+  const { loading, initialLoading, dailyPlan, mutate, completedSessions } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
 
   // Journal modal hook
   const {
@@ -136,6 +136,7 @@ export default function DailySyncPage() {
               </div>
               <DailySyncClient
                 year={year}
+                quarter={quarter}
                 weekNumber={displayWeek}
                 selectedDate={selectedDateStr}
                 onSetActiveTask={handleSetActiveTask}

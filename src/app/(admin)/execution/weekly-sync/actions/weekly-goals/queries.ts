@@ -18,6 +18,7 @@ export async function queryExistingWeeklyGoal(
   supabase: SupabaseClient,
   userId: string,
   year: number,
+  quarter: number,
   weekNumber: number,
   goalSlot: number
 ): Promise<{ id: string } | null> {
@@ -26,6 +27,7 @@ export async function queryExistingWeeklyGoal(
     .select('id')
     .eq('user_id', userId)
     .eq('year', year)
+    .eq('quarter', quarter)
     .eq('week_number', weekNumber)
     .eq('goal_slot', goalSlot)
     .single();

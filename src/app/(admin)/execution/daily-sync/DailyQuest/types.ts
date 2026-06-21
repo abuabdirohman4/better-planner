@@ -7,6 +7,7 @@ import type {
 
 export interface DailySyncClientProps {
   year: number;
+  quarter: number;
   weekNumber: number;
   selectedDate: string;
   onSetActiveTask?: (task: { id: string; title: string; item_type: string; focus_duration?: number; completed_sessions?: number; target_sessions?: number }) => void;

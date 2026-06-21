@@ -7,7 +7,7 @@ import { dailySyncKeys } from '@/lib/swr';
  * Custom hook for fetching tasks for week selection
  * Fallback for when ultra-fast hook doesn't work
  */
-export function useTasksForWeek(year: number, weekNumber: number, selectedDate?: string) {
+export function useTasksForWeek(year: number, quarter: number, weekNumber: number, selectedDate?: string) {
   const { 
     data: tasks = [], 
     error, 
@@ -15,7 +15,7 @@ export function useTasksForWeek(year: number, weekNumber: number, selectedDate?:
     mutate 
   } = useSWR(
     dailySyncKeys.tasksForWeek(year, weekNumber, selectedDate),
-    () => getTasksForWeek(year, weekNumber, selectedDate),
+    () => getTasksForWeek(year, quarter, weekNumber, selectedDate),
     {
       revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - weekly tasks don't need focus revalidation
       revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data

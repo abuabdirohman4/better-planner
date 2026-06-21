@@ -33,24 +33,32 @@ describe('queryExistingWeeklyGoal', () => {
   it('returns goal when found', async () => {
     const b = makeQueryBuilder({ data: { id: 'goal-1' }, error: null });
     const supabase = makeSupabase({ fromBuilder: b });
-    const result = await queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1);
+    const result = await queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1, 1);
     expect(result).toEqual({ id: 'goal-1' });
   });
 
   it('returns null when PGRST116 (not found)', async () => {
     const b = makeQueryBuilder({ data: null, error: { code: 'PGRST116', message: 'not found' } });
     const supabase = makeSupabase({ fromBuilder: b });
-    const result = await queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1);
+    const result = await queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1, 1);
     expect(result).toBeNull();
   });
 
   it('throws on non-PGRST116 error', async () => {
     const b = makeQueryBuilder({ data: null, error: { code: '42P01', message: 'table not found' } });
     const supabase = makeSupabase({ fromBuilder: b });
-    await expect(queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1)).rejects.toMatchObject({
+    await expect(queryExistingWeeklyGoal(supabase, 'user-1', 2026, 1, 1, 1)).rejects.toMatchObject({
       message: 'table not found',
     });
   });
+
+  it('applies quarter filter', async () => {
+    const b = makeQueryBuilder({ data: { id: 'goal-q2' }, error: null });
+    const supabase = makeSupabase({ fromBuilder: b });
+    await queryExistingWeeklyGoal(supabase, 'user-1', 2026, 2, 5, 1);
+    expect(b.eq).toHaveBeenCalledWith('quarter', 2);
+  });
+});
 });
 
 describe('updateWeeklyGoalQuarter', () => {

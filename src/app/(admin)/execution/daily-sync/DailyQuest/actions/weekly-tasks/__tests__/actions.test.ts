@@ -68,14 +68,14 @@ beforeEach(() => vi.clearAllMocks());
 describe('getTasksForWeek', () => {
   it('throws when user not authenticated', async () => {
     mockCreateClient(null);
-    await expect(getTasksForWeek(2026, 12)).rejects.toThrow('not authenticated');
+    await expect(getTasksForWeek(2026, 1, 12)).rejects.toThrow('not authenticated');
   });
 
   it('returns empty array when no weekly goals found', async () => {
     mockCreateClient();
     vi.mocked(queryWeeklyGoals).mockResolvedValue([]);
 
-    const result = await getTasksForWeek(2026, 12);
+    const result = await getTasksForWeek(2026, 1, 12);
 
     expect(result).toEqual([]);
     expect(queryWeeklyGoalItems).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('getTasksForWeek', () => {
     vi.mocked(queryWeeklyGoals).mockResolvedValue([{ id: 'wg-1', goal_slot: 1 }]);
     vi.mocked(queryWeeklyGoalItems).mockResolvedValue([]);
 
-    const result = await getTasksForWeek(2026, 12);
+    const result = await getTasksForWeek(2026, 1, 12);
 
     expect(result).toEqual([]);
     expect(queryTasksByIds).not.toHaveBeenCalled();
@@ -96,9 +96,9 @@ describe('getTasksForWeek', () => {
     mockCreateClient();
     const { filtered } = setupDefaultMocks();
 
-    const result = await getTasksForWeek(2026, 12);
+    const result = await getTasksForWeek(2026, 1, 12);
 
-    expect(queryWeeklyGoals).toHaveBeenCalledWith(expect.anything(), 'user-1', 2026, 12);
+    expect(queryWeeklyGoals).toHaveBeenCalledWith(expect.anything(), 'user-1', 2026, 1, 12);
     expect(queryWeeklyGoalItems).toHaveBeenCalledWith(expect.anything(), ['wg-1']);
     expect(queryTasksByIds).toHaveBeenCalledWith(expect.anything(), ['task-1']);
     expect(queryMilestonesByIds).toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe('getTasksForWeek', () => {
     mockCreateClient();
     setupDefaultMocks();
 
-    await getTasksForWeek(2026, 12);
+    await getTasksForWeek(2026, 1, 12);
 
     expect(queryCompletedPreviousDayItems).not.toHaveBeenCalled();
     expect(queryTodayPlanItems).not.toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('getTasksForWeek', () => {
     vi.mocked(queryTodayPlanItems).mockResolvedValue(todayRows);
     vi.mocked(filterOutCompletedPreviousDays).mockReturnValue(filtered as any);
 
-    await getTasksForWeek(2026, 12, '2026-03-20');
+    await getTasksForWeek(2026, 1, 12, '2026-03-20');
 
     expect(getPreviousDaysInWeek).toHaveBeenCalledWith('2026-03-20');
     expect(queryCompletedPreviousDayItems).toHaveBeenCalledWith(expect.anything(), 'user-1', previousDays);
@@ -148,7 +148,7 @@ describe('getTasksForWeek', () => {
     vi.mocked(queryCompletedPreviousDayItems).mockResolvedValue([]);
     vi.mocked(queryTodayPlanItems).mockResolvedValue([]);
 
-    await getTasksForWeek(2026, 12, '2026-03-17');
+    await getTasksForWeek(2026, 1, 12, '2026-03-17');
 
     expect(filterOutCompletedPreviousDays).not.toHaveBeenCalled();
   });
@@ -157,9 +157,9 @@ describe('getTasksForWeek', () => {
     mockCreateClient({ id: 'custom-user-id' });
     vi.mocked(queryWeeklyGoals).mockResolvedValue([]);
 
-    await getTasksForWeek(2026, 1);
+    await getTasksForWeek(2026, 1, 1);
 
-    expect(queryWeeklyGoals).toHaveBeenCalledWith(expect.anything(), 'custom-user-id', 2026, 1);
+    expect(queryWeeklyGoals).toHaveBeenCalledWith(expect.anything(), 'custom-user-id', 2026, 1, 1);
   });
 
   it('returns filtered result directly from filterTodoItems when no selectedDate', async () => {
@@ -170,7 +170,7 @@ describe('getTasksForWeek', () => {
     setupDefaultMocks();
     vi.mocked(filterTodoItems).mockReturnValue(expected as any);
 
-    const result = await getTasksForWeek(2026, 5);
+    const result = await getTasksForWeek(2026, 1, 5);
 
     expect(result).toEqual(expected);
   });

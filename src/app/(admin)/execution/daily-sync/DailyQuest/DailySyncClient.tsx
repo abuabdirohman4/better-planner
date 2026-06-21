@@ -17,6 +17,7 @@ import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 const DailySyncClient: React.FC<DailySyncClientProps> = ({
   year,
+  quarter,
   weekNumber,
   selectedDate,
   onSetActiveTask,
@@ -58,7 +59,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     // Work Quest state (unified)
     modalState,
     selectedWorkQuests,
-  } = useDailyPlanManagement(year, weekNumber, selectedDate);
+  } = useDailyPlanManagement(year, quarter, weekNumber, selectedDate);
 
   // Use hook data
   const effectiveDailyPlan = hookDailyPlan || dailyPlan;

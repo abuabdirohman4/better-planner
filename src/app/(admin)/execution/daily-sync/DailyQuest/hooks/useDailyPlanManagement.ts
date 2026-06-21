@@ -234,6 +234,7 @@ function useDailyQuestsForSelection(year: number, quarter: number) {
 
 export function useDailyPlanManagement(
   year: number,
+  quarter: number,
   weekNumber: number,
   selectedDate: string
 ) {
@@ -263,7 +264,7 @@ export function useDailyPlanManagement(
     error: tasksError,
     isLoading: tasksLoading,
     mutate: mutateTasks
-  } = useTasksForWeek(year, weekNumber, selectedDate);
+  } = useTasksForWeek(year, quarter, weekNumber, selectedDate);
 
   // ✅ NEW: Get completed sessions from activity_logs
   const dailyPlanItems = dailyPlan?.daily_plan_items || [];
@@ -303,8 +304,8 @@ export function useDailyPlanManagement(
   // Add Daily Quest selection state
   const [isDailyQuestModalOpen, setIsDailyQuestModalOpen] = useState(false);
   // Use quarterStore directly (same pattern as SideQuestModal) for consistent quarter context
-  const { year: quarterYear, quarter } = useQuarterStore();
-  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(quarterYear, quarter);
+  const { year: quarterYear, quarter: storeQuarter } = useQuarterStore();
+  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(quarterYear, storeQuarter);
   const [selectedDailyQuestIds, setSelectedDailyQuestIds] = useState<Record<string, boolean>>({});
   const [isSavingDailyQuests, setIsSavingDailyQuests] = useState(false);
 

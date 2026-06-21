@@ -9,7 +9,7 @@ import {
 } from './queries';
 import { queryExistingWeeklyGoal } from '../weekly-goals/queries';
 import { buildTitleMap, resolveWeekDate } from './logic';
-import { getWeekAndYearFromDate } from '@/lib/quarterUtils';
+import { getWeekAndYearFromDate, getQuarterFromWeek } from '@/lib/quarterUtils';
 
 export async function getTaskTitles(taskIds: string[]): Promise<Record<string, string>> {
   try {
@@ -44,7 +44,8 @@ export async function updateWeeklyTaskStatus(
 
     // Resolve weeklyGoalId agar update hanya menyentuh minggu yang aktif
     const { year, weekNumber } = getWeekAndYearFromDate(new Date(resolvedDate));
-    const weeklyGoal = await queryExistingWeeklyGoal(supabase, user.id, year, weekNumber, goalSlot);
+    const quarter = getQuarterFromWeek(weekNumber);
+    const weeklyGoal = await queryExistingWeeklyGoal(supabase, user.id, year, quarter, weekNumber, goalSlot);
 
     const data = await rpcUpdateTaskStatus(supabase, taskId, status, user.id, goalSlot, resolvedDate);
 
