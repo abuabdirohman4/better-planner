@@ -287,6 +287,10 @@ NEXT_PUBLIC_ENABLE_TIMER_DEV=true  # Enable timer in dev mode
 
 ## 📖 Additional Documentation
 
+**Product Docs** (visi, status fitur, arah pengembangan):
+- **Roadmap** (hidup): [`docs/products/roadmap.md`](docs/products/roadmap.md) — status F-01…F-08, next up, link ke plan files + beads. **READ di awal sesi** biar tahu konteks fitur mana sudah jadi sebelum nulis kode. **UPDATE tiap `bd close`** — checkbox + status tabel.
+- **BRD** (beku): [`docs/products/BRD.md`](docs/products/BRD.md) — visi, scope, non-functional requirements.
+
 All detailed documentation is in `docs/claude/`:
 
 - **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)
