@@ -4,7 +4,6 @@ import { useActivityStore } from '@/stores/activityStore';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
-import { createClient } from '@/lib/supabase/client';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
 export function useTimerManagement(selectedDateStr: string, openJournalModal: (data: {
@@ -81,33 +80,13 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
                 return;
               }
 
-              // Complete the timer session (this will create activity log and mark session as completed)
-              await completeTimerSession(activeSession.id, deviceId);
+              // Complete the timer session — returns activityLogId directly, no extra query needed
+              const result = await completeTimerSession(activeSession.id, deviceId);
               console.log('✅ Timer session completed successfully');
+              activityLogId = result.activityLogId;
 
               // Mark completion in sessionStorage
               sessionStorage.setItem(`completion-${completionKey}`, now.toString());
-
-              // ✅ FIX: Get the activity log ID after creation
-              const supabase = await createClient();
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                const { data: activityLog } = await supabase
-                  .from('activity_logs')
-                  .select('id')
-                  .eq('user_id', user.id)
-                  .eq('task_id', sessionData.taskId)
-                  .eq('start_time', sessionData.startTime)
-                  .eq('type', 'FOCUS')
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-                  .single();
-
-                if (activityLog) {
-                  activityLogId = activityLog.id;
-                  console.log('✅ Activity log ID found:', activityLogId);
-                }
-              }
             } else {
               // Fallback to old method if no active session found
               console.log('⚠️ No active session found, using fallback method');

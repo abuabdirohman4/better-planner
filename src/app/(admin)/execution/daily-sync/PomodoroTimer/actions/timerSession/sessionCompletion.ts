@@ -25,25 +25,27 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       throw sessionError;
     }
 
-    // ✅ CRITICAL: Validate and correct session duration before completion
     const now = new Date();
-    const startTime = new Date(session.start_time);
-    const actualElapsedSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-    // ✅ FIX: Cap ke target duration agar tidak catat durasi lebih dari yang ditentukan
-    const cappedDuration = Math.min(actualElapsedSeconds, session.target_duration_seconds);
+    const startTimeDate = new Date(session.start_time);
+    const rawDurationSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
+    // Cap to target: timer stops at target duration, never records more.
+    // (App closed & reopened later must still record only the target, not wall-clock gap.)
+    const cappedDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
+    // end_time = start_time + capped duration, so end_time - start_time stays consistent.
+    const endTime = new Date(startTimeDate.getTime() + cappedDurationSeconds * 1000).toISOString();
 
-    // Update session with correct duration if there's a significant difference
-    if (Math.abs(cappedDuration - session.current_duration_seconds) > 5) {
+    // Update session duration if significantly different
+    if (Math.abs(cappedDurationSeconds - session.current_duration_seconds) > 5) {
       await supabase
         .from('timer_sessions')
         .update({
-          current_duration_seconds: cappedDuration,
+          current_duration_seconds: cappedDurationSeconds,
           updated_at: now.toISOString()
         })
         .eq('id', sessionId);
     }
 
-    // ✅ FIX: Check if activity log already exists to prevent duplicates
+    // Check if activity log already exists to prevent duplicates
     const { data: existingLog } = await supabase
       .from('activity_logs')
       .select('id')
@@ -52,23 +54,13 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       .eq('start_time', session.start_time)
       .maybeSingle();
 
+    let activityLogId: string | undefined;
+
     if (!existingLog) {
-      // ✅ CRITICAL FIX: Always calculate actual elapsed time from database timestamps
-      const endTimeDate = new Date(); // Use local time directly
-      const endTime = endTimeDate.toISOString(); // Convert to ISO for database storage
-      const startTimeDate = new Date(session.start_time);
-      const rawDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
-      // ✅ FIX: Cap ke target duration agar activity log tidak catat durasi salah
-      const actualDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
-      const actualDurationMinutes = Math.max(1, Math.round(actualDurationSeconds / 60));
-      
-      // ✅ FIX: Use local date from endTimeDate instead of UTC to handle timezone correctly
-      // This ensures activity log uses the correct local date even when timer completes before 7 AM
-      // getLocalDateString uses getFullYear(), getMonth(), getDate() which return local timezone values
-      const localDate = getLocalDateString(endTimeDate);
-      
-      // Only create activity log if it doesn't exist
-      const { error: logError } = await supabase
+      const durationMinutes = Math.max(1, Math.round(cappedDurationSeconds / 60));
+      const localDate = getLocalDateString(new Date(endTime));
+
+      const { data: newLog, error: logError } = await supabase
         .from('activity_logs')
         .insert({
           user_id: user.id,
@@ -76,33 +68,36 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
           type: session.session_type,
           start_time: session.start_time,
           end_time: endTime,
-          duration_minutes: actualDurationMinutes,
+          duration_minutes: durationMinutes,
           local_date: localDate
-        });
+        })
+        .select('id')
+        .single();
 
       if (logError) {
-        // ✅ FIX: Gracefully handle unique constraint violation (duplicate log).
-        // PostgreSQL error code 23505 = unique_violation.
-        // Happens when two completion paths race — second one can safely skip.
+        // 23505 = unique_violation: two completion paths raced, second can skip
         if (logError.code === '23505') {
           console.log('[completeTimerSession] Activity log already exists (unique constraint), skipping duplicate');
         } else {
           console.error('[completeTimerSession] Activity log error:', logError);
           throw logError;
         }
+      } else {
+        activityLogId = newLog?.id;
       }
     } else {
       console.log('[completeTimerSession] Activity log already exists, skipping creation');
+      activityLogId = existingLog.id;
     }
 
-    // Mark session as completed with end_time
-    const endTime = new Date().toISOString();
+    // Mark session as completed
     const { error: updateError } = await supabase
       .from('timer_sessions')
-      .update({ 
+      .update({
         status: 'COMPLETED',
         end_time: endTime,
-        updated_at: endTime
+        current_duration_seconds: cappedDurationSeconds,
+        updated_at: now.toISOString()
       })
       .eq('id', sessionId);
 
@@ -111,24 +106,9 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       throw updateError;
     }
 
-    // ✅ FIX: Recompute accurate duration from start_time and end_time
-    const startTimeDate = new Date(session.start_time);
-    const endTimeDate = new Date(endTime);
-    const rawDurationSeconds = Math.floor((endTimeDate.getTime() - startTimeDate.getTime()) / 1000);
-    // ✅ FIX: Cap ke target duration agar current_duration_seconds tidak melebihi target
-    const cappedDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
-
-    // Update with accurate duration
-    await supabase
-      .from('timer_sessions')
-      .update({
-        current_duration_seconds: cappedDurationSeconds
-      })
-      .eq('id', sessionId);
-
     console.log(`✅ Timer completed: ${cappedDurationSeconds}s (target: ${session.target_duration_seconds}s)`);
 
-    // ✅ FIX: Check if stop event already exists to prevent duplicates
+    // Check if stop event already exists to prevent duplicates
     const { data: existingStopEvent } = await supabase
       .from('timer_events')
       .select('id')
@@ -137,9 +117,8 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
       .maybeSingle();
 
     if (!existingStopEvent) {
-      // Only log stop event if it doesn't exist
       await logTimerEvent(sessionId, 'stop', {
-        finalDuration: session.current_duration_seconds,
+        finalDuration: cappedDurationSeconds,
         completed: true
       }, deviceId);
     } else {
@@ -147,7 +126,7 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
     }
 
     revalidatePath('/execution/daily-sync');
-    return { success: true };
+    return { success: true, activityLogId };
   } catch (error) {
     console.error('[completeTimerSession] Exception:', error);
     throw error;

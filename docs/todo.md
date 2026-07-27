@@ -1,11 +1,11 @@
 # Issue
-- Benerin Format Laporan Email
-- Ada bug dimana kalau kita isi journal, maka hasil activity log nya jadi doubel
-- Banyak case, waktu real tercata nya lebih dari 25 menit, misal yang di hari ini itu 38 menit, tapi tulisanya tetep 25 menit, seharusnya waktu real nya juga di fix kan ke 25 menti
-- Kalau stop timer, perlu 2x klik
-- Finance hari ini, 31 menit tapi tertulisnya 25 menit
-- Tulisan udh berapa sesi di timer nya gk ke update
-- Di Main Quest, tambahin summary 3 main quest, jadi sekali liat, langsung keliatan progres tiap main quest, tidak perlu pilih satu satu
+- [ ] Benerin Format Laporan Email
+- [ ] Ada bug dimana kalau kita isi journal, maka hasil activity log nya jadi doubel
+- [ ] Banyak case, waktu real tercata nya lebih dari 25 menit, misal yang di hari ini itu 38 menit, tapi tulisanya tetep 25 menit, seharusnya waktu real nya juga di fix kan ke 25 menti
+- [ ] Kalau stop timer, perlu 2x klik
+- [ ] Finance hari ini, 31 menit tapi tertulisnya 25 menit
+- [ ] Tulisan udh berapa sesi di timer nya gk ke update
+- [ ] Di Main Quest, tambahin summary 3 main quest, jadi sekali liat, langsung keliatan progres tiap main quest, tidak perlu pilih satu satu
 
 ## v2.3.0
 Main Quest

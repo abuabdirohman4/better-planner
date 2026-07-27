@@ -159,28 +159,31 @@ export const useTimerStore = create<TimerStoreState>()(
 
       stopTimer: () => {
         const state = get();
-        // Stop focus sound when stopping timer
         get().stopFocusSound();
 
-        if (state.timerState === 'FOCUSING' && state.activeTask && state.secondsElapsed > 0) {
+        // Save session for both FOCUSING and PAUSED states (PAUSED = mid-session stop)
+        if ((state.timerState === 'FOCUSING' || state.timerState === 'PAUSED') && state.activeTask && state.secondsElapsed > 0) {
           const now = new Date();
-          const endTime = now.toISOString();
-          // Use actual startTime from store, not calculated
-          const startTime = state.startTime || new Date(now.getTime() - state.secondsElapsed * 1000).toISOString();
+          // Cap elapsed to target so a manual stop never records more than the focus duration
+          const targetSeconds = (state.activeTask.focus_duration || 25) * 60;
+          const cappedSeconds = Math.min(Math.round(state.secondsElapsed), targetSeconds);
+          const startTimeStr = state.startTime || new Date(now.getTime() - cappedSeconds * 1000).toISOString();
+          // end_time = start + capped so end_time - start_time stays consistent downstream
+          const endTime = new Date(new Date(startTimeStr).getTime() + cappedSeconds * 1000).toISOString();
           set({
             lastSessionComplete: {
               taskId: state.activeTask.id,
               taskTitle: state.activeTask.title,
-              duration: Math.round(state.secondsElapsed),
+              duration: cappedSeconds,
               type: 'FOCUS',
-              startTime,
+              startTime: startTimeStr,
               endTime
             },
             timerState: 'IDLE',
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
-            startTime: null, // Clear startTime
+            startTime: null,
           });
         } else {
           set({
@@ -188,7 +191,7 @@ export const useTimerStore = create<TimerStoreState>()(
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
-            startTime: null, // Clear startTime
+            startTime: null,
           });
         }
       },
@@ -222,9 +225,10 @@ export const useTimerStore = create<TimerStoreState>()(
         if (state.timerState === 'FOCUSING' && newSeconds >= focusDuration) {
           if (state.activeTask) {
             const now = new Date();
-            const endTime = now.toISOString();
             // Use actual startTime from store, not calculated
             const startTime = state.startTime || new Date(now.getTime() - focusDuration * 1000).toISOString();
+            // end_time = start + focusDuration so recorded duration is exactly the target
+            const endTime = new Date(new Date(startTime).getTime() + focusDuration * 1000).toISOString();
 
             // Stop focus sound when timer completes
             get().stopFocusSound();
@@ -243,6 +247,10 @@ export const useTimerStore = create<TimerStoreState>()(
             // This will be handled by useTimerManagement hook
             // We just need to trigger the completion
 
+            const updatedLastActiveTask = state.lastActiveTask ? {
+              ...state.lastActiveTask,
+              completed_sessions: (state.lastActiveTask.completed_sessions ?? 0) + 1,
+            } : null;
             return {
               lastSessionComplete: {
                 taskId: state.activeTask.id,
@@ -257,6 +265,7 @@ export const useTimerStore = create<TimerStoreState>()(
               secondsElapsed: 0,
               activeTask: null,
               breakType: null,
+              lastActiveTask: updatedLastActiveTask,
             };
           }
           return {
@@ -396,7 +405,9 @@ export const useTimerStore = create<TimerStoreState>()(
             taskTitle: sessionData.taskTitle,
             type: 'FOCUS',
             startTime: sessionData.startTime,
-            endTime: new Date().toISOString(), // ✅ Add endTime
+            // end_time = start + duration (target) so downstream duration math stays capped,
+            // even when the app was closed and reopened well past the target.
+            endTime: new Date(new Date(sessionData.startTime).getTime() + sessionData.duration * 1000).toISOString(),
             duration: sessionData.duration,
             completed: true
           },
