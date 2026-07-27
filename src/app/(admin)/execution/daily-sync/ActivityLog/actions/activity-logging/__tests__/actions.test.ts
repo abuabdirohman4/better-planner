@@ -11,6 +11,9 @@ vi.mock('../queries', () => ({
   queryMilestonesByIds: vi.fn(),
   queryQuestsByIds: vi.fn(),
 }));
+vi.mock('../dedup', () => ({
+  findRecentActivityLog: vi.fn(),
+}));
 vi.mock('../logic', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../logic')>();
   return {
@@ -24,13 +27,13 @@ vi.mock('../logic', async (importOriginal) => {
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import {
-  checkDuplicateActivityLog,
   insertActivityLog,
   queryActivityLogs,
   queryTasksByIds,
   queryMilestonesByIds,
   queryQuestsByIds,
 } from '../queries';
+import { findRecentActivityLog } from '../dedup';
 import { logActivity, getTodayActivityLogs } from '../actions';
 import { makeSupabase } from '@/test-utils/supabase-mock';
 
@@ -66,7 +69,7 @@ describe('logActivity', () => {
 
   it('returns existing session when duplicate found', async () => {
     mockCreateClient();
-    vi.mocked(checkDuplicateActivityLog).mockResolvedValue({ id: 'existing-log' } as any);
+    vi.mocked(findRecentActivityLog).mockResolvedValue({ id: 'existing-log' } as any);
     const result = await logActivity(makeFormData(validFormData));
     expect(result).toEqual({ id: 'existing-log' });
     expect(insertActivityLog).not.toHaveBeenCalled();
@@ -74,7 +77,7 @@ describe('logActivity', () => {
 
   it('inserts activity log and revalidates path when no duplicate', async () => {
     mockCreateClient();
-    vi.mocked(checkDuplicateActivityLog).mockResolvedValue(null);
+    vi.mocked(findRecentActivityLog).mockResolvedValue(null);
     vi.mocked(insertActivityLog).mockResolvedValue({ id: 'new-log' } as any);
     const result = await logActivity(makeFormData(validFormData));
     expect(insertActivityLog).toHaveBeenCalled();

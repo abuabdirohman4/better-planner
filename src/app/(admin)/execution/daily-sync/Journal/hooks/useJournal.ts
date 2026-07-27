@@ -5,6 +5,7 @@ import { updateActivityJournal, logActivityWithJournal } from '../actions/journa
 import { getActivityLogId, updateActivityLogJournal } from '../../PomodoroTimer/actions/timerSessionActions';
 import type { JournalData } from '@/types/journal';
 import { createClient } from '@/lib/supabase/client';
+import { findRecentActivityLog } from '../../ActivityLog/actions/activity-logging/dedup';
 import { useJournalData } from './useJournalData';
 import { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
@@ -99,24 +100,14 @@ export const useJournal = () => {
         if (!user) throw new Error('User not authenticated');
         
 
-        // ✅ FIX: First try to find existing activity log
-        const { data: recentActivity, error: activityError } = await supabase
-          .from('activity_logs')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('task_id', pendingActivityData.taskId)
-          .eq('start_time', pendingActivityData.startTime)
-          .eq('end_time', pendingActivityData.endTime)
-          .eq('type', 'FOCUS')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (activityError && activityError.code !== 'PGRST116') {
-          // PGRST116 = no rows found, which is expected if activity log doesn't exist yet
-          console.error(`📱 [${deviceInfo}] Error finding activity log:`, activityError);
-          throw new Error(`Database error: ${activityError.message}`);
-        }
+        // Find existing activity log within a time window (catches sub-second race duplicates)
+        const recentActivity = await findRecentActivityLog(
+          supabase,
+          user.id,
+          pendingActivityData.taskId,
+          'FOCUS',
+          pendingActivityData.startTime,
+        );
 
         if (recentActivity) {
           await updateActivityJournal(recentActivity.id, whatDone, whatThink);
@@ -176,6 +167,21 @@ export const useJournal = () => {
               const supabase = await createClient();
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) throw new Error('User not authenticated');
+
+              // Guard against duplicates before re-inserting on retry
+              const existingOnRetry = await findRecentActivityLog(
+                supabase,
+                user.id,
+                pendingActivityData.taskId,
+                'FOCUS',
+                pendingActivityData.startTime,
+              );
+              if (existingOnRetry) {
+                await updateActivityJournal(existingOnRetry.id, whatDone, whatThink);
+                setIsRetrying(false);
+                closeJournalModal();
+                return;
+              }
 
               const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
               const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));

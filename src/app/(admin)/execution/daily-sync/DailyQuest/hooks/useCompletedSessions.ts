@@ -84,9 +84,10 @@ export function useCompletedSessions({ selectedDate, dailyPlanItems }: Completed
     () => getCompletedSessions(selectedDate, dailyPlanItems),
     {
       revalidateOnFocus: false,
-      revalidateIfStale: false,
+      revalidateIfStale: true,   // fetch fresh when key/data changes (e.g. quest added later)
+      revalidateOnMount: true,   // always fetch on mount so counter is correct after full refresh
       revalidateOnReconnect: true,
-      dedupingInterval: 5 * 60 * 1000, // 5 menit
+      dedupingInterval: 30 * 1000, // 30s
       errorRetryCount: 3,
     }
   );

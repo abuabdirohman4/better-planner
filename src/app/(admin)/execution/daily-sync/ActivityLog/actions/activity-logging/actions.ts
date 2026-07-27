@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
-  checkDuplicateActivityLog,
   insertActivityLog,
   queryActivityLogs,
   queryTasksByIds,
@@ -16,6 +15,7 @@ import {
   calculateDurationMinutes,
   enrichLogsWithHierarchy,
 } from './logic';
+import { findRecentActivityLog } from './dedup';
 
 export async function logActivity(formData: FormData) {
   const supabase = await createClient();
@@ -29,12 +29,12 @@ export async function logActivity(formData: FormData) {
 
   const durationInMinutes = calculateDurationMinutes(startTime, endTime);
 
-  const existingSession = await checkDuplicateActivityLog(
+  const existingSession = await findRecentActivityLog(
     supabase,
     user.id,
     taskId,
+    sessionType,
     startTime,
-    endTime,
   );
   if (existingSession) return existingSession;
 

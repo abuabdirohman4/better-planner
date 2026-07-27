@@ -9,6 +9,9 @@ vi.mock('../queries', () => ({
   checkDuplicateLog: vi.fn(),
   insertActivityLogWithJournal: vi.fn(),
 }));
+vi.mock('../../../../ActivityLog/actions/activity-logging/dedup', () => ({
+  findRecentActivityLog: vi.fn(),
+}));
 vi.mock('../logic', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../logic')>();
   return {
@@ -24,9 +27,9 @@ import { revalidatePath } from 'next/cache';
 import {
   queryActivityLogById,
   updateActivityLogJournal,
-  checkDuplicateLog,
   insertActivityLogWithJournal,
 } from '../queries';
+import { findRecentActivityLog } from '../../../../ActivityLog/actions/activity-logging/dedup';
 import { getActivityLogById, updateActivityJournal, logActivityWithJournal } from '../actions';
 import { makeSupabase } from '@/test-utils/supabase-mock';
 
@@ -97,7 +100,7 @@ describe('logActivityWithJournal', () => {
 
   it('returns existing session when duplicate found', async () => {
     mockCreateClient();
-    vi.mocked(checkDuplicateLog).mockResolvedValue({ id: 'existing' } as any);
+    vi.mocked(findRecentActivityLog).mockResolvedValue({ id: 'existing' } as any);
     const result = await logActivityWithJournal(makeFormData(validFormFields));
     expect(result).toEqual({ id: 'existing' });
     expect(insertActivityLogWithJournal).not.toHaveBeenCalled();
@@ -105,7 +108,7 @@ describe('logActivityWithJournal', () => {
 
   it('inserts new log and revalidates when no duplicate', async () => {
     mockCreateClient();
-    vi.mocked(checkDuplicateLog).mockResolvedValue(null);
+    vi.mocked(findRecentActivityLog).mockResolvedValue(null);
     vi.mocked(insertActivityLogWithJournal).mockResolvedValue({ id: 'new-log' } as any);
     const result = await logActivityWithJournal(makeFormData(validFormFields));
     expect(insertActivityLogWithJournal).toHaveBeenCalled();

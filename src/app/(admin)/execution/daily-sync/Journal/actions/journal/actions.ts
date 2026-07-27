@@ -5,10 +5,10 @@ import { createClient } from '@/lib/supabase/server';
 import {
   queryActivityLogById,
   updateActivityLogJournal,
-  checkDuplicateLog,
   insertActivityLogWithJournal,
 } from './queries';
 import { parseJournalFormData, calculateDurationMinutes, sanitizeJournalField } from './logic';
+import { findRecentActivityLog } from '../../../ActivityLog/actions/activity-logging/dedup';
 
 export async function getActivityLogById(activityId: string) {
   const supabase = await createClient();
@@ -55,7 +55,7 @@ export async function logActivityWithJournal(formData: FormData) {
 
   const durationInMinutes = calculateDurationMinutes(startTime, endTime);
 
-  const existingSession = await checkDuplicateLog(supabase, user.id, taskId, startTime, endTime);
+  const existingSession = await findRecentActivityLog(supabase, user.id, taskId, sessionType, startTime);
   if (existingSession) return existingSession;
 
   const activity = await insertActivityLogWithJournal(supabase, {

@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { logTimerEvent } from './timerEventActions';
 import { getLocalDateString } from '@/lib/dateUtils';
+import { findRecentActivityLog } from '../../../ActivityLog/actions/activity-logging/dedup';
 
 export async function completeTimerSession(sessionId: string, deviceId?: string) {
   const supabase = await createClient();
@@ -45,14 +46,14 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
         .eq('id', sessionId);
     }
 
-    // Check if activity log already exists to prevent duplicates
-    const { data: existingLog } = await supabase
-      .from('activity_logs')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('task_id', session.task_id)
-      .eq('start_time', session.start_time)
-      .maybeSingle();
+    // Check for an existing log within a time window to prevent sub-second duplicate races
+    const existingLog = await findRecentActivityLog(
+      supabase,
+      user.id,
+      session.task_id,
+      session.session_type,
+      session.start_time,
+    );
 
     let activityLogId: string | undefined;
 

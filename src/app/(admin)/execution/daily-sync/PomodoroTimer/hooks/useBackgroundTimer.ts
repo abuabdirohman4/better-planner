@@ -121,6 +121,11 @@ export function useBackgroundTimer() {
         const { useTimerStore } = await import('@/stores/timerStore');
         const state = useTimerStore.getState();
         
+        // Skip if another completion path already finished this session
+        if (state.timerState !== 'FOCUSING') {
+          return;
+        }
+
         if (state.activeTask && state.startTime) {
           const targetDuration = (state.activeTask.focus_duration || 25) * 60;
           
