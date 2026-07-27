@@ -1,4 +1,5 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
+import { mutate as globalMutate } from 'swr';
 import { useTimer } from '@/stores/timerStore';
 import { useActivityStore } from '@/stores/activityStore';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
@@ -133,6 +134,11 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
 
         setActivityLogRefreshKey((k) => k + 1);
         useActivityStore.getState().triggerRefresh();
+
+        // Invalidate completed-sessions cache so the quest card counter refreshes immediately
+        await globalMutate(
+          (key) => Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'all-completed-sessions'
+        );
 
         // ✅ FIX: Open journal modal for FOCUS sessions only, with activity log ID
         if (sessionData.type === 'FOCUS') {
