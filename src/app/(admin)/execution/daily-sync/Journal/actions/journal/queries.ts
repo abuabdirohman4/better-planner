@@ -33,24 +33,6 @@ export async function updateActivityLogJournal(
   return data;
 }
 
-export async function checkDuplicateLog(
-  supabase: SupabaseClient,
-  userId: string,
-  taskId: string,
-  startTime: string,
-  endTime: string,
-) {
-  const { data } = await supabase
-    .from('activity_logs')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('task_id', taskId)
-    .eq('start_time', startTime)
-    .eq('end_time', endTime)
-    .single();
-  return data;
-}
-
 export async function insertActivityLogWithJournal(
   supabase: SupabaseClient,
   data: {

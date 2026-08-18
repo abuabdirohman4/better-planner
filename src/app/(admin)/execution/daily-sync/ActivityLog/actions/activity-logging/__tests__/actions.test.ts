@@ -4,7 +4,6 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../queries', () => ({
-  checkDuplicateActivityLog: vi.fn(),
   insertActivityLog: vi.fn(),
   queryActivityLogs: vi.fn(),
   queryTasksByIds: vi.fn(),

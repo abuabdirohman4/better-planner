@@ -59,7 +59,6 @@ describe('queryExistingWeeklyGoal', () => {
     expect(b.eq).toHaveBeenCalledWith('quarter', 2);
   });
 });
-});
 
 describe('updateWeeklyGoalQuarter', () => {
   it('returns updated goal id', async () => {

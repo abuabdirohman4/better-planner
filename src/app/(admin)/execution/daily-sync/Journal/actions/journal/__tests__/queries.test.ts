@@ -4,7 +4,6 @@ import { makeQueryBuilder } from '@/test-utils/supabase-mock';
 import {
   queryActivityLogById,
   updateActivityLogJournal,
-  checkDuplicateLog,
   insertActivityLogWithJournal,
 } from '../queries';
 
@@ -46,26 +45,6 @@ describe('updateActivityLogJournal', () => {
     const builder = makeQueryBuilder({ data: null, error: { message: 'update fail' } });
     const supabase = makeSupabaseFrom(builder);
     await expect(updateActivityLogJournal(supabase, 'u', 'id', null, null)).rejects.toMatchObject({ message: 'update fail' });
-  });
-});
-
-describe('checkDuplicateLog', () => {
-  it('queries with correct filters and returns existing log', async () => {
-    const row = { id: 'log-1' };
-    const builder = makeQueryBuilder({ data: row, error: null });
-    const supabase = makeSupabaseFrom(builder);
-    const result = await checkDuplicateLog(supabase, 'user-1', 'task-1', 'start', 'end');
-    expect(builder.eq).toHaveBeenCalledWith('task_id', 'task-1');
-    expect(builder.eq).toHaveBeenCalledWith('start_time', 'start');
-    expect(builder.eq).toHaveBeenCalledWith('end_time', 'end');
-    expect(result).toEqual(row);
-  });
-
-  it('returns null when no duplicate found', async () => {
-    const builder = makeQueryBuilder({ data: null, error: null });
-    const supabase = makeSupabaseFrom(builder);
-    const result = await checkDuplicateLog(supabase, 'user-1', 'task-1', 's', 'e');
-    expect(result).toBeNull();
   });
 });
 

@@ -6,7 +6,6 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('../queries', () => ({
   queryActivityLogById: vi.fn(),
   updateActivityLogJournal: vi.fn(),
-  checkDuplicateLog: vi.fn(),
   insertActivityLogWithJournal: vi.fn(),
 }));
 vi.mock('../../../../ActivityLog/actions/activity-logging/dedup', () => ({

@@ -1,8 +1,10 @@
 'use client';
 import React, { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
+import { mutate as globalMutate } from 'swr';
 
 import { useActivityStore } from '@/stores/activityStore';
+import { isFocusStatsKey } from '@/lib/swr';
 import { useActivityLogs } from './hooks/useActivityLogs';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
@@ -182,6 +184,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
       await deleteActivityLog(logId);
       toast.success('Activity log dihapus');
       triggerRefresh();
+      globalMutate(isFocusStatsKey);
     } catch {
       toast.error('Gagal menghapus activity log');
       // Rollback on error

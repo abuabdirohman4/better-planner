@@ -129,6 +129,10 @@ export const dailySyncKeys = {
   dailyQuests: (year: number, quarter: number) => [...dailySyncKeys.all, 'selectable-daily-quests', year, quarter] as const,
 };
 
+/** Predicate for `mutate()` — matches every key derived from activity_logs (quest counter + Total focus time bar). Call after any activity_log insert/delete. */
+export const isFocusStatsKey = (key: unknown) =>
+  Array.isArray(key) && key[0] === 'daily-sync' && ['all-completed-sessions', 'actual-focus-time'].includes(key[1]);
+
 /**
  * SWR key generator for dashboard
  */

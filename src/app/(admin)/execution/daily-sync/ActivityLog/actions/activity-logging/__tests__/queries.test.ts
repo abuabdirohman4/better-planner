@@ -2,7 +2,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { makeQueryBuilder } from '@/test-utils/supabase-mock';
 import {
-  checkDuplicateActivityLog,
   insertActivityLog,
   queryActivityLogs,
   queryTasksByIds,
@@ -12,27 +11,6 @@ import {
 } from '../queries';
 
 const makeSupabaseFrom = (builder: any) => ({ from: vi.fn().mockReturnValue(builder) } as any);
-
-describe('checkDuplicateActivityLog', () => {
-  it('queries activity_logs with correct filters', async () => {
-    const builder = makeQueryBuilder({ data: null, error: null });
-    const supabase = makeSupabaseFrom(builder);
-    await checkDuplicateActivityLog(supabase, 'user-1', 'task-1', '2026-01-01T09:00:00Z', '2026-01-01T09:25:00Z');
-    expect(supabase.from).toHaveBeenCalledWith('activity_logs');
-    expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
-    expect(builder.eq).toHaveBeenCalledWith('task_id', 'task-1');
-    expect(builder.eq).toHaveBeenCalledWith('start_time', '2026-01-01T09:00:00Z');
-    expect(builder.eq).toHaveBeenCalledWith('end_time', '2026-01-01T09:25:00Z');
-    expect(builder.single).toHaveBeenCalled();
-  });
-
-  it('returns null when no duplicate found', async () => {
-    const builder = makeQueryBuilder({ data: null, error: null });
-    const supabase = makeSupabaseFrom(builder);
-    const result = await checkDuplicateActivityLog(supabase, 'user-1', 'task-1', 's', 'e');
-    expect(result).toBeNull();
-  });
-});
 
 describe('insertActivityLog', () => {
   it('inserts with correct payload', async () => {
