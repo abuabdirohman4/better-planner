@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { label: "Monthly Grid", href: "/habits/monthly" },
   { label: "Today's Habits", href: "/habits/today" },
+  { label: "Monthly Grid", href: "/habits/monthly" },
 ];
 
 export default function HabitsTabLayout({
