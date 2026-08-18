@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
 import { dailySyncKeys } from '@/lib/swr';
+import { useActivityStore } from '@/stores/activityStore';
 
 interface CompletedSessionsOptions {
   selectedDate: string;
@@ -77,7 +78,7 @@ export function useCompletedSessions({ selectedDate, dailyPlanItems }: Completed
     )
     .map(item => item.item_id);
 
-  const { data: completedSessions = {}, error, isLoading } = useSWR(
+  const { data: completedSessions = {}, error, isLoading, mutate } = useSWR(
     selectedDate && taskIds.length > 0
       ? dailySyncKeys.allCompletedSessions(taskIds, selectedDate)
       : null,
@@ -91,6 +92,15 @@ export function useCompletedSessions({ selectedDate, dailyPlanItems }: Completed
       errorRetryCount: 3,
     }
   );
+
+  // Refetch whenever any path signals "activity_logs changed" (notifyActivityLogsChanged)
+  const lastActivityTimestamp = useActivityStore((s) => s.lastActivityTimestamp);
+  const seenTimestamp = useRef(lastActivityTimestamp);
+  useEffect(() => {
+    if (seenTimestamp.current === lastActivityTimestamp) return; // skip mount (revalidateOnMount already fetches)
+    seenTimestamp.current = lastActivityTimestamp;
+    mutate();
+  }, [lastActivityTimestamp, mutate]);
 
   return {
     completedSessions,

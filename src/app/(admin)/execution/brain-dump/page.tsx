@@ -1,8 +1,9 @@
+import { Metadata } from "next";
 import { Suspense } from 'react';
 import { parseQParam } from '@/lib/quarterUtils';
 import BrainDumpPageClient from './BrainDumpPageClient';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Brain Dump | Better Planner',
   description: 'Review semua brain dump Anda per minggu',
 };

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useTimer } from '@/stores/timerStore';
 import { useTimerStore } from '@/stores/timerStore';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { notifyActivityLogsChanged } from '@/lib/swr';
 import { getActiveTimerSession } from '../../actions/timerSessionActions';
 
 export function useRealtimeSync() {
@@ -130,6 +131,7 @@ export function useRealtimeSync() {
           console.log('📝 New activity log created:', payload);
           
           const activityLog = payload.new;
+          notifyActivityLogsChanged();
           
           // Check if this is for our current active task
           if (activityLog.task_id === activeTask.id) {

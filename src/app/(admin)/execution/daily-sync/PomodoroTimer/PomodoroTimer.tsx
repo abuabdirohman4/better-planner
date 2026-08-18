@@ -14,6 +14,8 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
 import { checkAudioPermission, initializeAudioContext } from '@/lib/soundUtils';
 import { isTimerDisabled, getTimerDevStatusMessage } from '@/lib/timerDevUtils';
+import { getLocalDateString } from '@/lib/dateUtils';
+import { useCompletedSessions } from '../DailyQuest/hooks/useCompletedSessions';
 import DebugTimer from './components/DebugTimer';
 import BreakPrompt from './components/BreakPrompt';
 
@@ -242,14 +244,24 @@ export default function PomodoroTimer() {
 
   // Display Task Title Logic
   const displayTask = activeTask || lastActiveTask;
+
+  // Live "today's" session count for the displayed task. The zustand snapshot (completed_sessions)
+  // is seeded once at play-click and never updated → read from activity_logs via SWR instead.
+  const todayStr = getLocalDateString(new Date());
+  const { completedSessions: liveCounts } = useCompletedSessions({
+    selectedDate: todayStr,
+    dailyPlanItems: displayTask ? [{ id: displayTask.id, item_id: displayTask.id, item_type: displayTask.item_type }] : [],
+  });
+  const liveCompleted = displayTask ? liveCounts[displayTask.id] : undefined;
   const displayTitle = timerState === 'BREAK'
     ? `Break Time (${breakType === 'SHORT' ? '5m' : breakType === 'MEDIUM' ? '10m' : '15m'})`
     : displayTask?.title || 'Ready to Focus';
 
   // Display Progress Info
   const showProgress = !activeTask && lastActiveTask && timerState === 'IDLE';
-  const progressText = displayTask?.completed_sessions !== undefined && displayTask?.target_sessions
-    ? `${displayTask.completed_sessions}/${displayTask.target_sessions} today's target`
+  const completedForDisplay = liveCompleted ?? displayTask?.completed_sessions;
+  const progressText = completedForDisplay !== undefined && displayTask?.target_sessions
+    ? `${completedForDisplay}/${displayTask.target_sessions} today's target`
     : null;
 
   // New: Determine if interaction is possible and appropriate
@@ -322,7 +334,7 @@ export default function PomodoroTimer() {
             </div>
           )}
           {(!activeTask && !lastActiveTask && timerState !== 'BREAK') ? (
-            <span className="text-lg select-none">00:00</span>
+            <span data-testid="timer-display" className="text-lg select-none">00:00</span>
           ) : (
             <>
               <div className="flex flex-col items-center justify-center -mt-2">
@@ -359,6 +371,7 @@ export default function PomodoroTimer() {
               <Button
                 variant="outline"
                 size="sm"
+                data-testid="timer-stop-btn"
                 className="text-orange-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation(); // Prevent triggering parent onClick

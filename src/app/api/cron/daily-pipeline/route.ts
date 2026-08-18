@@ -14,21 +14,12 @@ import { aggregatePerformance, getDailyPerformance, getWeeklyPerformance, getMon
 import { generateInsight } from '@/lib/notifications/services/aiInsightService'
 import { renderEmailTemplate } from '@/lib/notifications/templates'
 import { sendEmail } from '@/lib/notifications/services/emailService'
+import { buildSubject, insertHistory } from '@/lib/notifications/services/queueProcessor'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-function buildSubject(payload: EmailPayload): string {
-  const labels: Record<string, string> = {
-    daily: 'Laporan Harian',
-    weekly: 'Laporan Mingguan',
-    monthly: 'Laporan Bulanan',
-    quarterly: 'Laporan Kuartalan',
-  }
-  return `Better Planner — ${labels[payload.periodType]}: ${payload.periodLabel}`
-}
 
 function formatPeriodLabel(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, {
@@ -167,11 +158,7 @@ export async function POST(request: Request) {
           const sendResult = await sendEmail(email, subject, html)
 
           if (sendResult.success) {
-            await supabase.from('notification_history').insert({
-              user_id: user.user_id,
-              period_type: job.type,
-              resend_message_id: sendResult.messageId,
-            })
+            await insertHistory(supabase, payload, subject, sendResult.messageId)
             results.succeeded++
           } else {
             results.failed++

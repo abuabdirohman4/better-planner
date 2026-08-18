@@ -10,6 +10,7 @@ export interface RawHabitRow {
   category: string;
   frequency: string;
   monthly_goal: number;
+  daily_target: number;
   tracking_type: string;
   target_time: string | null;
   is_archived: boolean;
@@ -52,6 +53,7 @@ export async function insertHabit(
       category: data.category,
       frequency: data.frequency,
       monthly_goal: data.monthly_goal,
+      daily_target: data.daily_target ?? 1,
       tracking_type: data.tracking_type,
       target_time: data.target_time ?? null,
     })
@@ -77,6 +79,7 @@ export async function updateHabitById(
   if (data.category !== undefined) updates.category = data.category;
   if (data.frequency !== undefined) updates.frequency = data.frequency;
   if (data.monthly_goal !== undefined) updates.monthly_goal = data.monthly_goal;
+  if (data.daily_target !== undefined) updates.daily_target = data.daily_target;
   if (data.tracking_type !== undefined) updates.tracking_type = data.tracking_type;
   if ('target_time' in data) updates.target_time = data.target_time ?? null;
 

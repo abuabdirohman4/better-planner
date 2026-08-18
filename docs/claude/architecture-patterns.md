@@ -238,6 +238,21 @@ export function useData() {
 
 ---
 
+## 📄 Metadata Standard (page titles)
+
+Every route must expose `metadata` so the browser tab reads `"<Page> | Better Planner"`.
+
+| Page type | Where metadata lives | Example |
+|---|---|---|
+| Server component `page.tsx` | In `page.tsx` itself | `planning/vision/page.tsx` |
+| Client component `page.tsx` (`"use client"`) | Sibling **server** `layout.tsx` (`return children`) | `execution/daily-sync/layout.tsx`, `quests/*/layout.tsx` |
+| Section with client tab UI in layout | Split: server `layout.tsx` (metadata) wraps a client `XTabLayout.tsx` | `habits/layout.tsx` + `habits/HabitsTabLayout.tsx` |
+
+Rules:
+- Always `import { Metadata } from "next"` and annotate `export const metadata: Metadata = {...}` (untyped objects miss typos).
+- Title format: `"<Page Name> | Better Planner"`. Root `src/app/layout.tsx` uses a plain title, **not** a template — each page spells the suffix.
+- Never put `metadata` in a `"use client"` file — Next.js ignores it silently.
+
 ## 📦 Component Organization
 
 ### Component Directory Structure

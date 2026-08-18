@@ -5,6 +5,7 @@ import { useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
 import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from '../globalState';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { notifyActivityLogsChanged } from '@/lib/swr';
 
 export function useRecovery() {
   const [isRecovering, setIsRecovering] = useState(getGlobalState().recoveryInProgress);
@@ -34,6 +35,8 @@ export function useRecovery() {
             const result = await updateSessionWithActualTime(activeSession.id);
             
             if (result.completed) {
+              // Server already inserted the activity_log inside updateSessionWithActualTime → refresh all readers
+              notifyActivityLogsChanged();
               // ✅ FIX: Timer completed while app was closed - trigger completion
               console.log('⏰ Timer completed while app was closed');
               

@@ -176,6 +176,8 @@ npm run generate:pdf     # Generate PDF guide
 
 **Key Patterns**: Server Actions (`"use server"`), SWR Hooks (caching), Supabase Clients (`server`/`client`), RLS Policies (user isolation).
 
+**Metadata**: server page → in `page.tsx`; client page → sibling server `layout.tsx`; always typed `Metadata`. READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md) → "Metadata Standard".
+
 **📖 For detailed patterns, data fetching strategies, and component guidelines, READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)**
 
 ---

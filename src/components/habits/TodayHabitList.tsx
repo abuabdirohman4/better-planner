@@ -3,10 +3,12 @@ import TodayHabitItem from "./TodayHabitItem";
 
 interface TodayHabitListProps {
   habits: Habit[];
-  isCompleted: (habitId: string, date: string) => boolean;
+  isCompleted: (habitId: string, date: string, dailyTarget?: number) => boolean;
+  getCount: (habitId: string, date: string) => number;
   onToggle: (habitId: string, date: string) => void;
+  onAdjust: (habitId: string, date: string, delta: 1 | -1) => void;
   monthlyStats: MonthlyStats;
-  todayDate: string; // "YYYY-MM-DD"
+  selectedDate: string; // "YYYY-MM-DD" — the day being viewed/edited
 }
 
 interface TimeGroup {
@@ -38,9 +40,11 @@ const TIME_GROUP_META: { key: string; label: string }[] = [
 export default function TodayHabitList({
   habits,
   isCompleted,
+  getCount,
   onToggle,
+  onAdjust,
   monthlyStats,
-  todayDate,
+  selectedDate,
 }: TodayHabitListProps) {
   // Build groups
   const groupMap: Record<string, Habit[]> = {
@@ -79,7 +83,7 @@ export default function TodayHabitList({
     <div className="space-y-6">
       {groups.map((group) => {
         const doneCount = group.habits.filter((h) =>
-          isCompleted(h.id, todayDate)
+          isCompleted(h.id, selectedDate, h.daily_target)
         ).length;
 
         return (
@@ -106,9 +110,11 @@ export default function TodayHabitList({
                   <TodayHabitItem
                     key={habit.id}
                     habit={habit}
-                    isCompleted={isCompleted(habit.id, todayDate)}
+                    isCompleted={isCompleted(habit.id, selectedDate, habit.daily_target)}
+                    count={getCount(habit.id, selectedDate)}
                     currentStreak={currentStreak}
-                    onToggle={() => onToggle(habit.id, todayDate)}
+                    onToggle={() => onToggle(habit.id, selectedDate)}
+                    onAdjust={(delta) => onAdjust(habit.id, selectedDate, delta)}
                   />
                 );
               })}

@@ -1,24 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
-import { login, clearSession } from './helpers/auth';
+import { login, clearSession, injectQuarterState, getCurrentQuarter } from './helpers/auth';
+import { getTestUserId, getServiceRoleClient } from './helpers/db';
 
 dotenv.config({ path: '.env.test' });
-
-function getTestUserId(): string {
-  const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'tests', '.test-env.json'), 'utf-8'));
-  return data.userId;
-}
-
-function getServiceRoleClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 test.describe.configure({ mode: 'serial' });
 
@@ -27,6 +12,8 @@ test.describe('Daily Quest Management', () => {
 
   test.beforeEach(async ({ page }) => {
     await clearSession(page);
+    const { year, quarter } = getCurrentQuarter();
+    await injectQuarterState(page, year, quarter);
     await login(page);
     await page.goto('/quests/daily-quests', { timeout: 60000 });
     await page.waitForLoadState('domcontentloaded');
@@ -89,8 +76,8 @@ test.describe('Daily Quest Management', () => {
     await expect(deleteBtn).toBeVisible({ timeout: 15000 });
     await deleteBtn.click();
 
-    // Tunggu confirm dialog dan konfirmasi
-    const confirmBtn = page.locator('button', { hasText: /hapus|delete|confirm/i }).last();
+    // Konfirmasi via ConfirmModal
+    const confirmBtn = page.locator('[data-testid="confirm-modal-confirm"]');
     await expect(confirmBtn).toBeVisible({ timeout: 10000 });
     await confirmBtn.click();
 
@@ -106,6 +93,8 @@ test.describe('Work Quest Management', () => {
 
   test.beforeEach(async ({ page }) => {
     await clearSession(page);
+    const { year, quarter } = getCurrentQuarter();
+    await injectQuarterState(page, year, quarter);
     await login(page);
     await page.goto('/quests/work-quests', { timeout: 60000 });
     await page.waitForLoadState('domcontentloaded');
@@ -114,7 +103,8 @@ test.describe('Work Quest Management', () => {
   test.afterEach(async () => {
     if (createdProjectIds.length > 0) {
       const supabase = getServiceRoleClient();
-      await supabase.from('work_quests').delete().in('id', createdProjectIds);
+      // Projects live in `tasks` (type WORK_QUEST, parent_task_id null)
+      await supabase.from('tasks').delete().in('id', createdProjectIds);
       createdProjectIds.length = 0;
     }
   });
@@ -122,8 +112,7 @@ test.describe('Work Quest Management', () => {
   test('can create a new project', async ({ page }) => {
     const testTitle = `E2E Project ${Date.now()}`;
 
-    // Cari dan klik "Add Project" button
-    await page.locator('button', { hasText: /add project|tambah project/i }).click();
+    await page.locator('[data-testid="project-add-btn"]').click();
 
     await expect(page.locator('[data-testid="project-form-title"]')).toBeVisible({ timeout: 15000 });
     await page.locator('[data-testid="project-form-title"]').fill(testTitle);
@@ -131,5 +120,10 @@ test.describe('Work Quest Management', () => {
 
     // Project baru harus muncul
     await expect(page.locator(`text=${testTitle}`)).toBeVisible({ timeout: 15000 });
+
+    // Catat id untuk cleanup
+    const { data } = await getServiceRoleClient()
+      .from('tasks').select('id').eq('user_id', getTestUserId()).eq('title', testTitle).maybeSingle();
+    if (data?.id) createdProjectIds.push(data.id);
   });
 });

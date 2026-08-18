@@ -1,9 +1,10 @@
+import { Metadata } from "next";
 import { getQuarterlyReviewHistory } from '../actions/quarterly-review/actions';
 import { getQuarterString } from '@/lib/quarterUtils';
 import type { QuarterlyReviewSummary } from '@/types/twelve-week-sync';
 import Link from 'next/link';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: '12 Week Sync History | Better Planner',
 };
 

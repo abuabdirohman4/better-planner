@@ -1,5 +1,11 @@
 import React from 'react';
+import { Metadata } from 'next';
 import BestWeekClient from './BestWeekClient';
+
+export const metadata: Metadata = {
+  title: 'Best Week | Better Planner',
+  description: 'Plan and reflect on your best week',
+};
 
 export default function BestWeekPage() {
   return (

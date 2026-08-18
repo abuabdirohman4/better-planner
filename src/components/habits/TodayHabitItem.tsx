@@ -3,8 +3,10 @@ import type { Habit } from "@/types/habit";
 interface TodayHabitItemProps {
   habit: Habit;
   isCompleted: boolean;
+  count: number;
   currentStreak: number;
   onToggle: () => void;
+  onAdjust: (delta: 1 | -1) => void;
 }
 
 function capitalizeFirst(str: string): string {
@@ -15,18 +17,25 @@ function capitalizeFirst(str: string): string {
 export default function TodayHabitItem({
   habit,
   isCompleted,
+  count,
   currentStreak,
   onToggle,
+  onAdjust,
 }: TodayHabitItemProps) {
   const displayTime = habit.target_time ? habit.target_time.slice(0, 5) : null;
   const subtitle = [capitalizeFirst(habit.category), displayTime]
     .filter(Boolean)
     .join(" • ");
+  const target = habit.daily_target ?? 1;
+  const isMulti = target > 1;
+  // Binary habit: whole row is the toggle button. Multi: row is a div, +/- buttons control count.
+  const Row = isMulti ? "div" : "button";
+  const rowProps = isMulti ? {} : { type: "button" as const, onClick: onToggle };
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
+    <Row
+      {...rowProps}
+      data-testid={`habit-item-${habit.id}`}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors duration-150 text-left min-h-[64px] ${
         isCompleted
           ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
@@ -84,12 +93,53 @@ export default function TodayHabitItem({
         )}
       </div>
 
+      {/* Multi-completion counter */}
+      {isMulti && (
+        <div className="flex-shrink-0 flex items-center gap-2">
+          {target <= 10 && (
+            <div className="hidden sm:flex items-center gap-1" aria-hidden="true">
+              {Array.from({ length: target }, (_, i) => (
+                <span
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${
+                    i < count ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => onAdjust(-1)}
+            disabled={count === 0}
+            aria-label="Kurangi"
+            data-testid={`habit-dec-${habit.id}`}
+            className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            −
+          </button>
+          <span className="text-sm font-medium tabular-nums min-w-[36px] text-center text-gray-800 dark:text-gray-200">
+            {count}/{target}
+          </span>
+          <button
+            type="button"
+            onClick={() => onAdjust(1)}
+            disabled={count >= target}
+            aria-label="Tambah"
+            data-testid={`habit-inc-${habit.id}`}
+            className="w-7 h-7 rounded-full border border-green-500 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            +
+          </button>
+        </div>
+      )}
+
       {/* Streak */}
       {currentStreak > 0 && (
         <span className="flex-shrink-0 flex items-center gap-1 text-sm font-medium text-orange-500 dark:text-orange-400">
           🔥 {currentStreak}
         </span>
       )}
-    </button>
+    </Row>
   );
 }

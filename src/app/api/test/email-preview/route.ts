@@ -2,6 +2,7 @@ import { renderEmailTemplate } from '@/lib/notifications/templates'
 import type { EmailPayload } from '@/lib/notifications/types'
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === 'production') return new Response('Not found', { status: 404 })
   const { searchParams } = new URL(request.url)
   const period = searchParams.get('period') as 'daily' | 'weekly' | 'monthly' | 'quarterly' || 'daily'
 

@@ -108,6 +108,7 @@ export default function BlockModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul</label>
             <input
               autoFocus
+              data-testid="block-modal-title"
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="Shalat Tahajud, Kerja, Free..."
@@ -192,6 +193,7 @@ export default function BlockModal({
           <div>
             {isEdit && (
               <button
+                data-testid="block-modal-delete"
                 onClick={handleDelete}
                 disabled={isSaving}
                 className="text-sm text-red-500 hover:text-red-700"
@@ -208,6 +210,7 @@ export default function BlockModal({
               Batal
             </button>
             <button
+              data-testid="block-modal-save"
               onClick={handleSave}
               disabled={isSaving}
               className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"

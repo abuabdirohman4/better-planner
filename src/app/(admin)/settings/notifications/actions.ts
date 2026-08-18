@@ -13,15 +13,15 @@ export async function getNotificationSettings() {
   const { data, error } = await supabase
     .from('user_profiles')
     .select('notification_settings')
-    .eq('id', user.id)
-    .single()
+    .eq('user_id', user.id)
+    .maybeSingle()
 
   if (error) {
     console.error('Error fetching notification settings:', error.message)
     throw new Error('Failed to fetch settings')
   }
 
-  return data.notification_settings as NotificationSettings | null
+  return (data?.notification_settings ?? null) as NotificationSettings | null
 }
 
 export async function updateNotificationSettings(settings: NotificationSettings) {
@@ -31,10 +31,10 @@ export async function updateNotificationSettings(settings: NotificationSettings)
     throw new Error('Not authenticated')
   }
 
+  // Profile row may not exist yet → upsert on user_id (UNIQUE)
   const { error } = await supabase
     .from('user_profiles')
-    .update({ notification_settings: settings })
-    .eq('id', user.id)
+    .upsert({ user_id: user.id, notification_settings: settings }, { onConflict: 'user_id' })
 
   if (error) {
     console.error('Error updating notification settings:', error.message)

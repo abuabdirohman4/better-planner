@@ -56,6 +56,7 @@ export default function BreakPrompt({
             <Button
               size="sm"
               variant="primary"
+              data-testid="break-start-btn"
               className="w-full bg-green-500 hover:bg-green-600 text-white"
               onClick={() => onStartBreak('SHORT')}
             >
@@ -67,6 +68,7 @@ export default function BreakPrompt({
             <Button
               size="sm"
               variant="primary"
+              data-testid="break-start-btn"
               className="w-full bg-green-500 hover:bg-green-600 text-white"
               onClick={() => onStartBreak('MEDIUM')}
             >
@@ -78,6 +80,7 @@ export default function BreakPrompt({
             <Button
               size="sm"
               variant="primary"
+              data-testid="break-start-btn"
               className="w-full bg-green-500 hover:bg-green-600 text-white"
               onClick={() => onStartBreak('LONG')}
             >
@@ -93,6 +96,7 @@ export default function BreakPrompt({
           <Button
             size="sm"
             variant="plain"
+            data-testid="break-skip-btn"
             className="text-gray-500 hover:text-gray-700"
             onClick={onSkip}
           >

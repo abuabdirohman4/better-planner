@@ -12,10 +12,11 @@ export function verifyCronRequest(request: Request): boolean {
     return true
   }
 
-  // Vercel cron without CRON_SECRET set — allow if running on Vercel
-  // and request comes from Vercel cron (User-Agent: vercel-cron/1.0)
+  // Fallback ONLY when no secret is configured at all: trust Vercel cron user-agent.
+  // Once CRON_SECRET / CRON_SECRET_TOKEN is set, a Bearer token is mandatory (UA is spoofable).
+  const hasSecret = Boolean(process.env.CRON_SECRET || process.env.CRON_SECRET_TOKEN)
   const userAgent = request.headers.get('user-agent') ?? ''
-  if (userAgent.startsWith('vercel-cron/') && process.env.VERCEL === '1') {
+  if (!hasSecret && userAgent.startsWith('vercel-cron/') && process.env.VERCEL === '1') {
     return true
   }
 

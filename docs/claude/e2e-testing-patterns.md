@@ -87,6 +87,34 @@ test.afterEach(async () => {
 
 Memerlukan `NEXT_PUBLIC_ENABLE_TIMER_DEV=true` di `.env.local`. Tanpa ini, timer disabled di dev mode dan tests akan gagal.
 
+## Seeding & Cleanup Helper
+
+Pakai `tests/e2e/helpers/db.ts` — jangan duplikasi service-role client di spec:
+
+```ts
+import { getServiceRoleClient, getTestUserId, cleanupIds } from './helpers/db';
+const created: string[] = [];
+// seed → created.push(id) ; afterEach → await cleanupIds('tasks', created);
+```
+
+Quest pages (side/work) filter by `created_at` dalam quarter aktif → **selalu** `injectQuarterState(page, ...getCurrentQuarter())` sebelum `login`.
+
+## Coverage Map (spec → area)
+
+| Spec | Area | Testid kunci |
+|---|---|---|
+| `auth.spec.ts` | Sign-in | `signin-*` |
+| `daily-sync.spec.ts` | Daily quest section + toggle | `daily-sync-*-section`, `task-status-{id}` |
+| `timer.spec.ts` | Timer idle + start/pause/stop (skip tanpa `NEXT_PUBLIC_ENABLE_TIMER_DEV=true`) | `task-play-{id}`, `timer-action-btn`, `timer-stop-btn`, `break-*-btn` |
+| `quest-management.spec.ts` | Daily quest CRUD, project create | `daily-quest-*`, `project-add-btn`, `project-form-*` |
+| `side-quests.spec.ts` | Side quest toggle/edit/delete | `side-quest-item/status/edit/delete-{id}`, `side-quest-edit-input`, `side-quest-save-btn` |
+| `work-quest-tasks.spec.ts` | Task CRUD dalam project | `project-toggle/add-task-{id}`, `task-form-input/save`, `task-item/edit/delete-{id}` |
+| `best-week.spec.ts` | Template + grid block CRUD | `template-*`, `grid-slot-{day}-{slot}`, `grid-block-{id}`, `block-modal-*` |
+| `activity-plan.spec.ts` | Calendar/List/Quest switch | `activity-view-{calendar,list,quest}` (+`aria-pressed`) |
+| `dashboard.spec.ts` | Nav cards + quarter selector | `dashboard-card-{route-slug}`, `quarter-prev/toggle/next` |
+
+Shared: `confirm-modal-confirm` / `confirm-modal-cancel` (semua `ConfirmModal`). Delete task/block/template masih `window.confirm` → `page.once('dialog', d => d.accept())`.
+
 ## Bug Fixing Workflow (P0/P1)
 
 1. **Replicate** → Buat E2E test yang mereproduksi bug

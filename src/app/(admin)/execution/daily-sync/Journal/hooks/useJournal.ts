@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { findRecentActivityLog } from '../../ActivityLog/actions/activity-logging/dedup';
 import { useJournalData } from './useJournalData';
 import { mutate as globalMutate } from 'swr';
-import { dailySyncKeys } from '@/lib/swr';
+import { dailySyncKeys, notifyActivityLogsChanged } from '@/lib/swr';
 import { getCurrentLocalDate } from '@/lib/dateUtils';
 import { useActivityLogs } from '../../ActivityLog/hooks/useActivityLogs';
 
@@ -88,7 +88,7 @@ export const useJournal = () => {
       const currentLocalDate = getCurrentLocalDate();
       
       // ✅ CRITICAL: Invalidate ActivityLog cache with current date
-      await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+      await notifyActivityLogsChanged();
       
       // ✅ FIX: Add small delay to ensure date consistency
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -138,7 +138,7 @@ export const useJournal = () => {
           }
 
           // ✅ CRITICAL: Invalidate ActivityLog cache with current date
-          await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+          await notifyActivityLogsChanged();
           
           // ✅ FIX: Add small delay to ensure date consistency
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -208,7 +208,7 @@ export const useJournal = () => {
               }
 
               // ✅ CRITICAL: Invalidate ActivityLog cache with current date
-              await globalMutate(dailySyncKeys.activityLogs(currentLocalDate));
+              await notifyActivityLogsChanged();
               
               // ✅ FIX: Add small delay to ensure date consistency
               await new Promise(resolve => setTimeout(resolve, 100));

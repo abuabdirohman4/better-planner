@@ -68,6 +68,7 @@ export default function HabitFormModal({
         category: habit.category,
         frequency: habit.frequency,
         monthly_goal: habit.monthly_goal,
+        daily_target: habit.daily_target ?? 1,
         tracking_type: habit.tracking_type,
         description: habit.description ?? undefined,
         target_time: habit.target_time ?? undefined,

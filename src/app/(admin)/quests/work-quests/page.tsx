@@ -169,6 +169,7 @@ export default function WorkQuestsPage() {
             className="btn btn-primary"
             size="md"
             variant="primary"
+            data-testid="project-add-btn"
           >
             Add Project
           </Button>

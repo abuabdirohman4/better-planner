@@ -1,8 +1,9 @@
+import { Metadata } from "next";
 import { Suspense } from 'react';
 import { parseQParam } from '@/lib/quarterUtils';
 import TwelveWeekSyncClient from './TwelveWeekSyncClient';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: '12 Week Sync | Better Planner',
   description: 'Quarterly review untuk aplikasi Better Planner',
 };

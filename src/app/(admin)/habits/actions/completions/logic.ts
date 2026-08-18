@@ -33,6 +33,17 @@ export function buildCompletionSet(completions: HabitCompletion[]): Set<string> 
 }
 
 /**
+ * Dates where completion count >= dailyTarget (a day only "counts" when the target is met).
+ */
+export function buildCompletedDates(completions: HabitCompletion[], dailyTarget: number): Set<string> {
+  const counts = new Map<string, number>();
+  for (const c of completions) counts.set(c.date, (counts.get(c.date) ?? 0) + 1);
+  const dates = new Set<string>();
+  for (const [date, n] of counts) if (n >= Math.max(1, dailyTarget)) dates.add(date);
+  return dates;
+}
+
+/**
  * Calculate current and best streak from a set of completed dates.
  *
  * - current_streak: walk backwards from today, count consecutive days that are completed.
@@ -126,13 +137,13 @@ export function calculateMonthlyStats(
   month: number,
   today: string
 ): MonthlyStats {
-  // Group completions by habit_id
-  const byHabit = new Map<string, Set<string>>();
+  // Group completions by habit_id (raw rows; daily_target applied per habit below)
+  const byHabit = new Map<string, HabitCompletion[]>();
   for (const c of completions) {
     if (!byHabit.has(c.habit_id)) {
-      byHabit.set(c.habit_id, new Set());
+      byHabit.set(c.habit_id, []);
     }
-    byHabit.get(c.habit_id)!.add(c.date);
+    byHabit.get(c.habit_id)!.push(c);
   }
 
   const perHabit: HabitStats[] = [];
@@ -149,7 +160,7 @@ export function calculateMonthlyStats(
   > = {};
 
   for (const habit of habits) {
-    const datesForHabit = byHabit.get(habit.id) ?? new Set<string>();
+    const datesForHabit = buildCompletedDates(byHabit.get(habit.id) ?? [], habit.daily_target ?? 1);
     const completed = datesForHabit.size;
     const goal = habit.monthly_goal;
 

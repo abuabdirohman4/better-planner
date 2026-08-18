@@ -49,12 +49,7 @@ export async function processEmailQueue(
           .update({ status: 'SENT', resend_message_id: sendResult.messageId })
           .eq('id', item.id)
 
-        // Insert history
-        await supabase.from('notification_history').insert({
-          user_id: payload.userId,
-          period_type: payload.periodType,
-          resend_message_id: sendResult.messageId,
-        })
+        await insertHistory(supabase, payload, subject, sendResult.messageId, item.id)
 
         result.succeeded++
       } else {
@@ -89,7 +84,32 @@ async function handleFailure(supabase: ReturnType<typeof createServiceClient>, i
   }
 }
 
-function buildSubject(payload: EmailPayload): string {
+/** Record a sent email. Columns match notification_history NOT NULL set; errors are logged, never thrown. */
+export async function insertHistory(
+  supabase: ReturnType<typeof createServiceClient>,
+  payload: EmailPayload,
+  subject: string,
+  providerId?: string,
+  queueId?: string
+): Promise<void> {
+  const { error } = await supabase.from('notification_history').insert({
+    user_id: payload.userId,
+    notification_type: payload.periodType,
+    period_type: payload.periodType,
+    period_start: payload.metrics.periodStart,
+    period_end: payload.metrics.periodEnd,
+    email_address: payload.email,
+    email_provider_id: providerId ?? null,
+    email_provider_status: 'sent',
+    queue_id: queueId ?? null,
+    ai_character: payload.character,
+    subject,
+    metrics_snapshot: payload.metrics,
+  })
+  if (error) console.error('[notifications] history insert failed:', error.message)
+}
+
+export function buildSubject(payload: EmailPayload): string {
   const labels: Record<string, string> = {
     daily: 'Laporan Harian',
     weekly: 'Laporan Mingguan',

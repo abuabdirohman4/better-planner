@@ -168,22 +168,23 @@ export async function generateInsight(
   mainQuestMotivation?: string,
   inactiveStreak?: number
 ): Promise<AIInsight> {
-  // Fitur AI dimatikan sementara, gunakan pesan generik
-  //   try {
-  //   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  //   const model = genAI.getGenerativeModel({
-  //     model: 'gemini-2.0-flash',
-  //     generationConfig: { responseMimeType: 'application/json' },
-  //     systemInstruction: CHARACTER_PROMPTS[character][language],
-  //   })
-  //   const result = await model.generateContent(
-  //     buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
-  //   )
-  //   return parseGeminiResponse(result.response.text(), character, language)
-  // } catch (error) {
-  //   console.error('[aiInsightService] Gemini error:', error)
-  //   return { ...FALLBACK_INSIGHT[language], characterName: CHARACTER_NAMES[character] }
-  // }
-  // return parseGeminiResponse(...)
-  return { ...FALLBACK_INSIGHT[language], characterName: 'Better Planner' }
+  const fallback: AIInsight = { ...FALLBACK_INSIGHT[language], characterName: CHARACTER_NAMES[character] }
+  // No key configured (local dev / key pending) → generic message, no network call
+  if (!process.env.GEMINI_API_KEY) return fallback
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+    const model = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: 'application/json' },
+      systemInstruction: CHARACTER_PROMPTS[character][language],
+    })
+    const result = await model.generateContent(
+      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
+    )
+    return parseGeminiResponse(result.response.text(), character, language)
+  } catch (error) {
+    console.error('[aiInsightService] Gemini error:', error)
+    return fallback
+  }
 }

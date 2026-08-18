@@ -328,9 +328,10 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                   </div>
                 ) : (
                   /* Normal Project Item */
-                  <div className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
+                  <div data-testid={`project-item-${project.id}`} className="flex items-center py-3 px-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
                     {/* Chevron Icon */}
                     <button
+                      data-testid={`project-toggle-${project.id}`}
                       onClick={() => toggleProject(project.id)}
                       className="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
@@ -374,6 +375,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
 
                       {/* Delete Button */}
                       <button
+                        data-testid={`project-delete-${project.id}`}
                         onClick={() => handleDeleteProject(project.id)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete project"
@@ -412,6 +414,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                         <input
                           type="text"
                           name="title"
+                          data-testid="task-form-input"
                           value={editingTask ? (editingTask.title || '') : (newTaskTitle || '')}
                           onChange={(e) => {
                             if (editingTask) {
@@ -440,6 +443,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                       <div className="flex items-center space-x-1">
                         {/* Save Button */}
                         <button
+                          data-testid="task-form-save"
                           onClick={() => {
                             const title = editingTask ? (editingTask.title || '') : (newTaskTitle || '');
                             handleTaskSubmit({ title });
@@ -467,9 +471,10 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                     </div>
                   ) : (
                     /* Show normal task item if not being edited */
-                    <div className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
+                    <div data-testid={`task-item-${task.id}`} className="flex items-center py-2 pl-6 pr-4 hover:bg-gray-50 dark:hover:bg-gray-700 group">
                   {/* Checkbox */}
                   <Checkbox
+                    data-testid={`task-status-${task.id}`}
                     checked={task.status === 'DONE'}
                     onChange={() => handleToggleTaskStatus(task.id, task.status)}
                   />
@@ -487,6 +492,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {/* Edit Button */}
                     <button
+                      data-testid={`task-edit-${task.id}`}
                       onClick={() => handleEditTask(project.id, task)}
                       className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                       title="Edit task"
@@ -498,6 +504,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
 
                     {/* Delete Button */}
                     <button
+                      data-testid={`task-delete-${task.id}`}
                       onClick={() => handleDeleteTask(project.id, task.id)}
                       className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                       title="Delete task"
@@ -528,6 +535,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                       type="text"
                       name="title"
                     value={newTaskTitle || ''}
+                    data-testid="task-form-input"
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                       className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
                       placeholder="Masukkan task..."
@@ -548,6 +556,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
                   <div className="flex items-center space-x-1">
                     {/* Save Button */}
                     <button
+                    data-testid="task-form-save"
                     onClick={() => handleTaskSubmit({ title: newTaskTitle || '' })}
                     disabled={!(newTaskTitle || '').trim()}
                       className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -576,6 +585,7 @@ const ProjectList: React.FC<WorkQuestProjectListProps> = ({
               {!showTaskForm || (showTaskForm.projectId !== project.id) ? (
                 <div className="pl-6 pr-4 py-2">
                   <button
+                    data-testid={`project-add-task-${project.id}`}
                     onClick={() => handleAddTask(project.id)}
                     className="text-xs text-primary hover:text-primary/80 font-medium"
                   >

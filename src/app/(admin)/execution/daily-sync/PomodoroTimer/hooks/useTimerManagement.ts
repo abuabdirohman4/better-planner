@@ -1,8 +1,6 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
-import { mutate as globalMutate } from 'swr';
-import { isFocusStatsKey } from '@/lib/swr';
+import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useTimer } from '@/stores/timerStore';
-import { useActivityStore } from '@/stores/activityStore';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
@@ -79,6 +77,8 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
 
               if (lastCompletion && (now - parseInt(lastCompletion)) < 5000) {
                 console.log('🔇 Database completion already processed recently, skipping...');
+                // Another path already wrote the log — still make sure every counter refetches
+                await notifyActivityLogsChanged();
                 return;
               }
 
@@ -134,10 +134,8 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         }
 
         setActivityLogRefreshKey((k) => k + 1);
-        useActivityStore.getState().triggerRefresh();
-
-        // Refresh quest counter + Total focus time bar immediately
-        await globalMutate(isFocusStatsKey);
+        // One signal: activity list, quest counters, Total focus bar, timer progress
+        await notifyActivityLogsChanged();
 
         // ✅ FIX: Open journal modal for FOCUS sessions only, with activity log ID
         if (sessionData.type === 'FOCUS') {

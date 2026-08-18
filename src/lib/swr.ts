@@ -1,3 +1,5 @@
+import { mutate as globalMutate } from 'swr';
+import { useActivityStore } from '@/stores/activityStore';
 import { SWRConfiguration } from 'swr';
 
 /**
@@ -129,9 +131,23 @@ export const dailySyncKeys = {
   dailyQuests: (year: number, quarter: number) => [...dailySyncKeys.all, 'selectable-daily-quests', year, quarter] as const,
 };
 
-/** Predicate for `mutate()` — matches every key derived from activity_logs (quest counter + Total focus time bar). Call after any activity_log insert/delete. */
+/** Predicate for `mutate()` — matches every key derived from activity_logs (quest counter + Total focus time bar). */
 export const isFocusStatsKey = (key: unknown) =>
   Array.isArray(key) && key[0] === 'daily-sync' && ['all-completed-sessions', 'actual-focus-time'].includes(key[1]);
+
+/** Any SWR key that reads activity_logs (list + derived counters). */
+export const isActivityLogsKey = (key: unknown) =>
+  isFocusStatsKey(key) || (Array.isArray(key) && key[0] === 'daily-sync' && key[1] === 'activity-logs');
+
+/**
+ * ONE signal for "activity_logs changed" — call from EVERY path that inserts/updates/deletes a log
+ * (timer completion, journal save, delete, realtime event, recovery). Revalidates all SWR readers
+ * and bumps activityStore so hooks subscribed to lastActivityTimestamp refetch too.
+ */
+export function notifyActivityLogsChanged(): Promise<unknown> {
+  useActivityStore.getState().triggerRefresh();
+  return globalMutate(isActivityLogsKey);
+}
 
 /**
  * SWR key generator for dashboard

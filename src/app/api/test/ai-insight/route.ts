@@ -2,6 +2,7 @@ import { generateInsight } from '@/lib/notifications/services/aiInsightService'
 import type { PerformanceMetrics } from '@/lib/notifications/services/performanceAggregation'
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV === 'production') return new Response('Not found', { status: 404 })
   const dummyMetrics: PerformanceMetrics = {
     periodType: 'daily',
     periodStart: new Date().toISOString(),

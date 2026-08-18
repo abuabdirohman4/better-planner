@@ -160,6 +160,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
         <div className="flex-1">
           <input
             type="text"
+            data-testid="side-quest-search"
             placeholder="Cari side quest..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -167,6 +168,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
           />
         </div>
         <button
+          data-testid="side-quest-toggle-completed"
           onClick={() => setShowCompleted(!showCompleted)}
           className={`p-2 rounded-md transition-colors ${
             showCompleted
@@ -215,6 +217,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
                     <div className="flex-1">
                       <input
                         type="text"
+                        data-testid="side-quest-edit-input"
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
                         className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
@@ -236,6 +239,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
                     <div className="flex items-center space-x-1">
                       {/* Save Button */}
                       <button
+                        data-testid="side-quest-save-btn"
                         onClick={handleSaveQuest}
                         disabled={!editingTitle.trim()}
                         className="p-1 text-gray-400 hover:text-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -260,10 +264,11 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
                   </div>
                 ) : (
                   /* Normal Quest Item */
-                  <div className={`group relative flex items-center space-x-3 py-2 ml-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded`}>
+                  <div data-testid={`side-quest-item-${quest.id}`} className={`group relative flex items-center space-x-3 py-2 ml-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded`}>
                     {/* Status Toggle Checkbox */}
                     <div onClick={(e) => e.stopPropagation()}>
                       <Checkbox
+                        data-testid={`side-quest-status-${quest.id}`}
                         checked={quest.status === 'DONE'}
                         onChange={() => toggleStatus(quest.id, quest.status || 'TODO')}
                       />
@@ -282,6 +287,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {/* Edit Button */}
                       <button
+                        data-testid={`side-quest-edit-${quest.id}`}
                         onClick={() => handleEditQuest(quest)}
                         className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
                         title="Edit quest"
@@ -293,6 +299,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
 
                       {/* Delete Button */}
                       <button
+                        data-testid={`side-quest-delete-${quest.id}`}
                         onClick={() => handleDeleteQuest(quest.id)}
                         className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete quest"

@@ -9,7 +9,7 @@ interface HabitGridProps {
   year: number;
   month: number;
   todayDate: string;
-  isCompleted: (habitId: string, date: string) => boolean;
+  isCompleted: (habitId: string, date: string, dailyTarget?: number) => boolean;
   onToggle: (habitId: string, date: string) => void;
   monthlyStats: MonthlyStats;
   onEditHabit?: (habit: Habit) => void;

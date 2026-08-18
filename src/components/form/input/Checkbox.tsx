@@ -7,6 +7,7 @@ interface CheckboxProps {
   id?: string;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  "data-testid"?: string;
 }
 
 const Checkbox: React.FC<CheckboxProps> = ({
@@ -16,6 +17,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
   onChange,
   className = "",
   disabled = false,
+  "data-testid": dataTestId,
 }) => {
   return (
     <label
@@ -31,6 +33,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}
+          data-testid={dataTestId}
         />
         {/* ✅ FIXED: Centang putih hanya muncul jika checked={true} */}
         {checked ? (

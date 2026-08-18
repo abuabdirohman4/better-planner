@@ -107,6 +107,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
         <div
           key={block.id}
           data-block="true"
+          data-testid={`grid-block-${block.id}`}
           onClick={() => onEditBlock(block)}
           className="absolute left-0.5 right-0.5 rounded text-xs cursor-pointer hover:opacity-90 overflow-hidden z-10 flex items-center justify-center text-center px-1"
           style={{
@@ -178,6 +179,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
                     ? 'bg-blue-100 dark:bg-blue-900/30'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
                 } cursor-crosshair`}
+                data-testid={`grid-slot-${dayIndex}-${slotIndex}`}
                 onMouseDown={(e) => handleMouseDown(dayIndex, slotIndex, e)}
                 onMouseEnter={() => handleMouseEnter(dayIndex, slotIndex)}
                 onClick={(e) => handleSlotClick(dayIndex, slotIndex, e)}

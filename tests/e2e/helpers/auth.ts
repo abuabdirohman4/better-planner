@@ -30,14 +30,17 @@ export async function login(page: Page): Promise<void> {
   await page.locator('[data-testid="signin-password"]').fill(password);
   await page.locator('[data-testid="signin-submit"]').click();
 
-  // Login action redirect ke '/', middleware redirect ke '/dashboard'
-  // Tunggu sampai URL bukan /signin — middleware akan handle redirect ke /dashboard
+  // Login action redirect ke '/', middleware redirect ke '/dashboard'.
+  // Tunggu sampai redirect chain selesai (bukan /signin dan bukan '/') — kalau goto dilakukan
+  // saat redirect masih in-flight, navigasi berikutnya kena net::ERR_ABORTED.
   await page.waitForURL((url) => !url.pathname.startsWith('/signin'), { timeout: 45000 });
-  // Jika masih di '/', navigasi manual ke dashboard (middleware kadang butuh request baru)
-  if (page.url().endsWith('/') || page.url() === 'http://localhost:3000') {
+  await page
+    .waitForURL((url) => url.pathname !== '/' && !url.pathname.startsWith('/signin'), { timeout: 15000 })
+    .catch(() => {});
+  if (new URL(page.url()).pathname === '/') {
     await page.goto('/dashboard');
-    await page.waitForLoadState('domcontentloaded');
   }
+  await page.waitForLoadState('domcontentloaded');
 }
 
 // Clear cookies dan permissions sebelum setiap test

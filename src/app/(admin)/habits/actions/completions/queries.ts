@@ -45,6 +45,7 @@ export async function queryCompletion(
     .eq('habit_id', habitId)
     .eq('user_id', userId)
     .eq('date', date)
+    .limit(1)
     .maybeSingle();
 
   if (error) throw error;
@@ -68,6 +69,36 @@ export async function insertCompletion(
   return data as RawCompletionRow;
 }
 
+/** Delete only the most recent completion row for that day (multi-completion decrement). */
+export async function deleteLastCompletion(
+  supabase: SupabaseClient,
+  habitId: string,
+  userId: string,
+  date: string
+): Promise<void> {
+  const { data, error } = await supabase
+    .from('habit_completions')
+    .select('id')
+    .eq('habit_id', habitId)
+    .eq('user_id', userId)
+    .eq('date', date)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return;
+
+  const { error: delError } = await supabase
+    .from('habit_completions')
+    .delete()
+    .eq('id', data.id)
+    .eq('user_id', userId);
+
+  if (delError) throw delError;
+}
+
+/** Delete ALL completion rows for that day (binary toggle off). */
 export async function deleteCompletion(
   supabase: SupabaseClient,
   habitId: string,

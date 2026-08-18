@@ -54,6 +54,7 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
   return (
     <div className="relative">
       <button
+        data-testid="template-selector-toggle"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
       >
@@ -68,6 +69,7 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
             {templates.map(t => (
               <div
                 key={t.id}
+                data-testid={`template-item-${t.id}`}
                 onClick={() => handleSetActive(t.id)}
                 className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
               >
@@ -76,6 +78,7 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
                 </span>
                 {templates.length > 1 && (
                   <button
+                    data-testid={`template-delete-${t.id}`}
                     onClick={(e) => handleDelete(e, t.id)}
                     className="text-gray-400 hover:text-red-500 text-xs px-1"
                   >
@@ -89,17 +92,19 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
                 <div className="flex gap-2">
                   <input
                     autoFocus
+                    data-testid="template-new-input"
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleCreate()}
                     placeholder="Nama template..."
                     className="flex-1 text-sm px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                   />
-                  <button onClick={handleCreate} className="text-sm text-blue-600 font-medium">OK</button>
+                  <button data-testid="template-new-ok" onClick={handleCreate} className="text-sm text-blue-600 font-medium">OK</button>
                   <button onClick={() => setIsCreating(false)} className="text-sm text-gray-400">✕</button>
                 </div>
               ) : (
                 <button
+                  data-testid="template-new-btn"
                   onClick={() => setIsCreating(true)}
                   className="w-full text-left text-sm text-blue-600 hover:text-blue-700 px-1"
                 >

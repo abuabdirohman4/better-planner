@@ -1,8 +1,9 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { createClient } from '@/lib/supabase/client';
 import { dailySyncKeys } from '@/lib/swr';
 import { useTargetFocusStore } from '../stores/targetFocusStore';
+import { useActivityStore } from '@/stores/activityStore';
 
 interface UseTargetFocusOptions {
   selectedDate: string;
@@ -187,11 +188,21 @@ export function useTargetFocus({ selectedDate }: UseTargetFocusOptions): UseTarg
     {
       revalidateOnFocus: false,
       revalidateIfStale: false,
+      revalidateOnMount: true, // persisted swr-cache can be stale after reload
       revalidateOnReconnect: true,
       dedupingInterval: 5 * 60 * 1000, // 5 menit
       errorRetryCount: 3,
     }
   );
+
+  // Refetch whenever any path signals "activity_logs changed" (notifyActivityLogsChanged)
+  const lastActivityTimestamp = useActivityStore((s) => s.lastActivityTimestamp);
+  const seenTimestamp = useRef(lastActivityTimestamp);
+  useEffect(() => {
+    if (seenTimestamp.current === lastActivityTimestamp) return; // skip mount
+    seenTimestamp.current = lastActivityTimestamp;
+    mutateFocus();
+  }, [lastActivityTimestamp, mutateFocus]);
 
   // Clear cache when date changes
   useEffect(() => {

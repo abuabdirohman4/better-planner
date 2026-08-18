@@ -13,6 +13,7 @@ import {
  * POST /api/test/performance-aggregation
  */
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production') return new Response('Not found', { status: 404 })
   try {
     const supabase = await createClient();
 

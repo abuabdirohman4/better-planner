@@ -58,6 +58,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           onClick={onClose}
           disabled={isLoading}
           size="sm"
+          data-testid="confirm-modal-cancel"
         >
           {cancelText}
         </Button>
@@ -67,6 +68,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           loading={isLoading}
           disabled={isLoading}
           size="sm"
+          data-testid="confirm-modal-confirm"
           className={confirmVariant === 'danger' ? 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300' : ''}
         >
           {confirmText}

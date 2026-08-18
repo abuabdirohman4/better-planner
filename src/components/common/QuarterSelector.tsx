@@ -53,13 +53,14 @@ const QuarterSelector: React.FC = () => {
 
   return (
     <div className="flex items-center gap-2 w-full">
-      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handlePrev} aria-label="Sebelumnya">
+      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handlePrev} aria-label="Sebelumnya" data-testid="quarter-prev">
         <ChevronLeftIcon className="w-5 h-5" />
       </Button>
       <div className="relative w-full">
         <button
           className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer w-full dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={handleDropdownToggle}
+          data-testid="quarter-toggle"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
@@ -83,7 +84,7 @@ const QuarterSelector: React.FC = () => {
           </div>
         </Dropdown>
       </div>
-      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handleNext} aria-label="Berikutnya">
+      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handleNext} aria-label="Berikutnya" data-testid="quarter-next">
         <ChevronRightIcon className="w-5 h-5" />
       </Button>
     </div>

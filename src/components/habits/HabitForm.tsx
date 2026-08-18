@@ -34,6 +34,7 @@ const DEFAULT_VALUES: HabitFormInput = {
   category: "spiritual",
   frequency: "flexible",
   monthly_goal: 20,
+  daily_target: 1,
   tracking_type: "positive",
   description: "",
   target_time: undefined,
@@ -68,6 +69,9 @@ export default function HabitForm({
     }
     if (values.monthly_goal < 1 || values.monthly_goal > 31) {
       newErrors.monthly_goal = "Monthly goal must be between 1 and 31.";
+    }
+    if ((values.daily_target ?? 1) < 1 || (values.daily_target ?? 1) > 99) {
+      newErrors.daily_target = "Daily target must be between 1 and 99.";
     }
     if (hasTargetTime && values.target_time) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -186,6 +190,24 @@ export default function HabitForm({
           disabled={isSubmitting}
         />
         {errors.monthly_goal && <p className={errorClass}>{errors.monthly_goal}</p>}
+      </div>
+
+      {/* Daily Target */}
+      <div>
+        <label htmlFor="habit-daily-target" className={labelClass}>
+          Daily Target <span className="text-xs text-gray-400">(times/day, 1 = once)</span>
+        </label>
+        <input
+          id="habit-daily-target"
+          type="number"
+          min={1}
+          max={99}
+          value={values.daily_target ?? 1}
+          onChange={(e) => handleChange("daily_target", parseInt(e.target.value, 10) || 1)}
+          className={inputClass}
+          disabled={isSubmitting}
+        />
+        {errors.daily_target && <p className={errorClass}>{errors.daily_target}</p>}
       </div>
 
       {/* Tracking Type */}

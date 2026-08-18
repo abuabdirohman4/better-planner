@@ -1,10 +1,9 @@
 'use client';
 import React, { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { mutate as globalMutate } from 'swr';
 
 import { useActivityStore } from '@/stores/activityStore';
-import { isFocusStatsKey } from '@/lib/swr';
+import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useActivityLogs } from './hooks/useActivityLogs';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
@@ -172,7 +171,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [dynamicHeight, setDynamicHeight] = useState('auto');
 
-  const { triggerRefresh, lastActivityTimestamp } = useActivityStore();
+  const { lastActivityTimestamp } = useActivityStore();
   const { logs, isLoading, error, mutate } = useActivityLogs({ date, refreshKey, lastActivityTimestamp });
 
   const handleDeleteLog = async (logId: string) => {
@@ -183,8 +182,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
     try {
       await deleteActivityLog(logId);
       toast.success('Activity log dihapus');
-      triggerRefresh();
-      globalMutate(isFocusStatsKey);
+      notifyActivityLogsChanged();
     } catch {
       toast.error('Gagal menghapus activity log');
       // Rollback on error
@@ -440,8 +438,10 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
             )}
           </button>
         )}
-        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+        <div data-testid="activity-view-switch" className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
           <button
+            data-testid="activity-view-calendar"
+            aria-pressed={viewMode === 'CALENDAR'}
             onClick={() => setViewMode('CALENDAR')}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'CALENDAR'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
@@ -451,6 +451,8 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
             Calendar
           </button>
           <button
+            data-testid="activity-view-list"
+            aria-pressed={viewMode === 'TIMELINE'}
             onClick={() => setViewMode('TIMELINE')}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'TIMELINE'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
@@ -460,6 +462,8 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
             List
           </button>
           <button
+            data-testid="activity-view-quest"
+            aria-pressed={viewMode === 'GROUPED'}
             onClick={() => setViewMode('GROUPED')}
             className={`px-2 py-1 rounded text-xs font-medium transition-colors ${viewMode === 'GROUPED'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'

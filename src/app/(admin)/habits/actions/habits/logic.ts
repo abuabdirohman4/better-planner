@@ -11,6 +11,7 @@ export function toHabit(row: RawHabitRow): Habit {
     category: row.category as HabitCategory,
     frequency: row.frequency as HabitFrequency,
     monthly_goal: row.monthly_goal,
+    daily_target: row.daily_target ?? 1,
     tracking_type: row.tracking_type as HabitTrackingType,
     target_time: row.target_time,
     is_archived: row.is_archived,

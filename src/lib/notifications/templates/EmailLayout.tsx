@@ -33,7 +33,7 @@ export function EmailLayout({ preview, children, userId }: EmailLayoutProps) {
             <Text style={{ color: '#8898aa', fontSize: '12px', lineHeight: '16px' }}>
               You are receiving this email because you opted in via your Better Planner notification settings.
             </Text>
-            <Link href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/settings/notifications?userId=${userId}`} style={{ color: '#1496F6', textDecoration: 'none', fontSize: '14px' }}>
+            <Link href={`${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/settings/notifications?userId=${userId}`} style={{ color: '#1496F6', textDecoration: 'none', fontSize: '14px' }}>
               Unsubscribe or Manage Preferences
             </Link>
           </Section>

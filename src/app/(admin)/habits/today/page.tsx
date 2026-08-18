@@ -15,8 +15,18 @@ export default function TodayHabitsPage() {
     []
   );
 
-  const todayYear = useMemo(() => parseInt(todayDate.slice(0, 4)), [todayDate]);
-  const todayMonth = useMemo(() => parseInt(todayDate.slice(5, 7)), [todayDate]);
+  // Day being viewed/edited (bp-uv4). Defaults to today; past days editable, future blocked.
+  const [selectedDate, setSelectedDate] = useState(todayDate);
+  const isToday = selectedDate === todayDate;
+  const shiftDay = (delta: number) => {
+    const d = new Date(selectedDate + "T00:00:00");
+    d.setDate(d.getDate() + delta);
+    const next = d.toLocaleDateString("en-CA");
+    if (next <= todayDate) setSelectedDate(next);
+  };
+
+  const selYear = parseInt(selectedDate.slice(0, 4));
+  const selMonth = parseInt(selectedDate.slice(5, 7));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -24,24 +34,26 @@ export default function TodayHabitsPage() {
   const {
     completions,
     isCompleted,
+    getCount,
     toggleCompletion,
+    adjustCompletion,
     isLoading: completionsLoading,
-  } = useHabitCompletions(todayYear, todayMonth);
+  } = useHabitCompletions(selYear, selMonth);
 
-  const monthlyStats = useMonthlyStats(habits, completions, todayYear, todayMonth);
+  const monthlyStats = useMonthlyStats(habits, completions, selYear, selMonth);
 
   const isLoading = habitsLoading || completionsLoading;
 
   // Stats for the header
-  const todayCompleted = habits.filter((h) => isCompleted(h.id, todayDate)).length;
+  const todayCompleted = habits.filter((h) => isCompleted(h.id, selectedDate, h.daily_target)).length;
   const totalHabits = habits.length;
   const completionPct =
     totalHabits > 0 ? Math.round((todayCompleted / totalHabits) * 100) : 0;
 
-  // Format display date: "March 28, 2026"
-  const displayDate = new Date(todayDate + "T00:00:00").toLocaleDateString(
-    "en-US",
-    { year: "numeric", month: "long", day: "numeric" }
+  // Format display date: "Senin, 13 Apr 2026"
+  const displayDate = new Date(selectedDate + "T00:00:00").toLocaleDateString(
+    "id-ID",
+    { weekday: "long", day: "numeric", month: "short", year: "numeric" }
   );
 
   return (
@@ -50,12 +62,48 @@ export default function TodayHabitsPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            Today&apos;s Habits
+            Habits
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {displayDate}
-            </span>
+            {/* Day navigator */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => shiftDay(-1)}
+                aria-label="Previous day"
+                data-testid="habit-day-prev"
+                className="flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-sm text-gray-500 dark:text-gray-400 min-w-[130px] text-center" data-testid="habit-day-label">
+                {displayDate}
+              </span>
+              <button
+                type="button"
+                onClick={() => shiftDay(1)}
+                disabled={isToday}
+                aria-label="Next day"
+                data-testid="habit-day-next"
+                className="flex items-center justify-center w-8 h-8 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              {!isToday && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(todayDate)}
+                  data-testid="habit-day-today"
+                  className="text-xs px-2 py-1 rounded-md bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60"
+                >
+                  Hari Ini
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
@@ -83,7 +131,7 @@ export default function TodayHabitsPage() {
         {!isLoading && totalHabits > 0 && (
           <div className="mt-3 flex items-center gap-3">
             <span className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-              {todayCompleted} of {totalHabits} habits done today
+              {todayCompleted} of {totalHabits} habits done{isToday ? " today" : ""}
             </span>
             <div className="flex-1 flex items-center gap-2">
               {/* Progress bar */}
@@ -123,9 +171,11 @@ export default function TodayHabitsPage() {
         <TodayHabitList
           habits={habits}
           isCompleted={isCompleted}
+          getCount={getCount}
           onToggle={toggleCompletion}
+          onAdjust={adjustCompletion}
           monthlyStats={monthlyStats}
-          todayDate={todayDate}
+          selectedDate={selectedDate}
         />
       )}
 

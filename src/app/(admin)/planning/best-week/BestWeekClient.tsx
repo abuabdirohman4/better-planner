@@ -50,6 +50,7 @@ export default function BestWeekClient() {
           Rancang jadwal ideal mingguanmu untuk menjalani minggu terbaik secara konsisten.
         </p>
         <button
+          data-testid="best-week-create-first"
           onClick={handleCreateFirst}
           className="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
         >

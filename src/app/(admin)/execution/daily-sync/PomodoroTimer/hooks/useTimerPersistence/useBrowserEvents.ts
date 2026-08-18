@@ -5,6 +5,7 @@ import { useTimer, useTimerStore } from '@/stores/timerStore';
 import { getActiveTimerSession, updateSessionWithActualTime } from '../../actions/timerSessionActions';
 import { getGlobalState, setGlobalRecoveryInProgress, setGlobalRecoveryCompleted } from '../globalState';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useBackgroundTimer } from '../useBackgroundTimer';
 
 interface UseBrowserEventsProps {
@@ -67,6 +68,8 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
             const result = await updateSessionWithActualTime(activeSession.id);
             
             if (result.completed) {
+              // Server already inserted the activity_log inside updateSessionWithActualTime → refresh all readers
+              notifyActivityLogsChanged();
               // Timer selesai - trigger completion
               useTimerStore.getState().completeTimerFromDatabase({
                 taskId: activeSession.task_id,

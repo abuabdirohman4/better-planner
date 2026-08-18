@@ -19,7 +19,7 @@ interface HabitGridRowProps {
   year: number;
   month: number;
   todayDate: string;
-  isCompleted: (habitId: string, date: string) => boolean;
+  isCompleted: (habitId: string, date: string, dailyTarget?: number) => boolean;
   onToggle: (habitId: string, date: string) => void;
   stats: HabitStats;
   onEditHabit?: (habit: Habit) => void;
@@ -99,7 +99,7 @@ export default function HabitGridRow({
           const completed = weekDays.filter((day) => {
             const paddedDay = String(day).padStart(2, "0");
             const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
-            return isCompleted(habit.id, dateStr);
+            return isCompleted(habit.id, dateStr, habit.daily_target);
           }).length;
           const total = weekDays.length;
           const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -128,7 +128,7 @@ export default function HabitGridRow({
           const paddedDay = String(day).padStart(2, "0");
           const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
           const isFuture = dateStr > todayDate;
-          const completed = isCompleted(habit.id, dateStr);
+          const completed = isCompleted(habit.id, dateStr, habit.daily_target);
 
           return (
             <HabitGridCell

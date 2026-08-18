@@ -13,39 +13,24 @@ describe('queryGetQuestProgress', () => {
   });
 
   it('calculates average progress from milestones, tasks, and subtasks', async () => {
-    const mockData = [
-      {
-        status: 'DONE',
-        tasks: [
-          {
-            status: 'DONE',
-            subtasks: [{ status: 'DONE' }, { status: 'TODO' }] // 50%
-          },
-          {
-            status: 'TODO',
-            subtasks: [{ status: 'TODO' }] // 0%
-          }
-        ]
-      },
-      {
-        status: 'TODO',
-        tasks: []
-      }
+    // Query 1: milestones (1/2 DONE = 50%). Query 2: flat tasks; parent_task_id null = task (1/2 = 50%),
+    // non-null = subtask (1/3 = 33%). Average = 44.
+    const milestones = [{ id: 'm1', status: 'DONE' }, { id: 'm2', status: 'TODO' }];
+    const tasks = [
+      { id: 't1', status: 'DONE', parent_task_id: null },
+      { id: 't2', status: 'TODO', parent_task_id: null },
+      { id: 's1', status: 'DONE', parent_task_id: 't1' },
+      { id: 's2', status: 'TODO', parent_task_id: 't1' },
+      { id: 's3', status: 'TODO', parent_task_id: 't2' },
     ];
-    
-    // Milestones: 1/2 DONE = 50%
-    // Tasks: 1/2 DONE = 50%
-    // Subtasks: 1/3 DONE = 33.33...%
-    // Average: (50 + 50 + 33.33) / 3 = 44.44 => Math.round = 44%
-    
-    const builder = makeQueryBuilder({ data: mockData, error: null });
-    const supabase = makeFrom(builder);
+    const mBuilder = makeQueryBuilder({ data: milestones, error: null });
+    const tBuilder = makeQueryBuilder({ data: tasks, error: null });
+    const supabase = { from: vi.fn().mockReturnValueOnce(mBuilder).mockReturnValueOnce(tBuilder) } as any;
 
     const result = await queryGetQuestProgress(supabase, 'q1');
     expect(result.overallProgress).toBe(44);
-    
-    expect(builder.select).toHaveBeenCalled();
-    expect(builder.eq).toHaveBeenCalledWith('quest_id', 'q1');
+    expect(mBuilder.eq).toHaveBeenCalledWith('quest_id', 'q1');
+    expect(tBuilder.in).toHaveBeenCalledWith('milestone_id', ['m1', 'm2']);
   });
 
   it('handles empty milestones', async () => {

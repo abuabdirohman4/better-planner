@@ -379,6 +379,7 @@ const TaskItemCardContent = ({
 
               {onSetActiveTask ? (
                 <button
+                  data-testid={`task-play-${item.id}`}
                   className={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${isVisuallyDisabled
                     ? 'bg-gray-100 text-gray-400'
                     : `${isActiveInTimer
