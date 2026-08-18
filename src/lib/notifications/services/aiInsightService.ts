@@ -55,13 +55,14 @@ function buildUserPrompt(
   userName: string,
   language: EmailLanguage,
   mainQuestMotivation?: string,
-  inactiveStreak?: number
+  inactiveStreak?: number,
+  periodLabel?: string
 ): string {
   const isId = language === 'id'
 
   const langInstruction = isId
-    ? 'Tulis semua teks dalam Bahasa Indonesia yang natural, jujur, dan bermakna.'
-    : 'Write all text in English that is natural, honest, and meaningful.'
+    ? 'Tulis semua teks dalam Bahasa Indonesia yang natural, jujur, dan bermakna. JANGAN menyapa, menyebut nama user, atau menulis salam apa pun di awal narrative — template email sudah menyapa lebih dulu, jadi mulai langsung dari isi (contoh salah: "Hei Abu, ..."). Laporan ini membahas periode yang SUDAH LEWAT, jadi pakai bentuk lampau seperti "kemarin" — jangan pernah tulis "hari ini".'
+    : 'Write all text in English that is natural, honest, and meaningful. Do NOT greet the user, mention their name, or write any salutation at the start of the narrative — the email template already greets them, so start directly with the substance (wrong: "Hi Abu, ..."). This report covers a period that has ALREADY ENDED, so use past tense and say "yesterday" — never "today".'
 
   const motivationContext = mainQuestMotivation
     ? isId
@@ -69,19 +70,32 @@ function buildUserPrompt(
       : `\nUser's core reason for pursuing their goal: "${mainQuestMotivation}" — anchor your message to this reason, don't just quote it.`
     : ''
 
-  // Build task context for days WITH activity
+  // Task names matter even on zero-session days (tasks can be completed without a timer)
   let taskContext = ''
-  if (metrics.totalSessions > 0) {
-    const completedNames = metrics.topCompletedTasks?.map(t => `"${t.title}" (${t.questName})`).join(', ')
-    const activeNames = metrics.mainQuestProgress?.activeTasks?.slice(0, 3).map(t => `"${t.title}"`).join(', ')
+  const hasTaskContext =
+    (metrics.topCompletedTasks?.length ?? 0) > 0 ||
+    (metrics.activeTasks?.length ?? 0) > 0 ||
+    (metrics.needsAttention?.length ?? 0) > 0
+  if (hasTaskContext) {
+    const QUEST_TYPE: Record<string, string> = {
+      MAIN_QUEST: 'Main Quest', WORK_QUEST: 'Work Quest',
+      SIDE_QUEST: 'Side Quest', DAILY_QUEST: 'Daily Quest',
+    }
+    const label = (t: { title: string; questName?: string; type?: string }) =>
+      `"${t.title}" (${[t.type ? QUEST_TYPE[t.type] ?? t.type : '', t.questName].filter(Boolean).join(' · ')})`
+    const completedNames = metrics.topCompletedTasks?.map(label).join(', ')
+    const activeSource = metrics.activeTasks?.length
+      ? metrics.activeTasks
+      : metrics.mainQuestProgress?.activeTasks
+    const activeNames = activeSource?.slice(0, 3).map(t => `"${t.title}"`).join(', ')
     const stuckNames = metrics.needsAttention?.slice(0, 2).map(t => `"${t.title}" (${t.daysInProgress} hari macet)`).join(', ')
 
     taskContext = isId
-      ? `\nTugas yang diselesaikan hari ini: ${completedNames || 'tidak ada'}.
+      ? `\nTugas yang diselesaikan pada periode ini: ${completedNames || 'tidak ada'}.
 Tugas yang masih berjalan: ${activeNames || 'tidak ada'}.
 Tugas yang perlu perhatian: ${stuckNames || 'tidak ada'}.
 Sebutkan nama tugas/quest spesifik dalam pesanmu agar terasa personal dan relevan.`
-      : `\nTasks completed today: ${completedNames || 'none'}.
+      : `\nTasks completed in this period: ${completedNames || 'none'}.
 Active tasks in progress: ${activeNames || 'none'}.
 Tasks needing attention: ${stuckNames || 'none'}.
 Reference specific task/quest names in your message to make it feel personal and relevant.`
@@ -104,7 +118,7 @@ Reference specific task/quest names in your message to make it feel personal and
   return `
 ${langInstruction}
 
-Analyze this ${periodType} performance report. User: ${userName}.
+Analyze this ${periodType} performance report for ${periodLabel ?? metrics.periodStart} (a period that has already ended). User: ${userName}.
 ${motivationContext}
 ${taskContext}
 ${inactivityContext}
@@ -130,7 +144,7 @@ ${JSON.stringify({
 
 Output a JSON object — no markdown, just raw JSON:
 {
-  "headline": "Judul pendek yang menangkap situasi hari ini dengan tepat (bukan generik)",
+  "headline": "Judul pendek yang menangkap situasi periode laporan dengan tepat (bukan generik)",
   "narrative": "2-3 kalimat yang jujur dan spesifik tentang performa mereka — sebutkan angka, nama quest, atau tugas nyata",
   "topWin": "1 kalimat pencapaian terbaik yang spesifik (atau dampak nyata jika tidak ada aktivitas)",
   "challengeSpotted": "1 kalimat tantangan konkret yang perlu diatasi — jujur, bukan basa-basi",
@@ -166,7 +180,8 @@ export async function generateInsight(
   userName: string,
   language: EmailLanguage = 'id',
   mainQuestMotivation?: string,
-  inactiveStreak?: number
+  inactiveStreak?: number,
+  periodLabel?: string
 ): Promise<AIInsight> {
   const fallback: AIInsight = { ...FALLBACK_INSIGHT[language], characterName: CHARACTER_NAMES[character] }
   // No key configured (local dev / key pending) → generic message, no network call
@@ -180,7 +195,7 @@ export async function generateInsight(
       systemInstruction: CHARACTER_PROMPTS[character][language],
     })
     const result = await model.generateContent(
-      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak)
+      buildUserPrompt(metrics, metrics.periodType, userName, language, mainQuestMotivation, inactiveStreak, periodLabel)
     )
     return parseGeminiResponse(result.response.text(), character, language)
   } catch (error) {

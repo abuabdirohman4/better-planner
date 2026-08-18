@@ -48,6 +48,7 @@ export async function GET(request: Request) {
           focusMinutes: 60,
         }
       ],
+      activeTasks: [],
       needsAttention: [],
       otherQuestsCompleted: 2,
       otherQuestsTotal: 3,

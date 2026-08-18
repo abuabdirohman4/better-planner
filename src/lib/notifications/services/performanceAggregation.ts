@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { formatLocalDate } from "@/lib/notifications/utils/periodUtils";
 
 /**
  * Performance Aggregation Service
@@ -70,6 +71,7 @@ export interface PerformanceMetrics {
 
   // Task Details for Context
   topCompletedTasks: TaskDetail[]; // Top 3-5 wins
+  activeTasks: TaskDetail[]; // In-progress, any quest type
   needsAttention: TaskDetail[]; // Stuck/overdue tasks
 
   // Other Quests Summary
@@ -113,6 +115,7 @@ async function getTaskDetails(
       scheduled_date,
       created_at,
       milestone_id,
+      parent_task_id,
       milestones (
         id,
         title,
@@ -128,6 +131,47 @@ async function getTaskDetails(
     .in("id", taskIds);
 
   if (!tasksWithContext) return [];
+
+  // Work/Side quest tasks hang off a parent task (the project) instead of a
+  // milestone, so the milestone->quest join is empty for them. Walk up to the
+  // root ancestor and use its title as the quest name.
+  const parentTitles = new Map<string, { title: string; parentId: string | null }>();
+  let lookupIds = tasksWithContext
+    .map((t: any) => t.parent_task_id)
+    .filter((id: string | null): id is string => Boolean(id));
+
+  // Bounded walk: projects nest a couple of levels at most.
+  for (let depth = 0; depth < 5 && lookupIds.length > 0; depth++) {
+    const missing = Array.from(new Set<string>(lookupIds)).filter(
+      (id) => !parentTitles.has(id)
+    );
+    if (missing.length === 0) break;
+
+    const { data: parents } = await supabase
+      .from("tasks")
+      .select("id, title, parent_task_id")
+      .in("id", missing);
+
+    if (!parents?.length) break;
+    parents.forEach((p: any) =>
+      parentTitles.set(p.id, { title: p.title, parentId: p.parent_task_id })
+    );
+    lookupIds = parents
+      .map((p: any) => p.parent_task_id)
+      .filter((id: string | null): id is string => Boolean(id));
+  }
+
+  const rootTitleOf = (parentId: string | null): string | undefined => {
+    let current = parentId;
+    let title: string | undefined;
+    for (let depth = 0; depth < 5 && current; depth++) {
+      const node = parentTitles.get(current);
+      if (!node) break;
+      title = node.title;
+      current = node.parentId;
+    }
+    return title;
+  };
 
   // Map to TaskDetail with item_type from planItems
   const taskDetails: TaskDetail[] = tasksWithContext.map((task: any) => {
@@ -148,7 +192,8 @@ async function getTaskDetails(
     return {
       id: task.id,
       title: task.title,
-      questName: quest?.title || "No Quest",
+      // Empty when the task belongs to no quest/project — the template omits it
+      questName: quest?.title || rootTitleOf(task.parent_task_id) || "",
       milestoneName: milestone?.title,
       type: (planItem?.item_type as TaskDetail["type"]) || "MAIN_QUEST",
       status: task.status as TaskDetail["status"],
@@ -294,7 +339,7 @@ export async function getDailyPerformance(
   date: Date
 ): Promise<PerformanceMetrics> {
   const supabase = createServiceClient();
-  const dateStr = date.toISOString().split("T")[0];
+  const dateStr = formatLocalDate(date);
 
   // Get focus time and sessions from activity_logs
   const { data: activityData } = await supabase
@@ -334,6 +379,7 @@ export async function getDailyPerformance(
 
   let mainQuestProgress: MainQuestProgress | undefined;
   let topCompletedTasks: TaskDetail[] = [];
+  let activeTasks: TaskDetail[] = [];
   let needsAttention: TaskDetail[] = [];
   let otherQuestsCompleted = 0;
   let otherQuestsTotal = 0;
@@ -361,6 +407,7 @@ export async function getDailyPerformance(
 
     mainQuestProgress = insights.mainQuestProgress;
     topCompletedTasks = insights.topCompletedTasks;
+    activeTasks = insights.activeTasks;
     needsAttention = insights.needsAttention;
     otherQuestsCompleted = insights.otherQuestsCompleted;
     otherQuestsTotal = insights.otherQuestsTotal;
@@ -373,7 +420,7 @@ export async function getDailyPerformance(
   // Get previous day data for comparison
   const previousDate = new Date(date);
   previousDate.setDate(previousDate.getDate() - 1);
-  const previousDateStr = previousDate.toISOString().split("T")[0];
+  const previousDateStr = formatLocalDate(previousDate);
 
   const { data: previousActivity } = await supabase
     .from("activity_logs")
@@ -422,6 +469,7 @@ export async function getDailyPerformance(
     taskBreakdown,
     mainQuestProgress,
     topCompletedTasks,
+    activeTasks,
     needsAttention,
     otherQuestsCompleted,
     otherQuestsTotal,
@@ -445,7 +493,7 @@ export async function getInactiveStreak(
 
   // Check up to 30 days back
   for (let i = 0; i < 30; i++) {
-    const dateStr = checkDate.toISOString().split('T')[0]
+    const dateStr = formatLocalDate(checkDate)
     const { data } = await supabase
       .from('activity_logs')
       .select('id')
@@ -559,6 +607,11 @@ async function extractTaskInsights(
     .sort((a, b) => b.focusMinutes - a.focusMinutes)
     .slice(0, 5);
 
+  // Active tasks across all quest types (not just Main Quest)
+  const activeTasks = taskDetails
+    .filter((task) => task.status === "IN_PROGRESS")
+    .slice(0, 5);
+
   // Tasks that need attention (stuck > 3 days)
   const needsAttention = taskDetails.filter(
     (task) =>
@@ -579,6 +632,7 @@ async function extractTaskInsights(
   return {
     mainQuestProgress,
     topCompletedTasks,
+    activeTasks,
     needsAttention,
     otherQuestsCompleted,
     otherQuestsTotal,
@@ -596,8 +650,8 @@ export async function getWeeklyPerformance(
   const weekEndDate = new Date(weekStartDate);
   weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-  const startStr = weekStartDate.toISOString().split("T")[0];
-  const endStr = weekEndDate.toISOString().split("T")[0];
+  const startStr = formatLocalDate(weekStartDate);
+  const endStr = formatLocalDate(weekEndDate);
 
   // Get weekly activity data
   const { data: activityData } = await supabase
@@ -631,6 +685,7 @@ export async function getWeeklyPerformance(
   let tasksTotal = 0;
   let mainQuestProgress: MainQuestProgress | undefined;
   let topCompletedTasks: TaskDetail[] = [];
+  let activeTasks: TaskDetail[] = [];
   let needsAttention: TaskDetail[] = [];
   let otherQuestsCompleted = 0;
   let otherQuestsTotal = 0;
@@ -666,6 +721,7 @@ export async function getWeeklyPerformance(
 
     mainQuestProgress = insights.mainQuestProgress;
     topCompletedTasks = insights.topCompletedTasks;
+    activeTasks = insights.activeTasks;
     needsAttention = insights.needsAttention;
     otherQuestsCompleted = insights.otherQuestsCompleted;
     otherQuestsTotal = insights.otherQuestsTotal;
@@ -689,8 +745,8 @@ export async function getWeeklyPerformance(
   const previousWeekEnd = new Date(previousWeekStart);
   previousWeekEnd.setDate(previousWeekEnd.getDate() + 6);
 
-  const prevStartStr = previousWeekStart.toISOString().split("T")[0];
-  const prevEndStr = previousWeekEnd.toISOString().split("T")[0];
+  const prevStartStr = formatLocalDate(previousWeekStart);
+  const prevEndStr = formatLocalDate(previousWeekEnd);
 
   const { data: previousActivity } = await supabase
     .from("activity_logs")
@@ -742,6 +798,7 @@ export async function getWeeklyPerformance(
     taskBreakdown,
     mainQuestProgress,
     topCompletedTasks,
+    activeTasks,
     needsAttention,
     otherQuestsCompleted,
     otherQuestsTotal,
@@ -764,8 +821,8 @@ export async function getMonthlyPerformance(
   const monthEndDate = new Date(monthStartDate);
   monthEndDate.setDate(monthEndDate.getDate() + 27); // 4 weeks = 28 days
 
-  const startStr = monthStartDate.toISOString().split("T")[0];
-  const endStr = monthEndDate.toISOString().split("T")[0];
+  const startStr = formatLocalDate(monthStartDate);
+  const endStr = formatLocalDate(monthEndDate);
 
   // Get monthly activity data
   const { data: activityData } = await supabase
@@ -799,6 +856,7 @@ export async function getMonthlyPerformance(
   let tasksTotal = 0;
   let mainQuestProgress: MainQuestProgress | undefined;
   let topCompletedTasks: TaskDetail[] = [];
+  let activeTasks: TaskDetail[] = [];
   let needsAttention: TaskDetail[] = [];
   let otherQuestsCompleted = 0;
   let otherQuestsTotal = 0;
@@ -834,6 +892,7 @@ export async function getMonthlyPerformance(
 
     mainQuestProgress = insights.mainQuestProgress;
     topCompletedTasks = insights.topCompletedTasks;
+    activeTasks = insights.activeTasks;
     needsAttention = insights.needsAttention;
     otherQuestsCompleted = insights.otherQuestsCompleted;
     otherQuestsTotal = insights.otherQuestsTotal;
@@ -847,8 +906,8 @@ export async function getMonthlyPerformance(
   const previousMonthEnd = new Date(previousMonthStart);
   previousMonthEnd.setDate(previousMonthEnd.getDate() + 27);
 
-  const prevStartStr = previousMonthStart.toISOString().split("T")[0];
-  const prevEndStr = previousMonthEnd.toISOString().split("T")[0];
+  const prevStartStr = formatLocalDate(previousMonthStart);
+  const prevEndStr = formatLocalDate(previousMonthEnd);
 
   const { data: previousActivity } = await supabase
     .from("activity_logs")
@@ -900,6 +959,7 @@ export async function getMonthlyPerformance(
     taskBreakdown,
     mainQuestProgress,
     topCompletedTasks,
+    activeTasks,
     needsAttention,
     otherQuestsCompleted,
     otherQuestsTotal,
@@ -920,8 +980,8 @@ export async function getQuarterlyPerformance(
   const quarterEndDate = new Date(quarterStartDate);
   quarterEndDate.setDate(quarterEndDate.getDate() + 90); // ~13 weeks
 
-  const startStr = quarterStartDate.toISOString().split("T")[0];
-  const endStr = quarterEndDate.toISOString().split("T")[0];
+  const startStr = formatLocalDate(quarterStartDate);
+  const endStr = formatLocalDate(quarterEndDate);
 
   // Get quarterly activity data
   const { data: activityData } = await supabase
@@ -955,6 +1015,7 @@ export async function getQuarterlyPerformance(
   let tasksTotal = 0;
   let mainQuestProgress: MainQuestProgress | undefined;
   let topCompletedTasks: TaskDetail[] = [];
+  let activeTasks: TaskDetail[] = [];
   let needsAttention: TaskDetail[] = [];
   let otherQuestsCompleted = 0;
   let otherQuestsTotal = 0;
@@ -990,6 +1051,7 @@ export async function getQuarterlyPerformance(
 
     mainQuestProgress = insights.mainQuestProgress;
     topCompletedTasks = insights.topCompletedTasks;
+    activeTasks = insights.activeTasks;
     needsAttention = insights.needsAttention;
     otherQuestsCompleted = insights.otherQuestsCompleted;
     otherQuestsTotal = insights.otherQuestsTotal;
@@ -1012,8 +1074,8 @@ export async function getQuarterlyPerformance(
   const previousQuarterEnd = new Date(previousQuarterStart);
   previousQuarterEnd.setDate(previousQuarterEnd.getDate() + 90);
 
-  const prevStartStr = previousQuarterStart.toISOString().split("T")[0];
-  const prevEndStr = previousQuarterEnd.toISOString().split("T")[0];
+  const prevStartStr = formatLocalDate(previousQuarterStart);
+  const prevEndStr = formatLocalDate(previousQuarterEnd);
 
   const { data: previousActivity } = await supabase
     .from("activity_logs")
@@ -1065,6 +1127,7 @@ export async function getQuarterlyPerformance(
     taskBreakdown,
     mainQuestProgress,
     topCompletedTasks,
+    activeTasks,
     needsAttention,
     otherQuestsCompleted,
     otherQuestsTotal,

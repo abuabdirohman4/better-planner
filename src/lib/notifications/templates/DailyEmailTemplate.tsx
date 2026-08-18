@@ -26,6 +26,12 @@ const i18n = {
     challenge: 'Tantangan',
     actionTip: 'Tips Aksi',
     noActivity: 'Tidak ada sesi fokus kemarin — hari ini adalah kesempatanmu!',
+    questType: {
+      MAIN_QUEST: 'Main Quest',
+      WORK_QUEST: 'Work Quest',
+      SIDE_QUEST: 'Side Quest',
+      DAILY_QUEST: 'Daily Quest',
+    } as Record<string, string>,
   },
   en: {
     tag: 'Daily Summary',
@@ -45,6 +51,12 @@ const i18n = {
     challenge: 'Challenge',
     actionTip: 'Action Tip',
     noActivity: 'No focus sessions yesterday — today is your chance!',
+    questType: {
+      MAIN_QUEST: 'Main Quest',
+      WORK_QUEST: 'Work Quest',
+      SIDE_QUEST: 'Side Quest',
+      DAILY_QUEST: 'Daily Quest',
+    } as Record<string, string>,
   },
 }
 
@@ -126,11 +138,17 @@ export function DailyEmailTemplate({ payload }: DailyEmailTemplateProps) {
           <Heading style={{ fontSize: '18px', color: '#32325d', marginTop: '0', marginBottom: '12px' }}>
             {t.topCompletions}
           </Heading>
-          {metrics.topCompletedTasks.map((task) => (
-            <Text key={task.id} style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#525f7f' }}>
-              ✓ {task.title} ({task.questName})
-            </Text>
-          ))}
+          {metrics.topCompletedTasks.map((task) => {
+            // Quest name is empty for tasks not attached to any quest/project
+            const label = [t.questType[task.type] ?? task.type, task.questName]
+              .filter(Boolean)
+              .join(' · ')
+            return (
+              <Text key={task.id} style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#525f7f' }}>
+                ✓ {task.title} ({label})
+              </Text>
+            )
+          })}
         </Section>
       )}
 

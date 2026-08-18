@@ -16,7 +16,7 @@ import { renderEmailTemplate } from '@/lib/notifications/templates'
 import { sendEmail } from '@/lib/notifications/services/emailService'
 import { buildSubject, insertHistory } from '@/lib/notifications/services/queueProcessor'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart } from '@/lib/notifications/utils/periodUtils'
+import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -55,7 +55,8 @@ export async function POST(request: Request) {
       return Response.json({ success: true, message: 'No users with enabled notifications' })
     }
 
-    const now = new Date()
+    // WIB wall-clock: cron fires 23:00 UTC = 06:00 WIB, so UTC day is still H-1
+    const now = nowInUserTimezone()
     const runWeekly = now.getDay() === 1 // Monday
     const runMonthly = now.getDate() === 1
     const runQuarterly = now.getDate() === 1 && [0, 3, 6, 9].includes(now.getMonth())
@@ -138,7 +139,7 @@ export async function POST(request: Request) {
 
           // Rate limit: 4s between Gemini calls (15 RPM free tier)
           await delay(4000)
-          const insight = await generateInsight(metrics, char, userName, language, mainQuestMotivation, inactiveStreak)
+          const insight = await generateInsight(metrics, char, userName, language, mainQuestMotivation, inactiveStreak, periodLabel)
 
           const payload: EmailPayload = {
             userId: user.user_id,

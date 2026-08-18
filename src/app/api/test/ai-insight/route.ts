@@ -20,6 +20,7 @@ export async function GET(request: Request) {
       dailyQuest: { completed: 0, total: 0, focusMinutes: 0 },
     },
     topCompletedTasks: [],
+    activeTasks: [],
     needsAttention: [],
     otherQuestsCompleted: 2,
     otherQuestsTotal: 3,

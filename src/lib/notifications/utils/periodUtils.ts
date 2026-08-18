@@ -5,6 +5,15 @@
  */
 
 /**
+ * Format a Date as YYYY-MM-DD in the user's timezone (WIB).
+ * DB columns local_date/plan_date store WIB dates, so never use toISOString()
+ * for them — at 06:00 WIB the UTC date is still the previous day.
+ */
+export function formatLocalDate(date: Date, timezone = "Asia/Jakarta"): string {
+  return date.toLocaleDateString("en-CA", { timeZone: timezone });
+}
+
+/**
  * Get the start of the week (Monday) for a given date
  */
 export function getWeekStart(date: Date): Date {
@@ -47,10 +56,19 @@ export function getQuarterStart(date: Date): Date {
 }
 
 /**
- * Get yesterday's date
+ * Get "now" as a Date whose local fields are WIB wall-clock.
+ * Vercel runs in UTC, so date arithmetic on a raw `new Date()` is a day off
+ * during 00:00-07:00 WIB.
+ */
+export function nowInUserTimezone(timezone = "Asia/Jakarta"): Date {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: timezone }));
+}
+
+/**
+ * Get yesterday's date (WIB)
  */
 export function getYesterday(): Date {
-  const d = new Date();
+  const d = nowInUserTimezone();
   d.setDate(d.getDate() - 1);
   return d;
 }
@@ -59,7 +77,7 @@ export function getYesterday(): Date {
  * Get last week's start date
  */
 export function getLastWeekStart(): Date {
-  const d = new Date();
+  const d = nowInUserTimezone();
   d.setDate(d.getDate() - 7);
   return getWeekStart(d);
 }
@@ -68,7 +86,7 @@ export function getLastWeekStart(): Date {
  * Get last month's start date (4 weeks ago)
  */
 export function getLastMonthStart(): Date {
-  const d = new Date();
+  const d = nowInUserTimezone();
   d.setDate(d.getDate() - 28);
   return getMonthStart(d);
 }
@@ -77,7 +95,7 @@ export function getLastMonthStart(): Date {
  * Get last quarter's start date
  */
 export function getLastQuarterStart(): Date {
-  const d = new Date();
+  const d = nowInUserTimezone();
   d.setMonth(d.getMonth() - 3);
   return getQuarterStart(d);
 }
@@ -115,7 +133,7 @@ export function shouldSendNotification(
  * Format date for display
  */
 export function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return formatLocalDate(date);
 }
 
 /**
