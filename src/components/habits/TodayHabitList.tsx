@@ -1,5 +1,8 @@
 import type { Habit, MonthlyStats } from "@/types/habit";
+import { CATEGORY_ORDER, CATEGORY_LABELS } from "./HabitGrid";
 import TodayHabitItem from "./TodayHabitItem";
+
+export type HabitGroupBy = "category" | "time";
 
 interface TodayHabitListProps {
   habits: Habit[];
@@ -9,9 +12,10 @@ interface TodayHabitListProps {
   onAdjust: (habitId: string, date: string, delta: 1 | -1) => void;
   monthlyStats: MonthlyStats;
   selectedDate: string; // "YYYY-MM-DD" — the day being viewed/edited
+  groupBy?: HabitGroupBy;
 }
 
-interface TimeGroup {
+interface Group {
   key: string;
   label: string;
   habits: Habit[];
@@ -37,6 +41,38 @@ const TIME_GROUP_META: { key: string; label: string }[] = [
   { key: "anytime", label: "✨ Anytime" },
 ];
 
+// Group order matches the monthly grid when grouping by category.
+function buildGroups(habits: Habit[], groupBy: HabitGroupBy): Group[] {
+  const map = new Map<string, Habit[]>();
+  for (const habit of habits) {
+    const key = groupBy === "time" ? getTimeGroup(habit) : habit.category;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(habit);
+  }
+  for (const list of map.values()) {
+    list.sort((a, b) => a.sort_order - b.sort_order);
+  }
+
+  const order =
+    groupBy === "time"
+      ? TIME_GROUP_META.map((m) => m.key)
+      : [
+          ...CATEGORY_ORDER.filter((c) => map.has(c)),
+          ...[...map.keys()].filter((c) => !CATEGORY_ORDER.includes(c as never)),
+        ];
+
+  return order
+    .filter((key) => map.has(key))
+    .map((key) => ({
+      key,
+      label:
+        groupBy === "time"
+          ? TIME_GROUP_META.find((m) => m.key === key)!.label
+          : CATEGORY_LABELS[key] ?? key,
+      habits: map.get(key)!,
+    }));
+}
+
 export default function TodayHabitList({
   habits,
   isCompleted,
@@ -45,31 +81,9 @@ export default function TodayHabitList({
   onAdjust,
   monthlyStats,
   selectedDate,
+  groupBy = "category",
 }: TodayHabitListProps) {
-  // Build groups
-  const groupMap: Record<string, Habit[]> = {
-    morning: [],
-    afternoon: [],
-    evening: [],
-    before_sleep: [],
-    anytime: [],
-  };
-
-  for (const habit of habits) {
-    const key = getTimeGroup(habit);
-    groupMap[key].push(habit);
-  }
-
-  // Sort each group by sort_order
-  for (const key of Object.keys(groupMap)) {
-    groupMap[key].sort((a, b) => a.sort_order - b.sort_order);
-  }
-
-  const groups: TimeGroup[] = TIME_GROUP_META.map(({ key, label }) => ({
-    key,
-    label,
-    habits: groupMap[key],
-  })).filter((g) => g.habits.length > 0);
+  const groups = buildGroups(habits, groupBy);
 
   if (groups.length === 0) {
     return (

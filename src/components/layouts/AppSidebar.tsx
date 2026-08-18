@@ -49,7 +49,7 @@ const executionNav: NavItem[] = [
   {
     icon: <CheckCircleIcon />,
     name: "Habit Tracker",
-    path: "/habits/monthly",
+    path: "/habits/today",
   },
   {
     icon: <PencilIcon />,
@@ -118,7 +118,7 @@ const trackingNav: NavItem[] = [
   {
     icon: <CheckCircleIcon />,
     name: "Habit Tracker",
-    path: "/habits/monthly",
+    path: "/habits/today",
   },
   {
     icon: <PieChartIcon />,
@@ -598,7 +598,13 @@ const AppSidebar: React.FC = () => {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  // Habits has sibling tab routes (/habits/today, /habits/monthly) — one nav entry covers both.
+  const isActive = useCallback(
+    (path: string) =>
+      path === pathname ||
+      (path.startsWith("/habits/") && pathname.startsWith("/habits/")),
+    [pathname]
+  );
 
   // Handle navigation with loading state
   const handleNavigation = useCallback((path: string) => {

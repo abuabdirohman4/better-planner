@@ -16,9 +16,9 @@ interface HabitGridProps {
   onDeleteHabit?: (habit: Habit) => void;
 }
 
-const CATEGORY_ORDER: HabitCategory[] = ["spiritual", "kesehatan", "karir", "other"];
+export const CATEGORY_ORDER: HabitCategory[] = ["spiritual", "kesehatan", "karir", "other"];
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   spiritual: "Spiritual",
   kesehatan: "Kesehatan",
   karir: "Karir",

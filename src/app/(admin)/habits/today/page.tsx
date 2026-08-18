@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHabits } from "@/app/(admin)/habits/hooks/useHabits";
 import { useHabitCompletions } from "@/app/(admin)/habits/hooks/useHabitCompletions";
 import { useMonthlyStats } from "@/app/(admin)/habits/hooks/useMonthlyStats";
-import TodayHabitList from "@/components/habits/TodayHabitList";
+import TodayHabitList, { type HabitGroupBy } from "@/components/habits/TodayHabitList";
 import HabitFormModal from "@/components/habits/HabitFormModal";
+
+const GROUP_BY_KEY = "habit-today-group-by";
 
 export default function TodayHabitsPage() {
   // Get today's date in WIB (Asia/Jakarta)
@@ -29,6 +31,17 @@ export default function TodayHabitsPage() {
   const selMonth = parseInt(selectedDate.slice(5, 7));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Grouping mode, default category (matches monthly grid). Persisted per browser.
+  const [groupBy, setGroupBy] = useState<HabitGroupBy>("category");
+  useEffect(() => {
+    const saved = localStorage.getItem(GROUP_BY_KEY);
+    if (saved === "time" || saved === "category") setGroupBy(saved);
+  }, []);
+  const changeGroupBy = (next: HabitGroupBy) => {
+    setGroupBy(next);
+    localStorage.setItem(GROUP_BY_KEY, next);
+  };
 
   const { habits, isLoading: habitsLoading, addHabit, updateHabit } = useHabits();
   const {
@@ -149,6 +162,30 @@ export default function TodayHabitsPage() {
         )}
       </div>
 
+      {/* Group-by toggle */}
+      {!isLoading && totalHabits > 0 && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400">Group by</span>
+          <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {(["category", "time"] as HabitGroupBy[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => changeGroupBy(mode)}
+                data-testid={`habit-groupby-${mode}`}
+                className={`px-3 py-1 text-xs font-medium transition-colors ${
+                  groupBy === mode
+                    ? "bg-green-600 text-white"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+              >
+                {mode === "category" ? "Kategori" : "Waktu"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-6">
@@ -176,6 +213,7 @@ export default function TodayHabitsPage() {
           onAdjust={adjustCompletion}
           monthlyStats={monthlyStats}
           selectedDate={selectedDate}
+          groupBy={groupBy}
         />
       )}
 
