@@ -19,6 +19,9 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
+// Pipeline needs ~15-30s (4s Gemini delay per user + sends); Hobby default can be 10s
+export const maxDuration = 300
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 function formatPeriodLabel(date: Date, locale: string): string {
@@ -43,6 +46,16 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient()
   const results = { aggregated: 0, queued: 0, succeeded: 0, failed: 0, errors: [] as string[] }
+  // Report content per user/period, returned in the response so external
+  // orchestrators (n8n) can forward it to other channels like Telegram
+  const reports: Array<{
+    userId: string
+    email: string
+    periodType: string
+    periodLabel: string
+    insight: unknown
+    metrics: { totalFocusMinutes: number; totalSessions: number; tasksCompleted: number; tasksTotal: number; completionRate: number }
+  }> = []
 
   try {
     // --- Step 1: Get users with notifications enabled ---
@@ -141,6 +154,21 @@ export async function POST(request: Request) {
           await delay(4000)
           const insight = await generateInsight(metrics, char, userName, language, mainQuestMotivation, inactiveStreak, periodLabel)
 
+          reports.push({
+            userId: user.user_id,
+            email,
+            periodType: job.type,
+            periodLabel,
+            insight,
+            metrics: {
+              totalFocusMinutes: metrics.totalFocusMinutes,
+              totalSessions: metrics.totalSessions,
+              tasksCompleted: metrics.tasksCompleted,
+              tasksTotal: metrics.tasksTotal,
+              completionRate: metrics.completionRate,
+            },
+          })
+
           const payload: EmailPayload = {
             userId: user.user_id,
             email,
@@ -175,7 +203,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return Response.json({ success: true, ...results })
+    return Response.json({ success: true, ...results, reports })
   } catch (error) {
     console.error('[cron/daily-pipeline]', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
