@@ -1,213 +1,80 @@
 // Custom Service Worker for Better Planner
-// Extends PWA functionality with timer notifications
+// PWA lifecycle + Web Push (server-sent notifications for timer/habit/schedule/daily sync/recap)
 
-const CACHE_NAME = 'better-planner-v1';
-const TIMER_CACHE_NAME = 'timer-notifications-v1';
-
-// Install event
-self.addEventListener('install', (event) => {
-  console.log('🔧 Better Planner Service Worker installed');
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Better Planner Service Worker activated');
   event.waitUntil(self.clients.claim());
 });
 
-// Handle messages from the main thread
+// Main-thread messages: only sound relay is still used
 self.addEventListener('message', (event) => {
-  const { type, data } = event.data;
+  const { type } = event.data || {};
+  if (type === 'PLAY_COMPLETION_SOUND') {
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) => client.postMessage(event.data));
+    });
+  }
+});
 
-  switch (type) {
-    // OS notifications temporarily disabled — re-enable when needed for mobile PWA
-    // case 'TIMER_COMPLETED':
-    //   handleTimerCompletion(data);
-    //   break;
-    // case 'TIMER_STARTED':
-    //   handleTimerStarted(data);
-    //   break;
-    // case 'TIMER_UPDATED':
-    //   handleTimerUpdated(data);
-    //   break;
-    // case 'TIMER_PAUSED':
-    //   handleTimerPaused(data);
-    //   break;
-    // case 'TIMER_STOPPED':
-    //   handleTimerStopped();
-    //   break;
-    // case 'REQUEST_NOTIFICATION_PERMISSION':
-    //   requestNotificationPermission();
-    //   break;
-    case 'TIMER_COMPLETED':
-    case 'TIMER_STARTED':
-    case 'TIMER_UPDATED':
-    case 'TIMER_PAUSED':
-    case 'TIMER_STOPPED':
-    case 'REQUEST_NOTIFICATION_PERMISSION':
-      // OS notifications disabled — no-op for now
-      break;
-    default:
-      // Play sound messages are still forwarded to clients
-      if (type === 'PLAY_COMPLETION_SOUND') {
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => client.postMessage(event.data));
-        });
+// ─── Web Push ───
+// Payload: { title, body, url, tag, kind } — built server-side in src/lib/notifications/services/pushDue.ts
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'Better Planner', body: event.data ? event.data.text() : '' };
+  }
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const visible = clients.filter((c) => c.visibilityState === 'visible');
+      // App is on screen → let the page handle it (sound/toast), no OS notification needed
+      if (visible.length > 0) {
+        visible.forEach((c) => c.postMessage({ type: 'PUSH_RECEIVED', data }));
+        return;
       }
-  }
+      const show = self.registration.showNotification(data.title || 'Better Planner', {
+        body: data.body || '',
+        icon: '/images/logo/logo-icon.svg',
+        badge: '/images/logo/logo-icon.svg',
+        tag: data.tag || data.kind || 'better-planner',
+        renotify: true,
+        requireInteraction: data.kind === 'timer',
+        data: { url: data.url || '/', kind: data.kind },
+      });
+      if (self.navigator && self.navigator.setAppBadge) {
+        self.navigator.setAppBadge().catch(() => {});
+      }
+      return show;
+    })
+  );
 });
 
-// ─── OS Notification handlers (disabled — uncomment to re-enable for mobile PWA) ───
-
-// // Handle timer completion
-// function handleTimerCompletion(data) {
-//   const { taskTitle, soundId } = data;
-//
-//   // Show notification
-//   self.registration.showNotification('Timer Completed! 🎉', {
-//     body: `Your ${taskTitle || 'focus session'} is complete!`,
-//     icon: '/images/logo/logo-icon.svg',
-//     badge: '/images/logo/logo-icon.svg',
-//     tag: 'timer-completion',
-//     requireInteraction: true,
-//     actions: [{ action: 'view', title: 'View Results' }]
-//   });
-//
-//   // Play completion sound
-//   if (soundId && soundId !== 'none') {
-//     self.clients.matchAll().then(clients => {
-//       clients.forEach(client => {
-//         client.postMessage({ type: 'PLAY_COMPLETION_SOUND', data: { soundId } });
-//       });
-//     });
-//   }
-// }
-
-// // Handle timer started
-// function handleTimerStarted(data) {
-//   const { taskTitle, duration, soundId } = data;
-//   self.registration.showNotification('Timer Running ⏱️', {
-//     body: `${taskTitle || 'Focus Session'} - 00:00 / ${formatTime(duration)}`,
-//     icon: '/images/logo/logo-icon.svg',
-//     badge: '/images/logo/logo-icon.svg',
-//     tag: 'live-timer',
-//     requireInteraction: false,
-//     silent: true,
-//     actions: [
-//       { action: 'pause', title: '⏸️ Pause' },
-//       { action: 'stop', title: '⏹️ Stop' },
-//       { action: 'view', title: '👁️ View' }
-//     ],
-//     data: { taskTitle, duration, soundId, startTime: Date.now() }
-//   });
-// }
-
-// // Handle timer updated (every minute)
-// function handleTimerUpdated(data) {
-//   const { taskTitle, remainingSeconds, totalDuration } = data;
-//   const elapsedSeconds = totalDuration - remainingSeconds;
-//   self.registration.showNotification('Timer Running ⏱️', {
-//     body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
-//     icon: '/images/logo/logo-icon.svg',
-//     badge: '/images/logo/logo-icon.svg',
-//     tag: 'live-timer',
-//     requireInteraction: false,
-//     silent: true,
-//     actions: [
-//       { action: 'pause', title: '⏸️ Pause' },
-//       { action: 'stop', title: '⏹️ Stop' },
-//       { action: 'view', title: '👁️ View' }
-//     ],
-//     data: { taskTitle, remainingSeconds, elapsedSeconds, totalDuration, startTime: Date.now() }
-//   });
-// }
-
-// // Handle timer paused
-// function handleTimerPaused(data) {
-//   const { taskTitle, remainingSeconds, totalDuration } = data;
-//   const elapsedSeconds = totalDuration - remainingSeconds;
-//   self.registration.showNotification('Timer Paused ⏸️', {
-//     body: `${taskTitle || 'Focus Session'} - ${formatTime(elapsedSeconds)} / ${formatTime(totalDuration)}`,
-//     icon: '/images/logo/logo-icon.svg',
-//     badge: '/images/logo/logo-icon.svg',
-//     tag: 'live-timer',
-//     requireInteraction: false,
-//     silent: true,
-//     actions: [
-//       { action: 'resume', title: '▶️ Resume' },
-//       { action: 'stop', title: '⏹️ Stop' },
-//       { action: 'view', title: '👁️ View' }
-//     ],
-//     data: { taskTitle, remainingSeconds, elapsedSeconds, totalDuration, paused: true }
-//   });
-// }
-
-// // Handle timer stopped
-// function handleTimerStopped() {
-//   self.registration.getNotifications({ tag: 'live-timer' }).then(notifications => {
-//     notifications.forEach(notification => notification.close());
-//   });
-// }
-
-// // Request notification permission
-// function requestNotificationPermission() {
-//   self.clients.matchAll().then(clients => {
-//     clients.forEach(client => {
-//       client.postMessage({ type: 'REQUEST_NOTIFICATION_PERMISSION' });
-//     });
-//   });
-// }
-
-// ─── Notification click handler (disabled — uncomment with handlers above) ───
-
-// self.addEventListener('notificationclick', (event) => {
-//   event.notification.close();
-//   const { action, data } = event;
-//   switch (action) {
-//     case 'pause':
-//       self.clients.matchAll().then(clients => {
-//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'pause' }));
-//       });
-//       break;
-//     case 'resume':
-//       self.clients.matchAll().then(clients => {
-//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'resume' }));
-//       });
-//       break;
-//     case 'stop':
-//       self.clients.matchAll().then(clients => {
-//         clients.forEach(client => client.postMessage({ type: 'TIMER_ACTION', action: 'stop' }));
-//       });
-//       break;
-//     case 'view':
-//     default:
-//       event.waitUntil(
-//         self.clients.matchAll().then(clients => {
-//           if (clients.length > 0) return clients[0].focus();
-//           return self.clients.openWindow(data?.url || '/execution/daily-sync');
-//         })
-//       );
-//       break;
-//   }
-// });
-
-// Format time helper (keep for when notifications are re-enabled)
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
-
-// Background sync for timer updates
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'timer-sync') {
-    console.log('🔄 Timer background sync triggered');
-  }
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      if (self.navigator && self.navigator.clearAppBadge) self.navigator.clearAppBadge().catch(() => {});
+      const existing = clients.find((c) => 'focus' in c);
+      if (existing) {
+        if ('navigate' in existing) existing.navigate(url);
+        return existing.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
 
-// Cache management
-self.addEventListener('fetch', (event) => {
-  // Let the browser handle the request normally
-  // This is just a placeholder for future caching strategies
+// Chrome may rotate subscriptions; ask the page to re-subscribe
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      clients.forEach((c) => c.postMessage({ type: 'PUSH_SUBSCRIPTION_CHANGED' }));
+    })
+  );
 });

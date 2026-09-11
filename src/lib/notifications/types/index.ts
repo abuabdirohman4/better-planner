@@ -19,7 +19,11 @@ export interface NotificationSettings {
   timezone: string       // "Asia/Jakarta"
   email: string | null   // null = gunakan auth email
   language: EmailLanguage
+  push?: PushSettings     // web push (Mac/Android PWA); absent = disabled
 }
+
+import type { PushSettings } from '../services/pushDue'
+export type { PushSettings, PushPayload, PushKind } from '../services/pushDue'
 
 export interface AIInsight {
   headline: string

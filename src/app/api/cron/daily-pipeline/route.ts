@@ -14,6 +14,7 @@ import { aggregatePerformance, getDailyPerformance, getWeeklyPerformance, getMon
 import { generateInsight } from '@/lib/notifications/services/aiInsightService'
 import { renderEmailTemplate } from '@/lib/notifications/templates'
 import { sendEmail } from '@/lib/notifications/services/emailService'
+import { sendPushToUser } from '@/lib/notifications/services/pushService'
 import { buildSubject, insertHistory } from '@/lib/notifications/services/queueProcessor'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
@@ -189,6 +190,14 @@ export async function POST(request: Request) {
           if (sendResult.success) {
             await insertHistory(supabase, payload, subject, sendResult.messageId)
             results.succeeded++
+            // Web push companion — never fail the email job because of push
+            if (settings?.push?.enabled && settings.push.recap !== false) {
+              try {
+                await sendPushToUser(user.user_id, { kind: 'recap', tag: `recap-${job.type}`, title: subject, body: insight.headline, url: '/dashboard' })
+              } catch (pushErr) {
+                console.error('[cron/daily-pipeline] push failed', user.user_id, pushErr)
+              }
+            }
           } else {
             results.failed++
             results.errors.push(`${job.type}/${user.user_id}: ${sendResult.error}`)

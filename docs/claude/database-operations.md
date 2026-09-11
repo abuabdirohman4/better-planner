@@ -424,3 +424,42 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 - **Activity Plan Feature**: [`docs/activity-plan-feature.md`](../../activity-plan-feature.md)
 - **Architecture Patterns**: [`architecture-patterns.md`](architecture-patterns.md)
 - **Testing Guidelines**: [`testing-guidelines.md`](testing-guidelines.md)
+
+---
+
+## 🔔 Web Push cron (pg_cron → pg_net → Vercel)
+
+Vercel Hobby hanya 1 cron/hari, jadi scheduler per-menit hidup di Postgres. Tabel: `push_subscriptions` (1 baris per device), `push_log` (dedupe `unique(kind, ref_key)`). Logika "apa yang due" di `src/lib/notifications/services/pushDue.ts`, route `src/app/api/cron/push-due/route.ts`.
+
+**Setup sekali per environment** (SQL editor Supabase, ganti `<...>`):
+
+```sql
+-- 1. Simpan token (sama dengan env CRON_SECRET_TOKEN di Vercel)
+select vault.create_secret('<CRON_SECRET_TOKEN>', 'push_cron_token');
+
+-- 2. Jadwalkan tiap menit
+select cron.schedule('push-due', '* * * * *', $$
+  select net.http_post(
+    url := 'https://<SITE_URL>/api/cron/push-due',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'push_cron_token')
+    ),
+    body := '{}'::jsonb
+  );
+$$);
+```
+
+**Cek jalan:**
+
+```sql
+select jobid, schedule, active from cron.job where jobname = 'push-due';
+select status, (response).status_code, created from net._http_response order by created desc limit 5;  -- expect 200
+select kind, ref_key, sent_at from push_log order by sent_at desc limit 10;
+```
+
+**Matikan / ubah:** `select cron.unschedule('push-due');` lalu schedule ulang.
+
+**Env Vercel:** `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (generate: `npx web-push generate-vapid-keys`), `CRON_SECRET_TOKEN`.
+
+**Keterbatasan:** presisi ±1 menit; suara = default OS; break timer tidak ada di DB (`timer_sessions` hanya `FOCUS`) jadi push "break selesai" tidak ada; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).

@@ -96,6 +96,25 @@ export default function PWAComponents() {
       }
     }
 
+    // Web push: page is visible → SW forwards payload here instead of showing OS notification
+    const handleSwMessage = (event: MessageEvent) => {
+      const { type, data } = event.data || {};
+      if (type !== 'PUSH_RECEIVED' || !data) return;
+      // Timer completion is already handled locally (sound + UI) when the app is open
+      if (data.kind === 'timer') return;
+      toast(data.title, { description: data.body });
+    };
+    const clearBadge = () => {
+      if (document.visibilityState === 'visible' && 'clearAppBadge' in navigator) {
+        (navigator as Navigator & { clearAppBadge: () => Promise<void> }).clearAppBadge().catch(() => {});
+      }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    }
+    document.addEventListener('visibilitychange', clearBadge);
+    clearBadge();
+
     // Check if already installed
     const checkIfInstalled = () => {
       if (typeof window !== 'undefined') {
@@ -117,7 +136,9 @@ export default function PWAComponents() {
         window.removeEventListener("online", handleOnline);
         window.removeEventListener("offline", handleOffline);
         
+        document.removeEventListener('visibilitychange', clearBadge);
         if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.removeEventListener('message', handleSwMessage);
           navigator.serviceWorker.removeEventListener(
             "controllerchange",
             handleServiceWorkerUpdate
