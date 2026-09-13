@@ -44,8 +44,9 @@ export async function POST(request: Request) {
     const [timersRes, habitsRes, schedulesRes] = await Promise.all([
       supabase
         .from('timer_sessions')
-        .select('id, user_id, task_title, start_time, target_duration_seconds, status')
-        .eq('status', 'FOCUSING')
+        .select('id, user_id, task_title, start_time, target_duration_seconds, status, session_type')
+        // FOCUSING = focus session, RUNNING = break session
+        .in('status', ['FOCUSING', 'RUNNING'])
         .in('user_id', userIds),
       supabase
         .from('habits')

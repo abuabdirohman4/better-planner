@@ -23,6 +23,18 @@ export async function cleanupAbandonedSessions() {
     if (error) {
       console.error('[cleanupAbandonedSessions] Error:', error);
     }
+
+    // Breaks last 15 min at most; anything still RUNNING after an hour was abandoned
+    const { error: breakError } = await supabase
+      .from('timer_sessions')
+      .update({ status: 'COMPLETED' })
+      .eq('user_id', user.id)
+      .eq('status', 'RUNNING')
+      .lt('start_time', oneHourAgo);
+
+    if (breakError) {
+      console.error('[cleanupAbandonedSessions] Break error:', breakError);
+    }
   } catch (error) {
     console.error('[cleanupAbandonedSessions] Exception:', error);
   }

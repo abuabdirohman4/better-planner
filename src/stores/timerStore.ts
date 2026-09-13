@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { playTimerCompleteSound, playSound, stopCurrentSound, playFocusSoundLoop } from '@/lib/soundUtils';
 import { useSoundStore } from './soundStore';
+import { startBreakSession, endBreakSession } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSession/breakSession';
 
 // Global completion lock to prevent multiple completions
 let completionInProgress = false;
@@ -74,6 +75,12 @@ const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60;
 const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60;
 const LONG_BREAK_DURATION = isDev ? 60 : 15 * 60;
 
+const BREAK_DURATIONS = {
+  SHORT: SHORT_BREAK_DURATION,
+  MEDIUM: MEDIUM_BREAK_DURATION,
+  LONG: LONG_BREAK_DURATION,
+} as const;
+
 export const useTimerStore = create<TimerStoreState>()(
   persist(
     (set, get) => ({
@@ -92,6 +99,7 @@ export const useTimerStore = create<TimerStoreState>()(
       lastUpdatedDay: null,
 
       startFocusSession: (task: TimerTask) => {
+        if (get().timerState === 'BREAK') endBreakSession().catch(console.error);
         set({
           activeTask: task,
           timerState: 'FOCUSING',
@@ -108,13 +116,18 @@ export const useTimerStore = create<TimerStoreState>()(
       startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => {
         // Stop focus sound when starting break
         get().stopFocusSound();
+        const startTime = new Date().toISOString();
         set({
           timerState: 'BREAK',
           breakType: type,
           secondsElapsed: 0,
-          startTime: new Date().toISOString(),
+          startTime,
           waitingForBreak: false,
         });
+        // Persist so the push cron can notify when the break ends with the app closed.
+        // Fire-and-forget: a failed write must never delay or block the local break.
+        const duration = BREAK_DURATIONS[type];
+        startBreakSession(type, duration, startTime).catch(console.error);
       },
 
       dismissBreakPrompt: () => {
@@ -160,6 +173,7 @@ export const useTimerStore = create<TimerStoreState>()(
       stopTimer: () => {
         const state = get();
         get().stopFocusSound();
+        if (state.timerState === 'BREAK') endBreakSession().catch(console.error);
 
         // Save session for both FOCUSING and PAUSED states (PAUSED = mid-session stop)
         if ((state.timerState === 'FOCUSING' || state.timerState === 'PAUSED') && state.activeTask && state.secondsElapsed > 0) {
@@ -199,6 +213,7 @@ export const useTimerStore = create<TimerStoreState>()(
       resetTimer: () => {
         // Stop focus sound when resetting timer
         get().stopFocusSound();
+        if (get().timerState === 'BREAK') endBreakSession().catch(console.error);
         set({
           timerState: 'IDLE',
           secondsElapsed: 0,
@@ -278,6 +293,7 @@ export const useTimerStore = create<TimerStoreState>()(
         } else if (state.timerState === 'BREAK' && state.breakType === 'SHORT' && newSeconds >= SHORT_BREAK_DURATION) {
           // Stop focus sound when short break completes
           get().stopFocusSound();
+          endBreakSession().catch(console.error);
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
@@ -286,6 +302,7 @@ export const useTimerStore = create<TimerStoreState>()(
         } else if (state.timerState === 'BREAK' && state.breakType === 'MEDIUM' && newSeconds >= MEDIUM_BREAK_DURATION) {
           // Stop focus sound when medium break completes
           get().stopFocusSound();
+          endBreakSession().catch(console.error);
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,
@@ -294,6 +311,7 @@ export const useTimerStore = create<TimerStoreState>()(
         } else if (state.timerState === 'BREAK' && state.breakType === 'LONG' && newSeconds >= LONG_BREAK_DURATION) {
           // Stop focus sound when long break completes
           get().stopFocusSound();
+          endBreakSession().catch(console.error);
           return {
             timerState: 'IDLE' as TimerState,
             breakType: null,

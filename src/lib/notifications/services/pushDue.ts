@@ -39,7 +39,7 @@ export interface DueInput {
   now: Date
   windowMs?: number
   users: Array<{ user_id: string; timezone: string; push: PushSettings }>
-  timers: Array<{ id: string; user_id: string; task_title: string | null; start_time: string; target_duration_seconds: number; status: string }>
+  timers: Array<{ id: string; user_id: string; task_title: string | null; start_time: string; target_duration_seconds: number; status: string; session_type?: string }>
   habits: Array<{ id: string; user_id: string; name: string; target_time: string | null; is_archived: boolean; completed_today: boolean }>
   schedules: Array<{ id: string; user_id: string; title: string | null; scheduled_start_time: string }>
 }
@@ -52,6 +52,9 @@ export interface DueItem {
 }
 
 const DEFAULT_WINDOW_MS = 2 * 60 * 1000
+
+/** Statuses that mean "still counting down" — focus uses FOCUSING, break uses RUNNING. */
+const RUNNING_STATUSES = new Set(['FOCUSING', 'RUNNING'])
 
 /** 'YYYY-MM-DD' + 'HH:mm[:ss]' in `tz` → UTC instant. Fixed-offset zones only (no DST) — fine for WIB. */
 export function zonedTimeToUtc(date: string, time: string, tz: string): Date {
@@ -81,12 +84,17 @@ export function computeDue(input: DueInput): DueItem[] {
 
   for (const t of timers) {
     const u = byUser.get(t.user_id)
-    if (!u?.push.timer || t.status !== 'FOCUSING') continue
+    if (!u?.push.timer) continue
+    // Focus sessions sit in FOCUSING; break sessions in RUNNING (see startBreakSession)
+    const isBreak = (t.session_type ?? 'FOCUS') !== 'FOCUS'
+    if (!RUNNING_STATUSES.has(t.status)) continue
     const end = new Date(new Date(t.start_time).getTime() + t.target_duration_seconds * 1000)
     if (!inWindow(end)) continue
     out.push({
       userId: t.user_id, kind: 'timer', refKey: t.id,
-      payload: { kind: 'timer', tag: 'timer', title: 'Timer selesai 🎉', body: `${t.task_title || 'Sesi fokus'} sudah selesai. Waktunya istirahat.`, url: '/execution/daily-sync' },
+      payload: isBreak
+        ? { kind: 'timer', tag: 'timer', title: 'Istirahat selesai ☕', body: 'Waktunya kembali fokus.', url: '/execution/daily-sync' }
+        : { kind: 'timer', tag: 'timer', title: 'Timer selesai 🎉', body: `${t.task_title || 'Sesi fokus'} sudah selesai. Waktunya istirahat.`, url: '/execution/daily-sync' },
     })
   }
 

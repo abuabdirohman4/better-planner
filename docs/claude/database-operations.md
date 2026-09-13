@@ -462,4 +462,14 @@ select kind, ref_key, sent_at from push_log order by sent_at desc limit 10;
 
 **Env Vercel:** `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (generate: `npx web-push generate-vapid-keys`), `CRON_SECRET_TOKEN`.
 
-**Keterbatasan:** presisi ±1 menit; suara = default OS; break timer tidak ada di DB (`timer_sessions` hanya `FOCUS`) jadi push "break selesai" tidak ada; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).
+**Sesi break di `timer_sessions`:** break disimpan supaya push "istirahat selesai" tetap jalan saat app tertutup. Bedanya dari sesi fokus:
+
+| | Fokus | Break |
+|---|---|---|
+| `session_type` | `FOCUS` | `SHORT_BREAK` / `MEDIUM_BREAK` / `LONG_BREAK` |
+| `status` saat jalan | `FOCUSING` | `RUNNING` |
+| `task_id` | terisi | `null` |
+
+`task_id` null itu sengaja: semua query statistik memfilter `task_id`, jadi break tidak pernah ikut terhitung sebagai waktu fokus. Baris break ditulis `startBreakSession()` dan ditutup `endBreakSession()` (break selesai, di-stop, di-reset, atau user langsung mulai fokus lagi). Break yang ditinggalkan >1 jam dibereskan `cleanupAbandonedSessions()`.
+
+**Keterbatasan:** presisi ±1 menit; suara = default OS; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).

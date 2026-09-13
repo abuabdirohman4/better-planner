@@ -63,6 +63,47 @@ describe('computeDue — timer', () => {
   })
 })
 
+describe('computeDue — break', () => {
+  const brk = (startIso: string, secs = 300, sessionType = 'SHORT_BREAK') => ({
+    id: 'b1', user_id: 'u1', task_title: null, start_time: startIso,
+    target_duration_seconds: secs, status: 'RUNNING', session_type: sessionType,
+  })
+
+  it('fires when break ends inside window', () => {
+    // 22:55:00Z + 300s = 23:00:00Z, now 23:00:30Z
+    const due = computeDue(base({ timers: [brk('2026-09-09T22:55:00Z')] }))
+    expect(due).toHaveLength(1)
+    expect(due[0]).toMatchObject({ kind: 'timer', refKey: 'b1' })
+    expect(due[0].payload.title).toContain('Istirahat')
+  })
+
+  it('does not fire before the break ends', () => {
+    expect(computeDue(base({ timers: [brk('2026-09-09T22:59:00Z')] }))).toHaveLength(0)
+  })
+
+  it('ignores finished break sessions', () => {
+    expect(computeDue(base({ timers: [{ ...brk('2026-09-09T22:55:00Z'), status: 'COMPLETED' }] }))).toHaveLength(0)
+  })
+
+  it('long break gets the same treatment', () => {
+    const due = computeDue(base({ timers: [brk('2026-09-09T22:45:00Z', 900, 'LONG_BREAK')] }))
+    expect(due).toHaveLength(1)
+    expect(due[0].payload.title).toContain('Istirahat')
+  })
+
+  it('focus session keeps its own wording', () => {
+    const due = computeDue(base({
+      timers: [{ id: 'f1', user_id: 'u1', task_title: 'Nulis', start_time: '2026-09-09T22:35:00Z', target_duration_seconds: 1500, status: 'FOCUSING', session_type: 'FOCUS' }],
+    }))
+    expect(due[0].payload.title).toContain('Timer selesai')
+  })
+
+  it('respects timer toggle off for breaks too', () => {
+    const u = user(); u.push.timer = false
+    expect(computeDue(base({ users: [u], timers: [brk('2026-09-09T22:55:00Z')] }))).toHaveLength(0)
+  })
+})
+
 describe('computeDue — habit', () => {
   const habit = (target_time: string, over = {}) => ({
     id: 'h1', user_id: 'u1', name: 'Olahraga', target_time, is_archived: false, completed_today: false, ...over,
