@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, TaskIcon, CalenderIcon, PieChartIcon } from "@/lib/icons";
+import { GridIcon, TaskIcon, CalenderIcon, CheckCircleIcon } from "@/lib/icons";
 import Spinner from "@/components/ui/spinner/Spinner";
 
 interface NavItem {
@@ -28,16 +28,16 @@ const navItems: NavItem[] = [
     activeIcon: <TaskIcon />,
   },
   {
+    href: "/habits/today",
+    label: "Habit Tracker",
+    icon: <CheckCircleIcon />,
+    activeIcon: <CheckCircleIcon />,
+  },
+  {
     href: "/execution/weekly-sync",
     label: "Weekly Sync",
     icon: <CalenderIcon />,
     activeIcon: <CalenderIcon />,
-  },
-  {
-    href: "/planning/main-quests",
-    label: "Main Quests",
-    icon: <PieChartIcon />,
-    activeIcon: <PieChartIcon />,
   },
 ];
 
@@ -79,7 +79,10 @@ export default function BottomNavigation() {
       <div className="pb-safe">
         <div className="flex items-center justify-around px-1 py-1">
           {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            // /habits/today and /habits/monthly are sibling tabs of one nav entry
+            const isActive = item.href.startsWith("/habits/")
+              ? pathname.startsWith("/habits/")
+              : pathname.startsWith(item.href);
             const isRouteLoading = isLoadingRoute(item.href);
             
             return (
