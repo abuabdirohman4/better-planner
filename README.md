@@ -67,7 +67,7 @@ Transform your goals into achievements with Better Planner, the most comprehensi
 ```bash
 # Clone and setup
 git clone <repository-url>
-cd prj-better-planner
+cd better-planner
 npm install
 
 # Configure environment

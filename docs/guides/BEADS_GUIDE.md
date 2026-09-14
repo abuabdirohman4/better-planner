@@ -620,7 +620,7 @@ Here's the complete setup for Better Planner project:
 brew install yegge/tap/bd
 
 # 2. Initialize with prefix 'sm'
-cd ~/Documents/Project/prj-better-planner
+cd ~/Documents/applications/2_areas/better-planner
 bd init --prefix sm
 
 # 3. Setup Claude integration
