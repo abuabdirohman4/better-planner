@@ -59,3 +59,7 @@ next-env.d.ts
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Izin Claude Code khusus mesin ini (berisi path absolut + nama MCP lokal).
+# settings.json TETAP ikut repo; yang .local jangan.
+.claude/settings.local.json
