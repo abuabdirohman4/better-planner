@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
-import { computeDue, zonedTimeToUtc, type DueInput } from '../services/pushDue'
+import { computeDue, zonedTimeToUtc, DEFAULT_PUSH_SETTINGS, type DueInput } from '../services/pushDue'
 
 const WIB = 'Asia/Jakarta'
 // 2026-09-10 06:00 WIB = 2026-09-09 23:00 UTC
@@ -160,6 +160,18 @@ describe('computeDue — daily sync', () => {
   it('nothing when dailySync toggle off', () => {
     const u = user(); u.push.dailySync = false; u.push.morningTime = '06:00'
     expect(computeDue(base({ users: [u] }))).toHaveLength(0)
+  })
+})
+
+describe('DEFAULT_PUSH_SETTINGS', () => {
+  it('is enabled so a new user only needs to grant permission', () => {
+    expect(DEFAULT_PUSH_SETTINGS.enabled).toBe(true)
+  })
+
+  it('an explicit opt-out still wins over the default', () => {
+    const stored = { ...DEFAULT_PUSH_SETTINGS, enabled: false }
+    const merged = { ...DEFAULT_PUSH_SETTINGS, ...stored }
+    expect(merged.enabled).toBe(false)
   })
 })
 

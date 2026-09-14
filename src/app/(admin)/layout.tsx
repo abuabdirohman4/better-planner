@@ -9,6 +9,7 @@ import AppHeader from "@/components/layouts/AppHeader";
 import AppSidebar from "@/components/layouts/AppSidebar";
 import Backdrop from "@/components/layouts/Backdrop";
 import BottomNavigation from "@/components/layouts/BottomNavigation";
+import PushPrompt from "@/components/PWA/PushPrompt";
 
 export default function AdminLayout({
   children,
@@ -39,6 +40,7 @@ export default function AdminLayout({
           </div>
         </div>
         <BottomNavigation />
+        <PushPrompt />
       </div>
   );
 }

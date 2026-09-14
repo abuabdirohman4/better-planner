@@ -24,8 +24,11 @@ export interface PushSettings {
   eveningTime: string // 'HH:mm'
 }
 
+// enabled defaults to true so a new user only has to grant permission once;
+// nothing is ever delivered without a device subscription anyway. Users who
+// explicitly turn it off store enabled:false, which overrides this.
 export const DEFAULT_PUSH_SETTINGS: PushSettings = {
-  enabled: false,
+  enabled: true,
   timer: true,
   habits: true,
   schedules: true,

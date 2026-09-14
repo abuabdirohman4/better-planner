@@ -472,4 +472,6 @@ select kind, ref_key, sent_at from push_log order by sent_at desc limit 10;
 
 `task_id` null itu sengaja: semua query statistik memfilter `task_id`, jadi break tidak pernah ikut terhitung sebagai waktu fokus. Baris break ditulis `startBreakSession()` dan ditutup `endBreakSession()` (break selesai, di-stop, di-reset, atau user langsung mulai fokus lagi). Break yang ditinggalkan >1 jam dibereskan `cleanupAbandonedSessions()`.
 
-**Keterbatasan:** presisi ±1 menit; suara = default OS; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).
+**Onboarding push:** `DEFAULT_PUSH_SETTINGS.enabled` = `true`, jadi user baru cukup memberi izin sekali — tidak ada notifikasi terkirim tanpa baris di `push_subscriptions`, jadi default ini tidak mengirim apa pun ke orang yang belum setuju. User yang menolak menyimpan `enabled: false` dan itu menang atas default. `PushPrompt` menawarkan sekali per perangkat (5 detik setelah masuk, hanya bila `Notification.permission === 'default'`, penolakan diingat di localStorage). `usePushSubscription.refresh()` mendaftar ulang diam-diam kalau izin sudah ada tapi langganan hilang (kedaluwarsa / data situs terhapus), dan menulis ulang baris kalau browser punya langganan yang tidak dikenal server.
+
+**Keterbatasan:** izin notifikasi **wajib** lewat klik user (aturan browser, tidak bisa di-bypass); presisi ±1 menit; suara = default OS; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).

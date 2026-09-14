@@ -45,8 +45,9 @@ export function SettingsForm() {
         await device.unsubscribe()
         toast.success('Push dimatikan di perangkat ini')
       } else {
-        await device.subscribe()
-        toast.success('Push aktif di perangkat ini')
+        const ok = await device.subscribe()
+        if (ok) toast.success('Push aktif di perangkat ini')
+        else toast.info('Izin notifikasi belum diberikan')
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal mengubah push')
