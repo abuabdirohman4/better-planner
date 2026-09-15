@@ -72,10 +72,12 @@ export function deduplicateItems(items: WeeklyTaskItem[]): WeeklyTaskItem[] {
 }
 
 /**
- * Keep only items with status === 'TODO'.
+ * Keep items still selectable for a daily plan — work that is not finished yet.
  */
+const SELECTABLE_STATUSES = ['TODO', 'IN_PROGRESS'];
+
 export function filterTodoItems(items: WeeklyTaskItem[]): WeeklyTaskItem[] {
-  return items.filter(item => item.status === 'TODO');
+  return items.filter(item => SELECTABLE_STATUSES.includes(item.status));
 }
 
 /**

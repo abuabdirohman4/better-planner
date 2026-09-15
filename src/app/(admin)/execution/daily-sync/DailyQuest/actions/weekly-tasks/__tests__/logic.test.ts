@@ -166,18 +166,17 @@ describe('deduplicateItems', () => {
 
 // ---- filterTodoItems ----
 describe('filterTodoItems', () => {
-  it('keeps only TODO items', () => {
+  it('keeps TODO and IN_PROGRESS items, drops DONE', () => {
     const items = [
       makeWeeklyTaskItem({ id: 'task-1', status: 'TODO' }),
       makeWeeklyTaskItem({ id: 'task-2', status: 'DONE' }),
       makeWeeklyTaskItem({ id: 'task-3', status: 'IN_PROGRESS' }),
     ];
     const result = filterTodoItems(items);
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('task-1');
+    expect(result.map(i => i.id)).toEqual(['task-1', 'task-3']);
   });
 
-  it('returns empty array when no TODO items', () => {
+  it('returns empty array when no unfinished items', () => {
     const items = [makeWeeklyTaskItem({ status: 'DONE' })];
     expect(filterTodoItems(items)).toEqual([]);
   });
