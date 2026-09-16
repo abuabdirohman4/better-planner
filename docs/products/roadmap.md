@@ -2,7 +2,7 @@
 
 > **File ini = peta arah project.** Sumber tunggal visi + status + next up.
 > Visi & scope detail di [`BRD.md`](./BRD.md). Skema data di [`ERD.sql`](./ERD.sql). Task detail di beads (`bd list`, prefix `bp-`). Plan per-fitur di [`../plans/`](../plans/).
-> Diperbarui: 2026-08-18 · Status: **Semua 8 fitur BRD live, 0 beads open. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.**
+> Diperbarui: 2026-09-16 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) — 20 open, sebagian besar impor `todo.md` yang belum matang.
 
 ---
 
@@ -60,6 +60,7 @@
 | 2026-08-18 | Bugfix + docs | `bp-nuk` bar Total focus time tidak refresh; `bp-l4h` dead code; roadmap ke template standar |
 | 2026-08-18 | Root-cause counter | `bp-nuk` reopen: satu sinyal `notifyActivityLogsChanged()` di semua jalur + timer progress dari data live |
 | 2026-08-18 | Sapu bersih beads | Habit day-nav + multi-completion (`bp-uv4`,`bp-0df`), metadata standar (`bp-8m5`), E2E 9 spec (`bp-ztv`), epic email diverifikasi + bugfix (`bp-2we`). 0 open. |
+| 2026-09-16 | Polish F-02 | `app-t43e65f` Main Quest: toggle 3 HFG berjajar (desktop) seperti buku Sync Planner; SubTask panel samping → modal; detail hanya kebuka lewat tombol panah. |
 
 ## 🎯 Visi
 
@@ -76,7 +77,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | Item | Status | Route | Catatan / Issue |
 |---|---|---|---|
 | **F-01** Dashboard Utama | ✅ | `/dashboard` | — |
-| **F-02** Manajemen Quest | ✅ | `/planning/vision`, `/planning/12-week-quests`, `/planning/main-quests`, `/quests/*` | [main-quests-types](../plans/2026-03-21-main-quests-types-design.md), [work-quests-3layer](../plans/2026-03-17-work-quests-3layer-refactor.md) |
+| **F-02** Manajemen Quest | ✅ | `/planning/vision`, `/planning/12-week-quests`, `/planning/main-quests`, `/quests/*` | [main-quests-types](../plans/2026-03-21-main-quests-types-design.md), [work-quests-3layer](../plans/2026-03-17-work-quests-3layer-refactor.md). Main Quest punya toggle 3-kolom (`app-t43e65f`, lihat Catatan) |
 | **F-03** Weekly Sync + To-Don't | ✅ | `/execution/weekly-sync` (+ `ToDontList/`) | [12-week-sync-mvp](../plans/2026-03-29-12-week-sync-mvp.md) |
 | **F-04** Daily Sync (Pomodoro, Brain Dump, log) | ✅ | `/execution/daily-sync`, `/execution/brain-dump` | [daily-plan-3layer](../plans/2026-03-19-daily-plan-schedule-3layer-refactor.md), [brain-dump](../plans/2026-04-27-brain-dump-page-implementation-plan.md), [bp-byp](../plans/2026-07-27-bp-byp-pomodoro-timer-bugs.md) |
 | **F-05** Habit Tracker | ✅ | `/habits/today`, `/habits/monthly` | Day nav + `daily_target` multi-completion — [plan](../plans/2026-04-13-habit-nav-multicompletion-design.md) |
@@ -84,13 +85,13 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | **F-07** Pengaturan | ✅ | `/settings/profile`, `/settings/notifications` | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md) |
 | **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../plans/2026-03-27-best-week-design.md) |
 
-**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads: **65 closed / 66 total**, 0 open.
+**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) — 20 open per 16 Sep 2026.
 
 ---
 
 ## 🚧 Next Up
 
-Beads kosong. Yang tersisa = tindakan manual (bukan kode):
+Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan manual (bukan kode):
 
 ### ⚡ P2 — Aktivasi email+AI (manual, ±15 menit)
 - [ ] Vercel env: `RESEND_API_KEY`, `EMAIL_FROM` (domain terverifikasi di Resend), `GEMINI_API_KEY`, `CRON_SECRET` (random ≥32 char), `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -104,6 +105,7 @@ Beads kosong. Yang tersisa = tindakan manual (bukan kode):
 
 - **2026-08-18:** `bp-7xt` closed (duplikat `bp-a63`, GH-#4 sudah live). `bp-vjx` (stop 2× klik) closed — tidak reproduce setelah `bp-byp`; reopen kalau muncul lagi.
 - **Email epic (2026-08-18):** kode 7 sub-task ternyata sudah ada di master sebelum di-close; yang diperbaiki = insert `notification_history` (kolom salah → gagal diam-diam), unsubscribe URL (pakai `NEXT_PUBLIC_SITE_URL`), settings actions (`.eq('id')` → `user_id` + upsert), DB default `notification_settings` (shape lama → baru + backfill), Gemini diaktifkan bila key ada (`GEMINI_MODEL` default `gemini-2.5-flash`), `api/test/**` 404 di production, cronAuth UA-bypass hanya kalau tak ada secret. `vercel.json` cuma jadwalkan `daily-pipeline` (Hobby plan) — 6 route `/api/cron/*` lain = manual trigger.
+- **Main Quest 3-kolom (2026-09-16, `app-t43e65f`):** toggle di header (ikon layout, desktop saja) — state `mainQuestGridView` persist di `uiPreferencesStore`. Mode grid lepas cap `max-w-7xl` supaya isi ruang layar lebar; mode tab tetap `max-w-2xl`. SubTask tak lagi panel samping tapi `Modal` dengan prop baru `bare` (buang shell putih, pakai `ComponentCard` di dalamnya). Detail subtask **hanya** kebuka lewat tombol panah di `TaskItem` — klik baris/fokus input sekarang cuma edit teks (dulu auto-buka panel, ini yang bikin panel muncul tak sengaja).
 - **Habit multi-completion:** 1 baris `habit_completions` = 1 completion; hari "selesai" bila count ≥ `habits.daily_target` (streak & monthly goal ikut aturan ini). Toggle di monthly grid = isi penuh / kosongkan hari.
 - **E2E:** helper `tests/e2e/helpers/db.ts`; coverage map di `docs/claude/e2e-testing-patterns.md`.
 - **Cache SWR daily-sync:** `dedupingInterval` 5 menit sengaja (hemat edge request, plan [reduce-edge-requests](../plans/2026-04-21-reduce-edge-requests-swr-optimization.md)). Konsekuensi: tiap path yang ubah `activity_logs` **wajib** panggil `notifyActivityLogsChanged()` (`src/lib/swr.ts`) — satu sinyal untuk list, counter card, Total focus bar, dan teks progress timer. Jangan tambah `mutate` manual per handler lagi (itu akar bug berulang bp-6ka → bp-byp → bp-nuk).
@@ -114,6 +116,7 @@ Beads kosong. Yang tersisa = tindakan manual (bukan kode):
 
 ## 📜 Changelog
 
+- **2026-09-16** — Main Quest: toggle 3 HFG berjajar (desktop) + SubTask jadi modal + detail cuma lewat tombol panah (`app-t43e65f`, commit `fa2066e`). Header/ringkasan disetel ulang setelah beads pindah ke hub.
 - **2026-08-18** — Sapu bersih: 12→0 open. F-05 ✅, F-06 kode ✅ (aktivasi manual di Next Up), Post-MVP diganti ide lanjutan (per-user jam kirim, email tracking). Timeline +1 baris.
 - **2026-08-18** — Migrasi ke template standar: +MVP/Post-MVP, Manajemen Sesi, Timeline, Catatan, Changelog. Epic email dipindah ke Post-MVP. Sync beads 15→12 open (close bp-7xt duplikat, bp-vjx tak reproduce, bp-nuk & bp-l4h selesai).
 - **2026-06-21** — Roadmap pertama: tabel status F-01…F-08 + next up.
