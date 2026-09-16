@@ -192,9 +192,16 @@ const CalendarBlock: React.FC<CalendarBlockProps> = ({
 
   const dragCursor = isDragging ? 'cursor-grabbing' : isSchedule ? 'cursor-grab' : 'cursor-pointer';
 
+  // Running session: pulse while it grows, dim and hold still once paused.
+  const liveClass = item.isLive
+    ? item.isPaused
+      ? 'opacity-60 ring-1 ring-inset ring-current'
+      : 'ring-2 ring-inset ring-current animate-pulse'
+    : '';
+
   return (
     <div
-      className={`absolute rounded px-2 py-1 text-xs overflow-hidden cursor-pointer transition-all hover:brightness-95 hover:z-20 ${bgClass} ${borderClass} ${colors.text} ${dragCursor} ${isDragging || isResizing ? 'z-30 shadow-lg opacity-80' : ''} select-none`}
+      className={`absolute rounded px-2 py-1 text-xs overflow-hidden cursor-pointer transition-all hover:brightness-95 hover:z-20 ${bgClass} ${borderClass} ${colors.text} ${dragCursor} ${liveClass} ${isDragging || isResizing ? 'z-30 shadow-lg opacity-80' : ''} select-none`}
       style={{
         top: style.top,
         height: style.height,
@@ -203,6 +210,9 @@ const CalendarBlock: React.FC<CalendarBlockProps> = ({
         zIndex: isDragging || isResizing ? 50 : colIndex + 1,
       }}
       onClick={(e) => {
+        // The live block has no log row yet, so its detail panel (and its delete) would
+        // act on an id that does not exist. It becomes clickable once the session ends.
+        if (item.isLive) return;
         if (!isDragging && !isResizing && !hasDraggedRef.current && onClick) {
           onClick(item);
         }

@@ -3,10 +3,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { useActivityStore } from '@/stores/activityStore';
+import { useTimerStore } from '@/stores/timerStore';
 import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useActivityLogs } from './hooks/useActivityLogs';
 import type { ActivityLogItem } from '@/types/activity-log';
-import { formatTimeRange } from '@/lib/dateUtils';
+import { formatTimeRange, getLocalDateString } from '@/lib/dateUtils';
 import CalendarView, { CalendarEvent } from './components/CalendarView';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
 import { updateSchedule, createSchedule } from '../DailyQuest/actions';
@@ -253,6 +254,36 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
     return () => window.removeEventListener('resize', calculateHeight);
   }, [date]);
 
+  // Session in progress, read straight from the timer so the block ticks with it.
+  const timerState = useTimerStore(s => s.timerState);
+  const activeTask = useTimerStore(s => s.activeTask);
+  const timerStartTime = useTimerStore(s => s.startTime);
+  const secondsElapsed = useTimerStore(s => s.secondsElapsed);
+  const breakType = useTimerStore(s => s.breakType);
+
+  const liveSession = useMemo(() => {
+    const isRunning = timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED';
+    if (!isRunning || !activeTask || !timerStartTime) return null;
+
+    const start = new Date(timerStartTime);
+    // A paused timer stops incrementing secondsElapsed, so the block stops growing.
+    const duration = Math.max(1, Math.round(secondsElapsed / 60));
+    const isBreak = timerState === 'BREAK';
+
+    return {
+      localDate: getLocalDateString(start),
+      title: isBreak ? `Break — ${activeTask.title}` : activeTask.title,
+      startTime: timerStartTime,
+      endTime: new Date(start.getTime() + secondsElapsed * 1000).toISOString(),
+      duration,
+      subType: (isBreak
+        ? (breakType === 'LONG' ? 'LONG_BREAK' : 'SHORT_BREAK')
+        : 'FOCUS') as CalendarEvent['subType'],
+      itemType: isBreak ? 'DEFAULT' : activeTask.item_type,
+      isPaused: timerState === 'PAUSED',
+    };
+  }, [timerState, activeTask, timerStartTime, secondsElapsed, breakType]);
+
   // Merge logs + schedules into CalendarEvent[]
   const calendarEvents: CalendarEvent[] = useMemo(() => {
     const events: CalendarEvent[] = [];
@@ -297,8 +328,26 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
       });
     }
 
+    // Add the session running right now (ACTUAL). No log row exists until the
+    // session ends, so the block is derived from timer state and grows each tick.
+    if (calendarMode !== 'PLAN' && liveSession && liveSession.localDate === date) {
+      events.push({
+        id: 'live-session',
+        type: 'LOG',
+        subType: liveSession.subType,
+        title: liveSession.title,
+        startTime: liveSession.startTime,
+        endTime: liveSession.endTime,
+        duration: liveSession.duration,
+        itemType: liveSession.itemType,
+        isLive: true,
+        isPaused: liveSession.isPaused,
+        data: liveSession as unknown as ActivityLogItem,
+      });
+    }
+
     return events;
-  }, [logs, scheduledTasks, calendarMode]);
+  }, [logs, scheduledTasks, calendarMode, liveSession, date]);
 
   // Handle schedule update from drag (with optimistic update)
   const handleScheduleUpdate = async (

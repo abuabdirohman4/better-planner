@@ -18,6 +18,8 @@ export interface CalendarEvent {
   duration: number;
   data: ActivityLogItem | TaskSchedule;
   maxDuration?: number; // Max allowed duration for resize (based on focus settings)
+  isLive?: boolean; // Session running right now — no log row exists yet
+  isPaused?: boolean;
 }
 
 interface CalendarViewProps {
