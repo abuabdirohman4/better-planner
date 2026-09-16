@@ -21,6 +21,10 @@ interface UIPreferencesState {
   setShowAllTasksAutomatically: (show: boolean) => void;
   toggleShowAllTasksAutomatically: () => void;
 
+  // Main Quest: tampilkan 3 HFG berjajar (desktop) vs satu per tab
+  mainQuestGridView: boolean;
+  toggleMainQuestGridView: () => void;
+
   // Card collapse states
   cardCollapsed: {
     pomodoroTimer: boolean;
@@ -68,6 +72,10 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
       toggleShowAllTasksAutomatically: () =>
         set((state) => ({ showAllTasksAutomatically: !state.showAllTasksAutomatically })),
 
+      mainQuestGridView: false,
+      toggleMainQuestGridView: () =>
+        set((state) => ({ mainQuestGridView: !state.mainQuestGridView })),
+
       // Card collapse states - all cards start expanded (false = not collapsed)
       cardCollapsed: {
         pomodoroTimer: false,
@@ -103,6 +111,7 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
         showCompletedWorkQuest: state.showCompletedWorkQuest,
         showCompletedDailyQuest: state.showCompletedDailyQuest,
         showAllTasksAutomatically: state.showAllTasksAutomatically,
+        mainQuestGridView: state.mainQuestGridView,
         cardCollapsed: state.cardCollapsed,
       }),
     }

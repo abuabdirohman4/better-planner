@@ -13,6 +13,8 @@ export interface ModalProps {
   closeOnEscape?: boolean;
   showCloseButton?: boolean;
   className?: string;
+  /** Tanpa shell putih Modal — dipakai saat isi sudah punya card sendiri */
+  bare?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -26,6 +28,7 @@ const Modal: React.FC<ModalProps> = ({
   closeOnEscape = true,
   showCloseButton = true,
   className = '',
+  bare = false,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -93,7 +96,9 @@ const Modal: React.FC<ModalProps> = ({
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           ref={modalRef}
-          className={`relative w-full ${sizeClasses[size]} transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl transition-all duration-200 ${className}`}
+          className={`relative w-full ${sizeClasses[size]} transform transition-all duration-200 ${
+            bare ? '' : 'overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl'
+          } ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -129,7 +134,7 @@ const Modal: React.FC<ModalProps> = ({
           )}
 
           {/* Body */}
-          <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <div className={`overflow-y-auto ${bare ? 'max-h-[calc(100vh-100px)]' : 'px-6 py-4 max-h-[calc(100vh-200px)]'}`}>
             {children}
           </div>
 

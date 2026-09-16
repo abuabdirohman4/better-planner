@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
+import Modal from '@/components/ui/modal/Modal';
 
 import { updateQuestMotivation } from './actions/questActions';
 
@@ -20,10 +21,8 @@ interface QuestProps {
 export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuestUpdate }: { quest: QuestProps; showCompletedTasks: boolean; showAllTasks: boolean; onQuestUpdate?: () => void }) {
   const [motivationValue, setMotivationValue] = useState(quest.motivation || '');
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
-  const [showSubTask, setShowSubTask] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const subtaskContainerRef = useRef<HTMLDivElement>(null);
   
   const hasExistingContent = !!quest.motivation;
   const canSave = hasChanges && !isSaving;
@@ -67,50 +66,9 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuest
     }
   };
 
-  // Handle SubTask opening/closing with smooth animation
-  useEffect(() => {
-    if (activeSubTask) {
-      // Delay showing content to allow container animation to start
-      const timer = setTimeout(() => {
-        setShowSubTask(true);
-      }, 50);
-      return () => clearTimeout(timer);
-    } else {
-      // Hide content immediately when closing
-      setShowSubTask(false);
-    }
-  }, [activeSubTask]);
-
-  // Handle auto-scroll when task is selected
-  useEffect(() => {
-    if (!activeSubTask) return;
-    
-    // Detect screen size using matchMedia (lg breakpoint = 1024px)
-    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-    
-    if (isDesktop && showAllTasks) {
-      // Desktop + showAllTasks: scroll to top of page
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (!isDesktop) {
-      // Mobile: scroll to subtask container
-      setTimeout(() => {
-        subtaskContainerRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 100); // Small delay to allow SubTask panel to render
-    }
-  }, [activeSubTask, showAllTasks]);
-
   return (
-    <div className={`flex flex-col lg:flex-row gap-4 transition-all duration-300 ease-in ${
-      !activeSubTask ? 'justify-center' : ''
-    }`}>
-      <div className={`flex-1 max-w-2xl w-full transition-all duration-300 ease-in ${
-        !activeSubTask 
-          ? 'mx-auto transform translate-x-0' 
-          : 'mx-auto lg:mx-0 lg:transform lg:translate-x-0'
-      }`}>
+    <div className="flex flex-col">
+      <div className="w-full">
         <ComponentCard title={quest.title} className='' classNameTitle='text-center text-xl !font-extrabold' classNameHeader="pb-0">
           {/* Quest Progress Bar */}
           <QuestProgressBar questId={quest.id}/>
@@ -162,15 +120,15 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuest
           />
         </ComponentCard>
       </div>
-      <div 
-        ref={subtaskContainerRef}
-        className={`transition-all duration-300 ease-out ${
-          activeSubTask 
-            ? 'flex-1 max-w-2xl w-full mx-auto lg:mx-0 opacity-100 translate-x-0' 
-            : 'w-0 opacity-0 translate-x-4 overflow-hidden pointer-events-none'
-        }`}
+      <Modal
+        isOpen={!!activeSubTask}
+        onClose={() => setActiveSubTask(null)}
+        size="xl"
+        showCloseButton={false}
+        bare
+        className="max-w-2xl"
       >
-        {showSubTask && activeSubTask && (
+        {activeSubTask && (
           <SubTask
             task={activeSubTask}
             onBack={() => setActiveSubTask(null)}
@@ -178,7 +136,7 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuest
             showCompletedTasks={showCompletedTasks}
           />
         )}
-      </div>
+      </Modal>
     </div>
   );
 } 

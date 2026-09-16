@@ -6,7 +6,7 @@ import MainQuestsSkeleton from '@/components/ui/skeleton/MainQuestsSkeleton';
 import { useQuarterStore } from '@/stores/quarterStore';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import { EyeIcon, EyeCloseIcon } from '@/lib/icons';
-import { RiListUnordered, RiFocus3Line } from 'react-icons/ri';
+import { RiListUnordered, RiFocus3Line, RiLayoutColumnLine, RiLayoutRowLine } from 'react-icons/ri';
 
 import Quest from './Quest';
 import { useMainQuests } from './hooks/useMainQuestsSWR';
@@ -22,7 +22,9 @@ export default function MainQuestsClient() {
     showCompletedMainQuest, 
     toggleShowCompletedMainQuest,
     showAllTasksAutomatically,
-    toggleShowAllTasksAutomatically 
+    toggleShowAllTasksAutomatically,
+    mainQuestGridView,
+    toggleMainQuestGridView
   } = useUIPreferencesStore();
 
   if (isLoading) {
@@ -40,10 +42,25 @@ export default function MainQuestsClient() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-2 md:px-0">
+    <div className={`mx-auto px-2 ${mainQuestGridView ? 'lg:max-w-none lg:px-6 max-w-7xl md:px-0' : 'max-w-7xl md:px-0'}`}>
       <div className="mb-6">
         {/* Header dengan Toggle Button */}
         <div className="flex justify-center items-center gap-2 mb-4 relative">
+          {/* Toggle 3 HFG berjajar (desktop) */}
+          <div className="hidden lg:block bg-white border border-gray-200 rounded-lg">
+            <button
+              onClick={toggleMainQuestGridView}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              title={mainQuestGridView ? 'Tampilkan satu HFG per tab' : 'Tampilkan 3 HFG berjajar'}
+            >
+              {mainQuestGridView ? (
+                <RiLayoutRowLine className="w-5 h-5" />
+              ) : (
+                <RiLayoutColumnLine className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
           {/* Toggle Show All Tasks Button */}
           <div className="bg-white border border-gray-200 rounded-lg">
             <button
@@ -93,7 +110,7 @@ export default function MainQuestsClient() {
         </div>
 
         {/* Mobile: Horizontal scroll, Desktop: Centered */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className={`border-b border-gray-200 dark:border-gray-700 ${mainQuestGridView ? 'lg:hidden' : ''}`}>
           <div className="flex justify-evenly w-full md:w-auto">
             <div className="flex min-w-max md:min-w-max w-full md:w-auto">
               {quests.map((quest, idx) => (
@@ -112,18 +129,33 @@ export default function MainQuestsClient() {
           </div>
         </div>
         <div className="mt-6">
-          {quests.map((quest, idx) => 
-            activeTab === idx ? (
-              <div key={quest.id}>
+          {mainQuestGridView && (
+            <div className="hidden lg:grid lg:grid-cols-3 gap-4 items-start">
+              {quests.map((quest) => (
                 <Quest
+                  key={`grid-${quest.id}`}
                   quest={quest}
                   showCompletedTasks={showCompletedMainQuest}
                   showAllTasks={showAllTasksAutomatically}
                   onQuestUpdate={mutateQuests}
                 />
-              </div>
-            ) : null
+              ))}
+            </div>
           )}
+          <div className={`max-w-2xl mx-auto ${mainQuestGridView ? 'lg:hidden' : ''}`}>
+            {quests.map((quest, idx) =>
+              activeTab === idx ? (
+                <div key={quest.id}>
+                  <Quest
+                    quest={quest}
+                    showCompletedTasks={showCompletedMainQuest}
+                    showAllTasks={showAllTasksAutomatically}
+                    onQuestUpdate={mutateQuests}
+                  />
+                </div>
+              ) : null
+            )}
+          </div>
         </div>
       </div>
     </div>

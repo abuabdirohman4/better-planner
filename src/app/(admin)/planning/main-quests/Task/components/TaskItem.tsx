@@ -123,7 +123,6 @@ export default function TaskItem({
 
   const handleInputFocus = () => {
     setIsEditing(true);
-    onOpenSubtask?.();
   };
 
   const handleInputBlur = () => {
@@ -179,7 +178,6 @@ export default function TaskItem({
       }`}
       onClick={() => {
         onClearActiveTaskIdx?.();
-        onOpenSubtask?.();
       }}
     >
       <div className='flex gap-2 w-full items-center mr-2'>
@@ -196,6 +194,20 @@ export default function TaskItem({
             >
               {task.title}
             </span>
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onOpenSubtask?.();
+              }}
+              className="shrink-0 p-1 rounded text-gray-400 hover:text-brand-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Buka detail sub-tugas"
+              aria-label="Buka detail sub-tugas"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
             <Checkbox checked={isCompleted} onChange={handleStatusTask} />
           </div>
         ) : (
@@ -224,7 +236,6 @@ export default function TaskItem({
               onBlur={handleInputBlur}
               onClick={e => {
                 e.stopPropagation();
-                onOpenSubtask?.();
               }}
               onFocus={handleInputFocus}
               ref={editInputRef}
