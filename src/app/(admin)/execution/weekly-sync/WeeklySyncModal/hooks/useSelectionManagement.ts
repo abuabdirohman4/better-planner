@@ -110,29 +110,29 @@ export function useSelectionManagement(initialSelectedItems: SelectedItem[], exi
     });
   };
 
+  // Bulk select mirrors handleItemToggle: TASK + non-DONE subtasks, skip items held by other slots.
+  // No MILESTONE rows — weekly_goal_items.item_id FK points to tasks(id); a milestone id fails the whole insert.
   const getAllAvailableItems = (hierarchicalData: Quest[]): SelectedItem[] => {
     const items: SelectedItem[] = [];
-    
+
     hierarchicalData.forEach(quest => {
       quest.milestones?.forEach(milestone => {
-        items.push({ id: milestone.id, type: 'MILESTONE' });
-        
         milestone.tasks?.forEach(task => {
+          if (task.status === 'DONE' || existingSelectedIds.has(task.id)) return;
+          if (task.subtasks?.some(st => existingSelectedIds.has(st.id))) return;
+          const subtasks = (task.subtasks ?? []).filter(st => st.status !== 'DONE');
+
           items.push({ id: task.id, type: 'TASK' });
-          
-          task.subtasks?.forEach(subtask => {
-            items.push({ id: subtask.id, type: 'SUBTASK' });
-          });
+          subtasks.forEach(st => items.push({ id: st.id, type: 'SUBTASK' }));
         });
       });
     });
-    
+
     return items;
   };
 
   const handleSelectAll = (hierarchicalData: Quest[]) => {
-    const allItems = getAllAvailableItems(hierarchicalData);
-    setSelectedItems(allItems);
+    setSelectedItems(getAllAvailableItems(hierarchicalData));
   };
 
   const handleClearAll = () => {
