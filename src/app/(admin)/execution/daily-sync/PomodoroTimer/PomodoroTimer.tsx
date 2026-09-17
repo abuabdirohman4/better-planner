@@ -18,17 +18,9 @@ import { getLocalDateString } from '@/lib/dateUtils';
 import { useCompletedSessions } from '../DailyQuest/hooks/useCompletedSessions';
 import DebugTimer from './components/DebugTimer';
 import BreakPrompt from './components/BreakPrompt';
-
-const isDev = process.env.NODE_ENV === 'development';
-const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60;
-const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60;
-const LONG_BREAK_DURATION = isDev ? 60 : 15 * 60;
-
-const formatTime = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
+import FloatingTimer from './components/FloatingTimer';
+import { useDocumentPiP } from '@/hooks/useDocumentPiP';
+import { getFocusDuration, getTotalSeconds, getProgress, formatTime } from '@/lib/timerDisplay';
 
 function CircularTimer({
   progress,
@@ -137,6 +129,9 @@ export default function PomodoroTimer() {
   const [showSoundSelector, setShowSoundSelector] = useState(false);
   const [showAudioPermissionPrompt, setShowAudioPermissionPrompt] = useState(false);
   const [audioPermissionChecked, setAudioPermissionChecked] = useState(false);
+  // Always-on-top timer window. Chrome/Brave/Edge desktop only — the button
+  // hides itself elsewhere rather than failing on click.
+  const pip = useDocumentPiP();
 
   // Check audio permission on component mount (only once)
   // useEffect(() => {
@@ -188,29 +183,10 @@ export default function PomodoroTimer() {
   // Check if any loading state is active
   const isLoading = isRecovering || isProcessingCompletion;
 
-  // Helper to get total seconds for progress
-  const focusDuration = activeTask?.focus_duration
-    ? activeTask.focus_duration * 60
-    : (lastActiveTask?.focus_duration ? lastActiveTask.focus_duration * 60 : 25 * 60);
-
-  let totalSeconds = 0;
-  if (timerState === 'FOCUSING') totalSeconds = focusDuration;
-  else if (timerState === 'BREAK' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
-  else if (timerState === 'BREAK' && breakType === 'MEDIUM') totalSeconds = MEDIUM_BREAK_DURATION;
-  else if (timerState === 'BREAK' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
-  else if (timerState === 'PAUSED' && breakType === 'SHORT') totalSeconds = SHORT_BREAK_DURATION;
-  else if (timerState === 'PAUSED' && breakType === 'MEDIUM') totalSeconds = MEDIUM_BREAK_DURATION;
-  else if (timerState === 'PAUSED' && breakType === 'LONG') totalSeconds = LONG_BREAK_DURATION;
-  else if (timerState === 'PAUSED') totalSeconds = focusDuration;
-  else totalSeconds = focusDuration; // fallback/idle logic uses last active or default
-
-  // Progress calculation
-  let progress = 0;
-  if (timerState === 'FOCUSING' || timerState === 'BREAK' || timerState === 'PAUSED') {
-    progress = secondsElapsed / totalSeconds;
-  } else {
-    progress = 1;
-  }
+  // Shared with FloatingTimer so both views always agree
+  const focusDuration = getFocusDuration(activeTask, lastActiveTask);
+  const totalSeconds = getTotalSeconds(timerState, breakType, focusDuration);
+  const progress = getProgress(timerState, secondsElapsed, totalSeconds);
 
   // Tampilkan waktu
   const timeDisplay = formatTime(secondsElapsed);
@@ -276,6 +252,24 @@ export default function PomodoroTimer() {
           onSkip={handleSkipAudioPermission}
         />
       )}
+      {pip.pipWindow && <FloatingTimer pipWindow={pip.pipWindow} />}
+
+      {pip.supported && (
+        <div className="absolute right-[68px] top-[52px]">
+          <button
+            onClick={() => (pip.isOpen ? pip.close() : pip.open())}
+            className="flex items-center space-x-2 text-gray-500 hover:text-brand-500 transition-colors"
+            title={pip.isOpen ? 'Tutup timer melayang' : 'Timer melayang di atas app lain'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor" stroke="none" />
+            </svg>
+            <span className="text-sm">{pip.isOpen ? 'Tutup Float' : 'Float Timer'}</span>
+          </button>
+        </div>
+      )}
+
       <div className="absolute right-[68px] top-[24px]">
         {/* Sound Settings */}
         <button

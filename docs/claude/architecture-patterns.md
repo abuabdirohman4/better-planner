@@ -375,3 +375,19 @@ import { Button } from '@/components/ui/Button';
 - Service worker configured via next-pwa
 
 **For SWR loading state patterns and testing strategies, see [`testing-guidelines.md#swr-loading-states`](testing-guidelines.md#swr-loading-states)**
+
+---
+
+## Timer melayang (Document Picture-in-Picture)
+
+Timer bisa dilepas ke jendela kecil yang selalu di atas app lain, mirip Picture-in-Picture video. Tombol "Float Timer" ada di kanan atas kartu Pomodoro.
+
+**Dukungan:** Chrome, Brave, dan Edge desktop. Safari belum punya API-nya, Android juga tidak — `useDocumentPiP` mengembalikan `supported: false` di sana dan tombolnya tidak dirender sama sekali (bukan dirender lalu gagal saat diklik).
+
+**Cara kerjanya:** `useDocumentPiP` (`src/hooks/useDocumentPiP.ts`) membuka jendela via `documentPictureInPicture.requestWindow()`, lalu menyalin seluruh stylesheet halaman ke dokumen baru — jendela PiP lahir kosong, tanpa penyalinan ini isinya tak bergaya. Stylesheet lintas-origin melempar saat `cssRules` dibaca, jadi yang itu di-link ulang lewat `href`.
+
+`FloatingTimer` dirender ke sana dengan `createPortal`, membaca `timerStore` yang sama seperti timer utama. Jadi keduanya satu sumber kebenaran; jeda dari jendela melayang langsung terlihat di halaman, dan sebaliknya.
+
+**Hitungan durasi dipusatkan di `src/lib/timerDisplay.ts`** (`getFocusDuration`, `getTotalSeconds`, `getProgress`, `formatTime`). Sebelumnya logika ini ditulis inline di `PomodoroTimer.tsx`; dipindah supaya dua tampilan tidak bisa berbeda hasil. Ada unit test di `src/lib/__tests__/timerDisplay.test.ts`.
+
+**Catatan:** jendela PiP ditutup otomatis saat komponen unmount, supaya tidak ada jendela yatim saat tab ditutup.
