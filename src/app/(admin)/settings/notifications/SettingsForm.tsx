@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useNotificationSettings } from './useNotificationSettings'
+import { sendTestNotification } from './actions'
 import type { NotificationSettings, AICharacter, EmailLanguage, PushSettings } from '@/lib/notifications/types'
 import { DEFAULT_PUSH_SETTINGS } from '@/lib/notifications/services/pushDue'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
@@ -35,6 +36,7 @@ export function SettingsForm() {
   const { settings, isLoading, updateSettings } = useNotificationSettings()
   const [localSettings, setLocalSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS)
   const [isSaving, setIsSaving] = useState(false)
+  const [testing, setTesting] = useState<'push' | 'email' | null>(null)
   const device = usePushSubscription()
   const push: PushSettings = { ...DEFAULT_PUSH_SETTINGS, ...localSettings.push }
   const setPush = (patch: Partial<PushSettings>) => setLocalSettings({ ...localSettings, push: { ...push, ...patch } })
@@ -51,6 +53,19 @@ export function SettingsForm() {
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal mengubah push')
+    }
+  }
+
+  const handleTest = async (channel: 'push' | 'email') => {
+    setTesting(channel)
+    try {
+      const result = await sendTestNotification(channel)
+      if (result.ok) toast.success(result.message)
+      else toast.error(result.message)
+    } catch {
+      toast.error('Gagal menghubungi server. Cek koneksi lalu coba lagi.')
+    } finally {
+      setTesting(null)
     }
   }
 
@@ -294,6 +309,41 @@ export function SettingsForm() {
               </div>
             )}
           </>
+        )}
+      </div>
+
+      {/* Test notification */}
+      <div className="px-6 py-6 space-y-4 border-t border-gray-200 dark:border-gray-800">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Tes notifikasi</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Kirim satu notifikasi sekarang untuk memastikan sampai, tanpa menunggu jadwal harian
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => handleTest('push')}
+            disabled={testing !== null || device.state !== 'subscribed'}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-brand-500 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {testing === 'push' ? 'Mengirim...' : 'Kirim tes push'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTest('email')}
+            disabled={testing !== null}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-brand-500 text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {testing === 'email' ? 'Mengirim...' : 'Kirim tes email'}
+          </button>
+        </div>
+
+        {device.state !== 'subscribed' && device.state !== 'loading' && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Tes push nonaktif — aktifkan &quot;Perangkat ini&quot; di bagian Push Notifications dulu.
+          </p>
         )}
       </div>
 

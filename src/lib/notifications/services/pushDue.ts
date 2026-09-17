@@ -3,7 +3,8 @@
  * No I/O — route fetches rows, this decides. Unit-tested in __tests__/pushDue.test.ts.
  */
 
-export type PushKind = 'timer' | 'habit' | 'schedule' | 'daily_sync' | 'recap'
+/** 'test' is sent on demand from settings, never by the cron scheduler. */
+export type PushKind = 'timer' | 'habit' | 'schedule' | 'daily_sync' | 'recap' | 'test'
 
 export interface PushPayload {
   title: string
