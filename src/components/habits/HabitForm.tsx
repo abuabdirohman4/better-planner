@@ -29,12 +29,24 @@ const FREQUENCY_OPTIONS: { value: HabitFrequency; label: string }[] = [
   { value: "flexible", label: "Flexible" },
 ];
 
+// 0 = Sunday .. 6 = Saturday, displayed Monday-first to match the Indonesian week.
+const DAY_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "Sen" },
+  { value: 2, label: "Sel" },
+  { value: 3, label: "Rab" },
+  { value: 4, label: "Kam" },
+  { value: 5, label: "Jum" },
+  { value: 6, label: "Sab" },
+  { value: 0, label: "Min" },
+];
+
 const DEFAULT_VALUES: HabitFormInput = {
   name: "",
   category: "spiritual",
   frequency: "flexible",
   monthly_goal: 20,
   daily_target: 1,
+  target_days: null,
   tracking_type: "positive",
   description: "",
   target_time: undefined,
@@ -73,6 +85,9 @@ export default function HabitForm({
     if ((values.daily_target ?? 1) < 1 || (values.daily_target ?? 1) > 99) {
       newErrors.daily_target = "Daily target must be between 1 and 99.";
     }
+    if (values.frequency === "weekly" && (values.target_days ?? []).length === 0) {
+      newErrors.target_days = "Pilih minimal satu hari.";
+    }
     if (hasTargetTime && values.target_time) {
       const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
       if (!timeRegex.test(values.target_time)) {
@@ -103,6 +118,11 @@ export default function HabitForm({
       name: values.name.trim(),
       description: values.description?.trim() || undefined,
       target_time: hasTargetTime && values.target_time ? values.target_time : undefined,
+      // Only weekly habits are scheduled; null = every day.
+      target_days:
+        values.frequency === "weekly" && values.target_days?.length
+          ? [...values.target_days].sort((a, b) => a - b)
+          : null,
     };
 
     await onSubmit(payload);
@@ -173,6 +193,43 @@ export default function HabitForm({
           </select>
         </div>
       </div>
+
+      {/* Target Days — weekly habits only */}
+      {values.frequency === "weekly" && (
+        <div>
+          <label className={labelClass}>
+            Hari Target <span className="text-red-500">*</span>
+          </label>
+          <div className="flex gap-1.5 flex-wrap">
+            {DAY_OPTIONS.map(({ value, label }) => {
+              const selected = (values.target_days ?? []).includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    const current = values.target_days ?? [];
+                    handleChange(
+                      "target_days",
+                      selected ? current.filter((d) => d !== value) : [...current, value]
+                    );
+                  }}
+                  disabled={isSubmitting}
+                  className={`w-11 py-1.5 rounded-lg border text-xs font-medium transition ${
+                    selected
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300"
+                      : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {errors.target_days && <p className={errorClass}>{errors.target_days}</p>}
+        </div>
+      )}
 
       {/* Monthly Goal */}
       <div>

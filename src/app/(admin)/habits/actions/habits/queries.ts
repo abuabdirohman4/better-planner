@@ -11,6 +11,7 @@ export interface RawHabitRow {
   frequency: string;
   monthly_goal: number;
   daily_target: number;
+  target_days: number[] | null;
   tracking_type: string;
   target_time: string | null;
   is_archived: boolean;
@@ -54,6 +55,7 @@ export async function insertHabit(
       frequency: data.frequency,
       monthly_goal: data.monthly_goal,
       daily_target: data.daily_target ?? 1,
+      target_days: normalizeTargetDays(data),
       tracking_type: data.tracking_type,
       target_time: data.target_time ?? null,
     })
@@ -80,6 +82,7 @@ export async function updateHabitById(
   if (data.frequency !== undefined) updates.frequency = data.frequency;
   if (data.monthly_goal !== undefined) updates.monthly_goal = data.monthly_goal;
   if (data.daily_target !== undefined) updates.daily_target = data.daily_target;
+  if ('target_days' in data || data.frequency !== undefined) updates.target_days = normalizeTargetDays(data);
   if (data.tracking_type !== undefined) updates.tracking_type = data.tracking_type;
   if ('target_time' in data) updates.target_time = data.target_time ?? null;
 
@@ -121,6 +124,13 @@ export async function deleteHabitById(
     .eq('user_id', userId);
 
   if (error) throw error;
+}
+
+/** Only weekly habits carry target_days; everything else means "every day" (null). */
+function normalizeTargetDays(data: Partial<HabitFormInput>): number[] | null {
+  if (data.frequency !== undefined && data.frequency !== 'weekly') return null;
+  const days = data.target_days;
+  return days && days.length > 0 ? days : null;
 }
 
 // Re-export Habit type so logic.ts can import from here if needed

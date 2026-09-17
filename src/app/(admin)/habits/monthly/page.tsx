@@ -46,7 +46,7 @@ export default function HabitsMonthlyPage() {
     isCompleted,
   } = useHabitCompletions(year, month);
 
-  const monthlyStats = useMonthlyStats(habits, completions, year, month);
+  const monthlyStats = useMonthlyStats(habits, completions);
   const daysInMonth = new Date(year, month, 0).getDate();
   const isLoading = habitsLoading || completionsLoading;
 

@@ -12,6 +12,7 @@ export function toHabit(row: RawHabitRow): Habit {
     frequency: row.frequency as HabitFrequency,
     monthly_goal: row.monthly_goal,
     daily_target: row.daily_target ?? 1,
+    target_days: row.target_days ?? null,
     tracking_type: row.tracking_type as HabitTrackingType,
     target_time: row.target_time,
     is_archived: row.is_archived,
@@ -83,5 +84,36 @@ export function parseHabitFormInput(raw: unknown): HabitFormInput {
     result.target_time = String(data.target_time);
   }
 
+  if (data.target_days !== undefined) {
+    result.target_days = parseTargetDays(data.target_days);
+  }
+
+  if (result.frequency === 'weekly' && (result.target_days ?? []).length === 0) {
+    throw new Error('Invalid habit form input: weekly habits need at least one target day');
+  }
+
   return result;
+}
+
+/** Normalise target_days input to sorted unique 0..6, or null for "every day". */
+function parseTargetDays(raw: unknown): number[] | null {
+  if (raw === null) return null;
+  if (!Array.isArray(raw)) {
+    throw new Error('Invalid habit form input: target_days must be an array of 0-6');
+  }
+  const days = [...new Set(raw.map(Number))].sort((a, b) => a - b);
+  if (days.some(d => !Number.isInteger(d) || d < 0 || d > 6)) {
+    throw new Error('Invalid habit form input: target_days must contain integers 0-6');
+  }
+  return days.length === 0 ? null : days;
+}
+
+/**
+ * Is this habit scheduled on `date` ("YYYY-MM-DD")?
+ * No target_days (null/empty) = every day, so legacy habits keep their daily behaviour.
+ */
+export function isScheduledOn(habit: Pick<Habit, 'target_days'>, date: string): boolean {
+  const days = habit.target_days;
+  if (!days || days.length === 0) return true;
+  return days.includes(new Date(date + 'T00:00:00Z').getUTCDay());
 }

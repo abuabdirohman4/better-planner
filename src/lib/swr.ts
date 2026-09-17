@@ -213,6 +213,7 @@ export const habitKeys = {
   completions: () => [...habitKeys.all, 'completions'] as const,
   completionsForMonth: (year: number, month: number) =>
     [...habitKeys.completions(), year, month] as const,
+  recentCompletions: (days: number) => [...habitKeys.completions(), 'recent', days] as const,
   monthlyStats: (year: number, month: number) =>
     [...habitKeys.all, 'monthly-stats', year, month] as const,
   todayCompletions: (date: string) => [...habitKeys.all, 'today-completions', date] as const,

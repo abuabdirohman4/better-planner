@@ -19,6 +19,7 @@ export interface Habit {
   frequency: HabitFrequency;
   monthly_goal: number;
   daily_target: number; // 1 = binary, >1 = N completions/day
+  target_days: number[] | null; // 0=Sun..6=Sat scheduled days; null/empty = every day
   tracking_type: HabitTrackingType;
   target_time: string | null; // "HH:MM" or null
   is_archived: boolean;
@@ -43,6 +44,7 @@ export interface HabitFormInput {
   frequency: HabitFrequency;
   monthly_goal: number;
   daily_target?: number; // default 1
+  target_days?: number[] | null;
   tracking_type: HabitTrackingType;
   target_time?: string; // "HH:MM" or undefined
 }

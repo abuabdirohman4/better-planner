@@ -8,6 +8,7 @@ import type {
   HabitCategory,
 } from '@/types/habit';
 import type { RawCompletionRow } from './queries';
+import { isScheduledOn } from '../habits/logic';
 
 /**
  * Transform a raw database row into a typed HabitCompletion domain object.
@@ -46,73 +47,49 @@ export function buildCompletedDates(completions: HabitCompletion[], dailyTarget:
 /**
  * Calculate current and best streak from a set of completed dates.
  *
- * - current_streak: walk backwards from today, count consecutive days that are completed.
- *   Stops as soon as a gap is found. Only counts days up to and including today.
- * - best_streak: the longest consecutive run across all completed dates up to today.
+ * Walks the real history, not a calendar month — a streak that crosses 1 Sep
+ * keeps counting (app-w3t3). Days the habit is not scheduled on are skipped:
+ * they neither break the run nor add to it (app-pizc).
  *
- * @param completedDates - Set of "YYYY-MM-DD" strings
- * @param today - "YYYY-MM-DD" string (upper bound)
- * @param year - year of the month window (used to scope streak to this month)
- * @param month - 1-based month (used to scope streak to this month)
+ * @param completedDates - Set of "YYYY-MM-DD" strings (all history you fetched)
+ * @param today - "YYYY-MM-DD" upper bound; nothing after it is counted
+ * @param isScheduled - optional; returns false for days off the habit's schedule
  */
 export function calculateStreak(
   completedDates: Set<string>,
   today: string,
-  year: number,
-  month: number
+  isScheduled: (date: string) => boolean = () => true
 ): StreakResult {
-  // Filter to only dates in the target month and up to today
-  const monthPrefix = `${year}-${String(month).padStart(2, '0')}-`;
-  const monthDates = new Set<string>();
-  for (const d of completedDates) {
-    if (d.startsWith(monthPrefix) && d <= today) {
-      monthDates.add(d);
-    }
-  }
+  const sorted = Array.from(completedDates).filter(d => d <= today).sort();
+  if (sorted.length === 0) return { current_streak: 0, best_streak: 0 };
 
-  // Build sorted array of completed dates within the month
-  const sorted = Array.from(monthDates).sort();
+  const done = new Set(sorted);
 
-  if (sorted.length === 0) {
-    return { current_streak: 0, best_streak: 0 };
-  }
-
-  // --- best_streak: longest consecutive run in sorted dates ---
-  let best = 1;
-  let run = 1;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    const curr = sorted[i];
-    if (isConsecutiveDays(prev, curr)) {
+  // --- best_streak: longest run, walking day by day from the first completion ---
+  let best = 0;
+  let run = 0;
+  for (let d = sorted[0]; d <= today; d = addOneDay(d)) {
+    if (!isScheduled(d)) continue; // off-schedule day is neither hit nor miss
+    if (done.has(d)) {
       run += 1;
       if (run > best) best = run;
     } else {
-      run = 1;
+      run = 0;
     }
   }
 
-  // --- current_streak: walk backwards from today (within month scope) ---
-  // Clamp today to the last day of the target month when viewing a past month
-  const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
-  const effectiveToday = today <= monthEnd ? today : monthEnd;
-
+  // --- current_streak: walk backwards from today, skipping unscheduled days ---
   let current = 0;
-  let cursor = effectiveToday;
-
-  while (monthDates.has(cursor) && cursor >= sorted[0]) {
-    current += 1;
+  let cursor = today;
+  while (cursor >= sorted[0]) {
+    if (isScheduled(cursor)) {
+      if (!done.has(cursor)) break;
+      current += 1;
+    }
     cursor = subtractOneDay(cursor);
   }
 
   return { current_streak: current, best_streak: best };
-}
-
-/**
- * Returns true if dateB is exactly one day after dateA.
- */
-function isConsecutiveDays(dateA: string, dateB: string): boolean {
-  const next = addOneDay(dateA);
-  return next === dateB;
 }
 
 function addOneDay(date: string): string {
@@ -127,24 +104,39 @@ function subtractOneDay(date: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+function groupByHabit(completions: HabitCompletion[]): Map<string, HabitCompletion[]> {
+  const byHabit = new Map<string, HabitCompletion[]>();
+  for (const c of completions) {
+    if (!byHabit.has(c.habit_id)) byHabit.set(c.habit_id, []);
+    byHabit.get(c.habit_id)!.push(c);
+  }
+  return byHabit;
+}
+
+function countScheduled(dates: Set<string>, habit: Habit): number {
+  let n = 0;
+  for (const d of dates) if (isScheduledOn(habit, d)) n += 1;
+  return n;
+}
+
 /**
  * Compute full monthly stats for all habits.
+ *
+ * `completions` is the month window (drives completed/goal/percentage).
+ * `streakCompletions` is the longer history used for streaks only — the month
+ * window alone made every streak reset on the 1st (app-w3t3). Defaults to the
+ * month window when no history is supplied.
  */
 export function calculateMonthlyStats(
   habits: Habit[],
   completions: HabitCompletion[],
-  year: number,
-  month: number,
-  today: string
+  today: string,
+  streakCompletions: HabitCompletion[] = completions
 ): MonthlyStats {
   // Group completions by habit_id (raw rows; daily_target applied per habit below)
-  const byHabit = new Map<string, HabitCompletion[]>();
-  for (const c of completions) {
-    if (!byHabit.has(c.habit_id)) {
-      byHabit.set(c.habit_id, []);
-    }
-    byHabit.get(c.habit_id)!.push(c);
-  }
+  const byHabit = groupByHabit(completions);
+  const streakByHabit =
+    streakCompletions === completions ? byHabit : groupByHabit(streakCompletions);
 
   const perHabit: HabitStats[] = [];
   let totalPossible = 0;
@@ -160,17 +152,18 @@ export function calculateMonthlyStats(
   > = {};
 
   for (const habit of habits) {
-    const datesForHabit = buildCompletedDates(byHabit.get(habit.id) ?? [], habit.daily_target ?? 1);
-    const completed = datesForHabit.size;
+    const dailyTarget = habit.daily_target ?? 1;
+    const datesForHabit = buildCompletedDates(byHabit.get(habit.id) ?? [], dailyTarget);
+    // Only scheduled days count toward the monthly goal (app-pizc).
+    const completed = countScheduled(datesForHabit, habit);
     const goal = habit.monthly_goal;
 
     const percentage = goal > 0 ? Math.round((completed / goal) * 100) : 0;
 
     const { current_streak, best_streak } = calculateStreak(
-      datesForHabit,
+      buildCompletedDates(streakByHabit.get(habit.id) ?? [], dailyTarget),
       today,
-      year,
-      month
+      (date) => isScheduledOn(habit, date)
     );
 
     perHabit.push({

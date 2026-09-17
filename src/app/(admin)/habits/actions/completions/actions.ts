@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { HabitCompletion } from "@/types/habit";
 import {
   queryCompletionsForMonth,
+  queryCompletionsInRange,
   queryCompletion,
   insertCompletion,
   deleteCompletion,
@@ -35,6 +36,24 @@ export async function getCompletionsForMonth(
   if (!user) throw new Error('User not authenticated');
 
   const rows = await queryCompletionsForMonth(supabase, user.id, year, month);
+  return rows.map(toHabitCompletion);
+}
+
+/**
+ * Completions of the last `days` days, for streak calculation only (app-w3t3).
+ * Bounded window — a streak longer than this reads as capped, not unlimited history.
+ * ponytail: 90-day cap; widen if someone actually passes a 90-day streak.
+ */
+export async function getRecentCompletions(days = 90): Promise<HabitCompletion[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const today = getTodayWIB();
+  const from = new Date(today + 'T00:00:00Z');
+  from.setUTCDate(from.getUTCDate() - days);
+
+  const rows = await queryCompletionsInRange(supabase, user.id, from.toISOString().slice(0, 10), today);
   return rows.map(toHabitCompletion);
 }
 

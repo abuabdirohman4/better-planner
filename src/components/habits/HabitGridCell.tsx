@@ -3,6 +3,7 @@ interface HabitGridCellProps {
   date: string; // "YYYY-MM-DD"
   isCompleted: boolean;
   isFuture: boolean; // date > today
+  isOffSchedule: boolean; // weekly habit, not one of its target days
   isNegative: boolean; // tracking_type === 'negative'
   onToggle: (habitId: string, date: string) => void;
 }
@@ -28,12 +29,29 @@ export default function HabitGridCell({
   date,
   isCompleted,
   isFuture,
+  isOffSchedule,
   isNegative,
   onToggle,
 }: HabitGridCellProps) {
   const handleClick = () => {
     onToggle(habitId, date);
   };
+
+  // Not scheduled: a faint dot, deliberately NOT the empty box used for a miss,
+  // and not clickable — an off day must not read as a failure (app-pizc).
+  if (isOffSchedule) {
+    return (
+      <td className="p-1 text-center align-middle">
+        <span
+          className="flex items-center justify-center w-6 h-6 md:w-7 md:h-7 mx-auto"
+          title={`Tidak dijadwalkan (${date})`}
+          aria-label={`Not scheduled on ${date}`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700" />
+        </span>
+      </td>
+    );
+  }
 
   if (isFuture) {
     return (

@@ -10,6 +10,24 @@ export interface RawCompletionRow {
   created_at: string;
 }
 
+export async function queryCompletionsInRange(
+  supabase: SupabaseClient,
+  userId: string,
+  fromDate: string,
+  toDate: string
+): Promise<RawCompletionRow[]> {
+  const { data, error } = await supabase
+    .from('habit_completions')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('date', fromDate)
+    .lte('date', toDate)
+    .order('date', { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as RawCompletionRow[];
+}
+
 export async function queryCompletionsForMonth(
   supabase: SupabaseClient,
   userId: string,
@@ -17,20 +35,10 @@ export async function queryCompletionsForMonth(
   month: number
 ): Promise<RawCompletionRow[]> {
   // month is 1-based (1 = January)
-  const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
-  const lastDayDate = new Date(year, month, 0); // last day of month
-  const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
-
-  const { data, error } = await supabase
-    .from('habit_completions')
-    .select('*')
-    .eq('user_id', userId)
-    .gte('date', firstDay)
-    .lte('date', lastDay)
-    .order('date', { ascending: true });
-
-  if (error) throw error;
-  return (data ?? []) as RawCompletionRow[];
+  const paddedMonth = String(month).padStart(2, '0');
+  const firstDay = `${year}-${paddedMonth}-01`;
+  const lastDay = `${year}-${paddedMonth}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
+  return queryCompletionsInRange(supabase, userId, firstDay, lastDay);
 }
 
 export async function queryCompletion(

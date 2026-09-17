@@ -8,6 +8,7 @@ import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { computeDue, DEFAULT_PUSH_SETTINGS, type DueInput, type PushSettings } from '@/lib/notifications/services/pushDue'
 import { sendPushToUser } from '@/lib/notifications/services/pushService'
+import { isScheduledOn } from '@/app/(admin)/habits/actions/habits/logic'
 
 export const maxDuration = 30
 
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
         .in('user_id', userIds),
       supabase
         .from('habits')
-        .select('id, user_id, name, target_time, is_archived')
+        .select('id, user_id, name, target_time, is_archived, target_days')
         .eq('is_archived', false)
         .not('target_time', 'is', null)
         .in('user_id', userIds),
@@ -75,10 +76,13 @@ export async function POST(request: Request) {
     const completedKeys = new Set((completions ?? []).map(c => `${c.habit_id}:${c.date}`))
     const tzByUser = new Map(users.map(u => [u.user_id, u.timezone]))
 
-    const habits: DueInput['habits'] = (habitsRes.data ?? []).map(h => {
-      const today = now.toLocaleDateString('en-CA', { timeZone: tzByUser.get(h.user_id) })
-      return { ...h, completed_today: completedKeys.has(`${h.id}:${today}`) }
-    })
+    const habits: DueInput['habits'] = (habitsRes.data ?? [])
+      .map(h => {
+        const today = now.toLocaleDateString('en-CA', { timeZone: tzByUser.get(h.user_id) })
+        return { ...h, today, completed_today: completedKeys.has(`${h.id}:${today}`) }
+      })
+      // Don't nag about a weekly habit on a day it isn't scheduled (app-pizc)
+      .filter(h => isScheduledOn(h, h.today))
 
     // Schedules: resolve owner + task title
     type ScheduleRow = { id: string; scheduled_start_time: string; daily_plan_items: { item_id: string; daily_plans: { user_id: string } } }

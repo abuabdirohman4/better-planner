@@ -2,6 +2,7 @@ import type { Habit, HabitStats } from "@/types/habit";
 import type { WeekGroup } from "@/components/habits/HabitGrid";
 import HabitGridCell from "@/components/habits/HabitGridCell";
 import HabitProgressBar from "@/components/habits/HabitProgressBar";
+import { isScheduledOn } from "@/app/(admin)/habits/actions/habits/logic";
 
 const CATEGORY_DOT_COLORS: Record<string, string> = {
   spiritual: "bg-purple-500",
@@ -95,13 +96,16 @@ export default function HabitGridRow({
         const isCollapsed = collapsedWeeks.has(yearWeek);
 
         if (isCollapsed) {
-          // Count completions for this week
-          const completed = weekDays.filter((day) => {
+          // Count only scheduled days — an off day is not a missed day (app-pizc)
+          const scheduledDays = weekDays.filter((day) =>
+            isScheduledOn(habit, `${year}-${paddedMonth}-${String(day).padStart(2, "0")}`)
+          );
+          const completed = scheduledDays.filter((day) => {
             const paddedDay = String(day).padStart(2, "0");
             const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
             return isCompleted(habit.id, dateStr, habit.daily_target);
           }).length;
-          const total = weekDays.length;
+          const total = scheduledDays.length;
           const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
           const badgeColor =
@@ -128,6 +132,7 @@ export default function HabitGridRow({
           const paddedDay = String(day).padStart(2, "0");
           const dateStr = `${year}-${paddedMonth}-${paddedDay}`;
           const isFuture = dateStr > todayDate;
+          const offSchedule = !isScheduledOn(habit, dateStr);
           const completed = isCompleted(habit.id, dateStr, habit.daily_target);
 
           return (
@@ -137,6 +142,7 @@ export default function HabitGridRow({
               date={dateStr}
               isCompleted={completed}
               isFuture={isFuture}
+              isOffSchedule={offSchedule}
               isNegative={habit.tracking_type === "negative"}
               onToggle={onToggle}
             />

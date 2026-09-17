@@ -1,4 +1,5 @@
 import type { Habit, MonthlyStats } from "@/types/habit";
+import { isScheduledOn } from "@/app/(admin)/habits/actions/habits/logic";
 import { CATEGORY_ORDER, CATEGORY_LABELS } from "./HabitGrid";
 import TodayHabitItem from "./TodayHabitItem";
 
@@ -83,7 +84,12 @@ export default function TodayHabitList({
   selectedDate,
   groupBy = "category",
 }: TodayHabitListProps) {
-  const groups = buildGroups(habits, groupBy);
+  // Weekly habits only appear on their scheduled days — and for the day being
+  // viewed, not "today", since the page has a date navigator (app-pizc).
+  const groups = buildGroups(
+    habits.filter((h) => isScheduledOn(h, selectedDate)),
+    groupBy
+  );
 
   if (groups.length === 0) {
     return (

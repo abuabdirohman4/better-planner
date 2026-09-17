@@ -5,6 +5,7 @@ import { useHabits } from "@/app/(admin)/habits/hooks/useHabits";
 import { useHabitCompletions } from "@/app/(admin)/habits/hooks/useHabitCompletions";
 import { useMonthlyStats } from "@/app/(admin)/habits/hooks/useMonthlyStats";
 import TodayHabitList, { type HabitGroupBy } from "@/components/habits/TodayHabitList";
+import { isScheduledOn } from "@/app/(admin)/habits/actions/habits/logic";
 import HabitFormModal from "@/components/habits/HabitFormModal";
 
 const GROUP_BY_KEY = "habit-today-group-by";
@@ -53,13 +54,14 @@ export default function TodayHabitsPage() {
     isLoading: completionsLoading,
   } = useHabitCompletions(selYear, selMonth);
 
-  const monthlyStats = useMonthlyStats(habits, completions, selYear, selMonth);
+  const monthlyStats = useMonthlyStats(habits, completions);
 
   const isLoading = habitsLoading || completionsLoading;
 
-  // Stats for the header
-  const todayCompleted = habits.filter((h) => isCompleted(h.id, selectedDate, h.daily_target)).length;
-  const totalHabits = habits.length;
+  // Stats for the header — only habits scheduled on the viewed day (app-pizc)
+  const scheduledHabits = habits.filter((h) => isScheduledOn(h, selectedDate));
+  const todayCompleted = scheduledHabits.filter((h) => isCompleted(h.id, selectedDate, h.daily_target)).length;
+  const totalHabits = scheduledHabits.length;
   const completionPct =
     totalHabits > 0 ? Math.round((todayCompleted / totalHabits) * 100) : 0;
 
