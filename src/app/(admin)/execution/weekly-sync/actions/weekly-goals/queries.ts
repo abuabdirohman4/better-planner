@@ -80,20 +80,22 @@ export async function queryExistingGoalItems(
 
 export async function deleteGoalItems(
   supabase: SupabaseClient,
-  weeklyGoalId: string
+  weeklyGoalId: string,
+  keepItemIds: string[] = []
 ): Promise<void> {
-  const { error } = await supabase
-    .from('weekly_goal_items')
-    .delete()
-    .eq('weekly_goal_id', weeklyGoalId);
+  let q = supabase.from('weekly_goal_items').delete().eq('weekly_goal_id', weeklyGoalId);
+  if (keepItemIds.length > 0) q = q.not('item_id', 'in', `(${keepItemIds.join(',')})`);
+  const { error } = await q;
   if (error) throw error;
 }
 
-export async function insertGoalItems(
+export async function upsertGoalItems(
   supabase: SupabaseClient,
   items: { weekly_goal_id: string; item_id: string; status: string }[]
 ): Promise<void> {
   if (items.length === 0) return;
-  const { error } = await supabase.from('weekly_goal_items').insert(items);
-  if (error && error.code !== '23505') throw error;
+  const { error } = await supabase
+    .from('weekly_goal_items')
+    .upsert(items, { onConflict: 'weekly_goal_id,item_id', ignoreDuplicates: true });
+  if (error) throw error;
 }

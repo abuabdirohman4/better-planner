@@ -9,7 +9,7 @@ import {
   insertWeeklyGoal,
   queryExistingGoalItems,
   deleteGoalItems,
-  insertGoalItems,
+  upsertGoalItems,
 } from './queries';
 import { buildExistingStatusMap, deduplicateItems, buildGoalItemsToInsert } from './logic';
 
@@ -70,11 +70,11 @@ export async function setWeeklyGoalItems(data: {
     const existingItems = await queryExistingGoalItems(supabase, weeklyGoal.id);
     const statusMap = buildExistingStatusMap(existingItems);
 
-    await deleteGoalItems(supabase, weeklyGoal.id);
-
     const uniqueItems = deduplicateItems(data.items);
     const goalItemsData = buildGoalItemsToInsert(uniqueItems, weeklyGoal.id, statusMap);
-    await insertGoalItems(supabase, goalItemsData);
+    // Upsert dulu, baru hapus sisa — kalau upsert gagal, item lama tetap utuh.
+    await upsertGoalItems(supabase, goalItemsData);
+    await deleteGoalItems(supabase, weeklyGoal.id, uniqueItems.map((i) => i.id));
 
     revalidatePath('/execution/weekly-sync');
     return { success: true, message: 'Weekly goal items set successfully' };

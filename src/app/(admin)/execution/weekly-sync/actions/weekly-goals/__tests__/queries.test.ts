@@ -8,7 +8,7 @@ import {
   insertWeeklyGoal,
   queryExistingGoalItems,
   deleteGoalItems,
-  insertGoalItems,
+  upsertGoalItems,
 } from '../queries';
 
 describe('deleteWeeklyGoal', () => {
@@ -112,12 +112,21 @@ describe('queryExistingGoalItems', () => {
 });
 
 describe('deleteGoalItems', () => {
-  it('calls delete on weekly_goal_items', async () => {
+  it('deletes all items of the goal when keep list is empty', async () => {
     const b = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabase({ fromBuilder: b });
     await deleteGoalItems(supabase, 'goal-1');
     expect(supabase.from).toHaveBeenCalledWith('weekly_goal_items');
     expect(b.delete).toHaveBeenCalled();
+    expect(b.eq).toHaveBeenCalledWith('weekly_goal_id', 'goal-1');
+    expect(b.not).not.toHaveBeenCalled();
+  });
+
+  it('keeps listed items and deletes the rest', async () => {
+    const b = makeQueryBuilder({ data: null, error: null });
+    const supabase = makeSupabase({ fromBuilder: b });
+    await deleteGoalItems(supabase, 'goal-1', ['task-1', 'task-2']);
+    expect(b.not).toHaveBeenCalledWith('item_id', 'in', '(task-1,task-2)');
   });
 
   it('throws on error', async () => {
@@ -129,36 +138,30 @@ describe('deleteGoalItems', () => {
   });
 });
 
-describe('insertGoalItems', () => {
+describe('upsertGoalItems', () => {
   it('does nothing for empty items', async () => {
     const supabase = makeSupabase();
-    await insertGoalItems(supabase, []);
+    await upsertGoalItems(supabase, []);
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it('inserts items successfully', async () => {
+  it('upserts on (weekly_goal_id,item_id) and leaves existing rows untouched', async () => {
     const b = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabase({ fromBuilder: b });
-    await insertGoalItems(supabase, [
-      { weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' },
-    ]);
+    const rows = [{ weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' }];
+    await upsertGoalItems(supabase, rows);
     expect(supabase.from).toHaveBeenCalledWith('weekly_goal_items');
-    expect(b.insert).toHaveBeenCalled();
+    expect(b.upsert).toHaveBeenCalledWith(rows, {
+      onConflict: 'weekly_goal_id,item_id',
+      ignoreDuplicates: true,
+    });
   });
 
-  it('silently ignores 23505 unique constraint violation', async () => {
-    const b = makeQueryBuilder({ data: null, error: { code: '23505', message: 'duplicate' } });
-    const supabase = makeSupabase({ fromBuilder: b });
-    await expect(
-      insertGoalItems(supabase, [{ weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' }])
-    ).resolves.toBeUndefined();
-  });
-
-  it('throws on non-23505 error', async () => {
+  it('throws on error', async () => {
     const b = makeQueryBuilder({ data: null, error: { code: '42P01', message: 'table missing' } });
     const supabase = makeSupabase({ fromBuilder: b });
     await expect(
-      insertGoalItems(supabase, [{ weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' }])
+      upsertGoalItems(supabase, [{ weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' }])
     ).rejects.toMatchObject({ message: 'table missing' });
   });
 });

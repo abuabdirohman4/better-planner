@@ -46,8 +46,8 @@ describe('setWeeklyGoalItems', () => {
     // First call: queryExistingWeeklyGoal → PGRST116 (not found)
     // Second call: insertWeeklyGoal → { id: 'new-goal' }
     // Third call: queryExistingGoalItems → []
-    // Fourth call: deleteGoalItems → ok
-    // insertGoalItems not called (empty items)
+    // upsertGoalItems not called (empty items)
+    // Fourth call: deleteGoalItems → ok (hapus semua, keep list kosong)
     const calls: any[] = [];
     let callCount = 0;
     const supabase = {
@@ -81,6 +81,76 @@ describe('setWeeklyGoalItems', () => {
       items: [],
     });
     expect(result).toEqual({ success: true, message: 'Weekly goal items set successfully' });
+  });
+
+  it('upserts new items before deleting leftovers', async () => {
+    const builders: any[] = [];
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+      from: vi.fn().mockImplementation(() => {
+        const n = builders.length;
+        const b =
+          n === 0 || n === 1
+            ? makeQueryBuilder({ data: { id: 'goal-1' }, error: null }) // find + update quarter
+            : n === 2
+              ? makeQueryBuilder({ data: [{ item_id: 'task-old', status: 'DONE' }], error: null })
+              : makeQueryBuilder({ data: null, error: null });
+        builders.push(b);
+        return b;
+      }),
+    } as any;
+    mockCreateClient.mockResolvedValue(supabase);
+    await setWeeklyGoalItems({
+      year: 2026,
+      quarter: 1,
+      weekNumber: 5,
+      goalSlot: 1,
+      items: [
+        { id: 'task-1', type: 'TASK' },
+        { id: 'task-1', type: 'TASK' },
+        { id: 'task-2', type: 'TASK' },
+      ],
+    });
+    expect(builders[3].upsert).toHaveBeenCalledWith(
+      [
+        { weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'TODO' },
+        { weekly_goal_id: 'goal-1', item_id: 'task-2', status: 'TODO' },
+      ],
+      { onConflict: 'weekly_goal_id,item_id', ignoreDuplicates: true }
+    );
+    expect(builders[4].delete).toHaveBeenCalled();
+    expect(builders[4].not).toHaveBeenCalledWith('item_id', 'in', '(task-1,task-2)');
+  });
+
+  it('does not delete anything when upsert fails', async () => {
+    const builders: any[] = [];
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+      from: vi.fn().mockImplementation(() => {
+        const n = builders.length;
+        const b =
+          n === 0 || n === 1
+            ? makeQueryBuilder({ data: { id: 'goal-1' }, error: null })
+            : n === 2
+              ? makeQueryBuilder({ data: [], error: null })
+              : makeQueryBuilder({ data: null, error: { code: '23503', message: 'fk violation' } });
+        builders.push(b);
+        return b;
+      }),
+    } as any;
+    mockCreateClient.mockResolvedValue(supabase);
+    await expect(
+      setWeeklyGoalItems({
+        year: 2026,
+        quarter: 1,
+        weekNumber: 5,
+        goalSlot: 1,
+        items: [{ id: 'task-1', type: 'TASK' }],
+      })
+    ).rejects.toThrow('Failed to set weekly goal items');
+    expect(builders[3].upsert).toHaveBeenCalled();
+    expect(supabase.from).toHaveBeenCalledTimes(4);
+    for (const b of builders) expect(b.delete).not.toHaveBeenCalled();
   });
 
   it('throws wrapped error on failure', async () => {
