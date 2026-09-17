@@ -4,7 +4,8 @@ import type { Habit, HabitCompletion } from '@/types/habit';
 
 const habit = (over: Partial<Habit> = {}): Habit => ({
   id: 'h1', user_id: 'u', name: 'Air', description: null, category: 'kesehatan',
-  frequency: 'daily', monthly_goal: 30, daily_target: 1, target_days: null, tracking_type: 'positive',
+  frequency: 'daily', monthly_goal: 30, daily_target: 1, target_days: null,
+  show_in_daily_sync: false, tracking_type: 'positive',
   target_time: null, is_archived: false, sort_order: 0, created_at: '', updated_at: '', ...over,
 });
 const comp = (date: string, n = 1): HabitCompletion[] =>

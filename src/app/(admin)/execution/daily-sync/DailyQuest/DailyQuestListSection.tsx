@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import TaskItemCard from './components/TaskItemCard';
 import SortableTaskItemCard from './components/SortableTaskItemCard';
 import { TaskColumnProps } from './types';
@@ -24,6 +25,8 @@ import { toast } from 'sonner';
 import { updateDailyPlanItemsDisplayOrder } from './actions';
 import { useSWRConfig } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
+import HabitQuestRow from './components/HabitQuestRow';
+import { useDailySyncHabits } from './hooks/useDailySyncHabits';
 
 const DailyQuestListSection = ({
   title,
@@ -45,6 +48,33 @@ const DailyQuestListSection = ({
   const { showCompletedDailyQuest, toggleShowCompletedDailyQuest } = useUIPreferencesStore();
   const [isHovering, setIsHovering] = useState(false);
   const { mutate } = useSWRConfig();
+
+  // Habits flagged show_in_daily_sync ride along in this list (app-cr6i). They live in
+  // habit_completions, not daily_plan_items, so they stay outside the sortable context.
+  const {
+    date: habitDate,
+    habits: syncHabits,
+    isCompleted: isHabitCompleted,
+    toggleCompletion: toggleHabit,
+    streakOf,
+    pendingOtherCount,
+    scheduledOtherCount,
+  } = useDailySyncHabits(selectedDate ?? '');
+
+  const todayWIB = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+  const isFutureDate = habitDate > todayWIB;
+
+  const visibleHabits = syncHabits.filter(
+    (h) => showCompletedDailyQuest || !isHabitCompleted(h.id, habitDate, h.daily_target ?? 1)
+  );
+
+  const handleToggleHabit = async (habitId: string) => {
+    try {
+      await toggleHabit(habitId, habitDate);
+    } catch {
+      toast.error('Gagal memperbarui kebiasaan');
+    }
+  };
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -197,7 +227,34 @@ const DailyQuestListSection = ({
                 onConvertToQuest={onConvertToQuest}
               />
             ))}
-            {sortedItems.length === 0 ? (
+            {visibleHabits.map((habit) => (
+              <HabitQuestRow
+                key={habit.id}
+                habit={habit}
+                isCompleted={isHabitCompleted(habit.id, habitDate, habit.daily_target ?? 1)}
+                currentStreak={streakOf(habit.id)}
+                onToggle={() => handleToggleHabit(habit.id)}
+                disabled={isFutureDate}
+              />
+            ))}
+
+            {scheduledOtherCount > 0 ? (
+              <Link
+                href="/habits/today"
+                data-testid="daily-quest-habit-reminder"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                <span aria-hidden="true">🔁</span>
+                <span className="flex-1">
+                  {pendingOtherCount > 0
+                    ? `${pendingOtherCount} kebiasaan lain belum selesai hari ini`
+                    : `${scheduledOtherCount} kebiasaan lain sudah selesai hari ini`}
+                </span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
+
+            {sortedItems.length === 0 && visibleHabits.length === 0 ? (
               <div className="text-center text-gray-500 dark:text-gray-400">
                 <p className="mb-6 py-8">
                   {showCompletedDailyQuest

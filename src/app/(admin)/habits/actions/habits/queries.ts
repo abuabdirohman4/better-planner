@@ -12,6 +12,7 @@ export interface RawHabitRow {
   monthly_goal: number;
   daily_target: number;
   target_days: number[] | null;
+  show_in_daily_sync: boolean;
   tracking_type: string;
   target_time: string | null;
   is_archived: boolean;
@@ -56,6 +57,7 @@ export async function insertHabit(
       monthly_goal: data.monthly_goal,
       daily_target: data.daily_target ?? 1,
       target_days: normalizeTargetDays(data),
+      show_in_daily_sync: data.show_in_daily_sync ?? false,
       tracking_type: data.tracking_type,
       target_time: data.target_time ?? null,
     })
@@ -83,6 +85,7 @@ export async function updateHabitById(
   if (data.monthly_goal !== undefined) updates.monthly_goal = data.monthly_goal;
   if (data.daily_target !== undefined) updates.daily_target = data.daily_target;
   if ('target_days' in data || data.frequency !== undefined) updates.target_days = normalizeTargetDays(data);
+  if (data.show_in_daily_sync !== undefined) updates.show_in_daily_sync = data.show_in_daily_sync;
   if (data.tracking_type !== undefined) updates.tracking_type = data.tracking_type;
   if ('target_time' in data) updates.target_time = data.target_time ?? null;
 

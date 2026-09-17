@@ -13,6 +13,7 @@ export function toHabit(row: RawHabitRow): Habit {
     monthly_goal: row.monthly_goal,
     daily_target: row.daily_target ?? 1,
     target_days: row.target_days ?? null,
+    show_in_daily_sync: row.show_in_daily_sync ?? false,
     tracking_type: row.tracking_type as HabitTrackingType,
     target_time: row.target_time,
     is_archived: row.is_archived,
@@ -86,6 +87,10 @@ export function parseHabitFormInput(raw: unknown): HabitFormInput {
 
   if (data.target_days !== undefined) {
     result.target_days = parseTargetDays(data.target_days);
+  }
+
+  if (data.show_in_daily_sync !== undefined) {
+    result.show_in_daily_sync = Boolean(data.show_in_daily_sync);
   }
 
   if (result.frequency === 'weekly' && (result.target_days ?? []).length === 0) {

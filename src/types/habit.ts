@@ -20,6 +20,7 @@ export interface Habit {
   monthly_goal: number;
   daily_target: number; // 1 = binary, >1 = N completions/day
   target_days: number[] | null; // 0=Sun..6=Sat scheduled days; null/empty = every day
+  show_in_daily_sync: boolean; // tickable row in Daily Sync's daily quest list (app-cr6i)
   tracking_type: HabitTrackingType;
   target_time: string | null; // "HH:MM" or null
   is_archived: boolean;
@@ -45,6 +46,7 @@ export interface HabitFormInput {
   monthly_goal: number;
   daily_target?: number; // default 1
   target_days?: number[] | null;
+  show_in_daily_sync?: boolean;
   tracking_type: HabitTrackingType;
   target_time?: string; // "HH:MM" or undefined
 }

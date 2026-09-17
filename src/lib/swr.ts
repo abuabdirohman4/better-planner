@@ -219,6 +219,19 @@ export const habitKeys = {
   todayCompletions: (date: string) => [...habitKeys.all, 'today-completions', date] as const,
 };
 
+/** Any SWR key that reads habits or habit_completions (list, month window, streak history, stats). */
+export const isHabitsKey = (key: unknown) => Array.isArray(key) && key[0] === 'habits';
+
+/**
+ * ONE signal for "habit data changed" — call from EVERY path that toggles/adjusts a completion
+ * or edits a habit. Daily Sync and /habits/today read the same habitKeys, so this is what keeps
+ * the two views in step in both directions (app-cr6i), including the streak-history key that
+ * a single month's mutate would miss.
+ */
+export function notifyHabitsChanged(): Promise<unknown> {
+  return globalMutate(isHabitsKey);
+}
+
 /**
  * SWR key generator for 12 week sync
  */

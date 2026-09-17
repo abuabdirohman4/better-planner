@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import useSWR from "swr";
-import { habitKeys } from "@/lib/swr";
+import { habitKeys, notifyHabitsChanged } from "@/lib/swr";
 import {
   getCompletionsForMonth,
   toggleCompletion as toggleCompletionAction,
@@ -66,8 +66,9 @@ export function useHabitCompletions(year: number, month: number) {
 
     try {
       await toggleCompletionAction(habitId, date);
-      // Revalidate from server after successful mutation
-      await mutate();
+      // Revalidate every habit reader, not just this month's key — Daily Sync and
+      // /habits/today must stay in step in both directions (app-cr6i).
+      await notifyHabitsChanged();
     } catch (err) {
       console.error("Failed to toggle completion:", err);
       // Revalidate to restore correct state
@@ -92,7 +93,7 @@ export function useHabitCompletions(year: number, month: number) {
 
     try {
       await adjustCompletionAction(habitId, date, delta);
-      await mutate();
+      await notifyHabitsChanged();
     } catch (err) {
       console.error("Failed to adjust completion:", err);
       await mutate();

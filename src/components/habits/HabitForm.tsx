@@ -47,6 +47,7 @@ const DEFAULT_VALUES: HabitFormInput = {
   monthly_goal: 20,
   daily_target: 1,
   target_days: null,
+  show_in_daily_sync: false,
   tracking_type: "positive",
   description: "",
   target_time: undefined,
@@ -340,6 +341,25 @@ export default function HabitForm({
             {errors.target_time && <p className={errorClass}>{errors.target_time}</p>}
           </div>
         )}
+      </div>
+
+      {/* Show in Daily Sync (app-cr6i) */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={values.show_in_daily_sync ?? false}
+            onChange={(e) => handleChange("show_in_daily_sync", e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
+            disabled={isSubmitting}
+            data-testid="habit-show-in-daily-sync"
+          />
+          <span className={labelClass.replace("mb-1", "mb-0")}>Tampilkan di Daily Sync</span>
+        </label>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Muncul sebagai baris di Daily Quest dan bisa dicentang dari sana. Habit lain cukup
+          diwakili satu baris pengingat.
+        </p>
       </div>
 
       {/* Description */}
