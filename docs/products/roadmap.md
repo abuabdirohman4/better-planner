@@ -85,7 +85,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | **F-04** Daily Sync (Pomodoro, Brain Dump, log) | ✅ | `/execution/daily-sync`, `/execution/brain-dump` | [daily-plan-3layer](../plans/2026-03-19-daily-plan-schedule-3layer-refactor.md), [brain-dump](../plans/2026-04-27-brain-dump-page-implementation-plan.md), [bp-byp](../plans/2026-07-27-bp-byp-pomodoro-timer-bugs.md) |
 | **F-05** Habit Tracker | ✅ | `/habits/today`, `/habits/monthly` | Day nav + `daily_target` multi-completion — [plan](../plans/2026-04-13-habit-nav-multicompletion-design.md) |
 | **F-06** Review & Laporan | 🔄 | `/planning/12-week-sync` (+ `history/`), `/settings/notifications`, `/api/cron/daily-pipeline` | Review kuartalan ✅ (`bp-a63`); email+AI kode ✅ (`bp-2we`) tapi **belum aktif** — perlu key (lihat Catatan) |
-| **F-07** Pengaturan | ✅ | `/settings/profile`, `/settings/notifications` | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md) |
+| **F-07** Pengaturan | 🔄 | `/settings/notifications` (`/settings/profile` **belum ada halaman** — hanya actions sound settings) | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md). Halaman profile = kartu baru 17 Sep |
 | **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../plans/2026-03-27-best-week-design.md) |
 
 **Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) — 6 open per 17 Sep 2026.
@@ -120,6 +120,7 @@ Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan 
 
 ## 📜 Changelog
 
+- **2026-09-17** — Branch `fix/beplan-05h-klny`: link dropdown → `/settings/notifications` (`app-05h`), simpan slot Weekly Sync upsert-dulu (`app-klny`). Koreksi: `/settings/profile` ternyata tidak punya `page.tsx` — F-07 diturunkan ke 🔄, kartu halaman profile dibuat.
 - **2026-09-17** — Gelombang 2 (`7b632ab`, `6bbc9c8`): 3×3 tuntas 8 dari 9 — sisa `bp-3lo` (M2.1 monitoring, butuh keputusan cakupan). Di luar rencana: `app-v8x`, `app-tb99243` (fitur baru), `app-05h`, `app-klny` (temuan sampingan). Epic `app-xb7q` tinggal `bp-3lo`.
 - **2026-09-17** — Sapu bersih 6 kartu 3×3 (commit `466e524`, `5b9c318`, `f59bfce`, `4db191c`). Yang perlu dicek Abu di browser/device: pesan error signin, spinner sign out, ikon PWA (uninstall→install ulang), posisi prompt install mobile, logo sidebar saat toggle. Keputusan produk yang sengaja tidak diubah: `/` tetap landing publik; cap 25 menit sesi timer dipertahankan (tanpa cap, sesi yang app-nya ditutup tercatat ratusan menit).
 - **2026-09-16** — Audit 6 kartu `migrated`: 5 sudah jadi, `bp-vjx` tidak reproduce → 18 open jadi 12. Label `beplan` ditambahkan ke 5 kartu gabungan yang cuma punya `[beplan]` di judul (bikin `bd list --label` kurang hitung).
