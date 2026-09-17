@@ -3,6 +3,8 @@
  * Provides consistent error handling patterns across the application
  */
 
+import { isRedirectError as isNextRedirectError } from 'next/dist/client/components/redirect-error';
+
 export type ErrorContext = 
   | 'menyimpan data'
   | 'memuat data'
@@ -55,7 +57,7 @@ export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo
   };
 
   // Check if this is a Next.js redirect error (not a real error)
-  if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+  if (isRedirectError(error)) {
     // Don't log redirect errors as they are expected behavior
     errorInfo.message = 'Redirect in progress';
     return errorInfo;
@@ -121,18 +123,17 @@ export const handleNetworkError = (error: unknown): string => {
  */
 export const handleAuthError = (error: unknown): string => {
   const message = getErrorMessage(error);
-  if (message.includes('auth') || message.includes('login')) {
-    return 'Sesi Anda telah berakhir. Silakan login kembali.';
-  }
+  if (message.includes('Invalid login credentials')) return 'Email atau password salah.';
+  if (message.includes('Email not confirmed')) return 'Email belum dikonfirmasi. Cek kotak masuk Anda.';
+  if (message.includes('already registered')) return 'Email sudah terdaftar. Silakan sign in.';
+  if (message.includes('rate limit') || message.includes('Too many')) return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
   return message;
 };
 
 /**
  * Check if error is a Next.js redirect error (expected behavior)
  */
-export const isRedirectError = (error: unknown): boolean => {
-  return error instanceof Error && error.message === 'NEXT_REDIRECT';
-};
+export const isRedirectError = (error: unknown): boolean => isNextRedirectError(error);
 
 /**
  * Handle server action errors with proper redirect error handling

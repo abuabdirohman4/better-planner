@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { handleApiError, handleAuthError, isRedirectError } from '@/lib/errorUtils';
+import { handleApiError, handleAuthError } from '@/lib/errorUtils';
 import { createClient } from "@/lib/supabase/server";
 import { isNonEmptyString, isValidEmail } from '@/lib/typeGuards';
+
+// redirect() bekerja dengan melempar error NEXT_REDIRECT — jangan panggil di dalam try/catch.
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -16,36 +18,27 @@ export async function login(formData: FormData) {
 
   // Validation
   if (!isNonEmptyString(email) || !isValidEmail(email)) {
-    return redirect("/signin?message=Email tidak valid");
+    redirect("/signin?message=Email tidak valid");
   }
 
   if (!isNonEmptyString(password)) {
-    return redirect("/signin?message=Password tidak boleh kosong");
+    redirect("/signin?message=Password tidak boleh kosong");
   }
 
-  const data = { email, password };
-
+  let errorMessage: string | undefined;
   try {
-    const { error } = await supabase.auth.signInWithPassword(data);
-
-    if (error) {
-      const errorMessage = handleAuthError(error);
-      return redirect(`/signin?message=${encodeURIComponent(errorMessage)}`);
-    }
-
-    revalidatePath("/", "layout");
-    redirect("/");
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) errorMessage = handleAuthError(error);
   } catch (error) {
-    // Check if this is a Next.js redirect error (expected behavior)
-    if (isRedirectError(error)) {
-      // Re-throw redirect errors as they are expected
-      throw error;
-    }
-    
-    // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
-    return redirect(`/signin?message=${encodeURIComponent(errorInfo.message || 'Gagal login')}`);
+    errorMessage = handleApiError(error, 'autentikasi').message || 'Gagal login';
   }
+
+  if (errorMessage) {
+    redirect(`/signin?message=${encodeURIComponent(errorMessage)}`);
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {
@@ -58,81 +51,65 @@ export async function signup(formData: FormData) {
 
   // Validation
   if (!isNonEmptyString(email) || !isValidEmail(email)) {
-    return redirect("/signup?message=Email tidak valid");
+    redirect("/signup?message=Email tidak valid");
   }
 
   if (!isNonEmptyString(password)) {
-    return redirect("/signup?message=Password tidak boleh kosong");
+    redirect("/signup?message=Password tidak boleh kosong");
   }
 
   if (!isNonEmptyString(name)) {
-    return redirect("/signup?message=Nama tidak boleh kosong");
+    redirect("/signup?message=Nama tidak boleh kosong");
   }
 
-  const data = {
-    email,
-    password,
-    name,
-  };
-  
+  let errorMessage: string | undefined;
+  let needsConfirmation = false;
   try {
     const result = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
+      email,
+      password,
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
         data: {
-          full_name: data.name,
-          name: data.name,
+          full_name: name,
+          name,
         },
       },
     });
 
     if (result.error) {
-      return redirect(`/signup?message=${encodeURIComponent(result.error.message)}&email=${encodeURIComponent(data.email)}`);
+      errorMessage = handleAuthError(result.error);
+    } else {
+      // Force sign out to ensure user is not automatically signed in
+      await supabase.auth.signOut();
+      needsConfirmation = !!result.data.user && !result.data.user.email_confirmed_at;
     }
-
-    // Force sign out to ensure user is not automatically signed in
-    await supabase.auth.signOut();
-
-    // Check if user needs email confirmation
-    if (result.data.user && !result.data.user.email_confirmed_at) {
-      // User needs to confirm email
-      return redirect(`/signin?message=${encodeURIComponent("Please check your email to confirm your account before signing in.")}&email=${encodeURIComponent(data.email)}`);
-    }
-
-    // If email is already confirmed (auto-confirm enabled), redirect to signin with success message
-    return redirect(`/signin?message=${encodeURIComponent("Account created successfully! Please sign in with your credentials.")}&email=${encodeURIComponent(data.email)}`);
   } catch (error) {
-    // Check if this is a Next.js redirect error (expected behavior)
-    if (isRedirectError(error)) {
-      // Re-throw redirect errors as they are expected
-      throw error;
-    }
-    
-    // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
-    return redirect(`/signup?message=${encodeURIComponent(errorInfo.message || 'Gagal membuat akun')}&email=${encodeURIComponent(data.email)}`);
+    errorMessage = handleApiError(error, 'autentikasi').message || 'Gagal membuat akun';
   }
+
+  const emailParam = `&email=${encodeURIComponent(email)}`;
+
+  if (errorMessage) {
+    redirect(`/signup?message=${encodeURIComponent(errorMessage)}${emailParam}`);
+  }
+
+  if (needsConfirmation) {
+    redirect(`/signin?message=${encodeURIComponent("Please check your email to confirm your account before signing in.")}${emailParam}`);
+  }
+
+  // Email already confirmed (auto-confirm enabled)
+  redirect(`/signin?message=${encodeURIComponent("Account created successfully! Please sign in with your credentials.")}${emailParam}`);
 }
 
 export async function signOut() {
   const supabase = await createClient();
-  
-  try {
-    await supabase.auth.signOut();
-    redirect("/signin");
-  } catch (error) {
-    // Check if this is a Next.js redirect error (expected behavior)
-    if (isRedirectError(error)) {
-      // Re-throw redirect errors as they are expected
-      throw error;
-    }
-    
-    // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
-    console.error('Sign out error:', errorInfo);
-    // Even if there's an error, still redirect to signin
-    redirect("/signin");
+
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    // Tetap lempar ke signin — perilaku lama; middleware yang jadi penentu sesi
+    console.error('Sign out error:', handleApiError(error, 'autentikasi'));
   }
-} 
+
+  redirect("/signin");
+}

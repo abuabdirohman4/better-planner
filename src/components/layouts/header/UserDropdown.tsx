@@ -1,11 +1,12 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useTransition } from "react";
 
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
+import Spinner from "../../ui/spinner/Spinner";
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 
 // --- Avatar Utilities ---
@@ -30,6 +31,9 @@ function getAvatarColor(name: string): string {
 
 // Dropdown Menu Items Component
 function DropdownMenuItems({ onClose, fullName, email }: { onClose: () => void; fullName: string; email: string }) {
+  const [isSigningOut, startSignOut] = useTransition();
+  const handleSignOut = () => startSignOut(async () => { await signOut(); });
+
   return (
     <>
       <div>
@@ -141,11 +145,14 @@ function DropdownMenuItems({ onClose, fullName, email }: { onClose: () => void; 
           </DropdownItem>
         </li>
       </ul>
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 w-full"
-        >
+      <DropdownItem
+        onClick={handleSignOut}
+        disabled={isSigningOut}
+        className={`flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 w-full disabled:cursor-not-allowed ${isSigningOut ? "bg-gray-100 dark:bg-white/5" : ""}`}
+      >
+        {isSigningOut ? (
+          <Spinner size={24} colorClass="border-gray-500 dark:border-gray-400" />
+        ) : (
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
             width="24"
@@ -161,9 +168,9 @@ function DropdownMenuItems({ onClose, fullName, email }: { onClose: () => void; 
               fill=""
             />
           </svg>
-          Sign out
-        </button>
-      </form>
+        )}
+        {isSigningOut ? "Signing out..." : "Sign out"}
+      </DropdownItem>
     </>
   );
 }
