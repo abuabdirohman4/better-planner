@@ -7,6 +7,7 @@ import ConfirmModal from "@/components/ui/modal/ConfirmModal";
 import { addDailyQuest } from "@/app/(admin)/execution/daily-sync/DailyQuest/actions/dailyQuestActions";
 import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
+import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
 interface DailyQuestListProps {
   quests: DailyQuest[];
@@ -111,7 +112,7 @@ const DailyQuestList: React.FC<DailyQuestListProps> = ({
     }
   };
 
-  if (isLoading) return <div className="py-10 text-center text-gray-400">Loading...</div>;
+  if (isLoading) return <TaskItemSkeleton count={3} />;
   if (error) return <div className="py-10 text-center text-red-400">Error loading quests</div>;
 
   return (

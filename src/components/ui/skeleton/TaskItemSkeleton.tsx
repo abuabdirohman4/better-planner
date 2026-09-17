@@ -4,12 +4,24 @@ import Skeleton from "./Skeleton";
 interface TaskItemSkeletonProps {
   orderNumber?: number;
   showButton?: boolean;
+  count?: number;
 }
 
 const TaskItemSkeleton: React.FC<TaskItemSkeletonProps> = ({ 
   orderNumber, 
-  showButton = true 
+  showButton = true,
+  count = 1
 }) => {
+  if (count > 1) {
+    return (
+      <>
+        {Array.from({ length: count }).map((_, idx) => (
+          <TaskItemSkeleton key={`task-skeleton-${idx}`} showButton={showButton} />
+        ))}
+      </>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-lg mb-3 pl-2 pr-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700">
       <div className='flex gap-2 w-full items-center mr-2'>

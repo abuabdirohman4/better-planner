@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
-import Spinner from '@/components/ui/spinner/Spinner';
 import { ConfirmModal } from '@/components/ui/modal';
 import { Clock, Swords, ListChecks, Trash2 } from 'lucide-react';
 import { ScheduleManagementModal } from './ScheduleManagementModal';

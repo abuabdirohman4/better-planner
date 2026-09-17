@@ -5,6 +5,7 @@ import type { SideQuest } from '@/types/side-quest';
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
 import ConfirmModal from "@/components/ui/modal/ConfirmModal";
+import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
 interface SideQuestListProps {
   quests: SideQuest[];
@@ -138,11 +139,7 @@ const SideQuestList: React.FC<SideQuestListProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <TaskItemSkeleton count={3} />;
   }
 
   if (error) {

@@ -6,6 +6,7 @@ import { ProjectForm, ProjectList, WorkQuestModal } from "./components";
 import type { WorkQuestProject, WorkQuestProjectFormData } from "@/types/work-quest";
 import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
+import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
 // Disable SSR untuk page ini karena menggunakan Zustand store
 export const dynamic = 'force-dynamic';
@@ -135,8 +136,8 @@ export default function WorkQuestsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="mx-auto max-w-2xl">
+        <TaskItemSkeleton count={3} />
       </div>
     );
   }

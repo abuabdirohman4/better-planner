@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import Spinner from '@/components/ui/spinner/Spinner';
 import { useMilestones } from './hooks/useMainQuestsSWR';
 import MilestoneBar from './Milestone/components/MilestoneBar';
 import Task from './Task';

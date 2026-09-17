@@ -7,6 +7,7 @@ import type { SideQuest } from '@/types/side-quest';
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 import Checkbox from "@/components/form/input/Checkbox";
 import Button from "@/components/ui/button/Button";
+import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
 interface SideQuestModalProps {
   isOpen: boolean;
@@ -190,9 +191,7 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
         {/* Content */}
         <div className="max-h-96 overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
+            <TaskItemSkeleton count={3} showButton={false} />
           ) : error ? (
             <div className="text-center py-8">
               <p className="text-red-500">Error: {error}</p>
