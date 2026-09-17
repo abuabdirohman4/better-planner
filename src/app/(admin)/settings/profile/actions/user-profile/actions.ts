@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { handleApiError } from '@/lib/errorUtils';
+import { isNonEmptyString } from '@/lib/typeGuards';
 import type { UserProfile } from '@/types/user-profile';
 import type { SoundSettings } from '@/types/sound';
 import {
@@ -71,4 +72,20 @@ export async function resetSoundSettings(): Promise<void> {
 
   revalidatePath('/dashboard');
   revalidatePath('/execution');
+}
+
+export async function updateDisplayName(name: string): Promise<{ error: string | null }> {
+  if (!isNonEmptyString(name)) return { error: 'Nama tidak boleh kosong' };
+  const trimmed = name.trim();
+  if (trimmed.length > 80) return { error: 'Nama maksimal 80 karakter' };
+  try {
+    const supabase = await createClient();
+    // Signup menulis full_name + name, jadi keduanya diperbarui agar header konsisten.
+    const { error } = await supabase.auth.updateUser({ data: { full_name: trimmed, name: trimmed } });
+    if (error) throw error;
+  } catch (error) {
+    return { error: handleApiError(error, 'menyimpan data').message || 'Gagal menyimpan nama' };
+  }
+  revalidatePath('/', 'layout');
+  return { error: null };
 }

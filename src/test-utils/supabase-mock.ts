@@ -40,6 +40,7 @@ export function makeSupabase(opts: {
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user } }),
+      updateUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
     },
     from: vi.fn().mockReturnValue(opts.fromBuilder ?? makeQueryBuilder()),
     rpc: vi.fn().mockResolvedValue({ data: null, error: null }),

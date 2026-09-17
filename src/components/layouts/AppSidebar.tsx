@@ -134,6 +134,11 @@ const settingsNav: NavItem[] = [
   //   path: "/profile",
   // },
   {
+    icon: <UserCircleIcon />,
+    name: "Profile",
+    path: "/settings/profile",
+  },
+  {
     icon: <PlugInIcon />,
     name: "Notifications",
     path: "/settings/notifications",

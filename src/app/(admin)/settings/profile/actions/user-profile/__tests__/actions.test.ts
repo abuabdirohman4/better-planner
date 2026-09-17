@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('@/lib/errorUtils', () => ({ handleApiError: vi.fn().mockReturnValue({ message: 'Error handled' }) }));
 
 import { createClient } from '@/lib/supabase/server';
-import { getUserProfile, getSoundSettings, updateSoundSettings, resetSoundSettings } from '../actions';
+import { getUserProfile, getSoundSettings, updateSoundSettings, resetSoundSettings, updateDisplayName } from '../actions';
 
 describe('getUserProfile', () => {
   it('returns null when user not authenticated', async () => {
@@ -58,5 +58,29 @@ describe('resetSoundSettings', () => {
     const builder = makeQueryBuilder({ data: null, error: null });
     (createClient as any).mockResolvedValue(makeSupabase({ fromBuilder: builder }));
     await expect(resetSoundSettings()).resolves.toBeUndefined();
+  });
+});
+
+describe('updateDisplayName', () => {
+  it('rejects empty or too-long name without calling supabase', async () => {
+    const supabase = makeSupabase();
+    (createClient as any).mockResolvedValue(supabase);
+    expect((await updateDisplayName('   ')).error).toBe('Nama tidak boleh kosong');
+    expect((await updateDisplayName('x'.repeat(81))).error).toBe('Nama maksimal 80 karakter');
+    expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('trims and writes both full_name and name', async () => {
+    const supabase = makeSupabase();
+    (createClient as any).mockResolvedValue(supabase);
+    expect(await updateDisplayName('  Abu Abdirohman ')).toEqual({ error: null });
+    expect(supabase.auth.updateUser).toHaveBeenCalledWith({ data: { full_name: 'Abu Abdirohman', name: 'Abu Abdirohman' } });
+  });
+
+  it('returns error message when supabase fails', async () => {
+    const supabase = makeSupabase();
+    supabase.auth.updateUser.mockResolvedValue({ data: { user: null }, error: new Error('boom') });
+    (createClient as any).mockResolvedValue(supabase);
+    expect((await updateDisplayName('Abu')).error).toBe('Error handled');
   });
 });
