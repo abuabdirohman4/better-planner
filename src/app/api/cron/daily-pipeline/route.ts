@@ -17,11 +17,14 @@ import { sendEmail } from '@/lib/notifications/services/emailService'
 import { sendPushToUser } from '@/lib/notifications/services/pushService'
 import { buildSubject, insertHistory } from '@/lib/notifications/services/queueProcessor'
 import { createServiceClient } from '@/lib/supabase/service'
+import { startCronRun, finishCronRun } from '@/lib/cronRun'
 import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
 // Pipeline needs ~15-30s (4s Gemini delay per user + sends); Hobby default can be 10s
 export const maxDuration = 300
+
+const JOB = 'daily-pipeline'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceClient()
+  const runId = await startCronRun(JOB)
   const results = { aggregated: 0, queued: 0, succeeded: 0, failed: 0, errors: [] as string[] }
   // Report content per user/period, returned in the response so external
   // orchestrators (n8n) can forward it to other channels like Telegram
@@ -66,6 +70,7 @@ export async function POST(request: Request) {
       .filter('notification_settings->>enabled', 'eq', 'true')
 
     if (!users?.length) {
+      await finishCronRun(runId, JOB, { status: 'success', detail: { message: 'No users with enabled notifications' } })
       return Response.json({ success: true, message: 'No users with enabled notifications' })
     }
 
@@ -88,11 +93,16 @@ export async function POST(request: Request) {
       const locale = language === 'id' ? 'id-ID' : 'en-US'
 
       // Aggregate performance data (saves to performance_summaries)
-      await aggregatePerformance(user.user_id, 'daily', yesterday)
-      if (runWeekly) await aggregatePerformance(user.user_id, 'weekly', weekStart)
-      if (runMonthly) await aggregatePerformance(user.user_id, 'monthly', monthStart)
-      if (runQuarterly) await aggregatePerformance(user.user_id, 'quarterly', quarterStart)
-      results.aggregated++
+      try {
+        await aggregatePerformance(user.user_id, 'daily', yesterday)
+        if (runWeekly) await aggregatePerformance(user.user_id, 'weekly', weekStart)
+        if (runMonthly) await aggregatePerformance(user.user_id, 'monthly', monthStart)
+        if (runQuarterly) await aggregatePerformance(user.user_id, 'quarterly', quarterStart)
+        results.aggregated++
+      } catch (err) {
+        results.failed++
+        results.errors.push(`aggregate/${user.user_id}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      }
 
       // Get user email and name from auth
       const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id)
@@ -212,9 +222,20 @@ export async function POST(request: Request) {
       }
     }
 
+    await finishCronRun(runId, JOB, {
+      status: results.failed > 0 ? 'partial' : 'success',
+      detail: { aggregated: results.aggregated, queued: results.queued, succeeded: results.succeeded, failed: results.failed, errors: results.errors },
+      error: results.errors[0],
+    })
+
     return Response.json({ success: true, ...results, reports })
   } catch (error) {
     console.error('[cron/daily-pipeline]', error)
+    await finishCronRun(runId, JOB, {
+      status: 'failed',
+      detail: { stage: 'fatal', ...results },
+      error: error instanceof Error ? error.message : 'Unknown error',
+    })
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
