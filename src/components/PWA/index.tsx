@@ -254,17 +254,16 @@ export default function PWAComponents() {
 
       {/* Install Prompt - Only show on authenticated pages */}
       {showInstallPrompt && !isLandingPage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-full mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-99">
+        <div className="fixed top-20 md:top-4 left-1/2 transform -translate-x-1/2 max-w-sm w-[calc(100%-2rem)] mx-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-99">
           <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-brand-400 to-brand-500 rounded-xl flex items-center justify-center">
-              <Image
-                  src="/images/logo/logo-icon.svg"
-                  alt="Logo"
-                  width={48}
-                  height={48}
-                  priority
-                />
-            </div>
+            <Image
+              src="/images/logo/icon-192.png"
+              alt="Logo"
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 rounded-xl"
+              priority
+            />
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Install Better Planner</h3>
               <p className="text-xs text-gray-500">Add to home screen for quick access</p>

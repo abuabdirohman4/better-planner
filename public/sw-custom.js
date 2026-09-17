@@ -39,8 +39,8 @@ self.addEventListener('push', (event) => {
       }
       const show = self.registration.showNotification(data.title || 'Better Planner', {
         body: data.body || '',
-        icon: '/images/logo/logo-icon.svg',
-        badge: '/images/logo/logo-icon.svg',
+        icon: '/images/logo/icon-192.png',
+        badge: '/images/logo/icon-192.png',
         tag: data.tag || data.kind || 'better-planner',
         renotify: true,
         requireInteraction: data.kind === 'timer',

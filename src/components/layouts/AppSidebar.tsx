@@ -461,10 +461,11 @@ function SidebarContent({
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <Image
-                    src="/images/logo/logo-icon.svg"
+                    src="/images/logo/icon-192.png"
                     alt="Logo"
                     width={34}
                     height={34}
+                    className="h-[34px] w-[34px]"
                     priority
                   />
                 </div>
