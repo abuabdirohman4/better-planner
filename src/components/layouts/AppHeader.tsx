@@ -7,7 +7,6 @@ import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
 import { useSidebar } from "@/stores/sidebarStore";
 import Link from "next/link";
-import { PlugInIcon } from "@/lib/icons";
 
 // Page Title Component
 function PageTitle() {
@@ -226,16 +225,7 @@ const AppHeader: React.FC = () => {
             <PageTitle />
           </div>
 
-          {/* Settings — the application menu below is hidden under md, so mobile needs its own entry */}
-          <Link
-            href="/settings/notifications"
-            aria-label="Settings"
-            className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-50 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 md:hidden"
-          >
-            <PlugInIcon />
-          </Link>
-
-          {/* Avatar/sign out — same reason as Settings above: no other path to sign out under md */}
+          {/* Avatar/sign out — the application menu is hidden under md, so mobile needs its own path */}
           <div className="md:hidden">
             <UserDropdown />
           </div>
