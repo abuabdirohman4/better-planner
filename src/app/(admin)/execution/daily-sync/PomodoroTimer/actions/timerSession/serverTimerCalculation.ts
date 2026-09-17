@@ -86,7 +86,9 @@ export async function updateSessionWithActualTime(sessionId: string) {
     if (shouldComplete) {
       // Complete the session
       await completeTimerSession(sessionId);
-      return { completed: true, elapsedSeconds: actualElapsedSeconds };
+      // Return the capped value: the activity_log row is capped to target, so the journal
+      // modal / break prompt must not show the raw wall-clock gap (e.g. app closed for 52 min).
+      return { completed: true, elapsedSeconds: cappedElapsedSeconds };
     } else {
       // Update with actual elapsed time
       const { error } = await supabase
