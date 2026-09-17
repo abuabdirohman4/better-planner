@@ -78,14 +78,14 @@ export function MainContent({
       />
       
       {/* === To Don't List Card === */}
-      {/* <MemoizedToDontListCard
+      <MemoizedToDontListCard
         year={year}
         quarter={quarter}
         weekNumber={displayWeek}
         rules={processedRules}
         loading={toDontListLoading}
         onRefresh={handleRefreshToDontList}
-      /> */}
+      />
     </div>
   );
 }
