@@ -70,6 +70,7 @@ export default function HabitFormModal({
         monthly_goal: habit.monthly_goal,
         daily_target: habit.daily_target ?? 1,
         target_days: habit.target_days,
+        show_in_daily_sync: habit.show_in_daily_sync,
         tracking_type: habit.tracking_type,
         description: habit.description ?? undefined,
         target_time: habit.target_time ?? undefined,
@@ -86,6 +87,9 @@ export default function HabitFormModal({
       closeOnEscape={!isSubmitting && !isArchiving}
     >
       <HabitForm
+        // Instance baru tiap ganti habit: HabitForm membaca initialValues sekali
+        // lewat useState initializer, jadi tanpa key form menampilkan habit sebelumnya.
+        key={habit?.id ?? 'new'}
         initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={onClose}
