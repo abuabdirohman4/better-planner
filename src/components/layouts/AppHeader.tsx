@@ -235,6 +235,11 @@ const AppHeader: React.FC = () => {
             <PlugInIcon />
           </Link>
 
+          {/* Avatar/sign out — same reason as Settings above: no other path to sign out under md */}
+          <div className="md:hidden">
+            <UserDropdown />
+          </div>
+
           {/* Application Menu */}
           <button
             onClick={toggleApplicationMenu}

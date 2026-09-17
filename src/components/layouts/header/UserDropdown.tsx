@@ -199,7 +199,7 @@ export default function UserDropdown() {
         onClick={toggleDropdown} 
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 flex-shrink-0">
+        <span className="md:mr-3 overflow-hidden rounded-full h-11 w-11 flex-shrink-0">
           {isLoading ? (
             <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse" />
           ) : avatarUrl ? (
@@ -214,12 +214,12 @@ export default function UserDropdown() {
           )}
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">
+        <span className="hidden md:block mr-1 font-medium text-theme-sm">
           {isLoading ? '...' : fullName}
         </span>
 
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
+          className={`hidden md:block stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           width="18"
