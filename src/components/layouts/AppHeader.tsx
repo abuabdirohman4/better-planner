@@ -163,6 +163,7 @@ function ApplicationMenu({
 }
 
 const AppHeader: React.FC = () => {
+  const pathname = usePathname();
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
@@ -225,10 +226,13 @@ const AppHeader: React.FC = () => {
             <PageTitle />
           </div>
 
-          {/* Avatar/sign out — the application menu is hidden under md, so mobile needs its own path */}
-          <div className="md:hidden">
-            <UserDropdown />
-          </div>
+          {/* Avatar/sign out — mobile only, and only on the dashboard: the application menu is
+              hidden under md, and the bottom nav puts Dashboard one tap away from anywhere. */}
+          {pathname === "/dashboard" && (
+            <div className="md:hidden">
+              <UserDropdown />
+            </div>
+          )}
 
           {/* Application Menu */}
           <button
