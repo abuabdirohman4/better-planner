@@ -61,6 +61,7 @@
 | 2026-08-18 | Root-cause counter | `bp-nuk` reopen: satu sinyal `notifyActivityLogsChanged()` di semua jalur + timer progress dari data live |
 | 2026-08-18 | Sapu bersih beads | Habit day-nav + multi-completion (`bp-uv4`,`bp-0df`), metadata standar (`bp-8m5`), E2E 9 spec (`bp-ztv`), epic email diverifikasi + bugfix (`bp-2we`). 0 open. |
 | 2026-09-16 | Polish F-02 | `app-t43e65f` Main Quest: toggle 3 HFG berjajar (desktop) seperti buku Sync Planner; SubTask panel samping → modal; detail hanya kebuka lewat tombol panah. |
+| 2026-09-17 | Gelombang 2 | `app-tcf9b7f` mobile: bottom nav + 8 halaman sudah responsif, difix HP tak bisa sign out. `app-rkv`: Select All di Weekly Sync push id MILESTONE → FK tolak → isi slot hilang (bug data, difix). Lahir 2 kartu: `app-05h` link `/profile` 404, `app-klny` simpan slot tidak atomik. |
 | 2026-09-17 | Sapu bersih 3×3 | 4 agent paralel (Fable 5.1): `app-ta1b0f2` skeleton, `app-4ky` auth, `app-ico` PWA ikon, `app-2gf` durasi timer (fix 1 baris). `app-taa0c2f` + `bp-l4h` terbukti sudah beres sejak `18a9961` (27 Jul) lewat query DB. 12 → 6 open. |
 | 2026-09-16 | Audit kartu `migrated` | 6 kartu yang ke-reopen saat pindah ke hub diperiksa ke kode: 5 ternyata sudah jadi (`bp-uv4`, `bp-0df`, `bp-8m5`, `bp-ztv`, `bp-7xt`), `bp-vjx` tidak reproduce. 18 → 12 open. |
 
@@ -119,6 +120,7 @@ Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan 
 
 ## 📜 Changelog
 
+- **2026-09-17** — Gelombang 2 (`7b632ab`, `6bbc9c8`): 3×3 tuntas 8 dari 9 — sisa `bp-3lo` (M2.1 monitoring, butuh keputusan cakupan). Di luar rencana: `app-v8x`, `app-tb99243` (fitur baru), `app-05h`, `app-klny` (temuan sampingan). Epic `app-xb7q` tinggal `bp-3lo`.
 - **2026-09-17** — Sapu bersih 6 kartu 3×3 (commit `466e524`, `5b9c318`, `f59bfce`, `4db191c`). Yang perlu dicek Abu di browser/device: pesan error signin, spinner sign out, ikon PWA (uninstall→install ulang), posisi prompt install mobile, logo sidebar saat toggle. Keputusan produk yang sengaja tidak diubah: `/` tetap landing publik; cap 25 menit sesi timer dipertahankan (tanpa cap, sesi yang app-nya ditutup tercatat ratusan menit).
 - **2026-09-16** — Audit 6 kartu `migrated`: 5 sudah jadi, `bp-vjx` tidak reproduce → 18 open jadi 12. Label `beplan` ditambahkan ke 5 kartu gabungan yang cuma punya `[beplan]` di judul (bikin `bd list --label` kurang hitung).
 - **2026-09-16** — Main Quest: toggle 3 HFG berjajar (desktop) + SubTask jadi modal + detail cuma lewat tombol panah (`app-t43e65f`, commit `fa2066e`). Header/ringkasan disetel ulang setelah beads pindah ke hub.
