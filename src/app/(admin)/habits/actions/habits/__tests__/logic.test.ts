@@ -31,7 +31,7 @@ describe('isScheduledOn', () => {
 const rawRow = (over: Partial<RawHabitRow> = {}): RawHabitRow => ({
   id: 'h1', user_id: 'u', name: 'Ngaji', description: null, category: 'spiritual',
   frequency: 'weekly', monthly_goal: 4, daily_target: 1, target_days: [1, 4],
-  show_in_daily_sync: false, tracking_type: 'positive', target_time: null, is_archived: false, sort_order: 0,
+  show_in_daily_sync: false, tracking_type: 'positive', target_time: null, deadline_time: null, is_archived: false, sort_order: 0,
   created_at: '', updated_at: '', ...over,
 });
 

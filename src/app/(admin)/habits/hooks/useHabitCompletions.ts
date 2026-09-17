@@ -7,7 +7,9 @@ import {
   getCompletionsForMonth,
   toggleCompletion as toggleCompletionAction,
   adjustCompletion as adjustCompletionAction,
+  setCompletionDoneAt as setCompletionDoneAtAction,
 } from "../actions/completions/actions";
+import { firstCompletionOfDay } from "../actions/completions/logic";
 import type { HabitCompletion } from "@/types/habit";
 
 export function useHabitCompletions(year: number, month: number) {
@@ -59,6 +61,7 @@ export function useHabitCompletions(year: number, month: number) {
           date,
           note: null,
           created_at: new Date().toISOString(),
+          done_at: null,
         };
         return [...current, optimistic];
       }
@@ -84,7 +87,7 @@ export function useHabitCompletions(year: number, month: number) {
     mutate((currentData) => {
       const current = currentData ?? [];
       if (delta > 0) {
-        return [...current, { id: `opt-${Date.now()}`, habit_id: habitId, user_id: '', date, note: null, created_at: new Date().toISOString() }];
+        return [...current, { id: `opt-${Date.now()}`, habit_id: habitId, user_id: '', date, note: null, created_at: new Date().toISOString(), done_at: null }];
       }
       // remove the last matching row
       const idx = current.map((c) => c.habit_id === habitId && c.date === date).lastIndexOf(true);
@@ -101,9 +104,32 @@ export function useHabitCompletions(year: number, month: number) {
     }
   };
 
+  /** Baris yang dinilai untuk hari itu — yang pertama dikerjakan (app-r02c). */
+  const getScoredCompletion = (habitId: string, date: string): HabitCompletion | undefined =>
+    firstCompletionOfDay(completions, habitId, date);
+
+  /** Koreksi jam dikerjakan pada baris itu. `time` "HH:MM" atau null untuk kembali ke created_at. */
+  const setDoneAt = async (completionId: string, time: string | null): Promise<void> => {
+    mutate(
+      (currentData) =>
+        (currentData ?? []).map((c) => (c.id === completionId ? { ...c, done_at: time } : c)),
+      false
+    );
+    try {
+      await setCompletionDoneAtAction(completionId, time);
+      await notifyHabitsChanged();
+    } catch (err) {
+      console.error("Failed to set done_at:", err);
+      await mutate();
+      throw err;
+    }
+  };
+
   return {
     completions,
     isLoading,
+    getScoredCompletion,
+    setDoneAt,
     error: error?.message as string | undefined,
     toggleCompletion,
     adjustCompletion,

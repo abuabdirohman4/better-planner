@@ -1,4 +1,4 @@
-import type { Habit, MonthlyStats } from "@/types/habit";
+import type { Habit, HabitCompletion, MonthlyStats } from "@/types/habit";
 import { isScheduledOn } from "@/app/(admin)/habits/actions/habits/logic";
 import { CATEGORY_ORDER, CATEGORY_LABELS } from "./HabitGrid";
 import TodayHabitItem from "./TodayHabitItem";
@@ -14,6 +14,9 @@ interface TodayHabitListProps {
   monthlyStats: MonthlyStats;
   selectedDate: string; // "YYYY-MM-DD" — the day being viewed/edited
   groupBy?: HabitGroupBy;
+  /** app-r02c — baris yang dinilai untuk hari itu + cara mengoreksi jamnya. */
+  getScoredCompletion?: (habitId: string, date: string) => HabitCompletion | undefined;
+  onSetDoneAt?: (completionId: string, time: string | null) => Promise<void>;
 }
 
 interface Group {
@@ -83,6 +86,8 @@ export default function TodayHabitList({
   monthlyStats,
   selectedDate,
   groupBy = "category",
+  getScoredCompletion,
+  onSetDoneAt,
 }: TodayHabitListProps) {
   // Weekly habits only appear on their scheduled days — and for the day being
   // viewed, not "today", since the page has a date navigator (app-pizc).
@@ -135,6 +140,8 @@ export default function TodayHabitList({
                     currentStreak={currentStreak}
                     onToggle={() => onToggle(habit.id, selectedDate)}
                     onAdjust={(delta) => onAdjust(habit.id, selectedDate, delta)}
+                    scoredCompletion={getScoredCompletion?.(habit.id, selectedDate)}
+                    onSetDoneAt={onSetDoneAt}
                   />
                 );
               })}

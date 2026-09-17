@@ -15,6 +15,7 @@ export interface RawHabitRow {
   show_in_daily_sync: boolean;
   tracking_type: string;
   target_time: string | null;
+  deadline_time: string | null;
   is_archived: boolean;
   sort_order: number;
   created_at: string;
@@ -60,6 +61,7 @@ export async function insertHabit(
       show_in_daily_sync: data.show_in_daily_sync ?? false,
       tracking_type: data.tracking_type,
       target_time: data.target_time ?? null,
+      deadline_time: data.deadline_time ?? null,
     })
     .select()
     .single();
@@ -88,6 +90,7 @@ export async function updateHabitById(
   if (data.show_in_daily_sync !== undefined) updates.show_in_daily_sync = data.show_in_daily_sync;
   if (data.tracking_type !== undefined) updates.tracking_type = data.tracking_type;
   if ('target_time' in data) updates.target_time = data.target_time ?? null;
+  if (data.deadline_time !== undefined) updates.deadline_time = data.deadline_time;
 
   const { data: row, error } = await supabase
     .from('habits')

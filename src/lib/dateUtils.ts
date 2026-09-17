@@ -40,6 +40,16 @@ export function getLocalDateString(date: Date): string {
   return formatter.format(date);
 }
 
+/** Time-of-day in Asia/Jakarta as "HH:MM" — the clock Abu actually reads. */
+export function getLocalTimeString(date: Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+}
+
 export function getCurrentLocalDate(): string {
   return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
 }

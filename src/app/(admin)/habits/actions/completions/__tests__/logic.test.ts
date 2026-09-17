@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { calculateMonthlyStats, buildCompletedDates, calculateStreak } from '../logic';
+import { calculateMonthlyStats, buildCompletedDates, calculateStreak, getTimeliness, firstCompletionOfDay } from '../logic';
 import type { Habit, HabitCompletion } from '@/types/habit';
 
 const habit = (over: Partial<Habit> = {}): Habit => ({
   id: 'h1', user_id: 'u', name: 'Air', description: null, category: 'kesehatan',
   frequency: 'daily', monthly_goal: 30, daily_target: 1, target_days: null,
   show_in_daily_sync: false, tracking_type: 'positive',
-  target_time: null, is_archived: false, sort_order: 0, created_at: '', updated_at: '', ...over,
+  target_time: null, deadline_time: null, is_archived: false, sort_order: 0, created_at: '', updated_at: '', ...over,
 });
 const comp = (date: string, n = 1): HabitCompletion[] =>
-  Array.from({ length: n }, (_, i) => ({ id: `${date}-${i}`, habit_id: 'h1', user_id: 'u', date, note: null, created_at: '' }));
+  Array.from({ length: n }, (_, i) => ({ id: `${date}-${i}`, habit_id: 'h1', user_id: 'u', date, note: null, created_at: '', done_at: null }));
 
 describe('buildCompletedDates', () => {
   it('daily_target=1: any row counts', () => {
@@ -119,5 +119,56 @@ describe('calculateMonthlyStats with target_days', () => {
     const s = calculateMonthlyStats([habit()], monthWindow, '2026-09-02', history);
     expect(s.per_habit[0].completed).toBe(2); // month window only
     expect(s.per_habit[0].current_streak).toBe(4); // full history
+  });
+});
+
+describe('getTimeliness (app-r02c)', () => {
+  const at = (created: string, done: string | null = null): HabitCompletion => ({
+    id: 'c1', habit_id: 'h1', user_id: 'u', date: '2026-09-17', note: null,
+    created_at: created, done_at: done,
+  });
+  // 12:15 WIB = 05:15Z, 21:00 WIB = 14:00Z
+  const duhur = habit({ deadline_time: '13:00' });
+
+  it('dicentang sebelum batas = tepat waktu', () => {
+    expect(getTimeliness(duhur, at('2026-09-17T05:15:00Z'))).toBe('ontime');
+  });
+  it('dicentang setelah batas = telat', () => {
+    expect(getTimeliness(duhur, at('2026-09-17T14:00:00Z'))).toBe('late');
+  });
+  it('done_at mengalahkan created_at: shalat 12:15 tapi baru centang 21:00 tetap tepat waktu', () => {
+    expect(getTimeliness(duhur, at('2026-09-17T14:00:00Z', '12:15'))).toBe('ontime');
+  });
+  it('done_at juga bisa membuat telat walau baris dibuat pagi', () => {
+    expect(getTimeliness(duhur, at('2026-09-17T05:15:00Z', '13:30'))).toBe('late');
+  });
+  it('tepat pada jam batas masih tepat waktu (inklusif)', () => {
+    expect(getTimeliness(duhur, at('2026-09-17T00:00:00Z', '13:00'))).toBe('ontime');
+  });
+  it('habit tanpa deadline_time = null, tidak dinilai', () => {
+    expect(getTimeliness(habit({ deadline_time: null }), at('2026-09-17T14:00:00Z'))).toBeNull();
+  });
+  it('belum dicentang = null', () => {
+    expect(getTimeliness(duhur, undefined)).toBeNull();
+  });
+  it('Postgres TIME "HH:MM:SS" tetap dibandingkan benar', () => {
+    expect(getTimeliness(habit({ deadline_time: '13:00:00' }), at('', '12:15:00'))).toBe('ontime');
+  });
+  it('Tahajud batas 04:30: dicentang 03:30 WIB (20:30Z hari sebelumnya) tepat waktu', () => {
+    // batas dini hari — created_at hari sebelumnya di UTC, tapi jam WIB-nya 03:30
+    expect(getTimeliness(habit({ deadline_time: '04:30' }), at('2026-09-16T20:30:00Z'))).toBe('ontime');
+  });
+  it('lewat tengah malam: dicentang 23:50 WIB dinilai telat terhadap batas 04:30', () => {
+    expect(getTimeliness(habit({ deadline_time: '04:30' }), at('2026-09-17T16:50:00Z'))).toBe('late');
+  });
+
+  it('daily_target>1: yang dinilai baris paling awal, bukan baris terakhir', () => {
+    const rows: HabitCompletion[] = [
+      { ...at('2026-09-17T14:00:00Z'), id: 'late' },
+      { ...at('2026-09-17T05:00:00Z'), id: 'early' },
+    ];
+    const first = firstCompletionOfDay(rows, 'h1', '2026-09-17');
+    expect(first?.id).toBe('early');
+    expect(getTimeliness(duhur, first)).toBe('ontime');
   });
 });

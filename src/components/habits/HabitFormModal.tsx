@@ -74,6 +74,7 @@ export default function HabitFormModal({
         tracking_type: habit.tracking_type,
         description: habit.description ?? undefined,
         target_time: habit.target_time ?? undefined,
+        deadline_time: habit.deadline_time,
       }
     : undefined;
 

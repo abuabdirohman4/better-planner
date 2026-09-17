@@ -22,7 +22,7 @@ const habit = (over: Partial<Habit> = {}): Habit => ({
   target_days: null,
   show_in_daily_sync: false,
   tracking_type: 'positive',
-  target_time: null,
+  target_time: null, deadline_time: null,
   is_archived: false,
   sort_order: 0,
   created_at: '',

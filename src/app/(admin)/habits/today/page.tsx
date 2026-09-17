@@ -51,6 +51,8 @@ export default function TodayHabitsPage() {
     getCount,
     toggleCompletion,
     adjustCompletion,
+    getScoredCompletion,
+    setDoneAt,
     isLoading: completionsLoading,
   } = useHabitCompletions(selYear, selMonth);
 
@@ -216,6 +218,8 @@ export default function TodayHabitsPage() {
           monthlyStats={monthlyStats}
           selectedDate={selectedDate}
           groupBy={groupBy}
+          getScoredCompletion={getScoredCompletion}
+          onSetDoneAt={setDoneAt}
         />
       )}
 

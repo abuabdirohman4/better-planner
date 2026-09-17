@@ -51,7 +51,10 @@ const DEFAULT_VALUES: HabitFormInput = {
   tracking_type: "positive",
   description: "",
   target_time: undefined,
+  deadline_time: null,
 };
+
+const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export default function HabitForm({
   initialValues,
@@ -72,6 +75,8 @@ export default function HabitForm({
     !!initialValues?.target_time
   );
 
+  const [hasDeadline, setHasDeadline] = useState(!!initialValues?.deadline_time);
+
   const [errors, setErrors] = useState<Partial<Record<keyof HabitFormInput, string>>>({});
 
   const validate = (): boolean => {
@@ -89,11 +94,11 @@ export default function HabitForm({
     if (values.frequency === "weekly" && (values.target_days ?? []).length === 0) {
       newErrors.target_days = "Pilih minimal satu hari.";
     }
-    if (hasTargetTime && values.target_time) {
-      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-      if (!timeRegex.test(values.target_time)) {
-        newErrors.target_time = "Time must be in HH:MM format.";
-      }
+    if (hasTargetTime && values.target_time && !TIME_REGEX.test(values.target_time)) {
+      newErrors.target_time = "Time must be in HH:MM format.";
+    }
+    if (hasDeadline && !TIME_REGEX.test(values.deadline_time ?? "")) {
+      newErrors.deadline_time = "Batas harus dalam format HH:MM.";
     }
 
     setErrors(newErrors);
@@ -119,6 +124,8 @@ export default function HabitForm({
       name: values.name.trim(),
       description: values.description?.trim() || undefined,
       target_time: hasTargetTime && values.target_time ? values.target_time : undefined,
+      // null (bukan undefined) = hapus batasnya saat checkbox dimatikan.
+      deadline_time: hasDeadline && values.deadline_time ? values.deadline_time : null,
       // Only weekly habits are scheduled; null = every day.
       target_days:
         values.frequency === "weekly" && values.target_days?.length
@@ -339,6 +346,42 @@ export default function HabitForm({
               disabled={isSubmitting}
             />
             {errors.target_time && <p className={errorClass}>{errors.target_time}</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Batas tepat waktu (app-r02c) */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={hasDeadline}
+            onChange={(e) => {
+              setHasDeadline(e.target.checked);
+              if (!e.target.checked) handleChange("deadline_time", null);
+            }}
+            className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
+            disabled={isSubmitting}
+            data-testid="habit-has-deadline"
+          />
+          <span className={labelClass.replace("mb-1", "mb-0")}>Punya batas tepat waktu?</span>
+        </label>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Dikerjakan sebelum jam ini = tepat waktu. Beda dari jam pengingat di atas — kamu bisa
+          diingatkan 12:30 tapi batasnya 13:00. Telat tetap dihitung selesai, streak tidak terpengaruh.
+        </p>
+
+        {hasDeadline && (
+          <div className="mt-2">
+            <input
+              type="time"
+              value={values.deadline_time ?? ""}
+              onChange={(e) => handleChange("deadline_time", e.target.value || null)}
+              className={inputClass}
+              disabled={isSubmitting}
+              data-testid="habit-deadline-time"
+            />
+            {errors.deadline_time && <p className={errorClass}>{errors.deadline_time}</p>}
           </div>
         )}
       </div>

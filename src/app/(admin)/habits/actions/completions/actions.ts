@@ -10,6 +10,7 @@ import {
   insertCompletion,
   deleteCompletion,
   deleteLastCompletion,
+  updateCompletionDoneAt,
 } from "./queries";
 import { toHabitCompletion } from "./logic";
 
@@ -85,6 +86,28 @@ export async function toggleCompletion(
     revalidateAll();
     return { completed: true };
   }
+}
+
+/**
+ * Koreksi jam dikerjakan (app-r02c). Abu mungkin shalat 12:15 tapi baru mencentang 21:00 —
+ * ini yang membuat penanda menilai shalatnya, bukan ingatannya mencentang.
+ * `time` "HH:MM", atau null untuk kembali memakai created_at.
+ */
+export async function setCompletionDoneAt(
+  completionId: string,
+  time: string | null
+): Promise<HabitCompletion> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  if (time !== null && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
+    throw new Error('Invalid time: expected HH:MM');
+  }
+
+  const row = await updateCompletionDoneAt(supabase, completionId, user.id, time);
+  revalidateAll();
+  return toHabitCompletion(row);
 }
 
 /** Multi-completion: +1 inserts a row, -1 removes the latest row for that day. */

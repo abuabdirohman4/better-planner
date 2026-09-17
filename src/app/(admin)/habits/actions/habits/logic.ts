@@ -16,6 +16,7 @@ export function toHabit(row: RawHabitRow): Habit {
     show_in_daily_sync: row.show_in_daily_sync ?? false,
     tracking_type: row.tracking_type as HabitTrackingType,
     target_time: row.target_time,
+    deadline_time: row.deadline_time ? row.deadline_time.slice(0, 5) : null,
     is_archived: row.is_archived,
     sort_order: row.sort_order,
     created_at: row.created_at,
@@ -83,6 +84,15 @@ export function parseHabitFormInput(raw: unknown): HabitFormInput {
 
   if (data.target_time !== undefined && data.target_time !== null && data.target_time !== '') {
     result.target_time = String(data.target_time);
+  }
+
+  // Dibiarkan undefined kalau tidak dikirim, supaya update parsial tidak mereset batasnya.
+  if (data.deadline_time !== undefined) {
+    const raw = data.deadline_time === null ? '' : String(data.deadline_time);
+    if (raw !== '' && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(raw)) {
+      throw new Error('Invalid habit form input: deadline_time must be HH:MM');
+    }
+    result.deadline_time = raw === '' ? null : raw;
   }
 
   if (data.target_days !== undefined) {

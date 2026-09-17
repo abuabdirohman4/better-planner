@@ -22,7 +22,8 @@ export interface Habit {
   target_days: number[] | null; // 0=Sun..6=Sat scheduled days; null/empty = every day
   show_in_daily_sync: boolean; // tickable row in Daily Sync's daily quest list (app-cr6i)
   tracking_type: HabitTrackingType;
-  target_time: string | null; // "HH:MM" or null
+  target_time: string | null; // "HH:MM" or null — kapan DIINGATKAN (cron push-due)
+  deadline_time: string | null; // "HH:MM" or null — batas tepat waktu (app-r02c); null = tidak dinilai
   is_archived: boolean;
   sort_order: number;
   created_at: string;
@@ -36,7 +37,11 @@ export interface HabitCompletion {
   date: string; // "YYYY-MM-DD"
   note: string | null;
   created_at: string;
+  done_at: string | null; // "HH:MM" WIB, dikoreksi manual; null = pakai created_at
 }
+
+/** Penilaian tepat waktu (app-r02c). null = habit tanpa deadline_time, jangan tampilkan apa pun. */
+export type CompletionTimeliness = 'ontime' | 'late' | null;
 
 export interface HabitFormInput {
   name: string;
@@ -49,6 +54,7 @@ export interface HabitFormInput {
   show_in_daily_sync?: boolean;
   tracking_type: HabitTrackingType;
   target_time?: string; // "HH:MM" or undefined
+  deadline_time?: string | null; // "HH:MM"; null = hapus batas, undefined = jangan ubah
 }
 
 export interface HabitStats {

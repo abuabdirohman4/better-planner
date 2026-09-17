@@ -8,6 +8,26 @@ export interface RawCompletionRow {
   date: string;
   note: string | null;
   created_at: string;
+  done_at: string | null;
+}
+
+/** Koreksi jam dikerjakan (app-r02c). `time` "HH:MM", atau null untuk kembali ke created_at. */
+export async function updateCompletionDoneAt(
+  supabase: SupabaseClient,
+  completionId: string,
+  userId: string,
+  time: string | null
+): Promise<RawCompletionRow> {
+  const { data, error } = await supabase
+    .from('habit_completions')
+    .update({ done_at: time })
+    .eq('id', completionId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as RawCompletionRow;
 }
 
 export async function queryCompletionsInRange(

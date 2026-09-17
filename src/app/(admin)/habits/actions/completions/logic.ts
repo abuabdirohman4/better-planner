@@ -7,8 +7,10 @@ import type {
   StreakResult,
   HabitCategory,
 } from '@/types/habit';
+import type { CompletionTimeliness } from '@/types/habit';
 import type { RawCompletionRow } from './queries';
 import { isScheduledOn } from '../habits/logic';
+import { getLocalTimeString } from '@/lib/dateUtils';
 
 /**
  * Transform a raw database row into a typed HabitCompletion domain object.
@@ -22,7 +24,62 @@ export function toHabitCompletion(row: RawCompletionRow): HabitCompletion {
     date: row.date,
     note: row.note,
     created_at: row.created_at,
+    done_at: normalizeTime(row.done_at),
   };
+}
+
+/** Postgres TIME comes back "HH:MM:SS"; everything here compares "HH:MM". */
+function normalizeTime(value: string | null | undefined): string | null {
+  return value ? value.slice(0, 5) : null;
+}
+
+/**
+ * Jam habit itu dikerjakan, sebagai "HH:MM" WIB.
+ * done_at (koreksi manual) menang; kalau kosong pakai jam WIB dari created_at.
+ */
+export function completionTime(completion: Pick<HabitCompletion, 'created_at' | 'done_at'>): string | null {
+  const corrected = normalizeTime(completion.done_at);
+  if (corrected) return corrected;
+  if (!completion.created_at) return null;
+  const created = new Date(completion.created_at);
+  if (Number.isNaN(created.getTime())) return null;
+  return getLocalTimeString(created);
+}
+
+/**
+ * Tepat waktu atau telat (app-r02c)? PENANDA VISUAL SAJA — telat tetap selesai,
+ * streak & monthly_goal tidak tersentuh.
+ *
+ * Habit tanpa deadline_time → null (jangan tampilkan apa pun).
+ * Batas bersifat inklusif: dikerjakan tepat pada jam batas masih tepat waktu.
+ */
+export function getTimeliness(
+  habit: Pick<Habit, 'deadline_time'>,
+  completion: Pick<HabitCompletion, 'created_at' | 'done_at'> | undefined
+): CompletionTimeliness {
+  const deadline = normalizeTime(habit.deadline_time);
+  if (!deadline || !completion) return null;
+  const done = completionTime(completion);
+  if (!done) return null;
+  return done <= deadline ? 'ontime' : 'late';
+}
+
+/**
+ * Baris yang dinilai untuk satu hari: yang PERTAMA dibuat.
+ * Habit daily_target > 1 (mis. minum 8x) punya banyak baris sehari — yang bermakna
+ * "keburu sebelum batas" adalah yang paling awal; baris ke-8 pasti lewat batas apa pun
+ * dan akan menandai semua habit multi sebagai telat.
+ */
+export function firstCompletionOfDay(
+  completions: HabitCompletion[],
+  habitId: string,
+  date: string
+): HabitCompletion | undefined {
+  const rows = completions.filter(c => c.habit_id === habitId && c.date === date);
+  if (rows.length === 0) return undefined;
+  return rows.reduce((earliest, c) =>
+    (completionTime(c) ?? '99:99') < (completionTime(earliest) ?? '99:99') ? c : earliest
+  );
 }
 
 /**
