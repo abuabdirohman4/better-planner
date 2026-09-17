@@ -2,7 +2,7 @@
 
 > **File ini = peta arah project.** Sumber tunggal visi + status + next up.
 > Visi & scope detail di [`BRD.md`](./BRD.md). Skema data di [`ERD.sql`](./ERD.sql). Task detail di beads (`bd list`, prefix `bp-`). Plan per-fitur di [`../plans/`](../plans/).
-> Diperbarui: 2026-09-16 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) — 6 open setelah sapu bersih 17 Sep.
+> Diperbarui: 2026-09-16 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** setelah sapu bersih 17 Sep.
 
 ---
 
@@ -61,6 +61,7 @@
 | 2026-08-18 | Root-cause counter | `bp-nuk` reopen: satu sinyal `notifyActivityLogsChanged()` di semua jalur + timer progress dari data live |
 | 2026-08-18 | Sapu bersih beads | Habit day-nav + multi-completion (`bp-uv4`,`bp-0df`), metadata standar (`bp-8m5`), E2E 9 spec (`bp-ztv`), epic email diverifikasi + bugfix (`bp-2we`). 0 open. |
 | 2026-09-16 | Polish F-02 | `app-t43e65f` Main Quest: toggle 3 HFG berjajar (desktop) seperti buku Sync Planner; SubTask panel samping → modal; detail hanya kebuka lewat tombol panah. |
+| 2026-09-17 | Backlog nol | `app-j41i` halaman `/settings/profile` dibuat, `bp-3lo` alert cron gagal (tabel `cron_runs`, email saat run tidak sukses), epic `app-xb7q` ditutup. `app-v8x` + `app-tb99243` terbukti sudah ada di kode. 18 → 0 open. |
 | 2026-09-17 | Gelombang 2 | `app-tcf9b7f` mobile: bottom nav + 8 halaman sudah responsif, difix HP tak bisa sign out. `app-rkv`: Select All di Weekly Sync push id MILESTONE → FK tolak → isi slot hilang (bug data, difix). Lahir 2 kartu: `app-05h` link `/profile` 404, `app-klny` simpan slot tidak atomik. |
 | 2026-09-17 | Sapu bersih 3×3 | 4 agent paralel (Fable 5.1): `app-ta1b0f2` skeleton, `app-4ky` auth, `app-ico` PWA ikon, `app-2gf` durasi timer (fix 1 baris). `app-taa0c2f` + `bp-l4h` terbukti sudah beres sejak `18a9961` (27 Jul) lewat query DB. 12 → 6 open. |
 | 2026-09-16 | Audit kartu `migrated` | 6 kartu yang ke-reopen saat pindah ke hub diperiksa ke kode: 5 ternyata sudah jadi (`bp-uv4`, `bp-0df`, `bp-8m5`, `bp-ztv`, `bp-7xt`), `bp-vjx` tidak reproduce. 18 → 12 open. |
@@ -88,7 +89,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | **F-07** Pengaturan | 🔄 | `/settings/notifications` (`/settings/profile` **belum ada halaman** — hanya actions sound settings) | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md). Halaman profile = kartu baru 17 Sep |
 | **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../plans/2026-03-27-best-week-design.md) |
 
-**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) — 6 open per 17 Sep 2026.
+**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) **0 open** per 17 Sep 2026.
 
 ---
 
@@ -120,6 +121,7 @@ Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan 
 
 ## 📜 Changelog
 
+- **2026-09-17** — **Backlog BePlan nol.** Branch `fix/beplan-05h-klny` (6 commit) menunggu merge. Tindakan manual yang tersisa: apply migration `20260917000001_cron_runs.sql`, set `CRON_ALERT_EMAIL` di Vercel, lalu uji cron sukses & gagal (langkah di `bd show bp-3lo`). Dari 18 kartu pagi ini, 9 ternyata menggambarkan fitur yang sudah lama jalan — semuanya impor `todo.md` 13 Sep.
 - **2026-09-17** — Branch `fix/beplan-05h-klny`: link dropdown → `/settings/notifications` (`app-05h`), simpan slot Weekly Sync upsert-dulu (`app-klny`). Koreksi: `/settings/profile` ternyata tidak punya `page.tsx` — F-07 diturunkan ke 🔄, kartu halaman profile dibuat.
 - **2026-09-17** — Gelombang 2 (`7b632ab`, `6bbc9c8`): 3×3 tuntas 8 dari 9 — sisa `bp-3lo` (M2.1 monitoring, butuh keputusan cakupan). Di luar rencana: `app-v8x`, `app-tb99243` (fitur baru), `app-05h`, `app-klny` (temuan sampingan). Epic `app-xb7q` tinggal `bp-3lo`.
 - **2026-09-17** — Sapu bersih 6 kartu 3×3 (commit `466e524`, `5b9c318`, `f59bfce`, `4db191c`). Yang perlu dicek Abu di browser/device: pesan error signin, spinner sign out, ikon PWA (uninstall→install ulang), posisi prompt install mobile, logo sidebar saat toggle. Keputusan produk yang sengaja tidak diubah: `/` tetap landing publik; cap 25 menit sesi timer dipertahankan (tanpa cap, sesi yang app-nya ditutup tercatat ratusan menit).
