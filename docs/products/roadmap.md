@@ -2,7 +2,7 @@
 
 > **File ini = peta arah project.** Sumber tunggal visi + status + next up.
 > Visi & scope detail di [`BRD.md`](./BRD.md). Skema data di [`ERD.sql`](./ERD.sql). Task detail di beads (`bd list`, prefix `bp-`). Plan per-fitur di [`../plans/`](../plans/).
-> Diperbarui: 2026-09-17 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dua kali dikosongkan 17 Sep: pagi (sisa impor `todo.md`), lalu sore (tujuh temuan dari pemakaian harian).
+> Diperbarui: 2026-09-24 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dikosongkan 17 Sep (pagi + sore), lalu 24 Sep (`app-5skl` + tiga temuan pemakaian harian).
 
 ---
 
@@ -61,6 +61,7 @@
 | 2026-08-18 | Root-cause counter | `bp-nuk` reopen: satu sinyal `notifyActivityLogsChanged()` di semua jalur + timer progress dari data live |
 | 2026-08-18 | Sapu bersih beads | Habit day-nav + multi-completion (`bp-uv4`,`bp-0df`), metadata standar (`bp-8m5`), E2E 9 spec (`bp-ztv`), epic email diverifikasi + bugfix (`bp-2we`). 0 open. |
 | 2026-09-16 | Polish F-02 | `app-t43e65f` Main Quest: toggle 3 HFG berjajar (desktop) seperti buku Sync Planner; SubTask panel samping → modal; detail hanya kebuka lewat tombol panah. |
+| 2026-09-24 | Temuan pemakaian harian | Urutan quest Weekly Sync + Select Main Quest ikut milestone → langkah → sub task (RPC `get_weekly_sync` dulu cuma urut `tasks.display_order`). Koreksi jam habit simpan eksplisit (Safari blur antar segmen). Card refleksi 12 Week Sync klik → tampil penuh. `app-5skl` minggu 13 tak dihitung di dashboard. |
 | 2026-09-17 sore | Habit jadi bisa dipercaya | `app-cr6i` habit bertanda bisa dicentang dari Daily Sync (kolom `show_in_daily_sync`), sisanya diwakili baris pengingat. `app-r02c` batas tepat waktu (`deadline_time`) + koreksi jam (`done_at`) — `habit_completions` ternyata tak punya policy UPDATE sejak Maret. `app-je2x` modal edit habit menampilkan data habit sebelumnya. |
 | 2026-09-17 sore | Temuan dari pemakaian | `app-ejf5` To Don't List ternyata cuma dikomentari sejak refactor `896dc16`. `app-ni49` tombol tes notifikasi. `app-pizc` habit mingguan hanya di hari targetnya (kolom `target_days`) + `app-w3t3` streak tak lagi putus tiap tanggal 1 — keduanya bug yang menghalangi habit tracker dipercaya. |
 | 2026-09-17 | Backlog nol | `app-j41i` halaman `/settings/profile` dibuat, `bp-3lo` alert cron gagal (tabel `cron_runs`, email saat run tidak sukses), epic `app-xb7q` ditutup. `app-v8x` + `app-tb99243` terbukti sudah ada di kode. 18 → 0 open. |
@@ -82,7 +83,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 
 | Item | Status | Route | Catatan / Issue |
 |---|---|---|---|
-| **F-01** Dashboard Utama | ✅ | `/dashboard` | — |
+| **F-01** Dashboard Utama | ✅ | `/dashboard` | Weekly Progress hanya W1–W12 — minggu 13 (istirahat + susun kuartal) tetap boleh diisi di Weekly Sync tapi tak dihitung (`app-5skl`) |
 | **F-02** Manajemen Quest | ✅ | `/planning/vision`, `/planning/12-week-quests`, `/planning/main-quests`, `/quests/*` | [main-quests-types](../plans/2026-03-21-main-quests-types-design.md), [work-quests-3layer](../plans/2026-03-17-work-quests-3layer-refactor.md). Main Quest punya toggle 3-kolom (`app-t43e65f`, lihat Catatan) |
 | **F-03** Weekly Sync + To-Don't | ✅ | `/execution/weekly-sync` (+ `ToDontList/`) | [12-week-sync-mvp](../plans/2026-03-29-12-week-sync-mvp.md) |
 | **F-04** Daily Sync (Pomodoro, Brain Dump, log) | ✅ | `/execution/daily-sync`, `/execution/brain-dump` | [daily-plan-3layer](../plans/2026-03-19-daily-plan-schedule-3layer-refactor.md), [brain-dump](../plans/2026-04-27-brain-dump-page-implementation-plan.md), [bp-byp](../plans/2026-07-27-bp-byp-pomodoro-timer-bugs.md) | Habit bertanda ikut tampil & bisa dicentang di sini (`app-cr6i`).
@@ -91,7 +92,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | **F-07** Pengaturan | 🔄 | `/settings/notifications` (`/settings/profile` **belum ada halaman** — hanya actions sound settings) | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md). Halaman profile = kartu baru 17 Sep |
 | **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../plans/2026-03-27-best-week-design.md) |
 
-**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) **0 open** per 17 Sep 2026 sore.
+**Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) **0 open** per 24 Sep 2026.
 
 ---
 
@@ -123,6 +124,7 @@ Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan 
 
 ## 📜 Changelog
 
+- **2026-09-24** — Tiga temuan pemakaian (`8c59b43`): (1) urutan quest — RPC `get_weekly_sync` di-`ORDER BY` milestone → langkah parent → sub task (migration `20260924000001_weekly_sync_item_order`, sudah di-apply); Select Main Quest daily sync pakai `sortByPlanOrder` karena dulu tak diurutkan sama sekali (5 item `created_at` identik → acak). 435 dari 463 sub task tanpa `milestone_id`, jadi milestone diambil dari parent. (2) Koreksi jam habit: simpan lewat tombol/Enter, bukan onBlur — dugaan Safari memicu blur saat pindah segmen jam → menit; **belum direproduksi, cek di browser**. (3) Card refleksi 12 Week Sync: klik → tinggi ikut isi. Lalu `app-5skl` (`206cad9`): arah diubah Abu — bukan memblok minggu 13 di Weekly Sync, cukup dashboard tak menghitungnya.
 - **2026-09-17 sore (2)** — Backlog kosong lagi: `app-cr6i` (`9c63054`), `app-je2x` (`df089e7`), `app-r02c` (`80af4bf`). Empat migration di-apply hari ini: `cron_runs`, `habit_target_days`, `habit_show_in_daily_sync`, `habit_deadline_time`. Batas tepat waktu 7 shalat sudah diisi (Tahajud 04:30 … Isya 20:30); `target_time` dibiarkan karena maknanya beda (kapan diingatkan). Dobel catat 39 hari hilang setelah Abu menandai habit Update Finance & Daily Sync lalu berhenti memilih kembarannya sebagai daily quest — kode tidak bisa menebak pasangannya (tak ada FK, judul tak identik).
 - **2026-09-17 sore** — Empat kartu dari pemakaian harian ditutup (`5633bfa`, `06e062c`, `0904d5a`). Migration `habit_target_days` sudah di-apply; 21 habit Abu semuanya `target_days` NULL = tetap harian. Riset `app-cr6i` menemukan 39 hari tercatat ganda (Update Finance, Daily Sync) dan 4 kebiasaan konsisten tanpa streak (Cleaning House 62 hari) — Abu memilih Pilihan B: habit bertanda bisa dicentang dari Daily Sync, sisanya diwakili baris pengingat. Kartu baru menunggu: `app-r02c` (batas 'tepat waktu' shalat, nilai awal sudah disepakati), `app-je2x` (modal edit habit menampilkan data habit sebelumnya).
 - **2026-09-17** — **Backlog BePlan nol.** Branch `fix/beplan-05h-klny` (6 commit) menunggu merge. Tindakan manual yang tersisa: apply migration `20260917000001_cron_runs.sql`, set `CRON_ALERT_EMAIL` di Vercel, lalu uji cron sukses & gagal (langkah di `bd show bp-3lo`). Dari 18 kartu pagi ini, 9 ternyata menggambarkan fitur yang sudah lama jalan — semuanya impor `todo.md` 13 Sep.
