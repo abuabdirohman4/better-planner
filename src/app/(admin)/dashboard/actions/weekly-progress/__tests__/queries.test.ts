@@ -15,7 +15,7 @@ describe('queryWeeklyGoals', () => {
     expect(builder.eq).toHaveBeenCalledWith('year', 2026);
     expect(builder.eq).toHaveBeenCalledWith('quarter', 1);
     expect(builder.gte).toHaveBeenCalledWith('week_number', 1);
-    expect(builder.lte).toHaveBeenCalledWith('week_number', 13);
+    expect(builder.lte).toHaveBeenCalledWith('week_number', 12);
   });
 
   it('returns empty array when data is null', async () => {

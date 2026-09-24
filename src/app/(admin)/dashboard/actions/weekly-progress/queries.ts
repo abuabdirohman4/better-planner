@@ -13,7 +13,7 @@ export async function queryWeeklyGoals(
     .eq('year', year)
     .eq('quarter', quarter)
     .gte('week_number', 1)
-    .lte('week_number', 13)
+    .lte('week_number', 12) // minggu 13 = istirahat + susun kuartal, tidak dihitung (app-5skl)
     .order('week_number', { ascending: true });
 
   if (error) throw error;

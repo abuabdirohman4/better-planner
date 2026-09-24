@@ -46,7 +46,7 @@ describe('getWeeklyProgressForQuarter', () => {
     mockCreateClient();
     vi.mocked(queryWeeklyGoals).mockResolvedValue([]);
     const result = await getWeeklyProgressForQuarter(2026, 1);
-    expect(result).toHaveLength(13);
+    expect(result).toHaveLength(12);
     result.forEach((w) => {
       expect(w.total).toBe(0);
       expect(w.completed).toBe(0);
@@ -64,21 +64,21 @@ describe('getWeeklyProgressForQuarter', () => {
     expect(queryGoalItems).toHaveBeenCalledWith(expect.anything(), ['goal-1']);
   });
 
-  it('returns 13 progress entries when goals exist', async () => {
+  it('returns 12 progress entries when goals exist (week 13 excluded)', async () => {
     mockCreateClient();
     const goals = [{ id: 'goal-1', week_number: 1, quarter: 1 }];
     const items = [{ id: 'item-1', weekly_goal_id: 'goal-1', item_id: 'task-1', status: 'DONE' }];
     vi.mocked(queryWeeklyGoals).mockResolvedValue(goals);
     vi.mocked(queryGoalItems).mockResolvedValue(items);
     const result = await getWeeklyProgressForQuarter(2026, 1);
-    expect(result).toHaveLength(13);
+    expect(result).toHaveLength(12);
   });
 
   it('returns fallback empty weeks on query error', async () => {
     mockCreateClient();
     vi.mocked(queryWeeklyGoals).mockRejectedValue(new Error('DB failure'));
     const result = await getWeeklyProgressForQuarter(2026, 1);
-    expect(result).toHaveLength(13);
+    expect(result).toHaveLength(12);
     result.forEach((w) => {
       expect(w.total).toBe(0);
       expect(w.percentage).toBe(0);

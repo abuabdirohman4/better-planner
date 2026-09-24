@@ -25,7 +25,8 @@ export async function getWeeklyProgressForQuarter(
   if (!user) return [];
 
   const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
-  const totalWeeks = endWeek - startWeek + 1;
+  // Minggu 13 boleh diisi di Weekly Sync, tapi tidak dihitung di dashboard (app-5skl).
+  const totalWeeks = Math.min(endWeek - startWeek + 1, 12);
 
   try {
     const weeklyGoals = await queryWeeklyGoals(supabase, user.id, year, quarter);
