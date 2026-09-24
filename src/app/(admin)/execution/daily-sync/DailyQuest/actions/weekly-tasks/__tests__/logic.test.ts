@@ -6,6 +6,7 @@ import {
   filterTodoItems,
   getPreviousDaysInWeek,
   filterOutCompletedPreviousDays,
+  sortByPlanOrder,
   WeeklyTaskItem,
 } from '../logic';
 import { RawWeeklyGoal, RawWeeklyGoalItem, RawTask, RawMilestone, RawQuest } from '../queries';
@@ -275,5 +276,43 @@ describe('filterOutCompletedPreviousDays', () => {
   it('returns empty array for empty items input', () => {
     const result = filterOutCompletedPreviousDays([], new Set(['task-1']), new Set());
     expect(result).toEqual([]);
+  });
+});
+
+describe('sortByPlanOrder', () => {
+  const item = (id: string, parent: string | null = null): WeeklyTaskItem => ({
+    id, type: 'MAIN_QUEST', title: id, status: 'TODO', quest_title: '', goal_slot: 1, parent_task_id: parent,
+  });
+
+  it('urut milestone -> langkah, bukan display_order task saja', () => {
+    // "3.1" urutan 1 di milestone 3 tidak boleh mendahului "2.2" urutan 2 di milestone 2
+    const tasks = new Map<string, RawTask>([
+      ['3.1', makeTask({ id: '3.1', milestone_id: 'm3', display_order: 1 })],
+      ['2.2', makeTask({ id: '2.2', milestone_id: 'm2', display_order: 2 })],
+      ['2.3', makeTask({ id: '2.3', milestone_id: 'm2', display_order: 3 })],
+    ]);
+    const milestones = new Map<string, RawMilestone>([
+      ['m2', makeMilestone({ id: 'm2', display_order: 2 })],
+      ['m3', makeMilestone({ id: 'm3', display_order: 3 })],
+    ]);
+    const sorted = sortByPlanOrder([item('3.1'), item('2.3'), item('2.2')], tasks, milestones);
+    expect(sorted.map(i => i.id)).toEqual(['2.2', '2.3', '3.1']);
+  });
+
+  it('sub task ikut milestone & posisi parent-nya, setelah parent', () => {
+    const tasks = new Map<string, RawTask>([
+      ['p1', makeTask({ id: 'p1', milestone_id: 'm1', display_order: 1 })],
+      ['p2', makeTask({ id: 'p2', milestone_id: 'm1', display_order: 2 })],
+      ['s2b', makeTask({ id: 's2b', parent_task_id: 'p2', display_order: 2 })],
+      ['s2a', makeTask({ id: 's2a', parent_task_id: 'p2', display_order: 1 })],
+      ['s1', makeTask({ id: 's1', parent_task_id: 'p1', display_order: 1 })],
+    ]);
+    const milestones = new Map<string, RawMilestone>([['m1', makeMilestone({ id: 'm1', display_order: 1 })]]);
+    const sorted = sortByPlanOrder(
+      [item('s2b', 'p2'), item('p2'), item('s1', 'p1'), item('s2a', 'p2')],
+      tasks,
+      milestones
+    );
+    expect(sorted.map(i => i.id)).toEqual(['s1', 'p2', 's2a', 's2b']);
   });
 });

@@ -16,6 +16,7 @@ import {
   filterTodoItems,
   getPreviousDaysInWeek,
   filterOutCompletedPreviousDays,
+  sortByPlanOrder,
 } from './logic';
 
 export async function getTasksForWeek(
@@ -45,8 +46,13 @@ export async function getTasksForWeek(
   const allTasks = await queryTasksByIds(supabase, itemIds);
   const taskMap = new Map(allTasks.map(task => [task.id, task]));
 
+  // Parent sub task yang tidak ikut dipilih — dibutuhkan untuk urutan (milestone & posisi parent)
+  const missingParentIds = [...new Set(allTasks.map(t => t.parent_task_id).filter((id): id is string => !!id && !taskMap.has(id)))];
+  const parentTasks = missingParentIds.length ? await queryTasksByIds(supabase, missingParentIds) : [];
+  const orderTaskMap = new Map([...taskMap, ...parentTasks.map(t => [t.id, t] as const)]);
+
   // 4. Batch fetch milestones and quests
-  const milestoneIds = [...new Set(allTasks.map(t => t.milestone_id).filter((id): id is string => id !== null))];
+  const milestoneIds = [...new Set([...orderTaskMap.values()].map(t => t.milestone_id).filter((id): id is string => id !== null))];
   const allMilestones = await queryMilestonesByIds(supabase, milestoneIds);
   const milestoneMap = new Map(allMilestones.map(m => [m.id, m]));
 
@@ -57,7 +63,7 @@ export async function getTasksForWeek(
   // 5. Combine, deduplicate, and filter TODO only
   const combined = combineItemsWithDetails(items, weeklyGoals, taskMap, milestoneMap, questMap);
   const deduplicated = deduplicateItems(combined);
-  let result = filterTodoItems(deduplicated);
+  let result = sortByPlanOrder(filterTodoItems(deduplicated), orderTaskMap, milestoneMap);
 
   // 6. Filter tasks completed on previous days this week
   if (selectedDate) {

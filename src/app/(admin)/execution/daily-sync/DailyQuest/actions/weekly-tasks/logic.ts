@@ -62,6 +62,34 @@ export function combineItemsWithDetails(
 }
 
 /**
+ * Urut sesuai rencana: milestone -> langkah -> sub task (sub task ikut milestone & posisi parent).
+ * taskMap harus memuat parent dari sub task; sub task umumnya tanpa milestone_id.
+ */
+export function sortByPlanOrder(
+  items: WeeklyTaskItem[],
+  taskMap: Map<string, RawTask>,
+  milestoneMap: Map<string, RawMilestone>
+): WeeklyTaskItem[] {
+  const key = (item: WeeklyTaskItem): number[] => {
+    const task = taskMap.get(item.id);
+    const parent = task?.parent_task_id ? taskMap.get(task.parent_task_id) : undefined;
+    const milestoneId = task?.milestone_id ?? parent?.milestone_id;
+    const own = task?.display_order ?? 0;
+    return [
+      (milestoneId && milestoneMap.get(milestoneId)?.display_order) || 0,
+      parent ? parent.display_order ?? 0 : own,
+      parent ? 1 : 0,
+      own,
+    ];
+  };
+  return [...items].sort((a, b) => {
+    const ka = key(a), kb = key(b);
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
+    return 0;
+  });
+}
+
+/**
  * Remove duplicate items by id (first occurrence wins).
  */
 export function deduplicateItems(items: WeeklyTaskItem[]): WeeklyTaskItem[] {

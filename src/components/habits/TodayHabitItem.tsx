@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Button from "@/components/ui/button/Button";
 import type { Habit, HabitCompletion } from "@/types/habit";
 import {
   completionTime,
@@ -191,31 +192,39 @@ export default function TodayHabitItem({
 
     {/* Koreksi jam dikerjakan (app-r02c). Di luar Row karena baris binary itu sendiri
         sebuah <button> — tombol di dalam tombol bukan HTML yang sah.
-        Sengaja inline, bukan modal: satu input time, blur/change langsung simpan. */}
+        Simpan eksplisit (tombol/Enter), bukan onBlur: Safari memicu blur saat pindah
+        segmen jam -> menit, jadi dulu baru jamnya yang tersimpan. */}
     {canEditTime && (
       editingTime === null ? (
         <button
           type="button"
           onClick={() => setEditingTime(doneTime ?? "")}
           data-testid={`habit-edit-time-${habit.id}`}
-          className="absolute right-3 bottom-1.5 text-[11px] underline text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          className="absolute right-3 bottom-2 px-2 py-1 text-sm underline text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
         >
           ubah jam
         </button>
       ) : (
-        <input
-          type="time"
-          autoFocus
-          value={editingTime}
-          onChange={(e) => setEditingTime(e.target.value)}
-          onBlur={(e) => saveTime(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-            if (e.key === "Escape") setEditingTime(null);
-          }}
-          data-testid={`habit-time-input-${habit.id}`}
-          className="absolute right-3 bottom-1.5 w-[104px] rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-1.5 py-0.5 text-xs text-gray-900 dark:text-gray-100"
-        />
+        <div className="mt-2 flex items-center justify-end gap-2">
+          <input
+            type="time"
+            autoFocus
+            value={editingTime}
+            onChange={(e) => setEditingTime(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveTime(e.currentTarget.value);
+              if (e.key === "Escape") setEditingTime(null);
+            }}
+            data-testid={`habit-time-input-${habit.id}`}
+            className="w-[130px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-base text-gray-900 dark:text-gray-100"
+          />
+          <Button size="sm" variant="primary" onClick={() => saveTime(editingTime)} data-testid={`habit-time-save-${habit.id}`}>
+            Simpan
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setEditingTime(null)}>
+            Batal
+          </Button>
+        </div>
       )
     )}
     </div>

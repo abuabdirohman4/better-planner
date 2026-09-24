@@ -17,6 +17,7 @@ vi.mock('../logic', () => ({
   filterTodoItems: vi.fn(),
   getPreviousDaysInWeek: vi.fn(),
   filterOutCompletedPreviousDays: vi.fn(),
+  sortByPlanOrder: vi.fn((items: unknown[]) => items),
 }));
 
 import { createClient } from '@/lib/supabase/server';

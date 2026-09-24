@@ -19,12 +19,14 @@ export interface RawTask {
   milestone_id: string | null;
   type: string;
   parent_task_id: string | null;
+  display_order?: number | null;
 }
 
 export interface RawMilestone {
   id: string;
   title: string;
   quest_id: string | null;
+  display_order?: number | null;
 }
 
 export interface RawQuest {
@@ -76,7 +78,7 @@ export async function queryTasksByIds(
 ): Promise<RawTask[]> {
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, title, status, milestone_id, type, parent_task_id')
+    .select('id, title, status, milestone_id, type, parent_task_id, display_order')
     .in('id', itemIds);
   if (error) throw error;
   return data || [];
@@ -89,7 +91,7 @@ export async function queryMilestonesByIds(
   if (milestoneIds.length === 0) return [];
   const { data, error } = await supabase
     .from('milestones')
-    .select('id, title, quest_id')
+    .select('id, title, quest_id, display_order')
     .in('id', milestoneIds);
   if (error) throw error;
   return data || [];
