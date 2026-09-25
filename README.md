@@ -76,7 +76,7 @@ cp .env.example .env.local
 
 # Launch development server
 npm run dev
-# Open http://localhost:3000
+# Open http://localhost:5100
 ```
 
 ## 💎 **Why Developers Love Better Planner**

@@ -160,7 +160,7 @@ refactor: improve code structure
 ## 🔧 Development Commands
 
 ```bash
-npm run dev              # Dev server at localhost:3000
+npm run dev              # Dev server at localhost:5100
 npm run build            # Production build
 npm run type-check       # TypeScript check (no emit)
 npm run format           # Format with Prettier

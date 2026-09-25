@@ -8,7 +8,7 @@ export default defineConfig({
   timeout: 60000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:5100',
     actionTimeout: 15000,
     navigationTimeout: 45000,
     serviceWorkers: 'block',
@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:5100',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
