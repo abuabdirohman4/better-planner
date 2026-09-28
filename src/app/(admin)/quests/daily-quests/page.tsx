@@ -6,6 +6,7 @@ import { useDailyQuests } from "./hooks/useDailyQuests";
 import DailyQuestList from "./components/DailyQuestList";
 import Button from "@/components/ui/button/Button";
 import CarryOverModal from "../components/CarryOverModal";
+import CarryOverButton from "../components/CarryOverButton";
 import { dailySyncKeys, swrMutate } from "@/lib/swr";
 
 // Disable SSR untuk page ini karena menggunakan Zustand store
@@ -31,18 +32,11 @@ export default function DailyQuestsPage() {
               Daily <span className="text-brand-600">Quests</span>
             </h1>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setIsCarryOverOpen(true)}
-              size="md"
-              variant="outline"
-              data-testid="carry-over-open-btn"
-            >
-              Ambil dari quarter sebelumnya
-            </Button>
+          <div className="flex gap-2 shrink-0">
+            <CarryOverButton onClick={() => setIsCarryOverOpen(true)} />
             <Button
               onClick={() => setIsAdding(true)}
-              className="btn btn-primary"
+              className="btn btn-primary whitespace-nowrap"
               size="md"
               variant="primary"
               data-testid="daily-quest-add-btn"

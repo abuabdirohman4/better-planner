@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 import { TaskItemSkeleton } from "@/components/ui/skeleton";
 import CarryOverModal from "../components/CarryOverModal";
+import CarryOverButton from "../components/CarryOverButton";
 
 // Disable SSR untuk page ini karena menggunakan Zustand store
 export const dynamic = 'force-dynamic';
@@ -167,18 +168,11 @@ export default function WorkQuestsPage() {
               Work <span className="text-brand-600">Quests</span>
             </h1>
           </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setIsCarryOverOpen(true)}
-              size="md"
-              variant="outline"
-              data-testid="carry-over-open-btn"
-            >
-              Ambil dari quarter sebelumnya
-            </Button>
+          <div className="flex gap-2 shrink-0">
+            <CarryOverButton onClick={() => setIsCarryOverOpen(true)} />
             <Button
               onClick={() => setIsFormOpen(true)}
-              className="btn btn-primary"
+              className="btn btn-primary whitespace-nowrap"
               size="md"
               variant="primary"
               data-testid="project-add-btn"

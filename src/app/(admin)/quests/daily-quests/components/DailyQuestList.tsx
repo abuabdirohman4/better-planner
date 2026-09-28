@@ -152,7 +152,7 @@ const DailyQuestList: React.FC<DailyQuestListProps> = ({
       )}
 
       {/* Search and Toggle */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex gap-2 sm:gap-4">
         <div className="flex-1">
           <input
             type="text"
