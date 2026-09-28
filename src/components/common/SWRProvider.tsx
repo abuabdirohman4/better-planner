@@ -1,8 +1,8 @@
 "use client";
 
-import { SWRConfig, SWRConfiguration } from 'swr';
+import { SWRConfig, SWRConfiguration, useSWRConfig } from 'swr';
 
-import { swrConfig } from '@/lib/swr';
+import { swrConfig, setScopedMutate } from '@/lib/swr';
 
 /**
  * Custom SWR cache provider using localStorage for persistent cache.
@@ -40,6 +40,13 @@ function localStorageProvider(): Map<string, unknown> {
   return map;
 }
 
+/** Daftarkan mutate milik provider ke lib/swr — mutate global tidak melihat cache ini. */
+function ScopedMutateBridge() {
+  const { mutate } = useSWRConfig();
+  setScopedMutate(mutate);
+  return null;
+}
+
 interface SWRProviderProps {
   children: React.ReactNode;
 }
@@ -60,6 +67,7 @@ export default function SWRProvider({ children }: SWRProviderProps) {
   };
   return (
     <SWRConfig value={config}>
+      <ScopedMutateBridge />
       {children}
     </SWRConfig>
   );

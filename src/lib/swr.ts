@@ -1,6 +1,15 @@
-import { mutate as globalMutate } from 'swr';
+import { mutate as globalMutate, type ScopedMutator } from 'swr';
 import { useActivityStore } from '@/stores/activityStore';
 import { SWRConfiguration } from 'swr';
+
+// SWRProvider memakai cache provider sendiri; mutate global dari 'swr' tidak menyentuhnya,
+// jadi revalidasi lintas komponen wajib lewat mutate milik provider (didaftarkan SWRProvider).
+let scopedMutate: ScopedMutator | null = null;
+export function setScopedMutate(mutate: ScopedMutator) {
+  scopedMutate = mutate;
+}
+export const swrMutate = ((...args: Parameters<ScopedMutator>) =>
+  (scopedMutate ?? globalMutate)(...args)) as ScopedMutator;
 
 /**
  * Enhanced SWR configuration for optimal prefetching and caching
@@ -146,7 +155,7 @@ export const isActivityLogsKey = (key: unknown) =>
  */
 export function notifyActivityLogsChanged(): Promise<unknown> {
   useActivityStore.getState().triggerRefresh();
-  return globalMutate(isActivityLogsKey);
+  return swrMutate(isActivityLogsKey);
 }
 
 /**
@@ -229,7 +238,7 @@ export const isHabitsKey = (key: unknown) => Array.isArray(key) && key[0] === 'h
  * a single month's mutate would miss.
  */
 export function notifyHabitsChanged(): Promise<unknown> {
-  return globalMutate(isHabitsKey);
+  return swrMutate(isHabitsKey);
 }
 
 /**
