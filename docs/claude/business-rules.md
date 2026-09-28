@@ -37,6 +37,11 @@ const weeks = getWeeksInQuarter('Q1', 2026); // Array of 13 weeks
 3. **Daily Tasks** - Weekly milestones become daily tasks
 4. **Execution** - Track daily progress toward quarterly goals
 
+### Quarter Association
+- Quest (daily/work/side) diikat ke quarter lewat `tasks.created_at` yang berada dalam rentang `getQuarterDates(year, quarter)`.
+- Insert quest dari UI yang tahu quarter aktif wajib menggunakan `createdAtForQuarter(year, quarter)` dari `@/lib/quarterUtils` agar masuk ke quarter yang sedang dilihat, bukan otomatis tanggal hari ini.
+- **Fitur Carry-Over**: Quest berpindah antar-quarter disalin (bukan di-update/dipindah) lewat `carryOverQuests` dari `@/app/(admin)/quests/actions/carry-over/actions`, agar riwayat quarter sebelumnya tetap utuh. Baris baru diberi `created_at = createdAtForQuarter(year, quarter)` dan status `TODO`.
+
 **Components**: `src/app/(admin)/planning/`
 
 ---

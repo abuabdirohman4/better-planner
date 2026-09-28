@@ -119,3 +119,18 @@ export async function deleteSideQuestTask(
     .eq('type', 'SIDE_QUEST');
   if (error) throw error;
 }
+
+export async function insertSideQuest(
+  supabase: SupabaseClient,
+  userId: string,
+  title: string,
+  createdAt: string
+) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert({ user_id: userId, title, type: 'SIDE_QUEST', status: 'TODO', milestone_id: null, created_at: createdAt })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

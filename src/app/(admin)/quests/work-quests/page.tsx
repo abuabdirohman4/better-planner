@@ -7,6 +7,7 @@ import type { WorkQuestProject, WorkQuestProjectFormData } from "@/types/work-qu
 import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 import { TaskItemSkeleton } from "@/components/ui/skeleton";
+import CarryOverModal from "../components/CarryOverModal";
 
 // Disable SSR untuk page ini karena menggunakan Zustand store
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,7 @@ export default function WorkQuestsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
+  const [isCarryOverOpen, setIsCarryOverOpen] = useState(false);
 
   const handleCreateProject = async (formData: WorkQuestProjectFormData) => {
     try {
@@ -165,15 +167,25 @@ export default function WorkQuestsPage() {
               Work <span className="text-brand-600">Quests</span>
             </h1>
           </div>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="btn btn-primary"
-            size="md"
-            variant="primary"
-            data-testid="project-add-btn"
-          >
-            Add Project
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsCarryOverOpen(true)}
+              size="md"
+              variant="outline"
+              data-testid="carry-over-open-btn"
+            >
+              Ambil dari quarter lalu
+            </Button>
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              className="btn btn-primary"
+              size="md"
+              variant="primary"
+              data-testid="project-add-btn"
+            >
+              Add Project
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -210,6 +222,15 @@ export default function WorkQuestsPage() {
         onClose={handleCloseModal}
         workQuest={editingProject}
         onSave={(data: WorkQuestProjectFormData) => editingProject && handleUpdateProject(editingProject.id, data)}
+      />
+
+      <CarryOverModal
+        type="WORK_QUEST"
+        year={year}
+        quarter={quarter}
+        isOpen={isCarryOverOpen}
+        onClose={() => setIsCarryOverOpen(false)}
+        onDone={() => mutate()}
       />
     </div>
   );

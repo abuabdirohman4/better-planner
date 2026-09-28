@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { getSideQuests, updateSideQuestStatus, updateSideQuest, deleteSideQuest } from '../actions/sideQuestActions';
+import { getSideQuests, updateSideQuestStatus, updateSideQuest, deleteSideQuest, createSideQuest } from '../actions/sideQuestActions';
 import type { SideQuest } from '@/types/side-quest';
 
 export function useSideQuests(year: number, quarter: number) {
@@ -80,6 +80,11 @@ export function useSideQuests(year: number, quarter: number) {
     }
   };
 
+  const addQuest = async (title: string) => {
+    const created = await createSideQuest(title, year, quarter);
+    mutate((currentData) => [created, ...(currentData || [])], false);
+  };
+
   return {
     sideQuests,
     isLoading,
@@ -87,6 +92,7 @@ export function useSideQuests(year: number, quarter: number) {
     refetch: () => mutate(),
     toggleStatus,
     updateQuest,
-    deleteQuest
+    deleteQuest,
+    addQuest
   };
 }

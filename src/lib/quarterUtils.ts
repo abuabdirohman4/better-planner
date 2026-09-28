@@ -148,6 +148,13 @@ export const getQuarterDates = (year: number, quarter: number): { startDate: Dat
   return { startDate: quarterStartDate, endDate: quarterEndDate };
 };
 
+// Quest diikat ke quarter lewat created_at, jadi quest yang dibuat saat melihat quarter lain harus diberi tanggal di dalam quarter itu.
+export function createdAtForQuarter(year: number, quarter: number, now: Date = new Date()): string {
+  const { startDate, endDate } = getQuarterDates(year, quarter);
+  if (now >= startDate && now <= endDate) return now.toISOString();
+  return startDate.toISOString();
+}
+
 // Check if quarter is current
 export function isCurrentQuarter(year: number, quarter: number): boolean {
   const currentQuarter = parseQParam(null);

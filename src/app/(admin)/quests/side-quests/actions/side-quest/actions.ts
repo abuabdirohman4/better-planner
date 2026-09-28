@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getQuarterDates } from "@/lib/quarterUtils";
+import { getQuarterDates, createdAtForQuarter } from "@/lib/quarterUtils";
 import type { SideQuest } from '@/types/side-quest';
 import {
   querySideQuests,
@@ -14,6 +14,7 @@ import {
   deleteActivityLogsByTask,
   deleteDailyPlanItemsByTask,
   deleteSideQuestTask,
+  insertSideQuest,
 } from "./queries";
 import { buildSideQuestUpdateData } from "./logic";
 
@@ -68,4 +69,15 @@ export async function deleteSideQuest(taskId: string): Promise<void> {
   await deleteDailyPlanItemsByTask(supabase, taskId);
   await deleteSideQuestTask(supabase, taskId, user.id);
   revalidatePath("/quests/side-quests");
+}
+
+export async function createSideQuest(title: string, year: number, quarter: number): Promise<SideQuest> {
+  const trimmed = title.trim();
+  if (!trimmed) throw new Error("Title is required");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  const task = await insertSideQuest(supabase, user.id, trimmed, createdAtForQuarter(year, quarter));
+  revalidatePath("/quests/side-quests");
+  return task;
 }
