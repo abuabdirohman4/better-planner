@@ -229,7 +229,8 @@ const AppHeader: React.FC = () => {
           {/* Avatar/sign out — mobile only, and only on the dashboard: the application menu is
               hidden under md, and the bottom nav puts Dashboard one tap away from anywhere. */}
           {pathname === "/dashboard" && (
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center gap-2">
+              <ThemeToggleButton />
               <UserDropdown />
             </div>
           )}
