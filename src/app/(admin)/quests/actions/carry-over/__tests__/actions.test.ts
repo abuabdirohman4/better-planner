@@ -1,6 +1,6 @@
 // @vitest-environment node
-import { describe, it, expect, vi } from 'vitest';
-import { makeQueryBuilder, makeSupabase } from '@/test-utils/supabase-mock';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { makeSupabase } from '@/test-utils/supabase-mock';
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
@@ -9,124 +9,174 @@ vi.mock('@/lib/quarterUtils', () => ({
     startDate: new Date(Date.UTC(year, (quarter - 1) * 3, 1)),
     endDate: new Date(Date.UTC(year, quarter * 3, 0, 23, 59, 59)),
   })),
-  getPrevQuarter: vi.fn().mockReturnValue({ year: 2026, quarter: 3 }),
   createdAtForQuarter: vi.fn().mockReturnValue('2026-10-01T00:00:00.000Z'),
+  quarterOfDate: vi.fn().mockReturnValue({ year: 2026, quarter: 3 }),
+}));
+
+vi.mock('../queries', () => ({
+  queryTopTasksBefore: vi.fn(),
+  queryTopTasksInRange: vi.fn(),
+  queryTasksByIds: vi.fn(),
+  queryChildren: vi.fn(),
+  insertTasks: vi.fn(),
 }));
 
 import { createClient } from '@/lib/supabase/server';
-import { getCarryOverCandidates, carryOverQuests } from '../actions';
+import {
+  queryTopTasksBefore,
+  queryTopTasksInRange,
+  queryTasksByIds,
+  queryChildren,
+  insertTasks,
+} from '../queries';
+import { getCarryOverGroups, carryOverQuests, carryOverWorkQuests } from '../actions';
 
-describe('getCarryOverCandidates', () => {
-  it('throws User not authenticated when user is null', async () => {
-    (createClient as any).mockResolvedValue(makeSupabase({ user: null }));
-    await expect(getCarryOverCandidates('DAILY_QUEST', 2026, 4)).rejects.toThrow('User not authenticated');
+describe('getCarryOverGroups', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('returns carry over candidates when authenticated', async () => {
-    const sourceRows = [
-      { id: 't1', title: 'Task 1', description: null, status: 'TODO', is_archived: false, focus_duration: 25, parent_task_id: null },
-    ];
-    const targetRows: any[] = [];
+  it('throws User not authenticated when user is null', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: null }));
+    await expect(getCarryOverGroups('DAILY_QUEST', 2026, 4)).rejects.toThrow('User not authenticated');
+  });
 
-    let callCount = 0;
-    const builder = makeQueryBuilder();
-    builder.then = vi.fn().mockImplementation((resolve) => {
-      callCount++;
-      // call 1: source top tasks, call 2: target top tasks
-      return Promise.resolve({ data: callCount === 1 ? sourceRows : targetRows, error: null }).then(resolve);
-    });
-
-    (createClient as any).mockResolvedValue(makeSupabase({
-      user: { id: 'user-1' },
-      fromBuilder: builder,
-    }));
-
-    const candidates = await getCarryOverCandidates('DAILY_QUEST', 2026, 4);
-    expect(candidates).toEqual([
-      { id: 't1', title: 'Task 1', detail: null, alreadyExists: false },
+  it('returns carry over groups when authenticated', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
+    (queryTopTasksBefore as any).mockResolvedValue([
+      { id: 'd1', title: 'Task 1', description: null, status: 'TODO', is_archived: false, created_at: '2026-07-01T00:00:00.000Z' },
     ]);
+    (queryTopTasksInRange as any).mockResolvedValue([]);
+
+    const groups = await getCarryOverGroups('DAILY_QUEST', 2026, 4);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].candidates[0].id).toBe('d1');
   });
 });
 
 describe('carryOverQuests', () => {
-  it('returns 0 without calling createClient if ids is empty', async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('returns 0 without calling createClient if ids is empty', async () => {
     const result = await carryOverQuests('DAILY_QUEST', [], 2026, 4);
     expect(result).toBe(0);
     expect(createClient).not.toHaveBeenCalled();
   });
 
+  it('throws error when called with WORK_QUEST', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
+    await expect(carryOverQuests('WORK_QUEST', ['w1'], 2026, 4)).rejects.toThrow('Use carryOverWorkQuests');
+  });
+
   it('copies non-work quests with status TODO and createdAtForQuarter', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
     const source = [
-      { id: 't1', title: 'Side Quest 1', description: 'Desc', status: 'IN_PROGRESS', parent_task_id: null },
+      { id: 't1', title: 'Side Quest 1', description: 'Desc', status: 'IN_PROGRESS', parent_task_id: null, created_at: '2026-07-01T00:00:00.000Z' },
     ];
-
-    const selectBuilder = makeQueryBuilder({ data: source, error: null });
-    const insertBuilder = makeQueryBuilder({ data: [{ id: 'new-t1' }], error: null });
-
-    const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
-      from: vi.fn().mockImplementation((table: string) => {
-        return selectBuilder;
-      }),
-    };
-    (createClient as any).mockResolvedValue(supabase);
-
-    // Mock insert specifically
-    selectBuilder.insert = vi.fn().mockReturnValue(insertBuilder);
+    (queryTasksByIds as any).mockResolvedValue(source);
+    (insertTasks as any).mockResolvedValue([{ id: 'new-t1' }]);
 
     const count = await carryOverQuests('SIDE_QUEST', ['t1'], 2026, 4);
     expect(count).toBe(1);
-    expect(selectBuilder.insert).toHaveBeenCalledWith([
-      {
-        user_id: 'user-1',
-        title: 'Side Quest 1',
-        description: 'Desc',
-        type: 'SIDE_QUEST',
-        status: 'TODO',
-        milestone_id: null,
-        parent_task_id: null,
-        created_at: '2026-10-01T00:00:00.000Z',
-      },
-    ]);
+    expect(insertTasks).toHaveBeenCalledWith(
+      expect.anything(),
+      [
+        {
+          user_id: 'user-1',
+          title: 'Side Quest 1',
+          description: 'Desc',
+          type: 'SIDE_QUEST',
+          status: 'TODO',
+          milestone_id: null,
+          parent_task_id: null,
+          created_at: '2026-10-01T00:00:00.000Z',
+        },
+      ]
+    );
+  });
+});
+
+describe('carryOverWorkQuests', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('copies work quests with their open children', async () => {
-    const project = { id: 'p1', title: 'Project 1', description: null, status: 'IN_PROGRESS', parent_task_id: null };
-    const children = [
-      { id: 'c1', title: 'Child Done', description: null, status: 'DONE', parent_task_id: 'p1' },
-      { id: 'c2', title: 'Child Open', description: null, status: 'TODO', parent_task_id: 'p1' },
-    ];
+  it('returns 0 without calling createClient if selections is empty', async () => {
+    const result = await carryOverWorkQuests([], 2026, 4);
+    expect(result).toBe(0);
+    expect(createClient).not.toHaveBeenCalled();
+  });
 
-    let selectCalls = 0;
-    const queryBuilder = makeQueryBuilder();
-    queryBuilder.then = vi.fn().mockImplementation((resolve) => {
-      selectCalls++;
-      // 1st select: queryTasksByIds -> [project]
-      // 2nd select: queryChildren -> children
-      return Promise.resolve({ data: selectCalls === 1 ? [project] : children, error: null }).then(resolve);
+  it('when target does not have project, inserts project then tasks with new project id', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
+
+    const project = { id: 'p1', title: 'Project Alpha', description: null, status: 'TODO', created_at: '2026-07-01T00:00:00.000Z' };
+    const task = { id: 't1', title: 'Task 1', description: null, status: 'TODO', parent_task_id: 'p1', created_at: '2026-07-02T00:00:00.000Z' };
+
+    (queryTasksByIds as any).mockImplementation((_sb: any, _u: any, _type: any, ids: string[]) => {
+      if (ids.includes('p1') && ids.length === 1) return Promise.resolve([project]);
+      if (ids.includes('t1')) return Promise.resolve([task]);
+      return Promise.resolve([]);
     });
+    (queryTopTasksInRange as any).mockResolvedValue([]);
+    (insertTasks as any)
+      .mockResolvedValueOnce([{ id: 'new-p1' }]) // project insert
+      .mockResolvedValueOnce([{ id: 'new-t1' }]); // task insert
 
-    let insertCalls: any[] = [];
-    queryBuilder.insert = vi.fn().mockImplementation((rows) => {
-      insertCalls.push(rows);
-      return makeQueryBuilder({ data: [{ id: 'new-p1' }], error: null });
+    const count = await carryOverWorkQuests([{ projectId: 'p1', taskIds: ['t1'] }], 2026, 4);
+    expect(count).toBe(2); // 1 project + 1 task
+
+    expect(insertTasks).toHaveBeenCalledTimes(2);
+    // Project insert
+    expect((insertTasks as any).mock.calls[0][1][0].title).toBe('Project Alpha');
+    // Task insert
+    expect((insertTasks as any).mock.calls[1][1][0].title).toBe('Task 1');
+    expect((insertTasks as any).mock.calls[1][1][0].parent_task_id).toBe('new-p1');
+  });
+
+  it('when target already has project with same title, adds task to existing project without creating new project', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
+
+    const project = { id: 'p1', title: 'Project Alpha', description: null, status: 'TODO', created_at: '2026-07-01T00:00:00.000Z' };
+    const task = { id: 't1', title: 'Task 1', description: null, status: 'TODO', parent_task_id: 'p1', created_at: '2026-07-02T00:00:00.000Z' };
+    const targetProject = { id: 'tp1', title: '  project alpha ', description: null, status: 'TODO', created_at: '2026-10-01T00:00:00.000Z' };
+
+    (queryTasksByIds as any).mockImplementation((_sb: any, _u: any, _type: any, ids: string[]) => {
+      if (ids.includes('p1') && ids.length === 1) return Promise.resolve([project]);
+      if (ids.includes('t1')) return Promise.resolve([task]);
+      return Promise.resolve([]);
     });
+    (queryTopTasksInRange as any).mockResolvedValue([targetProject]);
+    (insertTasks as any).mockResolvedValue([{ id: 'new-t1' }]);
 
-    const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
-      from: vi.fn().mockReturnValue(queryBuilder),
-    };
-    (createClient as any).mockResolvedValue(supabase);
+    const count = await carryOverWorkQuests([{ projectId: 'p1', taskIds: ['t1'] }], 2026, 4);
+    expect(count).toBe(1); // 0 project (reused existing) + 1 task
 
-    const count = await carryOverQuests('WORK_QUEST', ['p1'], 2026, 4);
-    expect(count).toBe(1);
-    expect(insertCalls.length).toBe(2);
-    // First insert is the parent project
-    expect(insertCalls[0][0].title).toBe('Project 1');
-    // Second insert is open children only
-    expect(insertCalls[1].length).toBe(1);
-    expect(insertCalls[1][0].title).toBe('Child Open');
-    expect(insertCalls[1][0].parent_task_id).toBe('new-p1');
+    expect(insertTasks).toHaveBeenCalledTimes(1);
+    expect((insertTasks as any).mock.calls[0][1][0].parent_task_id).toBe('tp1');
+  });
+
+  it('ignores tasks whose parent belongs to another project title', async () => {
+    (createClient as any).mockResolvedValue(makeSupabase({ user: { id: 'user-1' } }));
+
+    const project = { id: 'p1', title: 'Project Alpha', description: null, status: 'TODO', created_at: '2026-07-01T00:00:00.000Z' };
+    const otherProject = { id: 'p_other', title: 'Project Beta', description: null, status: 'TODO', created_at: '2026-07-01T00:00:00.000Z' };
+    const task = { id: 't_rogue', title: 'Task Rogue', description: null, status: 'TODO', parent_task_id: 'p_other', created_at: '2026-07-02T00:00:00.000Z' };
+
+    (queryTasksByIds as any).mockImplementation((_sb: any, _u: any, _type: any, ids: string[]) => {
+      if (ids.includes('p1') && ids.length === 1) return Promise.resolve([project]);
+      if (ids.includes('t_rogue')) return Promise.resolve([task]);
+      if (ids.includes('p_other')) return Promise.resolve([otherProject]);
+      return Promise.resolve([]);
+    });
+    (queryTopTasksInRange as any).mockResolvedValue([]);
+    (insertTasks as any).mockResolvedValue([{ id: 'new-p1' }]);
+
+    const count = await carryOverWorkQuests([{ projectId: 'p1', taskIds: ['t_rogue'] }], 2026, 4);
+    expect(count).toBe(1); // 1 project, 0 rogue tasks
+
+    expect(insertTasks).toHaveBeenCalledTimes(1);
   });
 });

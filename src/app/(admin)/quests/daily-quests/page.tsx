@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { mutate as globalMutate } from "swr";
 import { useQuarterStore } from "@/stores/quarterStore";
 import { useDailyQuests } from "./hooks/useDailyQuests";
 import DailyQuestList from "./components/DailyQuestList";
 import Button from "@/components/ui/button/Button";
 import CarryOverModal from "../components/CarryOverModal";
-import { dailySyncKeys } from "@/lib/swr";
+import { dailySyncKeys, swrMutate } from "@/lib/swr";
 
 // Disable SSR untuk page ini karena menggunakan Zustand store
 export const dynamic = 'force-dynamic';
@@ -39,7 +38,7 @@ export default function DailyQuestsPage() {
               variant="outline"
               data-testid="carry-over-open-btn"
             >
-              Ambil dari quarter lalu
+              Ambil dari quarter sebelumnya
             </Button>
             <Button
               onClick={() => setIsAdding(true)}
@@ -74,7 +73,7 @@ export default function DailyQuestsPage() {
         onClose={() => setIsCarryOverOpen(false)}
         onDone={() => {
           refetch();
-          globalMutate(dailySyncKeys.dailyQuests(year, quarter));
+          swrMutate(dailySyncKeys.dailyQuests(year, quarter));
         }}
       />
     </div>

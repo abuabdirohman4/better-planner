@@ -40,7 +40,7 @@ const weeks = getWeeksInQuarter('Q1', 2026); // Array of 13 weeks
 ### Quarter Association
 - Quest (daily/work/side) diikat ke quarter lewat `tasks.created_at` yang berada dalam rentang `getQuarterDates(year, quarter)`.
 - Insert quest dari UI yang tahu quarter aktif wajib menggunakan `createdAtForQuarter(year, quarter)` dari `@/lib/quarterUtils` agar masuk ke quarter yang sedang dilihat, bukan otomatis tanggal hari ini.
-- **Fitur Carry-Over**: Quest berpindah antar-quarter disalin (bukan di-update/dipindah) lewat `carryOverQuests` dari `@/app/(admin)/quests/actions/carry-over/actions`, agar riwayat quarter sebelumnya tetap utuh. Baris baru diberi `created_at = createdAtForQuarter(year, quarter)` dan status `TODO`.
+- **Fitur Carry-Over**: Quest berpindah antar-quarter disalin (bukan di-update/dipindah) agar riwayat quarter sebelumnya tetap utuh. Baris baru diberi `created_at = createdAtForQuarter(year, quarter)` dan status `TODO`. Sumber carry-over mencakup semua quarter sebelum quarter target yang masih belum selesai (dedup per judul mengambil entri terbaru). Untuk Work Quest, salinan dapat dipilih per task dan jika project dengan judul sama sudah ada di quarter target, task langsung ditambahkan ke project tersebut lewat `carryOverWorkQuests`. Daily & side quest disalin lewat `carryOverQuests`.
 
 **Components**: `src/app/(admin)/planning/`
 

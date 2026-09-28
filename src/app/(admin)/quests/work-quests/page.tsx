@@ -174,7 +174,7 @@ export default function WorkQuestsPage() {
               variant="outline"
               data-testid="carry-over-open-btn"
             >
-              Ambil dari quarter lalu
+              Ambil dari quarter sebelumnya
             </Button>
             <Button
               onClick={() => setIsFormOpen(true)}

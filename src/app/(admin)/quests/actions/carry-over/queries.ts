@@ -2,7 +2,26 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CarryOverType, SourceTask } from './logic';
 
-const COLS = 'id, title, description, status, is_archived, focus_duration, parent_task_id';
+const COLS = 'id, title, description, status, is_archived, focus_duration, parent_task_id, created_at';
+
+export async function queryTopTasksBefore(
+  supabase: SupabaseClient,
+  userId: string,
+  type: CarryOverType,
+  beforeIso: string
+): Promise<SourceTask[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(COLS)
+    .eq('user_id', userId)
+    .eq('type', type)
+    .is('parent_task_id', null)
+    .lt('created_at', beforeIso)
+    .order('created_at', { ascending: false })
+    .limit(1000); // ponytail: batas PostgREST, urut terbaru dulu supaya yang terpotong quest tertua
+  if (error) throw error;
+  return data ?? [];
+}
 
 export async function queryTopTasksInRange(
   supabase: SupabaseClient,

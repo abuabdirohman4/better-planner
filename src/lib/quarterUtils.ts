@@ -155,6 +155,12 @@ export function createdAtForQuarter(year: number, quarter: number, now: Date = n
   return startDate.toISOString();
 }
 
+// Quarter perencanaan (13 minggu) tempat sebuah tanggal jatuh.
+export function quarterOfDate(date: Date): { year: number; quarter: number } {
+  const { weekNumber, year } = getWeekAndYearFromDate(date);
+  return { year, quarter: getQuarterFromWeek(weekNumber) };
+}
+
 // Check if quarter is current
 export function isCurrentQuarter(year: number, quarter: number): boolean {
   const currentQuarter = parseQParam(null);
