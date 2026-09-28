@@ -135,56 +135,56 @@
 }
 
 /* Dark mode styles */
-.dark .tiptapContainer {
+:global(.dark) .tiptapContainer {
   border-color: #4b5563;
   background-color: #1f2937;
 }
 
-.dark .tiptapContainer:focus-within {
+:global(.dark) .tiptapContainer:focus-within {
   border-color: #3b82f6;
 }
 
-.dark .toolbar {
+:global(.dark) .toolbar {
   background-color: #1f2937;
   border-bottom-color: #4b5563;
 }
 
-.dark .toolbarButton {
+:global(.dark) .toolbarButton {
   color: #9ca3af;
 }
 
-.dark .toolbarButton:hover:not(:disabled) {
+:global(.dark) .toolbarButton:hover:not(:disabled) {
   background-color: #374151;
   color: #3b82f6;
 }
 
-.dark .toolbarButton.active {
+:global(.dark) .toolbarButton.active {
   background-color: #1e3a8a;
   color: #60a5fa;
 }
 
-.dark .separator {
+:global(.dark) .separator {
   background-color: #4b5563;
 }
 
-.dark .editorContent {
+:global(.dark) .editorContent {
   background-color: #1f2937;
   color: #f9fafb;
 }
 
-.dark .editorContent:empty::before {
+:global(.dark) .editorContent:empty::before {
   color: #6b7280;
 }
 
-.dark .editorContent p {
+:global(.dark) .editorContent p {
   color: #f9fafb;
 }
 
-.dark .skeletonButton {
+:global(.dark) .skeletonButton {
   background-color: #4b5563;
 }
 
-.dark .editorSkeleton {
+:global(.dark) .editorSkeleton {
   background-color: #374151;
 }
 
@@ -194,7 +194,7 @@
   border-color: #d1d5db;
 }
 
-.dark .tiptapContainer:has(.editorContent[contenteditable="false"]) {
+:global(.dark) .tiptapContainer:has(.editorContent[contenteditable="false"]) {
   background-color: #374151;
   border-color: #4b5563;
 }
@@ -205,7 +205,7 @@
   cursor: not-allowed;
 }
 
-.dark .editorContent[contenteditable="false"] {
+:global(.dark) .editorContent[contenteditable="false"] {
   background-color: #374151;
   color: #9ca3af;
 }

@@ -61,6 +61,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
       <body>
+        {/* Pasang class dark sebelum paint supaya tidak kedip putih (di body, bukan head: extension suka sisip script ke head → hydration mismatch) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(JSON.parse(localStorage.getItem('theme-storage')||'{}').state?.theme==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
         {/* Inject global timer for Weekly Sync loading measurement */}
         <script
           dangerouslySetInnerHTML={{

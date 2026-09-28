@@ -41,7 +41,7 @@ async function DashboardContent() {
             <Link 
               href="/planning/vision"
               data-testid="dashboard-card-planning-vision"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
                 <EyeIcon className="w-6 h-6 text-[#7F56D9] ps-0.5 pt-0.5" />
@@ -55,7 +55,7 @@ async function DashboardContent() {
             <Link 
               href="/planning/12-week-quests"
               data-testid="dashboard-card-planning-12-week-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#EFF8FF] group-hover:bg-[#d3eafe] transition-colors md:mr-4">
                 <TaskIcon className="w-6 h-6 text-[#2E90FA]" />
@@ -69,7 +69,7 @@ async function DashboardContent() {
             <Link 
               href="/planning/main-quests"
               data-testid="dashboard-card-planning-main-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFEFE3] group-hover:bg-[#ffd9bd] transition-colors md:mr-4">
                 <PieChartIcon className="w-6 h-6 text-[#F79009]" />
@@ -83,7 +83,7 @@ async function DashboardContent() {
             <Link 
               href="/planning/best-week"
               data-testid="dashboard-card-planning-best-week"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
                 <ShootingStarIcon className="w-6 h-6 text-[#13B176]" />
@@ -97,7 +97,7 @@ async function DashboardContent() {
             <Link 
               href="/execution/daily-sync"
               data-testid="dashboard-card-execution-daily-sync"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FEF3F2] group-hover:bg-[#ffd7d6] transition-colors md:mr-4">
                 <TaskIcon className="w-6 h-6 text-[#F04438]" />
@@ -111,7 +111,7 @@ async function DashboardContent() {
             <Link 
               href="/execution/weekly-sync"
               data-testid="dashboard-card-execution-weekly-sync"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFF6ED] group-hover:bg-[#ffebd3] transition-colors md:mr-4">
                 <CalenderIcon className="w-6 h-6 text-[#FDB022]" />
@@ -125,7 +125,7 @@ async function DashboardContent() {
             <Link 
               href="/habits/today"
               data-testid="dashboard-card-habits-today"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
                 <CheckCircleIcon className="w-6 h-6 text-[#7F56D9]" />
@@ -139,7 +139,7 @@ async function DashboardContent() {
             <Link 
               href="/execution/brain-dump"
               data-testid="dashboard-card-execution-brain-dump"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
                 <PencilIcon className="w-6 h-6 text-[#7F56D9]" />
@@ -153,7 +153,7 @@ async function DashboardContent() {
             <Link 
               href="/quests/work-quests"
               data-testid="dashboard-card-quests-work-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#EFF8FF] group-hover:bg-[#d3eafe] transition-colors md:mr-4">
                 <TaskIcon className="w-6 h-6 text-[#2E90FA]" />
@@ -167,7 +167,7 @@ async function DashboardContent() {
             <Link 
               href="/quests/daily-quests"
               data-testid="dashboard-card-quests-daily-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
                 <TaskIcon className="w-6 h-6 text-[#13B176]" />
@@ -181,7 +181,7 @@ async function DashboardContent() {
             <Link 
               href="/quests/side-quests"
               data-testid="dashboard-card-quests-side-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-gray-50 rounded-xl border border-gray-200 shadow-none p-5 hover:shadow transition-colors duration-150"
+              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
             >
               <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FDF2FA] group-hover:bg-[#eed4ec] transition-colors md:mr-4">
                 <TaskIcon className="w-6 h-6 text-[#E31B54]" />

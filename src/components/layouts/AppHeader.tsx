@@ -2,7 +2,7 @@
 import React, { useState ,useEffect, Suspense} from "react";
 import { usePathname } from "next/navigation";
 
-// import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
 import { useSidebar } from "@/stores/sidebarStore";
@@ -154,7 +154,7 @@ function ApplicationMenu({
     >
       <div className="flex items-center gap-2 2xsm:gap-3">
         {/* <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} /> */}
-        {/* <ThemeToggleButton /> */}
+        <ThemeToggleButton />
         <NotificationDropdown />
       </div>
       <UserDropdown />

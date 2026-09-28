@@ -188,7 +188,7 @@
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal font-outfit z-1 bg-gray-50 dark:bg-gray-950;
   }
 }
 
@@ -813,5 +813,39 @@ span.flatpickr-weekday,
       opacity: 0.7;
       transform: translateX(-50%) scale(1.2);
     }
+  }
+}
+
+/*
+ * Fallback dark mode: warna terang yang belum punya varian `dark:` dipetakan ke versi gelap.
+ * ponytail: tebakan per-class; komponen yang butuh warna khusus tulis `dark:` sendiri (otomatis dikecualikan).
+ */
+@layer utilities {
+  .dark body {
+    color: rgb(255 255 255 / 0.9);
+  }
+  :where(.dark) :where(input, textarea, select) {
+    color: inherit;
+  }
+  .dark [class~='bg-white']:not([class*='dark:bg-']):not(.rounded-full) {
+    background-color: var(--color-gray-900);
+  }
+  .dark :is([class~='bg-gray-50'], [class~='bg-gray-100']):not([class*='dark:bg-']) {
+    background-color: var(--color-gray-800);
+  }
+  .dark :is([class~='hover:bg-gray-50'], [class~='hover:bg-gray-100'], [class~='hover:bg-gray-200']):not([class*='dark:hover:bg-']):hover {
+    background-color: rgb(255 255 255 / 0.05);
+  }
+  .dark :is([class~='text-black'], [class~='text-gray-900'], [class~='text-gray-800']):not([class*='dark:text-']) {
+    color: rgb(255 255 255 / 0.9);
+  }
+  .dark [class~='text-gray-700']:not([class*='dark:text-']) {
+    color: var(--color-gray-300);
+  }
+  .dark [class~='text-gray-600']:not([class*='dark:text-']) {
+    color: var(--color-gray-400);
+  }
+  .dark :is([class~='border-gray-100'], [class~='border-gray-200'], [class~='border-gray-300']):not([class*='dark:border-']) {
+    border-color: var(--color-gray-800);
   }
 }
