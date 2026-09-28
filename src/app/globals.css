@@ -763,7 +763,7 @@ span.flatpickr-weekday,
   }
   
   .bottom-nav-item-inactive {
-    @apply text-gray-500 hover:text-gray-700;
+    @apply text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200;
   }
   
   .bottom-nav-icon {
@@ -771,11 +771,11 @@ span.flatpickr-weekday,
   }
   
   .bottom-nav-icon-active {
-    @apply bg-brand-50 scale-110 shadow-sm;
+    @apply bg-brand-50 dark:bg-brand-500/15 scale-110 shadow-sm;
   }
   
   .bottom-nav-icon-inactive {
-    @apply hover:bg-gray-50 hover:scale-105;
+    @apply hover:bg-gray-50 dark:hover:bg-white/5 hover:scale-105;
   }
   
   .bottom-nav-label {
@@ -821,6 +821,9 @@ span.flatpickr-weekday,
  * ponytail: tebakan per-class; komponen yang butuh warna khusus tulis `dark:` sendiri (otomatis dikecualikan).
  */
 @layer utilities {
+  :root.dark {
+    color-scheme: dark;
+  }
   .dark body {
     color: rgb(255 255 255 / 0.9);
   }
