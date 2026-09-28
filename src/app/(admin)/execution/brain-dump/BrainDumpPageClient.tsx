@@ -1,14 +1,9 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/lib/icons';
 import {
   getQuarterWeekRange,
   getWeekOfYear,
-  formatQParam,
-  getPrevQuarter,
-  getNextQuarter,
   getDateFromWeek,
 } from '@/lib/quarterUtils';
 import { getLocalDateString } from '@/lib/dateUtils';
@@ -21,7 +16,6 @@ interface BrainDumpPageClientProps {
 }
 
 const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter }) => {
-  const router = useRouter();
   const { startWeek, endWeek } = getQuarterWeekRange(year, quarter);
   const totalWeeks = endWeek - startWeek + 1; // selalu 13
 
@@ -45,12 +39,6 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
   };
 
   const { dumpsByDate, isLoading, saveDump, isSaving } = useBrainDumpQuarter({ year, quarter });
-
-  const navigateQuarter = (direction: 'prev' | 'next') => {
-    const { year: nextYear, quarter: nextQuarter } =
-      direction === 'prev' ? getPrevQuarter(year, quarter) : getNextQuarter(year, quarter);
-    router.push(`/execution/brain-dump?q=${formatQParam(nextYear, nextQuarter)}`);
-  };
 
   // Generate list minggu dalam quarter ini
   const weeks = Array.from({ length: totalWeeks }, (_, i) => ({
@@ -83,25 +71,6 @@ const BrainDumpPageClient: React.FC<BrainDumpPageClientProps> = ({ year, quarter
             }`}
           >
             {hideEmpty ? 'Tampilkan semua' : 'Sembunyikan kosong'}
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigateQuarter('prev')}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Quarter sebelumnya"
-          >
-            <ChevronLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          </button>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
-            Q{quarter} {year}
-          </span>
-          <button
-            onClick={() => navigateQuarter('next')}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Quarter berikutnya"
-          >
-            <ChevronRightIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>

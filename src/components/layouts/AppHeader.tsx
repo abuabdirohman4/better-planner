@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
+import QuarterSelector from "@/components/common/QuarterSelector";
 import { useSidebar } from "@/stores/sidebarStore";
 import Link from "next/link";
 
@@ -225,6 +226,10 @@ const AppHeader: React.FC = () => {
           <div className="flex-1">
             <PageTitle />
           </div>
+
+          <Suspense fallback={null}>
+            <QuarterSelector />
+          </Suspense>
 
           {/* Avatar/sign out — mobile only, and only on the dashboard: the application menu is
               hidden under md, and the bottom nav puts Dashboard one tap away from anywhere. */}

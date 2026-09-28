@@ -1,6 +1,6 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
@@ -11,16 +11,35 @@ import {
   getNextQuarter,
   getQuarterString,
   generateQuarterOptions,
-  formatQParam
+  formatQParam,
+  parseQParam
 } from "@/lib/quarterUtils";
 import { useQuarterStore } from "@/stores/quarterStore";
+
+// Halaman yang tidak terikat quarter.
+const HIDDEN_PATHS = ['/planning/vision', '/settings', '/habits'];
+// Halaman server yang membaca quarter dari ?q=, bukan dari store.
+const URL_QUARTER_PATHS = ['/execution/brain-dump', '/planning/12-week-sync'];
 
 const QuarterSelector: React.FC = () => {
   const { year, quarter, setQuarter } = useQuarterStore();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const qParam = searchParams.get("q");
   const options = useMemo(() => generateQuarterOptions({ year, quarter }), [year, quarter]);
+
+  // ?q= di URL menang atas store; halaman URL-driven tanpa ?q= diberi quarter dari store.
+  useEffect(() => {
+    if (qParam) {
+      const fromUrl = parseQParam(qParam);
+      if (fromUrl.year !== year || fromUrl.quarter !== quarter) setQuarter(fromUrl.year, fromUrl.quarter);
+    } else if (URL_QUARTER_PATHS.some((p) => pathname.startsWith(p))) {
+      router.replace(`${pathname}?q=${formatQParam(year, quarter)}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, qParam]);
 
   const updateURL = (newYear: number, newQuarter: number) => {
     const qParam = formatQParam(newYear, newQuarter);
@@ -51,14 +70,16 @@ const QuarterSelector: React.FC = () => {
     setIsOpen((v) => !v);
   };
 
+  if (HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;
+
   return (
-    <div className="flex items-center gap-2 w-full">
-      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handlePrev} aria-label="Sebelumnya" data-testid="quarter-prev">
-        <ChevronLeftIcon className="w-5 h-5" />
+    <div className="flex items-center gap-1">
+      <Button size="sm" sizeClassName="p-2" variant="outline" onClick={handlePrev} aria-label="Sebelumnya" data-testid="quarter-prev">
+        <ChevronLeftIcon className="w-4 h-4" />
       </Button>
-      <div className="relative w-full">
+      <div className="relative">
         <button
-          className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer w-full dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-[84px] dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={handleDropdownToggle}
           data-testid="quarter-toggle"
           aria-haspopup="listbox"
@@ -84,8 +105,8 @@ const QuarterSelector: React.FC = () => {
           </div>
         </Dropdown>
       </div>
-      <Button size="md" sizeClassName="p-3" variant="outline" onClick={handleNext} aria-label="Berikutnya" data-testid="quarter-next">
-        <ChevronRightIcon className="w-5 h-5" />
+      <Button size="sm" sizeClassName="p-2" variant="outline" onClick={handleNext} aria-label="Berikutnya" data-testid="quarter-next">
+        <ChevronRightIcon className="w-4 h-4" />
       </Button>
     </div>
   );
