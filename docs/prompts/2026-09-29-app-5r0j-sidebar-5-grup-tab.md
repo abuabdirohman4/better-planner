@@ -1,3 +1,5 @@
+⛔ DILARANG: bd close / ubah status beads, git commit/push. Claude yang menutup issue setelah review.
+
 CONTEXT:
 Saya mengerjakan Better Planner - Next.js 15 productivity app (13-week quarter planning) dengan Supabase backend.
 

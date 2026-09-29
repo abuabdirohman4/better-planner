@@ -1,5 +1,9 @@
 # app-5r0j — Sidebar 5 grup berlabel + halaman jadi tab (IMPLEMENTATION PLAN)
 
+## ⛔ Aturan executor
+
+**JANGAN `bd close`, `bd update --status`, atau ubah status beads apa pun.** Issue ditutup Claude setelah review + uji manual. JANGAN git commit/push. Selesai = lapor ringkasan per task, lalu berhenti.
+
 Desain & alasan keputusan: `docs/plans/2026-09-29-app-5r0j-sidebar-5-grup-tab-design.md` — **baca dulu**.
 
 ## Ringkasan

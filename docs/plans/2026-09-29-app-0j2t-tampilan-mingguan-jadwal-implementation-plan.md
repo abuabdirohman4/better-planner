@@ -1,5 +1,9 @@
 # app-0j2t — Tampilan mingguan rencana nyata · Implementation Plan
 
+## ⛔ Aturan executor
+
+**JANGAN `bd close`, `bd update --status`, atau ubah status beads apa pun.** Issue ditutup Claude setelah review + uji manual. JANGAN git commit/push. Selesai = lapor ringkasan per task, lalu berhenti.
+
 Design & alasan keputusan: `docs/plans/2026-09-29-app-0j2t-tampilan-mingguan-jadwal-design.md`.
 Baca itu dulu. Ringkas: toggle `Template ideal | Minggu ini` di Best Week, `WeeklyGrid` dipakai
 ulang (generik + read-only), blok diwarnai per HFG #1–#3 (biru/hijau/oranye), sisanya abu-abu.

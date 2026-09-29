@@ -72,6 +72,8 @@ Plan format (Option B) — buat **DUA file** di `docs/plans/`:
 
 **Exception**: `bd sync` (beads issue tracker) is allowed.
 
+**Executor (Antigravity/AI lain) DILARANG `bd close` / ubah status beads.** Issue ditutup Claude setelah review + uji manual. Dilanggar 2x pada 29 Sep 2026 (`app-taj8`, `app-ddl0`, `app-01z6`, `app-dwhq` ditutup sebelum direview). Aturan "Session Completion" di CLAUDE.md hub tidak berlaku untuk executor di repo ini.
+
 **Commit Message Format (Conventional Commits):**
 ```
 feat: add new feature
