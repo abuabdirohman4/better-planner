@@ -24,6 +24,7 @@ export async function updateActivityJournal(
   activityId: string,
   whatDone: string,
   whatThink: string,
+  energy?: number | null,
 ) {
   const supabase = await createClient();
   const {
@@ -37,6 +38,7 @@ export async function updateActivityJournal(
     activityId,
     sanitizeJournalField(whatDone),
     sanitizeJournalField(whatThink),
+    energy,
   );
 
   revalidatePath('/execution/daily-sync');

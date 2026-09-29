@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
+import { energyLabel, type Energy } from '@/lib/energy';
 
 interface CalendarTaskDetailProps {
   item: ActivityLogItem | null;
@@ -100,6 +101,14 @@ const CalendarTaskDetail: React.FC<CalendarTaskDetailProps> = ({ item, onClose, 
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg text-base text-gray-800 dark:text-gray-200 shadow-sm min-h-[48px]">
               {item.what_think || '-'}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Energi:
+            </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg text-base text-gray-800 dark:text-gray-200 shadow-sm min-h-[48px]">
+              {energyLabel(item.energy as Energy | null) ?? '-'}
             </div>
           </div>
         </div>

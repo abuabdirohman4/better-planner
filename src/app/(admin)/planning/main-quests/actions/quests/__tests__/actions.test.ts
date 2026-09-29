@@ -12,6 +12,7 @@ import {
   getQuests,
   getUncommittedQuests,
   updateQuestMotivation,
+  updateQuestWeeklyTarget,
 } from '../actions';
 
 describe('addMultipleQuests', () => {
@@ -74,5 +75,27 @@ describe('updateQuestMotivation', () => {
     (createClient as any).mockResolvedValue(makeSupabase({ fromBuilder: builder }));
     const result = await updateQuestMotivation('q1', 'my motivation');
     expect(result.message).toContain('berhasil');
+  });
+});
+
+describe('updateQuestWeeklyTarget', () => {
+  it('menolak angka di luar 0 < jam <= 168', async () => {
+    await expect(updateQuestWeeklyTarget('q1', 0)).rejects.toThrow('Jatah jam harus antara 0 dan 168');
+    await expect(updateQuestWeeklyTarget('q1', 200)).rejects.toThrow('Jatah jam harus antara 0 dan 168');
+  });
+
+  it('menyimpan angka valid', async () => {
+    const builder = makeQueryBuilder({ data: null, error: null });
+    (createClient as any).mockResolvedValue(makeSupabase({ fromBuilder: builder }));
+    await updateQuestWeeklyTarget('q1', 10);
+    expect(builder.update).toHaveBeenCalledWith({ weekly_target_hours: 10 });
+    expect(builder.eq).toHaveBeenCalledWith('id', 'q1');
+  });
+
+  it('null mengosongkan jatah', async () => {
+    const builder = makeQueryBuilder({ data: null, error: null });
+    (createClient as any).mockResolvedValue(makeSupabase({ fromBuilder: builder }));
+    await updateQuestWeeklyTarget('q1', null);
+    expect(builder.update).toHaveBeenCalledWith({ weekly_target_hours: null });
   });
 });

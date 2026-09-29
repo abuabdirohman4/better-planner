@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import ComponentCard from '@/components/common/ComponentCard';
 import Button from '@/components/ui/button/Button';
 import Modal from '@/components/ui/modal/Modal';
 
-import { updateQuestMotivation } from './actions/questActions';
+import { updateQuestMotivation, updateQuestWeeklyTarget } from './actions/questActions';
+import { toast } from 'sonner';
 
 import Milestone from './Milestone';
 import SubTask from './SubTask';
@@ -16,6 +17,7 @@ interface QuestProps {
   id: string;
   title: string;
   motivation?: string;
+  weekly_target_hours?: number | null;
 }
 
 export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuestUpdate }: { quest: QuestProps; showCompletedTasks: boolean; showAllTasks: boolean; onQuestUpdate?: () => void }) {
@@ -23,6 +25,31 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuest
   const [activeSubTask, setActiveSubTask] = useState<Task | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [targetValue, setTargetValue] = useState(quest.weekly_target_hours?.toString() ?? '');
+
+  useEffect(() => {
+    setTargetValue(quest.weekly_target_hours?.toString() ?? '');
+  }, [quest.weekly_target_hours]);
+
+  const handleSaveTarget = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const reset = () => setTargetValue(quest.weekly_target_hours?.toString() ?? '');
+    // Ketikan tidak valid (mis. "e") terbaca "" oleh input number — tolak, jangan dianggap hapus jatah.
+    if (e.currentTarget.validity.badInput) {
+      toast.error('Jatah jam harus angka');
+      return reset();
+    }
+    const trimmed = targetValue.trim();
+    const hours = trimmed === '' ? null : Number(trimmed);
+    const current = quest.weekly_target_hours == null ? null : Number(quest.weekly_target_hours);
+    if (hours === current) return;
+    try {
+      await updateQuestWeeklyTarget(quest.id, hours);
+      onQuestUpdate?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan jatah jam');
+      reset();
+    }
+  };
   
   const hasExistingContent = !!quest.motivation;
   const canSave = hasChanges && !isSaving;
@@ -110,6 +137,27 @@ export default function Quest({ quest, showCompletedTasks, showAllTasks, onQuest
                 </>
               )}
             </Button>
+          </div>
+          <div className="flex items-center gap-2 mb-3">
+            <label htmlFor={`weekly-target-${quest.id}`} className="text-sm font-semibold">
+              Jatah jam per minggu :
+            </label>
+            <input
+              id={`weekly-target-${quest.id}`}
+              data-testid="quest-weekly-target-input"
+              type="number"
+              inputMode="decimal"
+              min={0.5}
+              max={168}
+              step={0.5}
+              placeholder="mis. 10"
+              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-20"
+              value={targetValue}
+              onChange={(e) => setTargetValue(e.target.value)}
+              onBlur={handleSaveTarget}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+            />
+            <span className="text-sm text-gray-500 dark:text-gray-400">jam</span>
           </div>
           <Milestone 
             questId={quest.id}

@@ -46,6 +46,13 @@ describe('updateActivityLogJournal', () => {
     const supabase = makeSupabaseFrom(builder);
     await expect(updateActivityLogJournal(supabase, 'u', 'id', null, null)).rejects.toMatchObject({ message: 'update fail' });
   });
+
+  it('menyertakan energy hanya kalau diberikan', async () => {
+    const builder = makeQueryBuilder({ data: { id: 'log-1' }, error: null });
+    const supabase = makeSupabaseFrom(builder);
+    await updateActivityLogJournal(supabase, 'user-1', 'log-1', 'done', null, 1);
+    expect(builder.update).toHaveBeenCalledWith({ what_done: 'done', what_think: null, energy: 1 });
+  });
 });
 
 describe('insertActivityLogWithJournal', () => {

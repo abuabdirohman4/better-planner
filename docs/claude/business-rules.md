@@ -97,6 +97,18 @@ type Priority = "low" | "medium" | "high" | "urgent";
 - **medium**: Normal priority (P2)
 - **low**: Nice-to-have, backlog (P3-P4)
 
+### High Focus Goals (HFG) & Weekly Target Hours (`app-dwhq`)
+
+- **HFG** = `quests.is_committed = true` untuk kuartal berjalan (`year`, `quarter`), `status <> 'DONE'`.
+- **Jam HFG**: Jam aktual FOCUS dihitung dari `activity_logs.type = 'FOCUS'` dalam minggu berjalan (Senin 00:00 – Minggu 23:59 WIB) yang diatribusikan lewat `tasks` → (parent task kalau sub task) → `milestones.quest_id`.
+- **Harapan (Expected Minutes)**: `target * 60 * min(days_since_monday, 5) / 5`. Hari kerja Senin–Jumat yang SUDAH lewat (hari ini tidak dihitung). Sabtu & Minggu = target penuh (jam akhir pekan = bonus).
+- **Status Mingguan**:
+  - `ON_TRACK`: `actual_minutes >= 0.8 * expected_minutes`
+  - `AT_RISK`: `actual_minutes < 0.8 * expected_minutes`
+  - `NO_TARGET`: `weekly_target_hours IS NULL` atau `<= 0`
+  - `REST_WEEK`: Minggu 13 kuartal berjalan (minggu istirahat, tanpa penilaian status).
+- **Single Source of Truth**: Seluruh perhitungan dilakukan di database lewat fungsi SQL `public.hfg_weekly_status(p_user_id, p_today)`. Aplikasi Next.js hanya memanggil RPC dan memformat angka untuk kartu dashboard.
+
 ---
 
 ## ⏱️ Pomodoro Timer & Activity Tracking

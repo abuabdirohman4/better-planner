@@ -13,6 +13,7 @@ import {
   queryCommittedQuests,
   queryUncommittedQuests,
   updateMotivation,
+  updateWeeklyTargetHours,
 } from './queries';
 import { buildQuestInsertData, getTop3QuestIds } from './logic';
 
@@ -96,4 +97,14 @@ export async function updateQuestMotivation(questId: string, motivation: string)
   revalidatePath('/planning/main-quests');
   revalidatePath('/planning/12-week-quests');
   return { message: 'Motivation berhasil diupdate!' };
+}
+
+export async function updateQuestWeeklyTarget(questId: string, hours: number | null) {
+  if (hours !== null && !(hours > 0 && hours <= 168)) {
+    throw new Error('Jatah jam harus antara 0 dan 168');
+  }
+  const supabase = await createClient();
+  await updateWeeklyTargetHours(supabase, questId, hours);
+  revalidatePath('/planning/main-quests');
+  revalidatePath('/dashboard');
 }

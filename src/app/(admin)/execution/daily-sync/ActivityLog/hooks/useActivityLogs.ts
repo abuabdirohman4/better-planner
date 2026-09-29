@@ -4,6 +4,7 @@ import { getTodayActivityLogs } from '../actions/activityLoggingActions';
 import { dailySyncKeys } from '@/lib/swr';
 
 import type { ActivityLogItem } from '@/types/activity-log';
+import type { Energy } from '@/lib/energy';
 
 export interface UseActivityLogsOptions {
   date: string;
@@ -16,7 +17,7 @@ export interface UseActivityLogsReturn {
   isLoading: boolean;
   error: string | null;
   mutate: KeyedMutator<ActivityLogItem[]>;
-  updateLogJournal: (logId: string, whatDone: string, whatThink: string) => void;
+  updateLogJournal: (logId: string, whatDone: string, whatThink: string, energy?: Energy | null) => void;
 }
 
 export function useActivityLogs({
@@ -53,14 +54,14 @@ export function useActivityLogs({
   }, [refreshKey, lastActivityTimestamp, mutate]);
 
   // ✅ NEW: Optimistic update for journal data
-  const updateLogJournal = (logId: string, whatDone: string, whatThink: string) => {
+  const updateLogJournal = (logId: string, whatDone: string, whatThink: string, energy?: Energy | null) => {
     mutate(
       (currentLogs) => {
         if (!currentLogs) return currentLogs;
 
         return currentLogs.map((log) =>
           log.id === logId
-            ? { ...log, what_done: whatDone, what_think: whatThink }
+            ? { ...log, what_done: whatDone, what_think: whatThink, ...(energy !== undefined && { energy }) }
             : log
         );
       },

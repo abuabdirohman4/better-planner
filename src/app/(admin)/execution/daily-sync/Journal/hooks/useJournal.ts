@@ -64,7 +64,7 @@ export const useJournal = () => {
       throw new Error('No pending activity data');
     }
 
-    const { whatDone, whatThink } = journalData;
+    const { whatDone, whatThink, energy } = journalData;
 
     // ✅ MOBILE FIX: Detect mobile device for better error handling
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -72,13 +72,14 @@ export const useJournal = () => {
 
     if (pendingActivityData.activityId) {
       // ✅ INSTANT: Optimistic update for immediate UI feedback
-      updateLogJournal(pendingActivityData.activityId, whatDone, whatThink);
+      updateLogJournal(pendingActivityData.activityId, whatDone, whatThink, energy);
       
       // Update existing activity log
       await updateActivityJournal(
         pendingActivityData.activityId,
         whatDone,
-        whatThink
+        whatThink,
+        energy
       );
       
       // ✅ CRITICAL: Update SWR cache for real-time ActivityLog update
@@ -110,7 +111,7 @@ export const useJournal = () => {
         );
 
         if (recentActivity) {
-          await updateActivityJournal(recentActivity.id, whatDone, whatThink);
+          await updateActivityJournal(recentActivity.id, whatDone, whatThink, energy);
         } else {
           const durationInSeconds = (new Date(pendingActivityData.endTime).getTime() - new Date(pendingActivityData.startTime).getTime()) / 1000;
           const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
@@ -128,6 +129,7 @@ export const useJournal = () => {
               local_date: currentLocalDate, // ✅ Use current date instead of selected date
               what_done: whatDone,
               what_think: whatThink,
+              energy: energy ?? null,
             })
             .select()
             .single();
@@ -160,7 +162,8 @@ export const useJournal = () => {
               await updateActivityJournal(
                 pendingActivityData.activityId,
                 whatDone,
-                whatThink
+                whatThink,
+                energy
               );
             } else {
               // Re-run the create logic
@@ -177,7 +180,7 @@ export const useJournal = () => {
                 pendingActivityData.startTime,
               );
               if (existingOnRetry) {
-                await updateActivityJournal(existingOnRetry.id, whatDone, whatThink);
+                await updateActivityJournal(existingOnRetry.id, whatDone, whatThink, energy);
                 setIsRetrying(false);
                 closeJournalModal();
                 return;
@@ -199,6 +202,7 @@ export const useJournal = () => {
                   local_date: currentLocalDate, // ✅ FIX: Use current date instead of selected date
                   what_done: whatDone,
                   what_think: whatThink,
+                  energy: energy ?? null,
                 })
                 .select()
                 .single();

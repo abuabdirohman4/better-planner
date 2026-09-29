@@ -475,3 +475,33 @@ select kind, ref_key, sent_at from push_log order by sent_at desc limit 10;
 **Onboarding push:** `DEFAULT_PUSH_SETTINGS.enabled` = `true`, jadi user baru cukup memberi izin sekali — tidak ada notifikasi terkirim tanpa baris di `push_subscriptions`, jadi default ini tidak mengirim apa pun ke orang yang belum setuju. User yang menolak menyimpan `enabled: false` dan itu menang atas default. `PushPrompt` menawarkan sekali per perangkat (5 detik setelah masuk, hanya bila `Notification.permission === 'default'`, penolakan diingat di localStorage). `usePushSubscription.refresh()` mendaftar ulang diam-diam kalau izin sudah ada tapi langganan hilang (kedaluwarsa / data situs terhapus), dan menulis ulang baris kalau browser punya langganan yang tidak dikenal server.
 
 **Keterbatasan:** izin notifikasi **wajib** lewat klik user (aturan browser, tidak bisa di-bypass); presisi ±1 menit; suara = default OS; Mac Chrome/Brave butuh browser tetap jalan (Safari "Add to Dock" macOS 14+ tidak).
+
+---
+
+## ⚡ Tanda Energi di `activity_logs` (app-01z6)
+
+Kolom: `activity_logs.energy smallint NULL CHECK (energy IN (-1, 0, 1))`
+- `1`: Menambah energi (+)
+- `0`: Biasa saja (=)
+- `-1`: Menguras energi (−)
+- `NULL`: Tidak dijawab (opsional, berbeda dari 0)
+
+Ditulis saat penyimpanan One Minute Journal setelah sesi fokus. Dirangkum per minggu di Dashboard via `queryEnergyRows` (`src/app/(admin)/dashboard/actions/weekly-energy/`). Filter tanggal mingguan menggunakan `local_date` (WIB).
+
+---
+
+## 🎯 Jatah Jam HFG & Status Mingguan (app-dwhq)
+
+### Kolom Database:
+- `quests.weekly_target_hours numeric(4,1) NULL CHECK (weekly_target_hours IS NULL OR (weekly_target_hours > 0 AND weekly_target_hours <= 168))`
+  - Jatah jam fokus mingguan per HFG (Senin-Minggu WIB). `NULL` = belum diatur.
+
+### Fungsi SQL:
+- `public.hfg_expected_minutes(p_target_hours numeric, p_days_since_monday integer, p_week_in_quarter integer) RETURNS integer`:
+  - Menghitung menit harapan pro-rata hari kerja (Senin-Jumat) yang sudah lewat (`days_since_monday` 0-6).
+- `public.hfg_pace_status(p_actual_minutes numeric, p_target_hours numeric, p_days_since_monday integer, p_week_in_quarter integer) RETURNS text`:
+  - Status `ON_TRACK` / `AT_RISK` / `NO_TARGET` / `REST_WEEK`. Ambang 80% dari harapan.
+- `public.hfg_weekly_status(p_user_id uuid, p_today date DEFAULT (now() AT TIME ZONE 'Asia/Jakarta')::date) RETURNS TABLE(...)`:
+  - Single source of truth untuk kartu dashboard dan script bot luar (Telegram VPS).
+  - Dipanggil via `supabase.rpc('hfg_weekly_status', { p_user_id: user.id })` atau PostgREST `/rpc/hfg_weekly_status`.
+

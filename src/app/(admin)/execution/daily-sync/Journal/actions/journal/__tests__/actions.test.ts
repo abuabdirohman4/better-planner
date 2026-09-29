@@ -84,10 +84,20 @@ describe('updateActivityJournal', () => {
     vi.mocked(updateActivityLogJournal).mockResolvedValue(row as any);
     const result = await updateActivityJournal('log-1', '  done  ', '');
     expect(updateActivityLogJournal).toHaveBeenCalledWith(
-      expect.anything(), 'user-1', 'log-1', 'done', null,
+      expect.anything(), 'user-1', 'log-1', 'done', null, undefined
     );
     expect(revalidatePath).toHaveBeenCalledWith('/execution/daily-sync');
     expect(result).toEqual(row);
+  });
+
+  it('calls updateActivityLogJournal with energy when provided', async () => {
+    mockCreateClient();
+    const row = { id: 'log-1' };
+    vi.mocked(updateActivityLogJournal).mockResolvedValue(row as any);
+    await updateActivityJournal('log-1', 'done', '', 1);
+    expect(updateActivityLogJournal).toHaveBeenCalledWith(
+      expect.anything(), 'user-1', 'log-1', 'done', null, 1
+    );
   });
 });
 

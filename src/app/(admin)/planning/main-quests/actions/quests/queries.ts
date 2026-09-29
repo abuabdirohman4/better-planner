@@ -108,7 +108,7 @@ export async function queryCommittedQuests(
 ) {
   const { data, error } = await supabase
     .from('quests')
-    .select('id, title, motivation, priority_score, is_committed')
+    .select('id, title, motivation, priority_score, is_committed, weekly_target_hours')
     .eq('user_id', userId)
     .eq('year', year)
     .eq('quarter', quarter)
@@ -144,6 +144,18 @@ export async function updateMotivation(
   const { error } = await supabase
     .from('quests')
     .update({ motivation })
+    .eq('id', questId);
+  if (error) throw error;
+}
+
+export async function updateWeeklyTargetHours(
+  supabase: SupabaseClient,
+  questId: string,
+  hours: number | null
+) {
+  const { error } = await supabase
+    .from('quests')
+    .update({ weekly_target_hours: hours })
     .eq('id', questId);
   if (error) throw error;
 }

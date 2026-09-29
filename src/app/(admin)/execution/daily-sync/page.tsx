@@ -184,8 +184,8 @@ export default function DailySyncPage() {
       <OneMinuteJournalModal
         isOpen={isJournalModalOpen}
         onClose={closeJournalModal}
-        onSave={async (whatDone: string, whatThink: string) => {
-          await saveJournal({ whatDone, whatThink });
+        onSave={async (whatDone, whatThink, energy) => {
+          await saveJournal({ whatDone, whatThink, energy });
         }}
         taskTitle={pendingActivityData?.taskTitle}
         duration={pendingActivityData?.duration || 0}

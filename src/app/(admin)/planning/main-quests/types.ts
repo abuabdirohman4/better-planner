@@ -20,6 +20,7 @@ export interface Quest {
   id: string
   title: string
   motivation?: string
+  weekly_target_hours?: number | null
 }
 
 export interface QuestProgress {

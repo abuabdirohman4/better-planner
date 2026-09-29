@@ -12,6 +12,7 @@ export interface ActivityLogItem {
   quest_title?: string | null
   what_done?: string | null
   what_think?: string | null
+  energy?: number | null
   task_type?: string
 }
 

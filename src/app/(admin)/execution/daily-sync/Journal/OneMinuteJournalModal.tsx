@@ -5,11 +5,12 @@ import { toast } from 'sonner';
 import Spinner from '@/components/ui/spinner/Spinner';
 import Button from '@/components/ui/button/Button';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
+import { ENERGY_OPTIONS, type Energy } from '@/lib/energy';
 
 interface OneMinuteJournalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (whatDone: string, whatThink: string) => Promise<void>;
+  onSave: (whatDone: string, whatThink: string, energy: Energy | null) => Promise<void>;
   taskTitle?: string;
   duration: number;
   isRetrying?: boolean;
@@ -27,12 +28,14 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
 }) => {
   const [whatDone, setWhatDone] = useState('');
   const [whatThink, setWhatThink] = useState('');
+  const [energy, setEnergy] = useState<Energy | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
   // ✅ FIX: Use refs to get latest values
   const whatDoneRef = useRef('');
   const whatThinkRef = useRef('');
+  const energyRef = useRef<Energy | null>(null);
 
   // Update refs when state changes
   useEffect(() => {
@@ -43,11 +46,16 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     whatDoneRef.current = whatDone; // Update ref
   }, [whatDone]);
 
+  useEffect(() => {
+    energyRef.current = energy;
+  }, [energy]);
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       setWhatDone('');
       setWhatThink('');
+      setEnergy(null);
       setIsSaving(false);
     }
   }, [isOpen]); // ✅ FIX: Only reset when modal opens, not when taskTitle or duration changes
@@ -85,7 +93,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
 
     setIsSaving(true);
     try {
-      await onSave(currentWhatDone.trim(), currentWhatThink.trim());
+      await onSave(currentWhatDone.trim(), currentWhatThink.trim(), energyRef.current);
       toast.success('Jurnal berhasil disimpan!');
       onClose();
     } catch (error) {
@@ -193,6 +201,33 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
             />
             <div className="text-xs text-gray-500 mt-1">
               {whatThink.length}/500 karakter
+            </div>
+          </div>
+
+          {/* Question 3 (opsional) */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">
+              3. Bagaimana energi saya setelah sesi ini? <span className="text-sm font-normal text-gray-500">(opsional)</span>
+            </label>
+            <div className="flex gap-3">
+              {ENERGY_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  data-testid={`journal-energy-${o.value}`}
+                  aria-pressed={energy === o.value}
+                  title={o.hint}
+                  disabled={isSaving}
+                  onClick={() => setEnergy(energy === o.value ? null : o.value)}
+                  className={`w-14 h-12 rounded-md border text-xl font-semibold transition-colors ${
+                    energy === o.value
+                      ? 'bg-brand-500 border-brand-500 text-white'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {o.symbol}
+                </button>
+              ))}
             </div>
           </div>
         </div>

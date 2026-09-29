@@ -21,10 +21,15 @@ export async function updateActivityLogJournal(
   activityId: string,
   whatDone: string | null,
   whatThink: string | null,
+  energy?: number | null,
 ) {
   const { data, error } = await supabase
     .from('activity_logs')
-    .update({ what_done: whatDone, what_think: whatThink })
+    .update({
+      what_done: whatDone,
+      what_think: whatThink,
+      ...(energy !== undefined && { energy }),
+    })
     .eq('id', activityId)
     .eq('user_id', userId)
     .select()
