@@ -183,13 +183,13 @@ describe('queryDailyQuests', () => {
     const builder = makeQueryBuilder({ data: tasks, error: null });
     const supabase = makeSupabaseFrom(builder);
 
-    const result = await queryDailyQuests(supabase, 'user-1', '2026-01-01T00:00:00Z', '2026-03-31T23:59:59Z');
+    const result = await queryDailyQuests(supabase, 'user-1', '2026-01-01T00:00:00Z', '2026-04-01T00:00:00Z');
 
     expect(supabase.from).toHaveBeenCalledWith('tasks');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(builder.eq).toHaveBeenCalledWith('type', 'DAILY_QUEST');
     expect(builder.gte).toHaveBeenCalledWith('created_at', '2026-01-01T00:00:00Z');
-    expect(builder.lte).toHaveBeenCalledWith('created_at', '2026-03-31T23:59:59Z');
+    expect(builder.lt).toHaveBeenCalledWith('created_at', '2026-04-01T00:00:00Z');
     expect(builder.order).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(result).toEqual(tasks);
   });
@@ -197,7 +197,7 @@ describe('queryDailyQuests', () => {
   it('returns empty array when data is null', async () => {
     const builder = makeQueryBuilder({ data: null, error: null });
     const supabase = makeSupabaseFrom(builder);
-    const result = await queryDailyQuests(supabase, 'user-1', '2026-01-01T00:00:00Z', '2026-03-31T23:59:59Z');
+    const result = await queryDailyQuests(supabase, 'user-1', '2026-01-01T00:00:00Z', '2026-04-01T00:00:00Z');
     expect(result).toEqual([]);
   });
 

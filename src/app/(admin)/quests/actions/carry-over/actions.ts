@@ -31,8 +31,8 @@ async function requireUser() {
 }
 
 function rangeIso(year: number, quarter: number) {
-  const { startDate, endDate } = getQuarterDates(year, quarter);
-  return [startDate.toISOString(), endDate.toISOString()] as const;
+  const { startDate, endExclusive } = getQuarterDates(year, quarter);
+  return [startDate.toISOString(), endExclusive.toISOString()] as const;
 }
 
 export async function getCarryOverGroups(type: CarryOverType, year: number, quarter: number): Promise<CarryOverGroup[]> {

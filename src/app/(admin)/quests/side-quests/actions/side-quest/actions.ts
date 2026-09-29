@@ -23,8 +23,8 @@ export async function getSideQuests(year: number, quarter: number): Promise<Side
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
-    const { startDate, endDate } = getQuarterDates(year, quarter);
-    return querySideQuests(supabase, user.id, startDate, endDate);
+    const { startDate, endExclusive } = getQuarterDates(year, quarter);
+    return querySideQuests(supabase, user.id, startDate, endExclusive);
   } catch (error) {
     console.error("Error fetching side quests:", error);
     return [];

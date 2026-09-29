@@ -18,7 +18,7 @@ export async function queryProjectsByQuarter(
   supabase: SupabaseClient,
   userId: string,
   startDate: Date,
-  endDate: Date
+  endExclusive: Date
 ): Promise<RawTaskRow[]> {
   const { data, error } = await supabase
     .from('tasks')
@@ -27,7 +27,7 @@ export async function queryProjectsByQuarter(
     .eq('type', 'WORK_QUEST')
     .is('parent_task_id', null)
     .gte('created_at', startDate.toISOString())
-    .lte('created_at', endDate.toISOString())
+    .lt('created_at', endExclusive.toISOString())
     .order('created_at', { ascending: false });
 
   if (error) throw error;

@@ -37,10 +37,10 @@ export async function getWorkQuestProjects(year: number, quarter: number): Promi
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { startDate, endDate } = getQuarterDates(year, quarter);
+    const { startDate, endExclusive } = getQuarterDates(year, quarter);
 
     // Batch queries — no N+1
-    const projectRows = await queryProjectsByQuarter(supabase, user.id, startDate, endDate);
+    const projectRows = await queryProjectsByQuarter(supabase, user.id, startDate, endExclusive);
     if (projectRows.length === 0) return [];
 
     const projectIds = projectRows.map(p => p.id);

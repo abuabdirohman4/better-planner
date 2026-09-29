@@ -212,7 +212,7 @@ function useDailyQuestsForSelection(year: number, quarter: number) {
       if (!user) return [];
 
       // Get date range for the quarter
-      const { startDate, endDate } = getQuarterDates(year, quarter);
+      const { startDate, endExclusive } = getQuarterDates(year, quarter);
 
       const { data, error } = await supabase
         .from('tasks')
@@ -221,7 +221,7 @@ function useDailyQuestsForSelection(year: number, quarter: number) {
         .eq('type', 'DAILY_QUEST')
         .eq('is_archived', false)
         .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
+        .lt('created_at', endExclusive.toISOString())
         .order('created_at', { ascending: false });
 
       if (error) throw error;

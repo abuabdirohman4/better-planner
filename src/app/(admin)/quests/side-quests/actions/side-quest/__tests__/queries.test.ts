@@ -27,7 +27,7 @@ describe('querySideQuests', () => {
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'u1');
     expect(builder.eq).toHaveBeenCalledWith('type', 'SIDE_QUEST');
     expect(builder.gte).toHaveBeenCalledWith('created_at', start.toISOString());
-    expect(builder.lte).toHaveBeenCalledWith('created_at', end.toISOString());
+    expect(builder.lt).toHaveBeenCalledWith('created_at', end.toISOString());
   });
 
   it('throws on error', async () => {

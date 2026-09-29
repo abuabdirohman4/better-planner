@@ -129,7 +129,7 @@ export async function queryDailyQuests(
   supabase: SupabaseClient,
   userId: string,
   startDate: string,
-  endDate: string
+  endExclusive: string
 ): Promise<RawTask[]> {
   const { data, error } = await supabase
     .from('tasks')
@@ -137,7 +137,7 @@ export async function queryDailyQuests(
     .eq('user_id', userId)
     .eq('type', 'DAILY_QUEST')
     .gte('created_at', startDate)
-    .lte('created_at', endDate)
+    .lt('created_at', endExclusive)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];

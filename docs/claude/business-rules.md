@@ -13,20 +13,23 @@ Better Planner uses a unique **13-week quarter planning system** for goal settin
 - **Q1**: Weeks 1-13 (roughly January - March)
 - **Q2**: Weeks 14-26 (roughly April - June)
 - **Q3**: Weeks 27-39 (roughly July - September)
-- **Q4**: Weeks 40-52 (roughly October - December)
+- **Q4**: Weeks 40-52, plus week 53 in 53-week planning years (roughly October - December)
 
 ### Quarter Calculation
 
-Quarter dates are calculated dynamically based on the year:
+Planning year starts on the Monday of the week containing 1 January; each quarter = 13 weeks (91 days). **Never use calendar-month formulas** (`Math.floor(getMonth()/3)+1`): Q4 2026 starts Monday 28 Sep, so 28–30 Sep is Q4, not Q3.
 
 ```typescript
-// Example: Get Q1 2026 dates
-const q1Start = getQuarterStart('Q1', 2026); // '2026-01-01'
-const q1End = getQuarterEnd('Q1', 2026);     // '2026-03-31' (approx)
+const { startDate, endDate, endExclusive } = getQuarterDates(2026, 4);
+// startDate    = Mon 28 Sep 2026 00:00
+// endDate      = last Sunday 00:00 — display/date strings only
+// endExclusive = Monday 00:00 of the next quarter (Q4: start of next planning year, covers week 53)
 
-// Get weeks in quarter
-const weeks = getWeeksInQuarter('Q1', 2026); // Array of 13 weeks
+quarterOfDate(new Date()); // { year, quarter } of the running quarter
 ```
+
+- **Default/current quarter** = `quarterOfDate(new Date())` (quarterStore default, `parseQParam(null)`) — `app-yv8t`.
+- **Filter quests per quarter** by `created_at` MUST use `.gte('created_at', startDate).lt('created_at', endExclusive)`. Never `.lte(endDate)` — it drops everything created on the last Sunday (`app-taj8`).
 
 **Utility Location**: `src/lib/quarterUtils.ts`
 

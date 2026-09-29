@@ -4,7 +4,7 @@ export async function querySideQuests(
   supabase: SupabaseClient,
   userId: string,
   startDate: Date,
-  endDate: Date
+  endExclusive: Date
 ) {
   const { data, error } = await supabase
     .from('tasks')
@@ -12,7 +12,7 @@ export async function querySideQuests(
     .eq('user_id', userId)
     .eq('type', 'SIDE_QUEST')
     .gte('created_at', startDate.toISOString())
-    .lte('created_at', endDate.toISOString())
+    .lt('created_at', endExclusive.toISOString())
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data ?? [];

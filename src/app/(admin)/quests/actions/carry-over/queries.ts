@@ -28,7 +28,7 @@ export async function queryTopTasksInRange(
   userId: string,
   type: CarryOverType,
   startIso: string,
-  endIso: string
+  endExclusiveIso: string
 ): Promise<SourceTask[]> {
   const { data, error } = await supabase
     .from('tasks')
@@ -37,7 +37,7 @@ export async function queryTopTasksInRange(
     .eq('type', type)
     .is('parent_task_id', null)
     .gte('created_at', startIso)
-    .lte('created_at', endIso)
+    .lt('created_at', endExclusiveIso)
     .order('created_at', { ascending: true });
   if (error) throw error;
   return data ?? [];

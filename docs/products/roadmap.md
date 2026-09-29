@@ -2,7 +2,7 @@
 
 > **File ini = peta arah project.** Sumber tunggal visi + status + next up.
 > Visi & scope detail di [`BRD.md`](./BRD.md). Skema data di [`ERD.sql`](./ERD.sql). Task detail di beads (`bd list`, prefix `bp-`). Plan per-fitur di [`../plans/`](../plans/).
-> Diperbarui: 2026-09-28 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dikosongkan 17 Sep (pagi + sore), lalu 24 Sep (`app-5skl` + tiga temuan pemakaian harian), lalu 28 Sep (`app-0ank`, `app-uq5a`, `app-7z06` — quest antar quarter).
+> Diperbarui: 2026-09-29 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dikosongkan 17 Sep (pagi + sore), lalu 24 Sep (`app-5skl` + tiga temuan pemakaian harian), lalu 28 Sep (`app-0ank`, `app-uq5a`, `app-7z06` — quest antar quarter).
 
 ---
 
@@ -64,6 +64,7 @@
 | 2026-09-28 | Revalidasi SWR hidup lagi | Jam habit tak lagi perlu disimpan 2x. `notifyHabitsChanged`/`notifyActivityLogsChanged` ternyata no-op sejak Jul 2025 — ikut membetulkan sinkron habit Daily Sync ↔ Habit dan counter fokus. |
 | 2026-09-28 siang | Carry-over v2 | `app-7z06` sumber = semua quarter sebelumnya (dikelompokkan per quarter, judul kembar diambil yang terbaru); Work Quest bisa pilih task per project dan menambah ke project yang sudah ada di quarter tujuan. |
 | 2026-09-28 | Quest antar quarter | `app-0ank` side quest bisa ditambah dari halaman Side Quests. `app-uq5a` tombol "Ambil dari quarter lalu" di Daily/Work/Side Quest — quest terpilih disalin (status TODO) ke quarter yang dilihat, baris lama utuh. |
+| 2026-09-29 | Batas kuartal + gangguan kecil | `app-yv8t` browser baru buka kuartal berjalan (bukan Q1), simpanan Q1 lama direset sekali. `app-taj8` quest yang dibuat Minggu terakhir kuartal (dan minggu ke-53) tak lagi hilang — query pakai batas eksklusif `endExclusive`. `app-ddl0` pop-up install PWA diam 30 hari setelah ditolak, banner versi baru jadi toast, Weekly Sync kosong punya ajakan mengisi. |
 | 2026-09-24 | Temuan pemakaian harian | Urutan quest Weekly Sync + Select Main Quest ikut milestone → langkah → sub task (RPC `get_weekly_sync` dulu cuma urut `tasks.display_order`). Koreksi jam habit simpan eksplisit (akar sebenarnya baru ketemu 28 Sep — lihat Changelog). Card refleksi 12 Week Sync klik → tampil penuh. `app-5skl` minggu 13 tak dihitung di dashboard. |
 | 2026-09-17 sore | Habit jadi bisa dipercaya | `app-cr6i` habit bertanda bisa dicentang dari Daily Sync (kolom `show_in_daily_sync`), sisanya diwakili baris pengingat. `app-r02c` batas tepat waktu (`deadline_time`) + koreksi jam (`done_at`) — `habit_completions` ternyata tak punya policy UPDATE sejak Maret. `app-je2x` modal edit habit menampilkan data habit sebelumnya. |
 | 2026-09-17 sore | Temuan dari pemakaian | `app-ejf5` To Don't List ternyata cuma dikomentari sejak refactor `896dc16`. `app-ni49` tombol tes notifikasi. `app-pizc` habit mingguan hanya di hari targetnya (kolom `target_days`) + `app-w3t3` streak tak lagi putus tiap tanggal 1 — keduanya bug yang menghalangi habit tracker dipercaya. |

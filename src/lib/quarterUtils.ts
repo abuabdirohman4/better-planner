@@ -62,10 +62,7 @@ export function getDateFromWeek(year: number, week: number, dayOfWeek: number = 
 // Helper: parse q param (e.g. 2025-Q2)
 export function parseQParam(q: string | null): { year: number; quarter: number } {
   if (!q) {
-    const now = new Date();
-    const week = getWeekOfYear(now);
-    const quarter = getQuarterFromWeek(week);
-    return { year: now.getFullYear(), quarter };
+    return quarterOfDate(new Date());
   }
   
   const match = q.match(/(\d{4})-Q([1-4])/);
@@ -74,10 +71,7 @@ export function parseQParam(q: string | null): { year: number; quarter: number }
   }
   
   // fallback
-  const now = new Date();
-  const week = getWeekOfYear(now);
-  const quarter = getQuarterFromWeek(week);
-  return { year: now.getFullYear(), quarter };
+  return quarterOfDate(new Date());
 }
 
 export function formatQParam(year: number, quarter: number): string {
@@ -132,7 +126,7 @@ export function getQuarterWeekRange(year: number, quarter: number): { startWeek:
  * berdasarkan sistem 13 minggu per kuartal.
  * Tahun perencanaan dimulai pada hari Senin di minggu yang sama dengan 1 Januari.
  */
-export const getQuarterDates = (year: number, quarter: number): { startDate: Date; endDate: Date } => {
+export const getQuarterDates = (year: number, quarter: number): { startDate: Date; endDate: Date; endExclusive: Date } => {
   const planningYearStartDate = getPlanningYearStartDate(year);
 
   // Hitung tanggal mulai kuartal yang diminta.
@@ -141,17 +135,22 @@ export const getQuarterDates = (year: number, quarter: number): { startDate: Dat
   const quarterStartDate = new Date(planningYearStartDate);
   quarterStartDate.setDate(planningYearStartDate.getDate() + daysToAdd);
 
-  // Hitung tanggal akhir kuartal.
-  const quarterEndDate = new Date(quarterStartDate);
-  quarterEndDate.setDate(quarterStartDate.getDate() + 90); // 91 hari total, jadi tambah 90 hari dari tanggal mulai.
+  // Batas atas eksklusif untuk query created_at (`.lt`): Senin 00:00 kuartal berikutnya, agar seluruh hari Minggu terakhir ikut.
+  // Q4 berakhir di awal tahun perencanaan berikutnya, supaya minggu ke-53 tidak hilang.
+  const quarterEndExclusive = quarter === 4 ? getPlanningYearStartDate(year + 1) : new Date(quarterStartDate);
+  if (quarter !== 4) quarterEndExclusive.setDate(quarterStartDate.getDate() + 91);
 
-  return { startDate: quarterStartDate, endDate: quarterEndDate };
+  // Hari Minggu terakhir (00:00), untuk tampilan/tanggal. JANGAN dipakai sebagai batas query created_at.
+  const quarterEndDate = new Date(quarterEndExclusive);
+  quarterEndDate.setDate(quarterEndExclusive.getDate() - 1);
+
+  return { startDate: quarterStartDate, endDate: quarterEndDate, endExclusive: quarterEndExclusive };
 };
 
 // Quest diikat ke quarter lewat created_at, jadi quest yang dibuat saat melihat quarter lain harus diberi tanggal di dalam quarter itu.
 export function createdAtForQuarter(year: number, quarter: number, now: Date = new Date()): string {
-  const { startDate, endDate } = getQuarterDates(year, quarter);
-  if (now >= startDate && now <= endDate) return now.toISOString();
+  const { startDate, endExclusive } = getQuarterDates(year, quarter);
+  if (now >= startDate && now < endExclusive) return now.toISOString();
   return startDate.toISOString();
 }
 

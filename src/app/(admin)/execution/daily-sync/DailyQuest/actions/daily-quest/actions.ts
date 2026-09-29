@@ -67,13 +67,13 @@ export async function getDailyQuests(year: number, quarter: number) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
-  const { startDate, endDate } = getQuarterDates(year, quarter);
+  const { startDate, endExclusive } = getQuarterDates(year, quarter);
 
   const data = await queryDailyQuests(
     supabase,
     user.id,
     startDate.toISOString(),
-    endDate.toISOString()
+    endExclusive.toISOString()
   );
 
   return data;

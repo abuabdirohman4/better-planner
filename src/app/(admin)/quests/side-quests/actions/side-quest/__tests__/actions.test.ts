@@ -8,6 +8,7 @@ vi.mock('@/lib/quarterUtils', () => ({
   getQuarterDates: vi.fn().mockReturnValue({
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-03-31'),
+    endExclusive: new Date('2026-04-01'),
   }),
   createdAtForQuarter: vi.fn().mockReturnValue('2026-01-05T00:00:00.000Z'),
 }));

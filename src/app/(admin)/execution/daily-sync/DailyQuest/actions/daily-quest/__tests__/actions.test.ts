@@ -158,9 +158,10 @@ describe('getDailyQuests', () => {
     mockCreateClient();
     const startDate = new Date('2026-01-01T00:00:00Z');
     const endDate = new Date('2026-03-31T23:59:59Z');
+    const endExclusive = new Date('2026-04-01T00:00:00Z');
     const tasks = [{ id: 'task-1' }, { id: 'task-2' }];
 
-    vi.mocked(getQuarterDates).mockReturnValue({ startDate, endDate } as any);
+    vi.mocked(getQuarterDates).mockReturnValue({ startDate, endDate, endExclusive } as any);
     vi.mocked(queryDailyQuests).mockResolvedValue(tasks as any);
 
     const result = await getDailyQuests(2026, 1);
@@ -170,7 +171,7 @@ describe('getDailyQuests', () => {
       expect.anything(),
       'user-1',
       startDate.toISOString(),
-      endDate.toISOString()
+      endExclusive.toISOString()
     );
     expect(result).toEqual(tasks);
   });

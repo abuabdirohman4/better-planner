@@ -8,6 +8,7 @@ vi.mock('@/lib/quarterUtils', () => ({
   getQuarterDates: vi.fn().mockImplementation((year: number, quarter: number) => ({
     startDate: new Date(Date.UTC(year, (quarter - 1) * 3, 1)),
     endDate: new Date(Date.UTC(year, quarter * 3, 0, 23, 59, 59)),
+    endExclusive: new Date(Date.UTC(year, quarter * 3, 1)),
   })),
   createdAtForQuarter: vi.fn().mockReturnValue('2026-10-01T00:00:00.000Z'),
   quarterOfDate: vi.fn().mockReturnValue({ year: 2026, quarter: 3 }),
