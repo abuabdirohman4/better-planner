@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { setWeeklyGoalItems, removeWeeklyGoal } from '../actions/weeklyGoalsActions';
 import WeeklySyncModal from '../WeeklySyncModal/WeeklySyncModal';
 import GoalRow from './components/GoalRow';
+import Button from '@/components/ui/button/Button';
 import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
 import { useWeekCalculations } from '../WeeklySyncClient/hooks/useWeekCalculations';
 import { getQuarterWeekRange, getWeekOfYear } from '@/lib/quarterUtils';
@@ -54,6 +55,9 @@ export default function WeeklySyncTable({
     
     return Math.round(totalPercentage / goalsWithItems.length);
   }, [goals, clientProgress]);
+
+  // Minggu belum diisi: tidak ada goal, atau semua goal tanpa item
+  const isEmpty = goals.every(goal => !goal.items || goal.items.length === 0);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);
@@ -120,6 +124,24 @@ export default function WeeklySyncTable({
           </h2>
           <div className="md:order-3"></div> {/* Empty column for centering */}
         </div>
+        {isEmpty && (
+          <div
+            data-testid="weekly-sync-empty-state"
+            className="mx-4 mb-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center"
+          >
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Minggu {props.weekNumber} belum punya 3 quest
+            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Pilih maksimal 3 quest utama untuk minggu ini supaya Daily Sync punya arah.
+            </p>
+            <div className="mt-4 flex justify-center">
+              <Button data-testid="weekly-sync-empty-cta" size="sm" onClick={() => handleSlotClick(1)}>
+                Isi Goal Minggu Ini
+              </Button>
+            </div>
+          </div>
+        )}
         <table className="w-full">
           <tbody>
             {[1, 2, 3].map((slotNumber: number) => {

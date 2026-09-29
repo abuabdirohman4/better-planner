@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
+import {
+  shouldShowInstallPrompt,
+  readInstallDismissedAt,
+  saveInstallDismissedAt,
+} from "@/lib/pwaInstallDismiss";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -14,15 +19,26 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+// Dicatat sebelum SW didaftarkan: tanpa controller berarti ini instalasi pertama, bukan update.
+const hadControllerAtLoad = typeof navigator !== "undefined" && !!navigator.serviceWorker?.controller;
+
 export default function PWAComponents() {
   const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
   // Check if we're on the landing page or auth pages
   const isLandingPage = pathname === '/' || pathname.startsWith('/(full-width-pages)');
+
+  const notifyUpdate = () => {
+    if (!hadControllerAtLoad) return; // kunjungan pertama: SW baru terpasang, bukan versi baru
+    toast('Versi baru tersedia', {
+      id: 'sw-update', // id tetap: dua pemicu tidak menumpuk dua toast
+      duration: 15000,
+      action: { label: 'Muat ulang', onClick: () => window.location.reload() },
+    });
+  };
 
   useEffect(() => {
     // Register main PWA Service Worker (handles both PWA and timer functionality)
@@ -39,7 +55,7 @@ export default function PWAComponents() {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   // New service worker is available
-                  setShowUpdatePrompt(true);
+                  notifyUpdate();
                 }
               });
             }
@@ -56,9 +72,8 @@ export default function PWAComponents() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Only show install prompt if not on landing page
-      if (!isLandingPage) {
-        // Show install prompt after delay
+      // Tampilkan hanya di halaman terautentikasi dan kalau masa tenang 30 hari sudah lewat
+      if (!isLandingPage && shouldShowInstallPrompt(readInstallDismissedAt())) {
         setTimeout(() => {
           setShowInstallPrompt(true);
         }, 3000);
@@ -79,7 +94,7 @@ export default function PWAComponents() {
     // Service worker update handler
     const handleServiceWorkerUpdate = () => {
       console.log('🔄 Service worker update available');
-      setShowUpdatePrompt(true);
+      notifyUpdate();
     };
 
     // Event listeners
@@ -203,26 +218,8 @@ export default function PWAComponents() {
 
   const handleInstallDismiss = () => {
     setShowInstallPrompt(false);
-    // Don't show again this session
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('pwa-install-dismissed', 'true');
-    }
+    saveInstallDismissedAt();
   };
-
-  const handleUpdateClick = () => {
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  };
-
-  const handleUpdateDismiss = () => {
-    setShowUpdatePrompt(false);
-  };
-
-  // Don't show if dismissed this session or on landing page
-  if (typeof window !== 'undefined' && (sessionStorage.getItem('pwa-install-dismissed') === 'true' || isLandingPage) && showInstallPrompt) {
-    setShowInstallPrompt(false);
-  }
 
   return (
     <>
@@ -230,25 +227,6 @@ export default function PWAComponents() {
       {!isOnline && (
         <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center py-2 px-4 z-50">
           📴 You are currently offline
-        </div>
-      )}
-
-      {/* Update Available */}
-      {showUpdatePrompt && (
-        <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 px-4 z-50">
-          🔄 New version available
-          <button 
-            onClick={handleUpdateClick}
-            className="ml-4 bg-white text-blue-500 px-3 py-1 rounded text-sm font-medium"
-          >
-            Update
-          </button>
-          <button 
-            onClick={handleUpdateDismiss}
-            className="ml-2 text-white text-sm"
-          >
-            ✕
-          </button>
         </div>
       )}
 

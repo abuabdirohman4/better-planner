@@ -373,6 +373,7 @@ import { Button } from '@/components/ui/Button';
 - App is configured as a Progressive Web App
 - Users can install on any device
 - Service worker configured via next-pwa
+- Dismiss install prompt disimpan di `localStorage` key `pwa-install-dismissed-at` selama 30 hari via `src/lib/pwaInstallDismiss.ts`
 
 **For SWR loading state patterns and testing strategies, see [`testing-guidelines.md#swr-loading-states`](testing-guidelines.md#swr-loading-states)**
 
