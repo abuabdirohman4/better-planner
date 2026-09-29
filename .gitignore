@@ -50,7 +50,7 @@ next-env.d.ts
 /public/sw.js
 
 # MCP
-.mcp.json
+# .mcp.json di-commit: token lewat ${VAR}, nilai di env mesin
 .mcp_config.json
 
 # Beads issue tracker

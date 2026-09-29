@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "better-planner": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=gwetkpmbkzddevhjcfbx"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${BEPLAN_SUPABASE_TOKEN}"
+      }
+    }
+  }
+}
