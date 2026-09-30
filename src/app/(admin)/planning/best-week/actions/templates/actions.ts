@@ -55,7 +55,7 @@ export async function renameTemplate(templateId: string, name: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
   const validName = validateTemplateName(name);
-  await updateTemplateName(supabase, templateId, validName);
+  await updateTemplateName(supabase, user.id, templateId, validName);
   revalidatePath('/planning/best-week');
   return { message: 'Nama template berhasil diupdate' };
 }

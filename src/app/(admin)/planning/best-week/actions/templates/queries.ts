@@ -62,13 +62,15 @@ export async function updateTemplateActiveStatus(
 
 export async function updateTemplateName(
   supabase: SupabaseClient,
+  userId: string,
   templateId: string,
   name: string
 ): Promise<void> {
   const { error } = await supabase
     .from('best_week_templates')
     .update({ name, updated_at: new Date().toISOString() })
-    .eq('id', templateId);
+    .eq('id', templateId)
+    .eq('user_id', userId);
   if (error) throw new Error('Gagal mengupdate nama template');
 }
 

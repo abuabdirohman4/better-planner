@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import type { BestWeekTemplate } from '@/lib/best-week/types';
-import { createTemplate, setActiveTemplate, deleteTemplate } from '../actions';
+import { createTemplate, setActiveTemplate, deleteTemplate, renameTemplate } from '../actions';
 
 interface TemplateSelectorProps {
   templates: BestWeekTemplate[];
@@ -15,6 +15,21 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+
+  const handleRename = async () => {
+    if (!editingId) return;
+    if (!editName.trim()) return toast.error('Nama template tidak boleh kosong');
+    try {
+      await renameTemplate(editingId, editName);
+      onMutate();
+      setEditingId(null);
+      toast.success('Nama template diubah');
+    } catch {
+      toast.error('Gagal mengubah nama template');
+    }
+  };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -67,6 +82,20 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
             {templates.map(t => (
+              editingId === t.id ? (
+                <div key={t.id} className="flex gap-2 px-3 py-2">
+                  <input
+                    autoFocus
+                    data-testid={`template-rename-input-${t.id}`}
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setEditingId(null); }}
+                    className="flex-1 min-w-0 text-sm px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  />
+                  <button data-testid={`template-rename-ok-${t.id}`} onClick={handleRename} className="text-sm text-blue-600 font-medium">OK</button>
+                  <button onClick={() => setEditingId(null)} className="text-sm text-gray-400">✕</button>
+                </div>
+              ) : (
               <div
                 key={t.id}
                 data-testid={`template-item-${t.id}`}
@@ -76,6 +105,14 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
                 <span className={`text-sm ${t.is_active ? 'font-semibold text-blue-600' : ''}`}>
                   {t.is_active ? '✓ ' : ''}{t.name}
                 </span>
+                <button
+                  data-testid={`template-rename-${t.id}`}
+                  onClick={(e) => { e.stopPropagation(); setEditingId(t.id); setEditName(t.name); }}
+                  className="text-gray-400 hover:text-blue-500 text-xs px-1 ml-auto"
+                  aria-label="Ubah nama"
+                >
+                  ✎
+                </button>
                 {templates.length > 1 && (
                   <button
                     data-testid={`template-delete-${t.id}`}
@@ -86,6 +123,7 @@ export default function TemplateSelector({ templates, activeTemplate, onMutate }
                   </button>
                 )}
               </div>
+              )
             ))}
             <div className="border-t border-gray-200 dark:border-gray-700 p-2">
               {isCreating ? (
