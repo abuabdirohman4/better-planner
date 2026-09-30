@@ -9,7 +9,7 @@ import GoalRow from './components/GoalRow';
 import Button from '@/components/ui/button/Button';
 import { useWeeklyGoalsProgress, getSlotProgress } from './hooks/useWeeklyGoalsProgress';
 import { useWeekCalculations } from '../WeeklySyncClient/hooks/useWeekCalculations';
-import { getQuarterWeekRange, getWeekOfYear } from '@/lib/quarterUtils';
+import { getQuarterWeekRange, getWeekAndYearFromDate, quarterOfDate } from '@/lib/quarterUtils';
 import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklySyncTable({ 
@@ -25,12 +25,9 @@ export default function WeeklySyncTable({
   // ✅ Determine if this is current week or past week
   const isCurrentWeek = () => {
     const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentQuarter = Math.ceil((today.getMonth() + 1) / 3);
-    
-    // Use the same logic as useWeekCalculations
-    const { getWeekOfYear, getQuarterWeekRange } = require('@/lib/quarterUtils');
-    const currentWeekNumber = getWeekOfYear(today);
+    // Kuartal 13 minggu, bukan bulan kalender (28-30 Sep 2026 = Q4, bukan Q3).
+    const { year: currentYear, quarter: currentQuarter } = quarterOfDate(today);
+    const currentWeekNumber = getWeekAndYearFromDate(today).weekNumber;
     const { startWeek, endWeek } = getQuarterWeekRange(currentYear, currentQuarter);
     const totalWeeks = endWeek - startWeek + 1;
     const weekInQuarter = Math.max(1, Math.min(totalWeeks, currentWeekNumber - startWeek + 1));
