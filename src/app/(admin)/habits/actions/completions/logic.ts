@@ -176,6 +176,17 @@ function countScheduled(dates: Set<string>, habit: Habit): number {
   return n;
 }
 
+/** Scheduled days in a "YYYY-MM" month (28/29/30/31, filtered by target_days). */
+function scheduledDaysInMonth(habit: Habit, month: string): number {
+  const [y, m] = month.split('-').map(Number);
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  let n = 0;
+  for (let d = 1; d <= days; d++) {
+    if (isScheduledOn(habit, `${month}-${String(d).padStart(2, '0')}`)) n += 1;
+  }
+  return n;
+}
+
 /**
  * Compute full monthly stats for all habits.
  *
@@ -188,7 +199,8 @@ export function calculateMonthlyStats(
   habits: Habit[],
   completions: HabitCompletion[],
   today: string,
-  streakCompletions: HabitCompletion[] = completions
+  streakCompletions: HabitCompletion[] = completions,
+  month: string = today.slice(0, 7)
 ): MonthlyStats {
   // Group completions by habit_id (raw rows; daily_target applied per habit below)
   const byHabit = groupByHabit(completions);
@@ -213,7 +225,8 @@ export function calculateMonthlyStats(
     const datesForHabit = buildCompletedDates(byHabit.get(habit.id) ?? [], dailyTarget);
     // Only scheduled days count toward the monthly goal (app-pizc).
     const completed = countScheduled(datesForHabit, habit);
-    const goal = habit.monthly_goal;
+    // Goal can't exceed the days the habit can be done in this month (app-8sl9).
+    const goal = Math.min(habit.monthly_goal, scheduledDaysInMonth(habit, month));
 
     const percentage = goal > 0 ? Math.round((completed / goal) * 100) : 0;
 

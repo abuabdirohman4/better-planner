@@ -11,7 +11,8 @@ const STREAK_HISTORY_DAYS = 90;
 
 export function useMonthlyStats(
   habits: Habit[],
-  completions: HabitCompletion[]
+  completions: HabitCompletion[],
+  month?: string
 ): MonthlyStats {
   // Get today's date string "YYYY-MM-DD" in WIB timezone
   // Recalculated once per mount — components remount daily via navigation
@@ -30,6 +31,6 @@ export function useMonthlyStats(
   return useMemo(() => {
     // Include the viewed month's rows so optimistic toggles show up immediately.
     const history = streakHistory ? [...streakHistory, ...completions] : completions;
-    return calculateMonthlyStats(habits, completions, today, history);
-  }, [habits, completions, today, streakHistory]);
+    return calculateMonthlyStats(habits, completions, today, history, month);
+  }, [habits, completions, today, streakHistory, month]);
 }

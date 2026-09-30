@@ -122,6 +122,19 @@ describe('calculateMonthlyStats with target_days', () => {
   });
 });
 
+describe('calculateMonthlyStats goal follows month length (app-8sl9)', () => {
+  const goalOf = (h: Habit, today: string) => calculateMonthlyStats([h], [], today).per_habit[0].goal;
+  it('Feb 2026 (28 days) caps goal at 28', () => expect(goalOf(habit({ monthly_goal: 31 }), '2026-02-10')).toBe(28));
+  it('Feb 2028 (29 days) caps goal at 29', () => expect(goalOf(habit({ monthly_goal: 31 }), '2028-02-10')).toBe(29));
+  it('30-day month caps goal at 30', () => expect(goalOf(habit({ monthly_goal: 31 }), '2026-04-10')).toBe(30));
+  it('31-day month keeps goal 31', () => expect(goalOf(habit({ monthly_goal: 31 }), '2026-07-10')).toBe(31));
+  it('goal below month length is unchanged', () => expect(goalOf(habit({ monthly_goal: 20 }), '2026-02-10')).toBe(20));
+  it('Monday-only habit: Sep 2026 has 4 Mondays', () =>
+    expect(goalOf(habit({ target_days: [1], monthly_goal: 31 }), '2026-09-10')).toBe(4));
+  it('explicit month arg overrides today', () =>
+    expect(calculateMonthlyStats([habit({ monthly_goal: 31 })], [], '2026-03-05', [], '2026-02').per_habit[0].goal).toBe(28));
+});
+
 describe('getTimeliness (app-r02c)', () => {
   const at = (created: string, done: string | null = null): HabitCompletion => ({
     id: 'c1', habit_id: 'h1', user_id: 'u', date: '2026-09-17', note: null,
