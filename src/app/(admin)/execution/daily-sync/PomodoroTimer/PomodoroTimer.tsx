@@ -359,6 +359,22 @@ export default function PomodoroTimer() {
             </div>
           )}
 
+          {/* Break langsung dari idle: pakai startBreak yang sama dengan BreakPrompt (tanpa task/log fokus) */}
+          {timerState === 'IDLE' && (
+            <div className="flex justify-start mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid="timer-break-btn"
+                className="text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                onClick={() => startBreak('SHORT')}
+              >
+                <BreakIcon className="w-4 h-4" />
+                Break
+              </Button>
+            </div>
+          )}
+
           {/* Stop Button */}
           {(timerState === 'FOCUSING' || timerState === 'PAUSED') && (
             <div className="flex justify-start mt-2">
