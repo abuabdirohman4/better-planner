@@ -13,7 +13,8 @@ import { getQuarterWeekRange, getWeekOfYear } from '@/lib/quarterUtils';
 import type { WeeklyGoalsTableProps } from './types';
 
 export default function WeeklySyncTable({ 
-  goals = [], 
+  goals = [],
+  isValidating = false,
   goalProgress = {}, // Keep for backward compatibility, but will use client calculation
   onRefreshGoals, 
   ...props 
@@ -57,7 +58,8 @@ export default function WeeklySyncTable({
   }, [goals, clientProgress]);
 
   // Minggu belum diisi: tidak ada goal, atau semua goal tanpa item
-  const isEmpty = goals.every(goal => !goal.items || goal.items.length === 0);
+  // Tunggu data segar: cache localStorage bisa masih kosong padahal minggu ini sudah diisi.
+  const isEmpty = !isValidating && goals.every(goal => !goal.items || goal.items.length === 0);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);

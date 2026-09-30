@@ -64,6 +64,7 @@ export function useWeeklySync(year: number, quarter: number, weekNumber: number,
     
     // Loading states
     isLoading,
+    isValidating,
     error,
     mutate,
   };
@@ -94,6 +95,7 @@ export function useWeeklySyncData(
     goals: ultraFastGoals,
     rules: ultraFastRules,
     isLoading: ultraFastLoading,
+    isValidating: ultraFastValidating,
     error: ultraFastError,
     mutate: mutateUltraFast
   } = useWeeklySync(year, quarter, relativeWeekNumber, startDate, endDate);
@@ -160,6 +162,7 @@ export function useWeeklySyncData(
     
     // Loading states
     ultraFastLoading: isLoading,
+    ultraFastValidating,
     ultraFastError: error,
     
     // Handlers

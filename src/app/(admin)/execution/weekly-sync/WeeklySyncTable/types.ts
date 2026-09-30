@@ -8,6 +8,7 @@ export interface WeeklyGoalsTableProps {
   quarter: number;
   weekNumber: number;
   goals: WeeklyGoal[];
+  isValidating?: boolean;
   goalProgress: { [key: number]: ProgressData };
   onRefreshGoals?: () => void;
 }

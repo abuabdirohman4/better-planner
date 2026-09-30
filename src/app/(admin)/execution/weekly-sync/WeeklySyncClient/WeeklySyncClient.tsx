@@ -124,6 +124,7 @@ export default function WeeklySyncClient() {
     processedProgress,
     processedRules,
     ultraFastLoading,
+    ultraFastValidating,
     ultraFastError,
     handleRefreshGoals,
     handleRefreshToDontList,
@@ -222,6 +223,7 @@ export default function WeeklySyncClient() {
       year={year}
       quarter={quarter}
       mobileOptimizedGoals={mobileOptimizedGoals}
+      goalsValidating={ultraFastValidating}
       processedProgress={processedProgress}
       processedRules={processedRules}
       toDontListLoading={ultraFastLoading}

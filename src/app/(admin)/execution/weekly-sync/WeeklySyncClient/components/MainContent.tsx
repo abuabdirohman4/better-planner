@@ -21,6 +21,7 @@ export function MainContent({
   quarter,
   year,
   mobileOptimizedGoals,
+  goalsValidating,
   processedProgress,
   processedRules,
   toDontListLoading,
@@ -73,6 +74,7 @@ export function MainContent({
         quarter={quarter}
         weekNumber={displayWeek}
         goals={mobileOptimizedGoals}
+        isValidating={goalsValidating}
         goalProgress={processedProgress}
         onRefreshGoals={handleRefreshGoals}
       />
