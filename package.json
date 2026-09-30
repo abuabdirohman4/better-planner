@@ -10,7 +10,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "fix:all": "npm run format && npm run type-check",
-    "generate:pdf": "node scripts/generate-pdf-guide.js",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

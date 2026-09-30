@@ -1,8 +1,8 @@
 # 🗺️ Roadmap: Better Planner
 
 > **File ini = peta arah project.** Sumber tunggal visi + status + next up.
-> Visi & scope detail di [`BRD.md`](./BRD.md). Skema data di [`ERD.sql`](./ERD.sql). Task detail di beads (`bd list`, prefix `bp-`). Plan per-fitur di [`../plans/`](../plans/).
-> Diperbarui: 2026-09-29 · Status: **Semua 8 fitur BRD live. Email+AI kode lengkap — tinggal isi API key di Vercel untuk aktif.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dikosongkan 17 Sep (pagi + sore), lalu 24 Sep (`app-5skl` + tiga temuan pemakaian harian), lalu 28 Sep (`app-0ank`, `app-uq5a`, `app-7z06` — quest antar quarter).
+> Visi & scope detail di [`BRD.md`](./BRD.md). Skema data sebenarnya: database Supabase + `supabase/migrations/` (ERD awal Juni 2025 di [`../archive/products/ERD.sql`](../archive/products/ERD.sql), sudah basi). Task detail di beads hub `applications` (`bd list --label=beplan`, prefix `app-`; issue lama `bp-`). Plan issue open di [`../plans/`](../archive/plans/), yang sudah closed di [`../archive/plans/`](../archive/plans/).
+> Diperbarui: 2026-09-29 · Status: **Semua 8 fitur BRD live. Proyek email+AI digugurkan 16 Sep 2026 (diganti Telegram dari VPS); Web Push sudah live.** Beads pindah ke hub `applications/` (prefix `app-`, label `beplan`) **0 open** — dikosongkan 17 Sep (pagi + sore), lalu 24 Sep (`app-5skl` + tiga temuan pemakaian harian), lalu 28 Sep (`app-0ank`, `app-uq5a`, `app-7z06` — quest antar quarter).
 
 ---
 
@@ -24,16 +24,16 @@
 | ✅ | ~~F-08 Best Week~~ | Template minggu ideal — **DONE** | ✅ |
 | ✅ | ~~F-05 Habit — polish (day nav + multi-completion)~~ | Mobile lihat hari lalu + habit N×/hari — **DONE** (`bp-uv4`, `bp-0df`) | ✅ |
 | ✅ | ~~Kualitas: metadata standar, E2E 9 area~~ | **DONE** (`bp-8m5`, `bp-ztv`) | ✅ |
-| 1 | **Aktivasi email+AI** (bukan kode — konfigurasi) | Kode epic `bp-2we` selesai; perlu key | ⏳ manual, lihat Catatan |
+| 1 | **Aktivasi email+AI** (bukan kode — konfigurasi) | Kode epic `bp-2we` selesai; perlu key | ⏳ digugurkan 16 Sep (diganti Telegram), lihat Catatan |
 
 ### Post-MVP — NANTI (parkiran ide, bukan blocker)
 
 | Item | Isi | Catatan |
 |---|---|---|
-| Web Push notification | Notifikasi browser (timer selesai, reminder) | Plan: [web-push](../plans/2026-03-31-web-push-notifications-design.md). Nunggu kebutuhan nyata |
+| Web Push notification | Notifikasi browser (timer selesai, reminder) | **Sudah live** (`useLiveTimerNotification.ts`, cron `push-due`). Plan: [web-push](../archive/plans/2026-03-31-web-push-notifications-design.md) |
 | Per-user jam kirim email | Sekarang fixed 06:00 WIB via `daily-pipeline` | Butuh Vercel Pro (multi cron) atau queue per jam |
 | Email tracking (open/click) | Kolom `opened_at/clicked_at` sudah ada di `notification_history` | Butuh Resend webhook |
-| Real-time sync antar tab/device | SSE / WebSocket (lihat [notes](./notes.md)) | Ide, belum ada kebutuhan |
+| Real-time sync antar tab/device | pilihan teknik: Ajax polling, Long Polling, Server-Sent Events, atau WebSocket | Ide, belum ada kebutuhan |
 
 ---
 
@@ -41,9 +41,9 @@
 
 | Tipe sesi | Untuk | Naming | Batch |
 |---|---|---|---|
-| **plan** | Diskusi ide + bikin beads + plan + prompt | `bp-<id> plan-<slug>` | ✅ banyak plan/sesi |
-| **review** | Review hasil executor → fix → close → commit | `bp-<id> review-<slug>` | ✅ 2-4 issue kecil |
-| **bugfix** | Debug error/regresi runtime | `bp-<id> bugfix-<slug>` | ❌ fokus 1 |
+| **plan** | Diskusi ide + bikin beads + plan + prompt | `app-<id> plan-<slug>` | ✅ banyak plan/sesi |
+| **review** | Review hasil executor → fix → close → commit | `app-<id> review-<slug>` | ✅ 2-4 issue kecil |
+| **bugfix** | Debug error/regresi runtime | `app-<id> bugfix-<slug>` | ❌ fokus 1 |
 | **discuss** | Diskusi global / arah projek (tanpa issue) | `bp discuss-<topik>` | — |
 
 **Naming = title deskriptif**, bukan cuma kode. Batch sejenis+kecil; sesi baru saat fase ganti / issue besar / context ~70%.
@@ -90,13 +90,13 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | Item | Status | Route | Catatan / Issue |
 |---|---|---|---|
 | **F-01** Dashboard Utama | ✅ | `/dashboard` | Weekly Progress hanya W1–W12 — minggu 13 (istirahat + susun kuartal) tetap boleh diisi di Weekly Sync tapi tak dihitung (`app-5skl`) |
-| **F-02** Manajemen Quest | ✅ | `/planning/vision`, `/planning/12-week-quests`, `/planning/main-quests`, `/quests/*` | [main-quests-types](../plans/2026-03-21-main-quests-types-design.md), [work-quests-3layer](../plans/2026-03-17-work-quests-3layer-refactor.md). Main Quest punya toggle 3-kolom (`app-t43e65f`, lihat Catatan) |
-| **F-03** Weekly Sync + To-Don't | ✅ | `/execution/weekly-sync` (+ `ToDontList/`) | [12-week-sync-mvp](../plans/2026-03-29-12-week-sync-mvp.md) |
-| **F-04** Daily Sync (Pomodoro, Brain Dump, log) | ✅ | `/execution/daily-sync`, `/execution/brain-dump` | [daily-plan-3layer](../plans/2026-03-19-daily-plan-schedule-3layer-refactor.md), [brain-dump](../plans/2026-04-27-brain-dump-page-implementation-plan.md), [bp-byp](../plans/2026-07-27-bp-byp-pomodoro-timer-bugs.md) | Habit bertanda ikut tampil & bisa dicentang di sini (`app-cr6i`).
-| **F-05** Habit Tracker | ✅ | `/habits/today`, `/habits/monthly` | Day nav + `daily_target` multi-completion — [plan](../plans/2026-04-13-habit-nav-multicompletion-design.md). 17 Sep: `target_days` (mingguan hanya di hari targetnya), streak lintas bulan, `deadline_time` batas tepat waktu, `show_in_daily_sync` |
+| **F-02** Manajemen Quest | ✅ | `/planning/vision`, `/planning/12-week-quests`, `/planning/main-quests`, `/quests/*` | [main-quests-types](../archive/plans/2026-03-21-main-quests-types-design.md), [work-quests-3layer](../archive/plans/2026-03-17-work-quests-3layer-refactor.md). Main Quest punya toggle 3-kolom (`app-t43e65f`, lihat Catatan) |
+| **F-03** Weekly Sync + To-Don't | ✅ | `/execution/weekly-sync` (+ `ToDontList/`) | [12-week-sync-mvp](../archive/plans/2026-03-29-12-week-sync-mvp.md) |
+| **F-04** Daily Sync (Pomodoro, Brain Dump, log) | ✅ | `/execution/daily-sync`, `/execution/brain-dump` | [daily-plan-3layer](../archive/plans/2026-03-19-daily-plan-schedule-3layer-refactor.md), [brain-dump](../archive/plans/2026-04-27-brain-dump-page-implementation-plan.md), [bp-byp](../archive/plans/2026-07-27-bp-byp-pomodoro-timer-bugs.md) | Habit bertanda ikut tampil & bisa dicentang di sini (`app-cr6i`).
+| **F-05** Habit Tracker | ✅ | `/habits/today`, `/habits/monthly` | Day nav + `daily_target` multi-completion — [plan](../archive/plans/2026-04-13-habit-nav-multicompletion-design.md). 17 Sep: `target_days` (mingguan hanya di hari targetnya), streak lintas bulan, `deadline_time` batas tepat waktu, `show_in_daily_sync` |
 | **F-06** Review & Laporan | 🔄 | `/planning/12-week-sync` (+ `history/`), `/settings/notifications`, `/api/cron/daily-pipeline` | Review kuartalan ✅ (`bp-a63`); email+AI kode ✅ (`bp-2we`) tapi **belum aktif** — perlu key (lihat Catatan) |
-| **F-07** Pengaturan | 🔄 | `/settings/notifications` (`/settings/profile` **belum ada halaman** — hanya actions sound settings) | [dynamic-user-profile](../plans/2026-03-21-dynamic-user-profile-design.md). Halaman profile = kartu baru 17 Sep |
-| **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../plans/2026-03-27-best-week-design.md) |
+| **F-07** Pengaturan | 🔄 | `/settings/notifications` (`/settings/profile` **belum ada halaman** — hanya actions sound settings) | [dynamic-user-profile](../archive/plans/2026-03-21-dynamic-user-profile-design.md). Halaman profile = kartu baru 17 Sep |
+| **F-08** Strategis (To-Don't, Best Week) | ✅ | `/execution/weekly-sync/ToDontList`, `/planning/best-week` | [best-week](../archive/plans/2026-03-27-best-week-design.md) |
 
 **Ringkasan:** 7 dari 8 ✅, F-06 🔄 hanya karena aktivasi email belum dilakukan (kode selesai). Beads sekarang di hub `applications/` (`bd list --label=beplan`) **0 open** per 24 Sep 2026.
 
@@ -122,7 +122,7 @@ Sisa kode ada di beads hub (`bd list --label=beplan`). Yang di bawah = tindakan 
 - **Kartu berlabel `migrated` tidak menandakan pekerjaan tersisa (2026-09-16):** saat beads pindah ke hub `applications/`, 6 kartu yang sudah closed ikut terbuka lagi. Diaudit ke kode: `bp-uv4` (day nav, `habits/today/page.tsx:20-118`), `bp-0df` (migration `20260818000001_habit_daily_target.sql`), `bp-8m5` (aturan metadata terdokumentasi, 14 halaman ber-metadata), `bp-ztv` (9 spec E2E, 6/6 area), `bp-7xt` (route `12-week-sync` + `history/`) semuanya **sudah terimplementasi**; `bp-vjx` ditutup sebagai tidak reproduce. Pelajaran: verifikasi ke kode dulu sebelum mengeksekusi kartu ber-label `migrated`.
 - **Habit multi-completion:** 1 baris `habit_completions` = 1 completion; hari "selesai" bila count ≥ `habits.daily_target` (streak & monthly goal ikut aturan ini). Toggle di monthly grid = isi penuh / kosongkan hari.
 - **E2E:** helper `tests/e2e/helpers/db.ts`; coverage map di `docs/claude/e2e-testing-patterns.md`.
-- **Cache SWR daily-sync:** `dedupingInterval` 5 menit sengaja (hemat edge request, plan [reduce-edge-requests](../plans/2026-04-21-reduce-edge-requests-swr-optimization.md)). Konsekuensi: tiap path yang ubah `activity_logs` **wajib** panggil `notifyActivityLogsChanged()` (`src/lib/swr.ts`) — satu sinyal untuk list, counter card, Total focus bar, dan teks progress timer. Jangan tambah `mutate` manual per handler lagi (itu akar bug berulang bp-6ka → bp-byp → bp-nuk).
+- **Cache SWR daily-sync:** `dedupingInterval` 5 menit sengaja (hemat edge request, plan [reduce-edge-requests](../archive/plans/2026-04-21-reduce-edge-requests-swr-optimization.md)). Konsekuensi: tiap path yang ubah `activity_logs` **wajib** panggil `notifyActivityLogsChanged()` (`src/lib/swr.ts`) — satu sinyal untuk list, counter card, Total focus bar, dan teks progress timer. Jangan tambah `mutate` manual per handler lagi (itu akar bug berulang bp-6ka → bp-byp → bp-nuk).
 - **Realtime Supabase belum aktif** untuk `activity_logs`/`timer_sessions` (`pg_publication_tables` kosong) → channel di `useRealtimeSync` diam. Kalau mau counter ikut update dari cron `auto-complete-timers` / device lain tanpa reload: `alter publication supabase_realtime add table activity_logs;` (uji dulu, handler completeTimerFromDatabase ikut hidup).
 - **Prinsip dokumen:** BRD = beku (visi/scope). Roadmap = hidup (status/progress). Plan files = detail eksekusi per-fitur. Beads = task aktif. Update roadmap tiap `bd close` / arah berubah.
 

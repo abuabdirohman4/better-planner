@@ -80,7 +80,7 @@ await supabase.from('task_schedules').insert(restoredSchedules);
 ### Complete Implementation Guide
 
 For complete step-by-step implementation of the Activity Plan feature including schedule management, see:
-- **`docs/activity-plan-feature.md`** - Full feature documentation
+- **`docs/archive/old-plan/activity-plan-feature.md`** - Full feature documentation
 - **`src/app/(admin)/execution/daily-sync/DailyQuest/actions/scheduleActions.ts`** - CRUD operations
 
 ---
@@ -90,7 +90,7 @@ For complete step-by-step implementation of the Activity Plan feature including 
 ### Date Formats
 
 - **Storage**: ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.sssZ)
-- **Timestamps**: Always store in UTC (see [`timezone-handling.md`](../../timezone-handling.md))
+- **Timestamps**: Always store in UTC (see [`timezone-handling.md`](timezone-handling.md))
 - **Display**: Convert to local timezone (WIB/Asia/Jakarta) for user
 
 ### ID Formats
@@ -230,7 +230,7 @@ const { data } = await supabase
 
 ### Date Range Queries
 
-**IMPORTANT**: Use UTC-aware filtering (see [`timezone-handling.md#date-range-queries`](../../timezone-handling.md#date-range-queries))
+**IMPORTANT**: Use UTC-aware filtering (see [`timezone-handling.md#date-range-queries`](timezone-handling.md#date-range-queries))
 
 ```typescript
 // Convert local date boundaries to UTC
@@ -420,8 +420,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 ## 📚 Related Documentation
 
-- **Timezone Handling**: [`docs/timezone-handling.md`](../../timezone-handling.md)
-- **Activity Plan Feature**: [`docs/activity-plan-feature.md`](../../activity-plan-feature.md)
+- **Timezone Handling**: [`docs/claude/timezone-handling.md`](timezone-handling.md)
+- **Activity Plan Feature**: [`docs/archive/old-plan/activity-plan-feature.md`](../archive/old-plan/activity-plan-feature.md)
 - **Architecture Patterns**: [`architecture-patterns.md`](architecture-patterns.md)
 - **Testing Guidelines**: [`testing-guidelines.md`](testing-guidelines.md)
 

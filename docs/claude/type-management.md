@@ -107,5 +107,5 @@ quest_id?: string
 ## Referensi
 
 - `src/types/README.md` — index semua types dengan panduan import
-- `docs/plans/2026-03-21-type-centralization-design.md` — design doc migrasi lengkap
-- `docs/plans/2026-03-21-type-centralization-implementation-plan.md` — implementation plan untuk Antigravity
+- `docs/archive/plans/2026-03-21-type-centralization-design.md` — design doc migrasi lengkap
+- `docs/archive/plans/2026-03-21-type-centralization-implementation-plan.md` — implementation plan untuk Antigravity

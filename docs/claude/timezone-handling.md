@@ -488,7 +488,7 @@ const end = new Date(`${date}T23:59:59.999+07:00`).toISOString();
 
 ## See Also
 
-- [CLAUDE.md - Timezone & Date Handling Section](../CLAUDE.md#critical-timezone--date-handling)
+- [CLAUDE.md - Timezone & Date Handling Section](../../CLAUDE.md#critical-timezone--date-handling)
 - [MDN: Date.prototype.toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
 - [MDN: Date.prototype.toLocaleString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleString)
 - [Supabase: Working with Timestamps](https://supabase.com/docs/guides/database/postgres/date-time)

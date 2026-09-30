@@ -77,19 +77,19 @@ Plan format (Option B) — buat **DUA file** di `docs/plans/`:
 **Commit Message Format (Conventional Commits):**
 ```
 feat: add new feature
-feat(scope): add feature with scope (bp-a3f2dd)
-fix: resolve bug (bp-xyz123)
+feat(scope): add feature with scope (app-a3f2)
+fix: resolve bug (app-xyz1)
 docs: update documentation
 refactor: improve code structure
 ```
 
 **GitHub Issue Title Format (MANDATORY):**
 ```
-[bp-xxx] type: short description
+[app-xxxx] type: short description
 ```
-- **Always prefix** with Beads issue ID in brackets: `[bp-xxx]`
+- **Always prefix** with Beads issue ID in brackets: `[app-xxxx]`
 - Create Beads issue FIRST → then create GH Issue with this prefix
-- Example: `[bp-0df] feat: habit multi-completion daily target`
+- Example: `[app-uq5a] feat: bawa quest dari quarter lalu`
 
 **📖 For complete Beads & Git integration guide, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
@@ -108,22 +108,20 @@ refactor: improve code structure
 
 ## 📋 Beads Issue Management
 
-**Beads Sync Branch:** `beads-sync` (NOT master)
-- Master is normal working branch - checkout anytime without conflicts
-- Beads syncs to dedicated `beads-sync` branch automatically via worktree
-- Work on feature branches normally, beads operates independently
+**Repo ini TIDAK punya `.beads/` sendiri.** Issue BePlan hidup di hub `~/Documents/applications`, prefix `app-`, label `beplan` (judul diawali `[beplan]`). Jalankan `bd` dari hub, bukan dari repo ini:
 
-**Key Commands:**
-- `bd ready` - Find ready tasks (no blockers)
-- `bd close <id>` - Close issue (never use `bd delete`)
-- `bd sync` - Sync to remote (commits to beads-sync, not your branch)
+```bash
+cd ~/Documents/applications
+bd list --label=beplan --status=open
+bd show app-xxxx
+bd create --title="[beplan] ..." --type=task --priority=2 --label=beplan
+```
 
-**Critical Rules:**
-- Never manually edit `.beads/*.jsonl` files
-- Never change `sync-branch` config in `.beads/config.yaml`
-- Progress files go in `.beads/progress/{issue-id}.md`
+- Executor (Antigravity/AI lain) **DILARANG** `bd close` / ubah status; Claude yang menutup setelah review + uji manual + persetujuan Abu.
+- Jangan pakai `bd delete`. Status kerjaan dilihat di beads/dashboard second-brain, bukan di dokumen repo.
+- Saat `bd close`, pindahkan `docs/plans/*<id>*` dan `docs/prompts/*<id>*` ke `docs/archive/`.
 
-**📖 For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
+**📖 For alur lengkap beads (hub `applications`, prefix `app-`, alur plan → executor → review → close), READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
 ---
 
@@ -308,11 +306,9 @@ All detailed documentation is in `docs/claude/`:
 - **Release Workflow**: [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
 - **E2E Testing Patterns**: [`docs/claude/e2e-testing-patterns.md`](docs/claude/e2e-testing-patterns.md)
+- **Timer Notifications**: [`docs/claude/timer-notifications.md`](docs/claude/timer-notifications.md)
 
-**Legacy Documentation** (migrate content to `docs/claude/` when updating):
-- `docs/activity-plan-feature.md` - Activity Plan implementation guide
-- `docs/BEADS_GUIDE.md` - Old beads guide
-- `docs/BEADS_WORKFLOW_STRATEGY.md` - Old beads strategy
+**Pintu masuk dokumen**: [`docs/README.md`](docs/README.md). **Arsip** (plan/prompt/panduan lama, ERD awal): `docs/archive/` — hanya untuk menelusuri keputusan lama.
 
 ---
 

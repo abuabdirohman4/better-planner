@@ -238,6 +238,19 @@ export function useData() {
 
 ---
 
+## ✍️ Daftar inline gaya Workflowy (langkah/sub-task)
+
+Kode: `src/app/(admin)/planning/main-quests/SubTask/` (`components/Subtask*.tsx`, `hooks/useSubtask*.ts`). Ciri UX yang harus dijaga:
+
+- Edit inline langsung di input (bukan tombol Edit); Enter di baris kosong menambah item; paste banyak baris sekaligus membuat banyak item; urutan bisa di-drag (dnd-kit).
+- **Optimistic UI**: item baru muncul seketika, dikirim ke server di background.
+- **Temp ID**: item baru diberi ID lokal, diganti ID server tanpa kehilangan fokus/isi; jangan pernah kirim update dengan temp ID ke server (error UUID).
+- **`display_order` fractional**: posisi dihitung di antara dua item tetangga supaya tidak perlu re-index seluruh list.
+- **Fokus** dikelola state khusus (`focusSubtaskId`) dan tetap terjaga saat re-render atau ganti ID.
+- **Draft title** disimpan lokal supaya ketikan tidak hilang saat data server masuk; simpan ke server dengan debounce, tapi langsung saat blur/Enter agar judul tidak kosong.
+
+---
+
 ## 📄 Metadata Standard (page titles)
 
 Every route must expose `metadata` so the browser tab reads `"<Page> | Better Planner"`.

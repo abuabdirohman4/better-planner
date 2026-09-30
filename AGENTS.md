@@ -119,7 +119,7 @@ bd automatically syncs via Dolt:
 - ❌ Do NOT use external issue trackers
 - ❌ Do NOT duplicate tracking systems
 
-For more details, see README.md and docs/QUICKSTART.md.
+For more details, see docs/README.md (issue BePlan ada di hub ~/Documents/applications, prefix `app-`, label `beplan`).
 
 ## Landing the Plane (Session Completion)
 
