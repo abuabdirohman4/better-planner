@@ -39,3 +39,15 @@ export interface BlockFormData {
   end_time: string;    // "HH:MM" format for UI
   description?: string;
 }
+
+export interface BlockColors {
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+// Bentuk minimal yang dirender WeeklyGrid; BestWeekBlock memenuhinya, blok jadwal nyata juga.
+export type GridBlock = Pick<BestWeekBlock, 'id' | 'days' | 'start_time' | 'end_time' | 'title'> & {
+  category?: ActivityCategory;
+  colors?: BlockColors;
+};

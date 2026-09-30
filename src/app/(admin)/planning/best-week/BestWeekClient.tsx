@@ -8,12 +8,14 @@ import WeeklyGrid from './components/WeeklyGrid';
 import BlockModal from './components/BlockModal';
 import HourSummary from './components/HourSummary';
 import { createTemplate } from './actions';
+import RealWeekView from './components/RealWeekView';
 import type { BestWeekBlock, DayCode } from '@/lib/best-week/types';
 
 export default function BestWeekClient() {
   const { templates, activeTemplate, mutate: mutateTemplates, isLoading: loadingTemplates } = useBestWeekTemplates();
   const { blocks, mutate: mutateBlocks, isLoading: loadingBlocks } = useBestWeekBlocks(activeTemplate?.id ?? null);
 
+  const [view, setView] = useState<'template' | 'real'>('template');
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     prefill?: { start_time: string; end_time: string; day: DayCode };
@@ -62,16 +64,38 @@ export default function BestWeekClient() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <TemplateSelector
-          templates={templates}
-          activeTemplate={activeTemplate}
-          onMutate={mutateTemplates}
-        />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {view === 'template' ? (
+          <TemplateSelector
+            templates={templates}
+            activeTemplate={activeTemplate}
+            onMutate={mutateTemplates}
+          />
+        ) : (
+          <span className="text-sm text-gray-500 dark:text-gray-400">Jadwal nyata dari Activity Plan, warna per HFG</span>
+        )}
+        <div data-testid="best-week-view-switch" className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
+          {([['template', 'Template ideal'], ['real', 'Minggu ini']] as const).map(([value, label]) => (
+            <button
+              key={value}
+              data-testid={`best-week-view-${value}`}
+              aria-pressed={view === value}
+              onClick={() => setView(value)}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${view === value
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {loadingBlocks ? (
+        {view === 'real' ? (
+          <RealWeekView />
+        ) : loadingBlocks ? (
           <div className="animate-pulse h-96 bg-gray-100 dark:bg-gray-800" />
         ) : (
           <>

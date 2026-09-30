@@ -392,3 +392,12 @@ Timer bisa dilepas ke jendela kecil yang selalu di atas app lain, mirip Picture-
 **Hitungan durasi dipusatkan di `src/lib/timerDisplay.ts`** (`getFocusDuration`, `getTotalSeconds`, `getProgress`, `formatTime`). Sebelumnya logika ini ditulis inline di `PomodoroTimer.tsx`; dipindah supaya dua tampilan tidak bisa berbeda hasil. Ada unit test di `src/lib/__tests__/timerDisplay.test.ts`.
 
 **Catatan:** jendela PiP ditutup otomatis saat komponen unmount, supaya tidak ada jendela yatim saat tab ditutup.
+
+---
+
+## 📅 Best Week & Tampilan Mingguan Jadwal Nyata (app-0j2t)
+
+- **Komponen**: `RealWeekView` (`src/app/(admin)/planning/best-week/components/RealWeekView.tsx`) merupakan komponen mandiri yang mengambil jadwal nyata (`task_schedules`) minggu berjalan (Senin-Minggu WIB).
+- **WeeklyGrid Generik**: Komponen `WeeklyGrid` mendukung `GridBlock` dengan warna custom (`colors?: BlockColors`). Bila `onAddBlock` dan `onEditBlock` tidak dipassing, grid otomatis menjadi read-only (tanpa drag, tanpa crosshair cursor, dan tanpa aksi klik modal).
+- **Atribusi HFG**: HFG ditentukan dari quest committed urut `priority_score` lalu `title` (limit 3, sama dengan tab Main Quests via `queryCommittedQuests`) di quarter tanggal tersebut (`quarterOfDate`), bukan dari quarter yang sedang aktif di `useQuarterStore`.
+- **Warna HFG**: `HFG_COLORS` (`real-week/logic.ts`) mendefinisikan warna hex Tailwind: Biru (HFG #1), Hijau (HFG #2), Oranye (HFG #3), dan Abu-abu (Lainnya / bukan HFG).

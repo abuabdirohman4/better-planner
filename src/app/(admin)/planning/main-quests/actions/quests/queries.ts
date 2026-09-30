@@ -114,6 +114,7 @@ export async function queryCommittedQuests(
     .eq('quarter', quarter)
     .eq('is_committed', isCommitted)
     .order('priority_score', { ascending: false })
+    .order('title', { ascending: true }) // skor sama: urutan tetap, supaya HFG #n sama di semua halaman
     .limit(limitCount);
   if (error) return [];
   return data ?? [];

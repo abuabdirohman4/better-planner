@@ -108,6 +108,7 @@ type Priority = "low" | "medium" | "high" | "urgent";
   - `NO_TARGET`: `weekly_target_hours IS NULL` atau `<= 0`
   - `REST_WEEK`: Minggu 13 kuartal berjalan (minggu istirahat, tanpa penilaian status).
 - **Single Source of Truth**: Seluruh perhitungan dilakukan di database lewat fungsi SQL `public.hfg_weekly_status(p_user_id, p_today)`. Aplikasi Next.js hanya memanggil RPC dan memformat angka untuk kartu dashboard.
+- **Pemetaan Jadwal Nyata ke HFG (`app-0j2t`)**: Pada tampilan mingguan Best Week, item jadwal nyata (`task_schedules`) diatribusikan ke HFG lewat rantai: `daily_plan_items.item_id` → `tasks.id` → `milestones.quest_id` → `quests.id` (untuk subtask mewarisi `milestone_id` milik parent task). Jika quest termasuk salah satu dari 3 HFG kuartal berjalan, blok diwarnai sesuai rank (HFG #1 biru, #2 hijau, #3 oranye); task di luar HFG (daily quest, side quest, work quest, non-milestone) masuk rank 0 (abu-abu).
 
 ---
 

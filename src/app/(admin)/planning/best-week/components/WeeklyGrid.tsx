@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CATEGORY_CONFIG, DAY_CODES, DAY_LABELS, TIME_SLOTS } from '@/lib/best-week/constants';
-import type { BestWeekBlock, DayCode } from '@/lib/best-week/types';
+import type { DayCode, GridBlock } from '@/lib/best-week/types';
 
 interface DragState {
   dayIndex: number;
@@ -11,15 +11,17 @@ interface DragState {
   isDragging: boolean;
 }
 
-interface WeeklyGridProps {
-  blocks: BestWeekBlock[];
-  onAddBlock: (prefill: { start_time: string; end_time: string; day: DayCode }) => void;
-  onEditBlock: (block: BestWeekBlock) => void;
+// Tanpa onAddBlock/onEditBlock grid jadi read-only (dipakai tampilan jadwal nyata).
+interface WeeklyGridProps<T extends GridBlock> {
+  blocks: T[];
+  onAddBlock?: (prefill: { start_time: string; end_time: string; day: DayCode }) => void;
+  onEditBlock?: (block: T) => void;
 }
 
+// Pecahan, bukan floor: sesi 25 menit tetap punya tinggi.
 function timeToSlot(time: string): number {
   const [h, m] = time.split(':').map(Number);
-  return h * 2 + Math.floor(m / 30);
+  return h * 2 + m / 30;
 }
 
 function slotToTime(slot: number): string {
@@ -28,7 +30,7 @@ function slotToTime(slot: number): string {
   return `${h}:${m}`;
 }
 
-export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGridProps) {
+export default function WeeklyGrid<T extends GridBlock>({ blocks, onAddBlock, onEditBlock }: WeeklyGridProps<T>) {
   const [drag, setDrag] = useState<DragState | null>(null);
   // useRef to always have latest drag state in the global mouseup handler
   const dragRef = useRef<DragState | null>(null);
@@ -48,7 +50,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
       const endSlot = Math.max(d.startSlot, d.endSlot) + 1;
       dragRef.current = null;
       setDrag(null);
-      onAddBlockRef.current({
+      onAddBlockRef.current?.({
         start_time: slotToTime(startSlot),
         end_time: slotToTime(endSlot),
         day: DAY_CODES[d.dayIndex],
@@ -59,6 +61,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
   }, []);
 
   const handleMouseDown = (dayIndex: number, slotIndex: number, e: React.MouseEvent) => {
+    if (!onAddBlock) return;
     if ((e.target as HTMLElement).closest('[data-block]')) return;
     e.preventDefault();
     e.stopPropagation();
@@ -72,7 +75,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
     if ((e.target as HTMLElement).closest('[data-block]')) return;
     // Only fire if there was no drag (dragRef already null after mouseup)
     if (dragRef.current) return;
-    onAddBlock({
+    onAddBlock?.({
       start_time: slotToTime(slotIndex),
       end_time: slotToTime(slotIndex + 1),
       day: DAY_CODES[dayIndex],
@@ -96,11 +99,11 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
     return slotIndex >= min && slotIndex <= max;
   };
 
-  const renderBlocksForDay = (day: DayCode, dayBlocks: BestWeekBlock[]) => {
+  const renderBlocksForDay = (dayBlocks: T[]) => {
     return dayBlocks.map(block => {
       const startSlot = timeToSlot(block.start_time);
       const endSlot = timeToSlot(block.end_time);
-      const config = CATEGORY_CONFIG[block.category];
+      const config = block.colors ?? CATEGORY_CONFIG[block.category ?? 'transition'];
       const heightSlots = endSlot - startSlot;
 
       return (
@@ -108,8 +111,9 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
           key={block.id}
           data-block="true"
           data-testid={`grid-block-${block.id}`}
-          onClick={() => onEditBlock(block)}
-          className="absolute left-0.5 right-0.5 rounded text-xs cursor-pointer hover:opacity-90 overflow-hidden z-10 flex items-center justify-center text-center px-1"
+          title={`${block.start_time.slice(0, 5)}–${block.end_time.slice(0, 5)} · ${block.title}`}
+          onClick={onEditBlock ? () => onEditBlock(block) : undefined}
+          className={`absolute left-0.5 right-0.5 rounded text-xs overflow-hidden z-10 flex items-center justify-center text-center px-1 ${onEditBlock ? 'cursor-pointer hover:opacity-90' : ''}`}
           style={{
             top: `${startSlot * 20}px`,
             height: `${heightSlots * 20}px`,
@@ -178,7 +182,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
                   isDragSelected(dayIndex, slotIndex)
                     ? 'bg-blue-100 dark:bg-blue-900/30'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
-                } cursor-crosshair`}
+                } ${onAddBlock ? 'cursor-crosshair' : ''}`}
                 data-testid={`grid-slot-${dayIndex}-${slotIndex}`}
                 onMouseDown={(e) => handleMouseDown(dayIndex, slotIndex, e)}
                 onMouseEnter={() => handleMouseEnter(dayIndex, slotIndex)}
@@ -187,7 +191,7 @@ export default function WeeklyGrid({ blocks, onAddBlock, onEditBlock }: WeeklyGr
             ))}
 
             {/* Blocks — absolute positioned, pointer-events only on the block element itself */}
-            {renderBlocksForDay(day, blocksByDay[dayIndex])}
+            {renderBlocksForDay(blocksByDay[dayIndex])}
           </div>
         ))}
       </div>
