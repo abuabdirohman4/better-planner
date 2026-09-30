@@ -113,8 +113,10 @@ export async function queryCommittedQuests(
     .eq('year', year)
     .eq('quarter', quarter)
     .eq('is_committed', isCommitted)
-    .order('priority_score', { ascending: false })
-    .order('title', { ascending: true }) // skor sama: urutan tetap, supaya HFG #n sama di semua halaman
+    .or('status.is.null,status.neq.DONE') // quest DONE tidak memakan slot HFG (sama dengan hfg_weekly_status)
+    .order('priority_score', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: true }) // skor sama: urutan tetap, identik dengan hfg_weekly_status
+    .order('id', { ascending: true })
     .limit(limitCount);
   if (error) return [];
   return data ?? [];

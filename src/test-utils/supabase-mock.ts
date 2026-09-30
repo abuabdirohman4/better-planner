@@ -16,6 +16,7 @@ export function makeQueryBuilder(resolvedValue: { data: any; error: any } = { da
   b.eq = vi.fn().mockReturnValue(b);
   b.in = vi.fn().mockReturnValue(b);
   b.not = vi.fn().mockReturnValue(b);
+  b.or = vi.fn().mockReturnValue(b);
   b.gte = vi.fn().mockReturnValue(b);
   b.lte = vi.fn().mockReturnValue(b);
   b.gt = vi.fn().mockReturnValue(b);

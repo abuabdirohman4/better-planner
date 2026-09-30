@@ -206,6 +206,7 @@ export default function PWAComponents() {
         toast.success("Better Planner installed successfully!");
       } else {
         toast.info("Installation cancelled");
+        saveInstallDismissedAt(); // Cancel = diam 30 hari
       }
       
       setDeferredPrompt(null);

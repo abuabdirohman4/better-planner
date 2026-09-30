@@ -142,6 +142,18 @@ describe('queryCommittedQuests', () => {
     expect(builder.limit).toHaveBeenCalledWith(3);
   });
 
+  it('mengecualikan DONE (status NULL tetap ikut) dan urut skor lalu created_at lalu id', async () => {
+    const builder = makeQueryBuilder({ data: [], error: null });
+    const supabase = makeFrom(builder);
+    await queryCommittedQuests(supabase, 'u1', 2026, 1, true, 3);
+    expect(builder.or).toHaveBeenCalledWith('status.is.null,status.neq.DONE');
+    expect(builder.order.mock.calls).toEqual([
+      ['priority_score', { ascending: false, nullsFirst: false }],
+      ['created_at', { ascending: true }],
+      ['id', { ascending: true }],
+    ]);
+  });
+
   it('returns empty array on error', async () => {
     const builder = makeQueryBuilder({ data: null, error: { message: 'err' } });
     const supabase = makeFrom(builder);

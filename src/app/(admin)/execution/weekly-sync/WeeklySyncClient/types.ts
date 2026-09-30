@@ -19,6 +19,7 @@ export interface MainContentProps {
   quarter: number;
   mobileOptimizedGoals: WeeklyGoal[];
   goalsValidating?: boolean;
+  goalsError?: boolean;
   processedProgress: any;
   processedRules: Rule[];
   

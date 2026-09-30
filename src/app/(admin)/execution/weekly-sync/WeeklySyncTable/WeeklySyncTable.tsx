@@ -15,6 +15,7 @@ import type { WeeklyGoalsTableProps } from './types';
 export default function WeeklySyncTable({ 
   goals = [],
   isValidating = false,
+  hasError = false,
   goalProgress = {}, // Keep for backward compatibility, but will use client calculation
   onRefreshGoals, 
   ...props 
@@ -56,7 +57,7 @@ export default function WeeklySyncTable({
 
   // Minggu belum diisi: tidak ada goal, atau semua goal tanpa item
   // Tunggu data segar: cache localStorage bisa masih kosong padahal minggu ini sudah diisi.
-  const isEmpty = !isValidating && goals.every(goal => !goal.items || goal.items.length === 0);
+  const isEmpty = !isValidating && !hasError && goals.every(goal => !goal.items || goal.items.length === 0);
 
   const handleSlotClick = (slotNumber: number) => {
     setSelectedSlot(slotNumber);

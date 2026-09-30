@@ -22,6 +22,7 @@ export function MainContent({
   year,
   mobileOptimizedGoals,
   goalsValidating,
+  goalsError,
   processedProgress,
   processedRules,
   toDontListLoading,
@@ -75,6 +76,7 @@ export function MainContent({
         weekNumber={displayWeek}
         goals={mobileOptimizedGoals}
         isValidating={goalsValidating}
+        hasError={goalsError}
         goalProgress={processedProgress}
         onRefreshGoals={handleRefreshGoals}
       />

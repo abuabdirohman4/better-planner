@@ -36,6 +36,19 @@ describe('getHfgWeeklyStatus', () => {
     expect(result.cards[0]).toMatchObject({ actualLabel: '6.5h', targetLabel: '10h', status: 'ON_TRACK' });
   });
 
+  it('urutan kartu persis urutan rpc (urutan HFG ditentukan SQL, tidak di-sort ulang)', async () => {
+    const supabase = makeSupabase({ user: { id: 'u1' } });
+    const row = (id: string, urut: number) => ({
+      quest_id: id, title: id, urut, weekly_target_hours: 5, actual_minutes: 0,
+      expected_minutes: 0, status: 'AT_RISK', week_start: '2026-09-28', week_end: '2026-10-04',
+      year: 2026, quarter: 4, week_in_quarter: 1,
+    });
+    supabase.rpc.mockResolvedValue({ data: [row('b', 1), row('a', 2), row('c', 3)], error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase);
+    const { cards } = await getHfgWeeklyStatus();
+    expect(cards.map(c => c.title)).toEqual(['b', 'a', 'c']);
+  });
+
   it('melempar error rpc supaya SWR menandai error', async () => {
     const supabase = makeSupabase({ user: { id: 'u1' } });
     supabase.rpc.mockResolvedValue({ data: null, error: { message: 'function does not exist' } });
