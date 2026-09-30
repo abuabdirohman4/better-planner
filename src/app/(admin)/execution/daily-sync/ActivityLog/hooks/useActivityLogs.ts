@@ -61,7 +61,7 @@ export function useActivityLogs({
 
         return currentLogs.map((log) =>
           log.id === logId
-            ? { ...log, what_done: whatDone, what_think: whatThink, ...(energy !== undefined && { energy }) }
+            ? { ...log, ...(whatDone && { what_done: whatDone }), ...(whatThink && { what_think: whatThink }), ...(energy !== undefined && { energy }) }
             : log
         );
       },

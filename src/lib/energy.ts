@@ -21,3 +21,13 @@ export function summarizeEnergy(rows: { energy?: number | null }[]) {
   }
   return s;
 }
+
+/** Judul tugas dengan tanda − terbanyak (null bila tidak ada). */
+export function mostDrainingTask(rows: { energy?: number | null; tasks?: { title: string } | { title: string }[] | null }[]): string | null {
+  const count = new Map<string, number>();
+  for (const { energy, tasks } of rows) {
+    const title = Array.isArray(tasks) ? tasks[0]?.title : tasks?.title;
+    if (energy === -1 && title) count.set(title, (count.get(title) ?? 0) + 1);
+  }
+  return [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}

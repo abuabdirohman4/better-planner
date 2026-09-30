@@ -26,8 +26,9 @@ export async function updateActivityLogJournal(
   const { data, error } = await supabase
     .from('activity_logs')
     .update({
-      what_done: whatDone,
-      what_think: whatThink,
+      // Teks kosong (null) tidak menimpa jurnal lama; hanya energi yang diperbarui.
+      ...(whatDone !== null && { what_done: whatDone }),
+      ...(whatThink !== null && { what_think: whatThink }),
       ...(energy !== undefined && { energy }),
     })
     .eq('id', activityId)

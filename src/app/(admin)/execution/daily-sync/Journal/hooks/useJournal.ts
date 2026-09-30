@@ -83,7 +83,7 @@ export const useJournal = () => {
       );
       
       // ✅ CRITICAL: Update SWR cache for real-time ActivityLog update
-      await updateJournalData({ whatDone, whatThink });
+      if (whatDone || whatThink) await updateJournalData({ whatDone, whatThink });
       
       // ✅ FIX: Use current date for cache invalidation
       const currentLocalDate = getCurrentLocalDate();
@@ -127,8 +127,8 @@ export const useJournal = () => {
               end_time: pendingActivityData.endTime,
               duration_minutes: durationInMinutes,
               local_date: currentLocalDate, // ✅ Use current date instead of selected date
-              what_done: whatDone,
-              what_think: whatThink,
+              what_done: whatDone || null,
+              what_think: whatThink || null,
               energy: energy ?? null,
             })
             .select()
@@ -200,8 +200,8 @@ export const useJournal = () => {
                   end_time: pendingActivityData.endTime,
                   duration_minutes: durationInMinutes,
                   local_date: currentLocalDate, // ✅ FIX: Use current date instead of selected date
-                  what_done: whatDone,
-                  what_think: whatThink,
+                  what_done: whatDone || null,
+                  what_think: whatThink || null,
                   energy: energy ?? null,
                 })
                 .select()

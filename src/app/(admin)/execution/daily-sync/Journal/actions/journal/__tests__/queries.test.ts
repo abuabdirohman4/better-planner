@@ -35,7 +35,7 @@ describe('updateActivityLogJournal', () => {
     const builder = makeQueryBuilder({ data: row, error: null });
     const supabase = makeSupabaseFrom(builder);
     const result = await updateActivityLogJournal(supabase, 'user-1', 'log-1', 'done', null);
-    expect(builder.update).toHaveBeenCalledWith({ what_done: 'done', what_think: null });
+    expect(builder.update).toHaveBeenCalledWith({ what_done: 'done' });
     expect(builder.eq).toHaveBeenCalledWith('id', 'log-1');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(result).toEqual(row);
@@ -47,11 +47,18 @@ describe('updateActivityLogJournal', () => {
     await expect(updateActivityLogJournal(supabase, 'u', 'id', null, null)).rejects.toMatchObject({ message: 'update fail' });
   });
 
+  it('teks null tidak ditulis (tidak menimpa jurnal lama), energi tetap', async () => {
+    const builder = makeQueryBuilder({ data: { id: 'log-1' }, error: null });
+    const supabase = makeSupabaseFrom(builder);
+    await updateActivityLogJournal(supabase, 'user-1', 'log-1', null, null, -1);
+    expect(builder.update).toHaveBeenCalledWith({ energy: -1 });
+  });
+
   it('menyertakan energy hanya kalau diberikan', async () => {
     const builder = makeQueryBuilder({ data: { id: 'log-1' }, error: null });
     const supabase = makeSupabaseFrom(builder);
     await updateActivityLogJournal(supabase, 'user-1', 'log-1', 'done', null, 1);
-    expect(builder.update).toHaveBeenCalledWith({ what_done: 'done', what_think: null, energy: 1 });
+    expect(builder.update).toHaveBeenCalledWith({ what_done: 'done', energy: 1 });
   });
 });
 

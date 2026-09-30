@@ -14,7 +14,7 @@ describe('queryEnergyRows', () => {
     const result = await queryEnergyRows(supabase, 'user-1', '2026-09-28', '2026-10-04');
 
     expect(supabase.from).toHaveBeenCalledWith('activity_logs');
-    expect(builder.select).toHaveBeenCalledWith('energy');
+    expect(builder.select).toHaveBeenCalledWith('energy, tasks(title)');
     expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(builder.gte).toHaveBeenCalledWith('local_date', '2026-09-28');
     expect(builder.lte).toHaveBeenCalledWith('local_date', '2026-10-04');

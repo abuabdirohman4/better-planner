@@ -60,13 +60,15 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     }
   }, [isOpen]); // ✅ FIX: Only reset when modal opens, not when taskTitle or duration changes
 
+  const canSave = !!whatDone.trim() || energy !== null;
+
   // Keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
-        if (!isSaving && whatDone.trim()) {
+        if (!isSaving && canSave) {
           handleSave();
         }
       }
@@ -79,15 +81,15 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, isSaving, whatDone]);
+  }, [isOpen, isSaving, canSave]);
 
   const handleSave = useCallback(async () => {
     // ✅ FIX: Get latest values from refs
     const currentWhatDone = whatDoneRef.current;
     const currentWhatThink = whatThinkRef.current;
 
-    if (!currentWhatDone.trim()) {
-      toast.error('Silakan isi apa yang telah Anda selesaikan');
+    if (!currentWhatDone.trim() && energyRef.current === null) {
+      toast.error('Isi jawaban atau pilih energi');
       return;
     }
 
@@ -229,6 +231,9 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
                 </button>
               ))}
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Sesi ini bikin kamu lebih bertenaga (+), biasa (=), atau terkuras (−)? Tiap minggu terlihat kerja mana yang menguras.
+            </p>
           </div>
         </div>
 
@@ -245,7 +250,7 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
           <Button
             onClick={handleSave}
             variant="primary"
-            disabled={isSaving || !whatDone.trim()}
+            disabled={isSaving || !canSave}
             className="px-4 py-2"
           >
             {isSaving ? (

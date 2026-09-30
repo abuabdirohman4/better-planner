@@ -46,6 +46,11 @@ export default function WeeklyEnergyCard() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             dari {energySummary.total} sesi yang diberi tanda
           </p>
+          {energySummary.worstTask && (
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
+              Paling menguras: {energySummary.worstTask}
+            </p>
+          )}
         </div>
       )}
     </div>
