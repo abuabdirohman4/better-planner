@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, SVGProps } from 'react';
-import { Ban } from 'lucide-react';
+import { Ban, Check } from 'lucide-react';
 
 import Button from '@/components/ui/button/Button';
 import { useTimer } from '@/stores/timerStore';
@@ -20,7 +20,7 @@ import DebugTimer from './components/DebugTimer';
 import BreakPrompt from './components/BreakPrompt';
 import FloatingTimer from './components/FloatingTimer';
 import { useDocumentPiP } from '@/hooks/useDocumentPiP';
-import { getFocusDuration, getTotalSeconds, getProgress, formatTime } from '@/lib/timerDisplay';
+import { getFocusDuration, getTotalSeconds, getProgress, formatTime, getBreakOptions, BREAK_MINUTES } from '@/lib/timerDisplay';
 
 function CircularTimer({
   progress,
@@ -82,7 +82,12 @@ const BreakIcon = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function PomodoroTimer() {
+interface PomodoroTimerProps {
+  onMarkDone?: (taskId: string) => Promise<void>;
+  isTaskDone?: (taskId: string) => boolean;
+}
+
+export default function PomodoroTimer({ onMarkDone, isTaskDone }: PomodoroTimerProps = {}) {
   const {
     timerState,
     secondsElapsed,
@@ -240,6 +245,10 @@ export default function PomodoroTimer() {
     ? `${completedForDisplay}/${displayTask.target_sessions} today's target`
     : null;
 
+  const breakOptions = getBreakOptions(focusDuration, completedForDisplay ?? 0);
+  const [isMarkingDone, setIsMarkingDone] = useState(false);
+  const canMarkDone = !!(onMarkDone && lastActiveTask && !isTaskDone?.(lastActiveTask.id));
+
   // New: Determine if interaction is possible and appropriate
   const isActionable = timerState !== 'IDLE' || !!lastActiveTask;
 
@@ -359,19 +368,38 @@ export default function PomodoroTimer() {
             </div>
           )}
 
-          {/* Break langsung dari idle: pakai startBreak yang sama dengan BreakPrompt (tanpa task/log fokus) */}
+          {/* Idle: selesai atau istirahat langsung; break pakai startBreak yang sama dengan BreakPrompt */}
           {timerState === 'IDLE' && (
-            <div className="flex justify-start mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                data-testid="timer-break-btn"
-                className="text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                onClick={() => startBreak('SHORT')}
-              >
-                <BreakIcon className="w-4 h-4" />
-                Break
-              </Button>
+            <div className="flex flex-wrap justify-start gap-2 mt-2">
+              {canMarkDone && (
+                <Button
+                  size="sm"
+                  variant="plain"
+                  data-testid="timer-done-btn"
+                  loading={isMarkingDone}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  onClick={async () => {
+                    setIsMarkingDone(true);
+                    try { await onMarkDone!(lastActiveTask!.id); } catch { /* toast di handleStatusChange */ } finally { setIsMarkingDone(false); }
+                  }}
+                >
+                  <Check className="w-4 h-4" />
+                  Mark as Done
+                </Button>
+              )}
+              {breakOptions.map(type => (
+                <Button
+                  key={type}
+                  size="sm"
+                  variant="plain"
+                  data-testid={`timer-break-btn-${type.toLowerCase()}`}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  onClick={() => startBreak(type)}
+                >
+                  <BreakIcon viewBox="0 0 24 24" className="w-5 h-5" />
+                  {BREAK_MINUTES[type]} mins
+                </Button>
+              ))}
             </div>
           )}
 

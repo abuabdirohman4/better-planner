@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import {
+  getBreakOptions,
   formatTime,
   getFocusDuration,
   getTotalSeconds,
@@ -85,5 +86,18 @@ describe('getProgress', () => {
 
   it('does not divide by zero', () => {
     expect(getProgress('FOCUSING', 10, 0)).toBe(1)
+  })
+})
+
+describe('getBreakOptions', () => {
+  it('25m → 5m; after 4 sessions also 15m', () => {
+    expect(getBreakOptions(25 * 60)).toEqual(['SHORT'])
+    expect(getBreakOptions(25 * 60, 3)).toEqual(['SHORT'])
+    expect(getBreakOptions(25 * 60, 4)).toEqual(['SHORT', 'LONG'])
+  })
+
+  it('60m → 10m, 90m → 15m', () => {
+    expect(getBreakOptions(60 * 60, 9)).toEqual(['MEDIUM'])
+    expect(getBreakOptions(90 * 60)).toEqual(['LONG'])
   })
 })

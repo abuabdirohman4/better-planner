@@ -41,7 +41,15 @@ export default function DailySyncPage() {
   const selectedDateStr = getLocalDateString(selectedDate);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-  const { loading, initialLoading, dailyPlan, mutate, completedSessions } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
+  const { loading, initialLoading, dailyPlan, mutate, completedSessions, handleStatusChange } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
+
+  // Tombol "Mark as Done" di timer: cari item daily plan dari task yang terakhir dijalankan.
+  const findPlanItem = (taskId: string) => dailyPlan?.daily_plan_items?.find((i: { item_id: string }) => i.item_id === taskId);
+  const markTimerTaskDone = async (taskId: string) => {
+    const item = findPlanItem(taskId);
+    if (item) await handleStatusChange(item.id, 'DONE');
+  };
+  const isTimerTaskDone = (taskId: string) => { const item = findPlanItem(taskId); return !item || item.status === 'DONE'; };
 
   // Journal modal hook
   const {
@@ -119,7 +127,7 @@ export default function DailySyncPage() {
             >
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
                 <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                <PomodoroTimer />
+                <PomodoroTimer onMarkDone={markTimerTaskDone} isTaskDone={isTimerTaskDone} />
               </div>
             </CollapsibleCard>
           </div>
@@ -158,7 +166,7 @@ export default function DailySyncPage() {
                 >
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
                     <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                    <PomodoroTimer />
+                    <PomodoroTimer onMarkDone={markTimerTaskDone} isTaskDone={isTimerTaskDone} />
                   </div>
                 </CollapsibleCard>
               </div>

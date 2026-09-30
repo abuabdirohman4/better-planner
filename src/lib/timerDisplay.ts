@@ -50,3 +50,15 @@ export function getProgress(timerState: TimerState, secondsElapsed: number, tota
   if (!running || totalSeconds <= 0) return 1
   return Math.min(1, Math.max(0, secondsElapsed / totalSeconds))
 }
+
+/**
+ * Break choices for a focus length (seconds): 25→5m, 60→10m, 90→15m; 25/5 offers 15m too after 4 sessions today.
+ * Thresholds match BreakPrompt (45m / 75m).
+ */
+export function getBreakOptions(focusSeconds: number, completedToday = 0): Exclude<BreakType, null>[] {
+  if (focusSeconds >= 4500) return ['LONG']
+  if (focusSeconds >= 2700) return ['MEDIUM']
+  return completedToday >= 4 ? ['SHORT', 'LONG'] : ['SHORT']
+}
+
+export const BREAK_MINUTES: Record<Exclude<BreakType, null>, number> = { SHORT: 5, MEDIUM: 10, LONG: 15 }
