@@ -3,6 +3,8 @@
  *
  * Helper functions untuk menentukan period dates untuk aggregation
  */
+import { quarterOfDate, getQuarterDates } from '@/lib/quarterUtils';
+
 
 /**
  * Format a Date as YYYY-MM-DD in the user's timezone (WIB).
@@ -48,11 +50,8 @@ export function getMonthStart(date: Date): Date {
  * Get the start of the quarter for a given date
  */
 export function getQuarterStart(date: Date): Date {
-  const d = new Date(date);
-  const month = d.getMonth();
-  const quarterMonth = Math.floor(month / 3) * 3; // 0, 3, 6, or 9
-
-  return new Date(d.getFullYear(), quarterMonth, 1);
+  const { year, quarter } = quarterOfDate(date);
+  return getQuarterDates(year, quarter).startDate;
 }
 
 /**
@@ -95,9 +94,17 @@ export function getLastMonthStart(): Date {
  * Get last quarter's start date
  */
 export function getLastQuarterStart(): Date {
-  const d = nowInUserTimezone();
-  d.setMonth(d.getMonth() - 3);
-  return getQuarterStart(d);
+  // Instant asli (bukan nowInUserTimezone): quarterOfDate sudah menggeser ke WIB sendiri.
+  return getQuarterStart(new Date(Date.now() - 91 * 86400000)); // 1 kuartal = 13 minggu
+}
+
+/**
+ * Hari ini (WIB) = hari pertama kuartal 13 minggu
+ */
+export function isFirstDayOfQuarter(now: Date = new Date()): boolean {
+  const today = quarterOfDate(now);
+  const yesterday = quarterOfDate(new Date(now.getTime() - 86400000));
+  return today.quarter !== yesterday.quarter || today.year !== yesterday.year;
 }
 
 /**

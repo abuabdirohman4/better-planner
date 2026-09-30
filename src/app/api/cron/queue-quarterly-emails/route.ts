@@ -2,6 +2,7 @@ import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { generateInsight } from '@/lib/notifications/services/aiInsightService'
 import { getQuarterlyPerformance } from '@/lib/notifications/services/performanceAggregation'
+import { quarterOfDate } from '@/lib/quarterUtils'
 import { getLastQuarterStart } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
@@ -25,8 +26,7 @@ export async function POST(request: Request) {
     }
 
     const quarterStartDate = getLastQuarterStart()
-    const prevQuarterYear = quarterStartDate.getFullYear()
-    const prevQuarter = Math.floor(quarterStartDate.getMonth() / 3)
+    const { year: prevQuarterYear, quarter: prevQuarter } = quarterOfDate(quarterStartDate)
     const periodStart = quarterStartDate.toISOString().split('T')[0]
 
     let queuedCount = 0
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         email,
         userName: name,
         periodType: 'quarterly',
-        periodLabel: `Q${prevQuarter + 1} ${prevQuarterYear}`,
+        periodLabel: `Q${prevQuarter} ${prevQuarterYear}`,
         metrics,
         insight,
         character: char,

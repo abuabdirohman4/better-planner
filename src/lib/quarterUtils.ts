@@ -156,7 +156,12 @@ export function createdAtForQuarter(year: number, quarter: number, now: Date = n
 
 // Quarter perencanaan (13 minggu) tempat sebuah tanggal jatuh.
 export function quarterOfDate(date: Date): { year: number; quarter: number } {
-  const { weekNumber, year } = getWeekAndYearFromDate(date);
+  // Pakai jam dinding WIB (bukan timezone proses, Vercel = UTC); di browser WIB hasilnya identik.
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' })
+      .formatToParts(date).map(x => [x.type, +x.value])
+  );
+  const { weekNumber, year } = getWeekAndYearFromDate(new Date(p.year, p.month - 1, p.day, p.hour, p.minute));
   return { year, quarter: getQuarterFromWeek(weekNumber) };
 }
 

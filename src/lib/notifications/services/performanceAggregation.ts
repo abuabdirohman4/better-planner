@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { quarterOfDate } from "@/lib/quarterUtils";
 import { formatLocalDate } from "@/lib/notifications/utils/periodUtils";
 
 /**
@@ -1059,11 +1060,12 @@ export async function getQuarterlyPerformance(
   const completionRate = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   // Get weekly goals for the quarter
-  const quarterNumber = Math.floor(quarterStartDate.getMonth() / 3) + 1;
+  const { year: quarterYear, quarter: quarterNumber } = quarterOfDate(quarterStartDate);
   const { data: weeklyGoals } = await supabase
     .from("weekly_goals")
     .select("id, quarter")
     .eq("user_id", userId)
+    .eq("year", quarterYear)
     .eq("quarter", quarterNumber);
 
   const weeklyGoalsTotal = weeklyGoals?.length || 0;

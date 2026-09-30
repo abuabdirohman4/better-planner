@@ -18,7 +18,7 @@ import { sendPushToUser } from '@/lib/notifications/services/pushService'
 import { buildSubject, insertHistory } from '@/lib/notifications/services/queueProcessor'
 import { createServiceClient } from '@/lib/supabase/service'
 import { startCronRun, finishCronRun } from '@/lib/cronRun'
-import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
+import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, isFirstDayOfQuarter, nowInUserTimezone } from '@/lib/notifications/utils/periodUtils'
 import type { EmailPayload, AICharacter } from '@/lib/notifications/types'
 
 // Pipeline needs ~15-30s (4s Gemini delay per user + sends); Hobby default can be 10s
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     const now = nowInUserTimezone()
     const runWeekly = now.getDay() === 1 // Monday
     const runMonthly = now.getDate() === 1
-    const runQuarterly = now.getDate() === 1 && [0, 3, 6, 9].includes(now.getMonth())
+    const runQuarterly = isFirstDayOfQuarter()
 
     const yesterday = getYesterday()
     const weekStart = getLastWeekStart()

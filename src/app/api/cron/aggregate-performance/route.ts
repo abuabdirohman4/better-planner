@@ -1,7 +1,7 @@
 import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { aggregatePerformance } from '@/lib/notifications/services/performanceAggregation'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart } from '@/lib/notifications/utils/periodUtils'
+import { getYesterday, getLastWeekStart, getLastMonthStart, getLastQuarterStart, isFirstDayOfQuarter } from '@/lib/notifications/utils/periodUtils'
 
 export async function POST(request: Request) {
   if (!verifyCronRequest(request)) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const todayDateObj = new Date()
     const runWeekly = todayDateObj.getDay() === 1 // is Monday
     const runMonthly = todayDateObj.getDate() === 1
-    const runQuarterly = todayDateObj.getDate() === 1 && [0,3,6,9].includes(todayDateObj.getMonth())
+    const runQuarterly = isFirstDayOfQuarter()
 
     const yesterdayDate = getYesterday()
     const weekStartDate = getLastWeekStart()
