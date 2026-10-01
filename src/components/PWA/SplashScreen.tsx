@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 interface SplashScreenProps {
   children: React.ReactNode;
 }
 
 export default function SplashScreen({ children }: SplashScreenProps) {
-  const [showSplash, setShowSplash] = useState(true);
+  const pathname = usePathname();
+  const [showSplash, setShowSplash] = useState(pathname !== "/");
 
   useEffect(() => {
     // Show splash screen for 1.5 seconds

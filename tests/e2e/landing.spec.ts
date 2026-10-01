@@ -7,9 +7,9 @@ test.describe('Landing page', () => {
   test('hero Indonesia + CTA', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'id');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Target besarmu masih di tempat');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('target besarmu masih di tempat');
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'id_ID');
-    await expect(page.getByRole('link', { name: 'Coba gratis' }).first()).toHaveAttribute('href', '/signup');
+    await expect(page.getByRole('link', { name: 'Mulai Sekarang' }).first()).toHaveAttribute('href', '/signup');
     await expect(page.getByRole('link', { name: 'Masuk' }).first()).toHaveAttribute('href', '/signin');
   });
 

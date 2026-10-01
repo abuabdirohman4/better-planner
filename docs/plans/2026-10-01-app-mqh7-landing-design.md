@@ -216,3 +216,26 @@ Persona: karyawan swasta, ingin naik kelas karier + sehat + keuangan rapi. Kuart
 - [ ] 390px: tanpa scroll samping, gambar tidak pecah, tombol ≥ 44px tinggi
 - [ ] Logged-in user yang buka `/` tetap dialihkan ke `/dashboard` (middleware)
 - [ ] Tidak ada aset/kalimat Superfocus atau Acuan
+
+## Revisi 1 (feedback Abu, 1 Okt 2026) — menimpa §Copy & tata letak di atas
+
+- Menu header pindah ke kanan (logo kiri; Cara kerja · Harga · FAQ · Masuk · tombol). Tombol utama di nav, hero, dan penutup jadi **"Mulai Sekarang"** (kartu harga Gratis tetap "Coba gratis").
+- Klik menu header menggulir halus (`scroll-behavior: smooth`, hanya di landing, hormati reduced-motion) dan berhenti 5rem di bawah header sticky.
+- Hero: latar gradasi biru tipis (`brand-50 → brand-25 → putih`), label jadi pil bertitik, kalimat kedua judul bergradasi biru, tombol gradasi biru + panah, tombol kedua "Lihat cara kerja" → `#cara-kerja`, baris centang (Gratis selama masa awal · Cukup daftar dengan email · Bisa dipasang di HP) menggantikan "Sudah punya akun? Masuk" + catatan kecil. Screenshot desktop dibingkai jendela browser (`planner.abuabdirohman.com`).
+- "Tanya jawab" → **FAQ** (anchor `#faq`): label "FAQ" + judul "Pertanyaan yang sering muncul", tiap pertanyaan kartu putih membulat, ikon + di kotak biru muda yang berputar jadi × bergradasi saat dibuka.
+- Warna tetap biru brand (bukan oranye Acuan) — yang ditiru pola tampilannya.
+- `SplashScreen` (root layout) dilewati di `/`: sebelumnya landing tertahan 1,5 detik di balik splash dan HTML server hanya berisi splash.
+
+## Revisi 2 (feedback Abu, 1 Okt 2026)
+
+- Menu "Masuk" dihapus dari header (desktop & HP). "Masuk"/"Daftar" pindah ke kolom **Akun** di footer.
+- Judul hero dua bagian seperti Acuan: masalah (hitam) "Hari-harimu penuh, target besarmu masih di tempat." + janji (gradasi biru) "Mulai dari 3 yang terpenting."; ukuran `md:text-5xl`, lebar `max-w-2xl`. Subjudul berpotongan tebal: "Better Planner menyambungkan **visi, 3 tujuan 12 minggu, rencana mingguan, jadwal harian, dan timer fokus** dalam satu alur. **Tiap minggu kamu tahu tujuan mana yang mulai tertinggal** — bukan sekadar daftar tugas yang terus memanjang." Label pil: "Perencana 12 minggu · metode Sync Planner".
+- Klik logo → `#top`, menggulir halus ke atas.
+- Satu gradasi biru tipis untuk seluruh halaman (brand-50 → brand-25 → putih, berulang); latar per seksi dihapus, kartu tetap putih.
+- Penutup + footer gelap (`gray-950`) seperti Acuan: cahaya biru di atas judul, subjudul "Dua belas minggu cukup untuk satu perubahan besar. Mulai dengan memilih tiga tujuanmu hari ini.", tombol gradasi; footer = garis aksen + logo terang + tagline + kolom Produk (Cara kerja, Harga, FAQ) & Akun (Masuk, Daftar) + baris hak cipta & domain.
+
+## Revisi 3 (Abu, 1 Okt 2026)
+
+- Label pil: "Perencana 12 minggu" → **"Perencanaan 12 minggu"**.
+- Kata **"tujuan" diganti "goal"** di seluruh copy (termasuk metadata; "tujuanmu" → "goal-mu"). `copy.id.ts` jadi acuan teks terbaru.
+- Judul penutup: "12 Minggu ini, pastikan yang terpenting yang kamu kerjakan."

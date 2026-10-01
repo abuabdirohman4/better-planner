@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { RiCheckLine } from 'react-icons/ri';
+import { RiArrowRightLine, RiCheckLine } from 'react-icons/ri';
 
 import Button from '@/components/ui/button/Button';
 
@@ -9,12 +9,12 @@ import { copy, SIZE } from './copy.id';
 // Matikan untuk menyembunyikan seksi harga + link nav-nya.
 export const SHOW_PRICING = true;
 
-const ctaClass =
-  'inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-600';
-const navCtaClass =
-  'inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-500 px-4 text-sm font-semibold text-white hover:bg-brand-600';
-const textLinkClass =
-  'inline-flex min-h-11 items-center px-2 text-sm font-medium text-gray-700 hover:text-gray-900';
+const gradientClass =
+  'bg-gradient-to-r from-brand-600 to-brand-400 text-white shadow-lg shadow-brand-500/30 transition hover:brightness-110';
+const ctaClass = `inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold ${gradientClass}`;
+const navCtaClass = `inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold ${gradientClass}`;
+const navLinkClass = 'inline-flex min-h-11 items-center hover:text-gray-900';
+const footerLinkClass = 'inline-flex min-h-11 items-center hover:text-white';
 const wrapClass = 'mx-auto max-w-6xl px-4 sm:px-6';
 const sectionClass = 'py-16 md:py-24';
 const h2Class = 'text-3xl font-bold tracking-tight text-gray-900 md:text-4xl';
@@ -25,63 +25,94 @@ export default function LandingPage() {
   const { nav, hero, problem, howItWorks, steps, beforeAfter, method, pricing, faq, closing, footer } = copy;
 
   return (
-    <div className="min-h-screen bg-white text-gray-700">
+    <div id="top" data-landing className="min-h-screen bg-[linear-gradient(180deg,var(--color-brand-50)_0%,var(--color-brand-25)_18%,#ffffff_38%,var(--color-brand-25)_58%,#ffffff_78%,var(--color-brand-50)_100%)] text-gray-700">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur">
-        <div className={`${wrapClass} flex h-16 items-center justify-between gap-2`}>
-          <Link href="/" className="shrink-0">
+      <header className="sticky top-0 z-50 border-b border-brand-100/70 bg-white/70 backdrop-blur">
+        <div className={`${wrapClass} flex h-16 items-center gap-2`}>
+          <a href="#top" className="mr-auto shrink-0">
             <Image src="/images/logo/logo.svg" alt="Better Planner" width={218} height={37} className="h-6 w-auto sm:h-8" priority />
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-gray-600 md:flex">
-            <a href="#cara-kerja" className="hover:text-gray-900">{nav.howItWorks}</a>
-            {SHOW_PRICING && <a href="#harga" className="hover:text-gray-900">{nav.pricing}</a>}
-            <a href="#tanya-jawab" className="hover:text-gray-900">{nav.faq}</a>
+          </a>
+          <nav className="hidden items-center gap-7 text-sm font-medium text-gray-600 md:flex">
+            <a href="#cara-kerja" className={navLinkClass}>{nav.howItWorks}</a>
+            {SHOW_PRICING && <a href="#harga" className={navLinkClass}>{nav.pricing}</a>}
+            <a href="#faq" className={navLinkClass}>{nav.faq}</a>
           </nav>
-          <div className="flex items-center gap-1 sm:gap-3">
-            <Link href="/signin" className={textLinkClass}>{nav.signin}</Link>
-            <Link href="/signup" className={navCtaClass}>{nav.cta}</Link>
-          </div>
+          <Link href="/signup" className={`${navCtaClass} md:ml-4`}>{nav.cta}</Link>
         </div>
       </header>
 
       <main>
         {/* 1 Hero */}
-        <section className={`${wrapClass} pb-16 pt-12 md:pb-24 md:pt-20`}>
-          <div className="mx-auto max-w-3xl text-center">
-            <p className={eyebrowClass}>{hero.eyebrow}</p>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 md:text-6xl">{hero.title}</h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">{hero.subtitle}</p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5">
-              <Link href="/signup" className={ctaClass}>{hero.cta}</Link>
-              <span className="text-sm text-gray-600">
-                {hero.signinPrompt}{' '}
-                <Link href="/signin" className="font-semibold text-brand-500 hover:text-brand-600">{hero.signin}</Link>
-              </span>
+        <section>
+          <div className={`${wrapClass} pb-16 pt-12 md:pb-24 md:pt-20`}>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-1.5 text-sm font-medium text-brand-600 shadow-sm">
+                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-brand-500" />
+                {hero.eyebrow}
+              </p>
+              <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-bold leading-tight tracking-tight text-gray-900 md:text-5xl">
+                {hero.titleLead}{' '}
+                <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">{hero.titleAccent}</span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
+                {hero.subtitle.map((part) =>
+                  part.bold ? <strong key={part.text} className="font-semibold text-gray-900">{part.text}</strong> : part.text,
+                )}
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <Link href="/signup" className={`${ctaClass} px-8 text-base`}>
+                  {hero.cta}
+                  <RiArrowRightLine aria-hidden="true" className="h-5 w-5" />
+                </Link>
+                <a
+                  href="#cara-kerja"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-gray-200 bg-white px-8 py-3 text-base font-semibold text-gray-900 shadow-sm hover:bg-gray-50"
+                >
+                  {hero.secondaryCta}
+                </a>
+              </div>
+              <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                {hero.checks.map((item) => (
+                  <li key={item} className="flex items-center gap-1.5">
+                    <RiCheckLine aria-hidden="true" className="h-4 w-4 text-brand-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="mt-4 text-sm text-gray-500">{hero.note}</p>
-          </div>
-          <div className="mt-12">
-            <Image
-              src={hero.image.desktop}
-              alt={hero.image.alt}
-              {...SIZE.wide}
-              sizes="(min-width: 1152px) 1152px, 100vw"
-              className={`${imgClass} hidden md:block`}
-              priority
-            />
-            <Image
-              src={hero.image.mobile}
-              alt={hero.image.alt}
-              {...SIZE.mobile}
-              sizes="(min-width: 768px) 0px, 390px"
-              className={`${imgClass} mx-auto max-w-[280px] md:hidden`}
-              priority
-            />
+            <div className="mt-12">
+              <div className="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl shadow-brand-500/10 md:block">
+                <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                  <span aria-hidden="true" className="flex gap-1.5">
+                    <span className="h-3 w-3 rounded-full bg-gray-300" />
+                    <span className="h-3 w-3 rounded-full bg-gray-300" />
+                    <span className="h-3 w-3 rounded-full bg-gray-300" />
+                  </span>
+                  <span className="rounded-md border border-gray-200 bg-white px-3 py-1 font-mono text-xs text-gray-500">{hero.browserUrl}</span>
+                </div>
+                <Image
+                  src={hero.image.desktop}
+                  alt={hero.image.alt}
+                  {...SIZE.wide}
+                  sizes="(min-width: 1152px) 1152px, 100vw"
+                  className="h-auto w-full"
+                  priority
+                />
+              </div>
+              <Image
+                src={hero.image.mobile}
+                alt={hero.image.alt}
+                {...SIZE.mobile}
+                sizes="(min-width: 768px) 0px, 390px"
+                className={`${imgClass} mx-auto max-w-[280px] md:hidden`}
+                priority
+              />
+            </div>
           </div>
         </section>
 
         {/* 2 Masalah */}
-        <section className={`${sectionClass} bg-gray-50`}>
+        <section className={sectionClass}>
           <div className={`${wrapClass} grid items-center gap-10 md:grid-cols-2`}>
             <div>
               <p className={eyebrowClass}>{problem.eyebrow}</p>
@@ -163,11 +194,11 @@ export default function LandingPage() {
         </section>
 
         {/* 4 Sebelum / Sesudah */}
-        <section className={`${sectionClass} bg-gray-50`}>
+        <section className={sectionClass}>
           <div className={wrapClass}>
             <h2 className={`${h2Class} text-center`}>{beforeAfter.title}</h2>
             <div className="mt-10 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-gray-100 p-6 md:p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white/60 p-6 md:p-8">
                 <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">{beforeAfter.before.label}</p>
                 <p className="mt-3 text-lg text-gray-700">{beforeAfter.before.body}</p>
               </div>
@@ -195,7 +226,7 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-            <figure className="mx-auto mt-14 max-w-3xl rounded-2xl border border-gray-200 bg-gray-50 p-6 md:p-10">
+            <figure className="mx-auto mt-14 max-w-3xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
               <blockquote className="text-lg italic text-gray-800">{method.quote}</blockquote>
               <figcaption className="mt-6 flex items-center gap-3">
                 <span
@@ -214,7 +245,7 @@ export default function LandingPage() {
 
         {/* 6 Harga */}
         {SHOW_PRICING && (
-          <section id="harga" className={`${sectionClass} bg-gray-50`}>
+          <section id="harga" className={sectionClass}>
             <div className={wrapClass}>
               <h2 className={`${h2Class} text-center`}>{pricing.title}</h2>
               <div className="mx-auto mt-10 grid max-w-3xl gap-4 md:grid-cols-2">
@@ -249,17 +280,28 @@ export default function LandingPage() {
         )}
 
         {/* 7 Tanya jawab */}
-        <section id="tanya-jawab" className={sectionClass}>
-          <div className={`${wrapClass} grid gap-8 md:grid-cols-3`}>
-            <h2 className={h2Class}>{faq.title}</h2>
-            <div className="md:col-span-2">
+        <section id="faq" className={sectionClass}>
+          <div className={`${wrapClass} max-w-3xl`}>
+            <div className="text-center">
+              <p className={`${eyebrowClass} inline-flex items-center gap-2`}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {faq.eyebrow}
+              </p>
+              <h2 className={h2Class}>{faq.title}</h2>
+            </div>
+            <div className="mt-10 space-y-3">
               {faq.items.map((item) => (
-                <details key={item.q} className="group border-b border-gray-200 py-4">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-medium text-gray-900 [&::-webkit-details-marker]:hidden">
+                <details key={item.q} className="group rounded-2xl border border-gray-200 bg-white px-5 shadow-sm open:shadow-md md:px-6">
+                  <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold text-gray-900 [&::-webkit-details-marker]:hidden">
                     {item.q}
-                    <span aria-hidden="true" className="text-xl text-gray-400 transition group-open:rotate-45">+</span>
+                    <span
+                      aria-hidden="true"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-lg text-brand-500 transition group-open:rotate-45 group-open:bg-gradient-to-r group-open:from-brand-600 group-open:to-brand-400 group-open:text-white"
+                    >
+                      +
+                    </span>
                   </summary>
-                  <p className="mt-2 text-gray-600">{item.a}</p>
+                  <p className="pb-5 text-gray-600">{item.a}</p>
                 </details>
               ))}
             </div>
@@ -267,22 +309,51 @@ export default function LandingPage() {
         </section>
 
         {/* 8 Penutup */}
-        <section className={`${sectionClass} bg-gray-50`}>
-          <div className={`${wrapClass} text-center`}>
-            <h2 className={`${h2Class} mx-auto max-w-3xl`}>{closing.title}</h2>
-            <div className="mt-8">
-              <Link href="/signup" className={ctaClass}>{closing.cta}</Link>
+        <section className="relative overflow-hidden bg-gray-950 py-20 text-center md:py-28">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-72 max-w-3xl rounded-full bg-brand-500/30 blur-3xl"
+          />
+          <div className={`${wrapClass} relative`}>
+            <h2 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-white md:text-4xl">{closing.title}</h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg text-gray-300">{closing.subtitle}</p>
+            <div className="mt-10">
+              <Link href="/signup" className={`${ctaClass} px-8 text-base`}>
+                {closing.cta}
+                <RiArrowRightLine aria-hidden="true" className="h-5 w-5" />
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-gray-200 py-8">
-        <div className={`${wrapClass} flex flex-col items-center justify-between gap-2 text-sm text-gray-500 sm:flex-row`}>
-          <p>{footer.copyright}</p>
-          <div className="flex gap-2">
-            <Link href="/signin" className={textLinkClass}>{footer.signin}</Link>
-            <Link href="/signup" className={textLinkClass}>{footer.signup}</Link>
+      <footer className="bg-gray-950 text-gray-400">
+        <div className={`${wrapClass} border-t border-white/10 py-14`}>
+          <div className="grid gap-10 md:grid-cols-[1fr_auto_auto] md:gap-16">
+            <div className="max-w-md">
+              <span aria-hidden="true" className="mb-6 block h-1 w-14 rounded-full bg-gradient-to-r from-brand-600 to-brand-400" />
+              <Image src="/images/logo/logo-dark.svg" alt="Better Planner" width={218} height={37} className="h-8 w-auto" />
+              <p className="mt-4 leading-relaxed">{footer.tagline}</p>
+            </div>
+            <nav aria-label={footer.productTitle}>
+              <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-white">{footer.productTitle}</p>
+              <ul className="space-y-1">
+                <li><a href="#cara-kerja" className={footerLinkClass}>{nav.howItWorks}</a></li>
+                {SHOW_PRICING && <li><a href="#harga" className={footerLinkClass}>{nav.pricing}</a></li>}
+                <li><a href="#faq" className={footerLinkClass}>{nav.faq}</a></li>
+              </ul>
+            </nav>
+            <nav aria-label={footer.accountTitle}>
+              <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-white">{footer.accountTitle}</p>
+              <ul className="space-y-1">
+                <li><Link href="/signin" className={footerLinkClass}>{footer.signin}</Link></li>
+                <li><Link href="/signup" className={footerLinkClass}>{footer.signup}</Link></li>
+              </ul>
+            </nav>
+          </div>
+          <div className="mt-12 flex flex-col gap-2 border-t border-white/10 pt-6 text-sm sm:flex-row sm:justify-between">
+            <p>{footer.copyright}</p>
+            <p className="font-mono text-gray-500">{footer.site}</p>
           </div>
         </div>
       </footer>

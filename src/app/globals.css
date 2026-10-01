@@ -852,3 +852,13 @@ span.flatpickr-weekday,
     border-color: var(--color-gray-800);
   }
 }
+
+/* Landing: klik menu header menggulir halus, berhenti di bawah header sticky. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has([data-landing]) {
+    scroll-behavior: smooth;
+  }
+}
+html:has([data-landing]) {
+  scroll-padding-top: 5rem;
+}

@@ -11,19 +11,25 @@ export const copy = {
   nav: {
     howItWorks: 'Cara kerja',
     pricing: 'Harga',
-    faq: 'Tanya jawab',
-    signin: 'Masuk',
-    cta: 'Coba gratis',
+    faq: 'FAQ',
+    cta: 'Mulai Sekarang',
   },
   hero: {
-    eyebrow: 'Perencana 12 minggu',
-    title: 'Hari-harimu penuh. Target besarmu masih di tempat.',
-    subtitle:
-      'Better Planner membantumu memilih 3 tujuan terpenting, memecahnya jadi rencana 12 minggu, mingguan, dan harian — lalu memberi tahu mana yang mulai tertinggal.',
-    cta: 'Coba gratis',
-    signinPrompt: 'Sudah punya akun?',
-    signin: 'Masuk',
-    note: 'Gratis selama masa awal. Cukup daftar dengan email.',
+    eyebrow: 'Perencanaan 12 minggu · metode Sync Planner',
+    titleLead: 'Hari-harimu penuh, target besarmu masih di tempat.',
+    titleAccent: 'Mulai dari 3 yang terpenting.',
+    // Potongan subjudul; bold = ditebalkan.
+    subtitle: [
+      { text: 'Better Planner menyambungkan ' },
+      { text: 'visi, 3 goal 12 minggu, rencana mingguan, jadwal harian, dan timer fokus', bold: true },
+      { text: ' dalam satu alur. ' },
+      { text: 'Tiap minggu kamu tahu goal mana yang mulai tertinggal', bold: true },
+      { text: ' — bukan sekadar daftar tugas yang terus memanjang.' },
+    ],
+    cta: 'Mulai Sekarang',
+    secondaryCta: 'Lihat cara kerja',
+    checks: ['Gratis selama masa awal', 'Cukup daftar dengan email', 'Bisa dipasang di HP'],
+    browserUrl: 'planner.abuabdirohman.com',
     image: {
       desktop: `${IMG}/hero-desktop.jpg`,
       mobile: `${IMG}/hero-mobile.jpg`,
@@ -33,7 +39,7 @@ export const copy = {
   problem: {
     eyebrow: 'Terdengar familiar?',
     title: 'Bukan kurang rajin. Kurang arah.',
-    body: 'Daftar tugasmu 40 baris. Kalender penuh rapat. Tiap malam kamu capek, tapi kalau ditanya "tujuan besarmu maju berapa minggu ini?" — jawabannya diam. Masalahnya jarang di kemauan. Kamu sibuk mengerjakan yang mendesak, sementara yang penting menunggu giliran yang tidak pernah datang.',
+    body: 'Daftar tugasmu 40 baris. Kalender penuh rapat. Tiap malam kamu capek, tapi kalau ditanya "goal besarmu maju berapa minggu ini?" — jawabannya diam. Masalahnya jarang di kemauan. Kamu sibuk mengerjakan yang mendesak, sementara yang penting menunggu giliran yang tidak pernah datang.',
     punchline: 'Tiga bulan lewat lagi, dan target yang sama masih ada di daftar.',
     todo: {
       title: 'Hari ini',
@@ -57,40 +63,40 @@ export const copy = {
   steps: [
     {
       tag: 'Langkah 1 · Arah',
-      title: 'Pilih 3 tujuan untuk 12 minggu ke depan',
+      title: 'Pilih 3 goal untuk 12 minggu ke depan',
       body: 'Mulai dari visimu, tulis semua yang ingin dicapai kuartal ini, lalu adu satu lawan satu sampai ketemu tiga yang paling penting. Tiga, bukan sepuluh — supaya tenagamu tidak terbagi rata ke semua hal.',
       image: {
         src: `${IMG}/l1-main-quests.jpg`,
-        alt: 'Tiga tujuan kuartal berjajar, masing-masing dengan milestone dan langkahnya',
+        alt: 'Tiga goal kuartal berjajar, masing-masing dengan milestone dan langkahnya',
       },
       cards: [
         {
           title: 'Visi',
-          body: 'Tulis mau jadi apa 3–10 tahun lagi. Ini jadi patokan saat memilih tujuan.',
+          body: 'Tulis mau jadi apa 3–10 tahun lagi. Ini jadi patokan saat memilih goal.',
           image: { src: `${IMG}/l1-vision.jpg`, alt: 'Halaman visi' },
         },
         {
           title: 'Pilih yang terpenting',
-          body: 'Semua ide tujuan diadu berpasangan. Hasilnya urutan prioritas yang jelas, bukan tebakan.',
+          body: 'Semua ide goal diadu berpasangan. Hasilnya urutan prioritas yang jelas, bukan tebakan.',
           image: {
             src: `${IMG}/l1-pairwise.jpg`,
-            alt: 'Matriks perbandingan berpasangan untuk mengurutkan tujuan',
+            alt: 'Matriks perbandingan berpasangan untuk mengurutkan goal',
           },
         },
         {
-          title: 'Jatah jam per tujuan',
-          body: 'Tiap tujuan dipecah jadi milestone dan diberi jatah jam per minggu.',
-          image: { src: `${IMG}/l1-jatah-jam.jpg`, alt: 'Tujuan dengan jatah jam per minggu' },
+          title: 'Jatah jam per goal',
+          body: 'Tiap goal dipecah jadi milestone dan diberi jatah jam per minggu.',
+          image: { src: `${IMG}/l1-jatah-jam.jpg`, alt: 'Goal dengan jatah jam per minggu' },
         },
       ],
     },
     {
       tag: 'Langkah 2 · Jalan',
-      title: 'Ubah tujuan jadi jadwal minggu ini dan hari ini',
-      body: 'Tiap awal minggu, pilih langkah dari tiga tujuan tadi — plus daftar hal yang sengaja tidak kamu kerjakan minggu ini. Tiap pagi, tarik yang mau dikerjakan hari ini, pasang di jam, lalu mulai timer fokus. Semua sesi tercatat sendiri.',
+      title: 'Ubah goal jadi jadwal minggu ini dan hari ini',
+      body: 'Tiap awal minggu, pilih langkah dari tiga goal tadi — plus daftar hal yang sengaja tidak kamu kerjakan minggu ini. Tiap pagi, tarik yang mau dikerjakan hari ini, pasang di jam, lalu mulai timer fokus. Semua sesi tercatat sendiri.',
       image: {
         src: `${IMG}/l2-weekly-sync.jpg`,
-        alt: 'Weekly Sync: rencana minggu ini yang diambil dari tiga tujuan',
+        alt: 'Weekly Sync: rencana minggu ini yang diambil dari tiga goal',
       },
       cards: [
         {
@@ -115,11 +121,11 @@ export const copy = {
     },
     {
       tag: 'Langkah 3 · Cek',
-      title: 'Tahu tujuan mana yang tertinggal, sebelum terlambat',
-      body: 'Tiap tujuan diberi status ON TRACK atau AT RISK, dihitung dari jam fokus yang benar-benar kamu habiskan minggu ini dibanding jatahnya. Kamu tahu harus menambah jam di mana — bukan baru sadar di minggu ke-11.',
+      title: 'Tahu goal mana yang tertinggal, sebelum terlambat',
+      body: 'Tiap goal diberi status ON TRACK atau AT RISK, dihitung dari jam fokus yang benar-benar kamu habiskan minggu ini dibanding jatahnya. Kamu tahu harus menambah jam di mana — bukan baru sadar di minggu ke-11.',
       image: {
         src: `${IMG}/l3-hfg-status.jpg`,
-        alt: 'Status mingguan tiga tujuan: jam fokus dibanding jatah, ON TRACK dan AT RISK',
+        alt: 'Status mingguan tiga goal: jam fokus dibanding jatah, ON TRACK dan AT RISK',
       },
       cards: [
         {
@@ -148,7 +154,7 @@ export const copy = {
     },
     after: {
       label: 'Dengan Better Planner',
-      body: 'Tiga tujuan yang jelas, jam yang disisihkan untuk masing-masing, dan peringatan tiap minggu saat salah satunya mulai tertinggal.',
+      body: 'Tiga goal yang jelas, jam yang disisihkan untuk masing-masing, dan peringatan tiap minggu saat salah satunya mulai tertinggal.',
     },
   },
   method: {
@@ -162,7 +168,7 @@ export const copy = {
         body: 'Setahun terlalu jauh untuk terasa mendesak. Dua belas minggu cukup panjang untuk hasil besar, dan cukup pendek untuk tetap fokus.',
       },
       {
-        title: '3 tujuan terpenting',
+        title: '3 goal terpenting',
         body: 'Prinsip Highest First: kerjakan yang paling penting dulu, sisanya menunggu giliran.',
       },
       {
@@ -183,7 +189,7 @@ export const copy = {
       price: 'Rp0',
       note: 'Semua fitur, selama masa awal',
       features: [
-        '3 tujuan & rencana 12 minggu',
+        '3 goal & rencana 12 minggu',
         'Weekly Sync & Daily Sync',
         'Timer fokus + catatan otomatis',
         'Habit tracker',
@@ -200,15 +206,16 @@ export const copy = {
     },
   },
   faq: {
-    title: 'Tanya jawab',
+    eyebrow: 'FAQ',
+    title: 'Pertanyaan yang sering muncul',
     items: [
       {
         q: 'Apa bedanya dengan to-do list biasa?',
-        a: 'To-do list mencatat semua hal. Better Planner dimulai dari 3 tujuan terpenting, lalu hanya menurunkan pekerjaan yang mendukung tujuan itu ke minggu dan harimu.',
+        a: 'To-do list mencatat semua hal. Better Planner dimulai dari 3 goal terpenting, lalu hanya menurunkan pekerjaan yang mendukung goal itu ke minggu dan harimu.',
       },
       {
         q: 'Belum pernah pakai metode 12 minggu, bisa?',
-        a: 'Bisa. Urutannya dipandu: visi, pilih tujuan, pecah jadi milestone, lalu rencana mingguan. Cukup disusun sekali di awal kuartal.',
+        a: 'Bisa. Urutannya dipandu: visi, pilih goal, pecah jadi milestone, lalu rencana mingguan. Cukup disusun sekali di awal kuartal.',
       },
       {
         q: 'Bisa dipakai di HP?',
@@ -233,18 +240,23 @@ export const copy = {
     ],
   },
   closing: {
-    title: 'Kuartal ini, pastikan yang penting benar-benar bergerak.',
-    cta: 'Coba gratis',
+    title: '12 Minggu ini, pastikan yang terpenting yang kamu kerjakan.',
+    subtitle: 'Dua belas minggu cukup untuk satu perubahan besar. Mulai dengan memilih tiga goal-mu hari ini.',
+    cta: 'Mulai Sekarang',
   },
   footer: {
-    copyright: '© 2026 Better Planner',
+    tagline: 'Sistem perencanaan 12 minggu untuk menyelesaikan tiga hal yang paling penting, satu minggu demi satu minggu.',
+    productTitle: 'Produk',
+    accountTitle: 'Akun',
     signin: 'Masuk',
     signup: 'Daftar',
+    copyright: '© 2026 Better Planner',
+    site: 'planner.abuabdirohman.com',
   },
   meta: {
-    title: 'Better Planner — Rencana 12 Minggu untuk 3 Tujuan Terpentingmu',
+    title: 'Better Planner — Rencana 12 Minggu untuk 3 Goal Terpentingmu',
     description:
-      'Pilih 3 tujuan terpenting, pecah jadi rencana 12 minggu, mingguan, dan harian, lalu lihat mana yang mulai tertinggal. Gratis selama masa awal.',
+      'Pilih 3 goal terpenting, pecah jadi rencana 12 minggu, mingguan, dan harian, lalu lihat mana yang mulai tertinggal. Gratis selama masa awal.',
     keywords:
       'perencanaan 12 minggu, planner, target, produktivitas, sync planner, pomodoro, habit tracker',
   },
