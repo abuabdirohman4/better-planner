@@ -391,9 +391,9 @@ export default function PomodoroTimer({ onMarkDone, isTaskDone }: PomodoroTimerP
                 <Button
                   key={type}
                   size="sm"
-                  variant="plain"
+                  variant="outline"
                   data-testid={`timer-break-btn-${type.toLowerCase()}`}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                   onClick={() => startBreak(type)}
                 >
                   <BreakIcon viewBox="0 0 24 24" className="w-5 h-5" />
