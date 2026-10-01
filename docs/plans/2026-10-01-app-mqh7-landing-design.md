@@ -239,3 +239,24 @@ Persona: karyawan swasta, ingin naik kelas karier + sehat + keuangan rapi. Kuart
 - Label pil: "Perencana 12 minggu" → **"Perencanaan 12 minggu"**.
 - Kata **"tujuan" diganti "goal"** di seluruh copy (termasuk metadata; "tujuanmu" → "goal-mu"). `copy.id.ts` jadi acuan teks terbaru.
 - Judul penutup: "12 Minggu ini, pastikan yang terpenting yang kamu kerjakan."
+
+## Revisi 4 (Abu, 1 Okt 2026) — bedah Acuan, seksi baru
+
+Susunan: Hero → **Strip angka gelap** (Web App · 12 Minggu · 3 Goal · Rp0) → **Callout "bukan spreadsheet / buku planner"** (✕/✓ chip) → **Masalah 4 kartu** → **Solusi 8 kartu** (`#fitur`, ikon + label) → Cara kerja 3 langkah (Langkah 3 **Evaluasi**, bukan Cek) → **Nyaman dipakai** (PWA, notifikasi, terang/gelap, data sama di HP & laptop; gambar HP) → **Tabel perbandingan** (Better Planner vs buku planner vs Google Sheets vs aplikasi to-do, 8 baris + 5 chip) → Metode + pembuat → Harga → FAQ → Penutup → Footer. Seksi lama "Masalah (paragraf + kartu to-do)" dan "Sebelum/Sesudah" dihapus. Menu + footer dapat link "Fitur". Chip hero pertama: 🌐 "Aplikasi web, bukan Google Sheets".
+
+Kutipan pembuat memuat riwayat nyata Abu: buku Sync Planner (~16 buku) → Google Sheets → Better Planner.
+
+Sengaja TIDAK diklaim (tidak benar untuk kita): offline 100%, data hanya di perangkat, dua bahasa, sekali bayar, jumlah modul. Teks lengkap: `copy.id.ts`.
+
+## Revisi 5 (Abu, 1 Okt 2026)
+
+- Harga: satu kartu di tengah ala Acuan, **gratis saja** (kartu Pro dihapus): label "Harga", judul "Gratis selama masa awal. Semua fitur terbuka.", pil "Akses masa awal", "Rp0" + lencana "Gratis", 6 butir fitur nyata, kotak "Masa awal" (masih dikembangkan aktif, masukan menentukan fitur), tombol "Mulai Sekarang", catatan "Tanpa kartu kredit".
+- Strip angka & callout diperkecil (angka satu baris di ±970px, strip ±140px; judul callout `md:text-2xl`).
+- Callout ditulis ulang: "Bukan spreadsheet, bukan buku planner. Ini aplikasi yang bekerja untukmu." / "Banyak orang menjalankan metode 12 minggu di spreadsheet atau buku…" / chip "Ya, aplikasi yang langsung memberi tahu goal mana yang tertinggal". "Pasang (di HP)" → "install" di semua tempat; strip angka: "Bisa di-install di HP".
+
+## Revisi 6 (Abu, 1 Okt 2026)
+
+- **ON TRACK / AT RISK (jam per goal) dan tanda energi tidak ditampilkan di landing** — fitur baru, masih diuji. Penggantinya fitur lama: progres mingguan per goal (cincin Weekly Sync) + grafik 12 minggu dashboard. Langkah 3 = gambar besar 12 Week Sync (`l3-evaluasi.jpg`), kartu: Progres per goal (`l3-goal-progress.jpg`), Minggu ideal, Grafik 12 minggu (`l3-weekly-progress.jpg`). Kartu Langkah 1 "Jatah jam" → "Milestone per goal" (`l1-milestone.jpg`). Gambar lama `l3-hfg-status`, `l3-energi`, `l1-jatah-jam`, `l3-12-week-sync` dihapus.
+- Ikon jadi **emoji** (pola Acuan): Masalah 🤹🚨🧩⌛ di kotak merah muda; Solusi 🧭🎯🗓️⏱️📈⚖️✅📝 di kotak bergradasi warna-warni; Nyaman dipakai 📱🔔🌗🔄; chip perbandingan ⚡📱🔔🔄🎁; callout & chip hero 🌐.
+- Tabel perbandingan: kolom "Aplikasi to-do" dihapus, urutan **Better Planner | Google Sheets | Buku planner**, sel dipendekkan (satu baris), ✓ hijau / ✕ merah, judul "Bukan sekadar spreadsheet atau buku planner".
+- "Kuartal" diganti "12 minggu" di seluruh copy (mis. "Tiga langkah, diulang tiap 12 minggu"; "di akhir kuartal" → "di minggu terakhir"/"di akhir 12 minggu").

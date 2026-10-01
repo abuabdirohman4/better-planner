@@ -1,10 +1,26 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { RiArrowRightLine, RiCheckLine } from 'react-icons/ri';
+import {
+  RiArrowRightLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiShieldCheckLine,
+} from 'react-icons/ri';
 
-import Button from '@/components/ui/button/Button';
 
 import { copy, SIZE } from './copy.id';
+
+// Warna kotak emoji Solusi, dipasangkan per indeks dengan copy.solution.items.
+const SOLUTION_GRADIENTS = [
+  'from-theme-purple-500 to-brand-400',
+  'from-orange-500 to-warning-400',
+  'from-brand-600 to-blue-light-400',
+  'from-blue-light-600 to-blue-light-400',
+  'from-success-600 to-success-400',
+  'from-theme-pink-500 to-orange-400',
+  'from-success-500 to-blue-light-400',
+  'from-warning-500 to-orange-400',
+];
 
 // Matikan untuk menyembunyikan seksi harga + link nav-nya.
 export const SHOW_PRICING = true;
@@ -19,10 +35,11 @@ const wrapClass = 'mx-auto max-w-6xl px-4 sm:px-6';
 const sectionClass = 'py-16 md:py-24';
 const h2Class = 'text-3xl font-bold tracking-tight text-gray-900 md:text-4xl';
 const eyebrowClass = 'mb-3 text-sm font-semibold uppercase tracking-wide text-brand-500';
+const dotEyebrowClass = `${eyebrowClass} inline-flex items-center gap-2`;
 const imgClass = 'h-auto w-full rounded-xl border border-gray-200 shadow-sm';
 
 export default function LandingPage() {
-  const { nav, hero, problem, howItWorks, steps, beforeAfter, method, pricing, faq, closing, footer } = copy;
+  const { nav, hero, stats, callout, problem, solution, howItWorks, steps, comfort, comparison, method, pricing, faq, closing, footer } = copy;
 
   return (
     <div id="top" data-landing className="min-h-screen bg-[linear-gradient(180deg,var(--color-brand-50)_0%,var(--color-brand-25)_18%,#ffffff_38%,var(--color-brand-25)_58%,#ffffff_78%,var(--color-brand-50)_100%)] text-gray-700">
@@ -33,6 +50,7 @@ export default function LandingPage() {
             <Image src="/images/logo/logo.svg" alt="Better Planner" width={218} height={37} className="h-6 w-auto sm:h-8" priority />
           </a>
           <nav className="hidden items-center gap-7 text-sm font-medium text-gray-600 md:flex">
+            <a href="#fitur" className={navLinkClass}>{nav.features}</a>
             <a href="#cara-kerja" className={navLinkClass}>{nav.howItWorks}</a>
             {SHOW_PRICING && <a href="#harga" className={navLinkClass}>{nav.pricing}</a>}
             <a href="#faq" className={navLinkClass}>{nav.faq}</a>
@@ -72,9 +90,13 @@ export default function LandingPage() {
                 </a>
               </div>
               <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
-                {hero.checks.map((item) => (
+                {hero.checks.map((item, i) => (
                   <li key={item} className="flex items-center gap-1.5">
-                    <RiCheckLine aria-hidden="true" className="h-4 w-4 text-brand-500" />
+                    {i === 0 ? (
+                      <span aria-hidden="true">🌐</span>
+                    ) : (
+                      <RiCheckLine aria-hidden="true" className="h-4 w-4 text-brand-500" />
+                    )}
                     {item}
                   </li>
                 ))}
@@ -111,44 +133,113 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 2 Masalah */}
-        <section className={sectionClass}>
-          <div className={`${wrapClass} grid items-center gap-10 md:grid-cols-2`}>
-            <div>
-              <p className={eyebrowClass}>{problem.eyebrow}</p>
-              <h2 className={h2Class}>{problem.title}</h2>
-              <p className="mt-5 text-lg text-gray-600">{problem.body}</p>
-              <p className="mt-6 border-l-4 border-brand-500 pl-4 text-lg font-bold text-gray-900">{problem.punchline}</p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <p className="mb-3 text-sm font-semibold text-gray-900">{problem.todo.title}</p>
-              <ul className="space-y-3 text-sm">
-                {problem.todo.items.map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-gray-300" />
-                    {item}
+        {/* 2 Strip angka */}
+        <section aria-label="Ringkasan" className="bg-gray-950">
+          <div className={`${wrapClass} grid grid-cols-2 gap-6 py-8 text-center md:grid-cols-4 md:py-10`}>
+            {stats.map((stat) => (
+              <div key={stat.value}>
+                <p className="whitespace-nowrap bg-gradient-to-r from-brand-400 to-brand-200 bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl lg:text-4xl">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-sm text-gray-300">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3 Bukan spreadsheet */}
+        <section className="pt-12 md:pt-16">
+          <div className={wrapClass}>
+            <div className="flex flex-col gap-5 rounded-3xl border border-brand-200 bg-brand-50/70 p-6 md:flex-row md:items-center md:gap-8 md:px-8 md:py-7">
+              <span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">
+                🌐
+              </span>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">{callout.title}</h2>
+                <p className="mt-2 text-gray-600">{callout.body}</p>
+                <ul className="mt-5 flex flex-wrap gap-2.5 text-sm">
+                  {callout.no.map((item) => (
+                    <li key={item} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-gray-800 shadow-sm">
+                      <RiCloseLine aria-hidden="true" className="h-4 w-4 shrink-0 text-error-500" />
+                      <span><strong className="text-error-600">{callout.noLabel}</strong> {item}</span>
+                    </li>
+                  ))}
+                  <li className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-gray-800 shadow-sm">
+                    <RiCheckLine aria-hidden="true" className="h-4 w-4 shrink-0 text-brand-500" />
+                    <span><strong className="text-brand-600">{callout.yesLabel}</strong> {callout.yes}</span>
                   </li>
-                ))}
-                {problem.todo.faded.map((item) => (
-                  <li key={item} className="flex items-center gap-3 opacity-50">
-                    <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-gray-300" />
-                    {item}
-                  </li>
-                ))}
-                <li className="flex items-center gap-3 opacity-30">
-                  <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded border border-gray-300" />
-                  {problem.todo.more}
-                </li>
-              </ul>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* 3 Cara kerja */}
+        {/* 4 Masalah */}
+        <section id="masalah" className={sectionClass}>
+          <div className={wrapClass}>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {problem.eyebrow}
+              </p>
+              <h2 className={h2Class}>{problem.title}</h2>
+              <p className="mt-4 text-lg text-gray-600">{problem.subtitle}</p>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {problem.items.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <span aria-hidden="true" className="flex h-12 w-12 items-center justify-center rounded-xl bg-error-50 text-2xl">
+                    {item.icon}
+                  </span>
+                  <h3 className="mt-5 text-lg font-semibold text-gray-900">{item.title}</h3>
+                  <p className="mt-2 text-gray-600">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5 Solusi */}
+        <section id="fitur" className={sectionClass}>
+          <div className={wrapClass}>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {solution.eyebrow}
+              </p>
+              <h2 className={h2Class}>{solution.title}</h2>
+              <p className="mt-4 text-lg text-gray-600">{solution.subtitle}</p>
+            </div>
+            <div className="mt-12 grid gap-4 md:grid-cols-2">
+              {solution.items.map((item, i) => {
+                return (
+                  <div key={item.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl shadow-md ${SOLUTION_GRADIENTS[i]}`}
+                    >
+                      {item.icon}
+                    </span>
+                    <h3 className="mt-5 text-lg font-semibold text-gray-900">{item.title}</h3>
+                    <p className="mt-2 text-gray-600">{item.body}</p>
+                    <span className="mt-5 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600">
+                      {item.tag}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* 6 Cara kerja */}
         <section id="cara-kerja" className={sectionClass}>
           <div className={wrapClass}>
             <div className="mx-auto max-w-3xl text-center">
-              <p className={eyebrowClass}>{howItWorks.eyebrow}</p>
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {howItWorks.eyebrow}
+              </p>
               <h2 className={h2Class}>{howItWorks.title}</h2>
               <p className="mt-5 text-lg text-gray-600">{howItWorks.subtitle}</p>
             </div>
@@ -193,28 +284,104 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4 Sebelum / Sesudah */}
+        {/* 7 Nyaman dipakai */}
         <section className={sectionClass}>
-          <div className={wrapClass}>
-            <h2 className={`${h2Class} text-center`}>{beforeAfter.title}</h2>
-            <div className="mt-10 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-gray-200 bg-white/60 p-6 md:p-8">
-                <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">{beforeAfter.before.label}</p>
-                <p className="mt-3 text-lg text-gray-700">{beforeAfter.before.body}</p>
-              </div>
-              <div className="rounded-2xl border-2 border-brand-500 bg-white p-6 md:p-8">
-                <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">{beforeAfter.after.label}</p>
-                <p className="mt-3 text-lg text-gray-900">{beforeAfter.after.body}</p>
-              </div>
+          <div className={`${wrapClass} grid items-center gap-12 md:grid-cols-2`}>
+            <div>
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {comfort.eyebrow}
+              </p>
+              <h2 className={h2Class}>{comfort.title}</h2>
+              <p className="mt-5 text-lg text-gray-600">{comfort.body}</p>
+              <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+                {comfort.points.map((point) => (
+                  <li key={point.text} className="flex items-center gap-3 font-medium text-gray-900">
+                    <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xl">
+                      {point.icon}
+                    </span>
+                    {point.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mx-auto w-full max-w-[280px] rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl shadow-brand-500/20">
+              <Image
+                src={comfort.image.src}
+                alt={comfort.image.alt}
+                {...SIZE.mobile}
+                sizes="280px"
+                className="h-auto w-full rounded-[1.9rem]"
+              />
             </div>
           </div>
         </section>
 
-        {/* 5 Metode + pembuat */}
+        {/* 8 Perbandingan */}
         <section className={sectionClass}>
           <div className={wrapClass}>
             <div className="mx-auto max-w-3xl text-center">
-              <p className={eyebrowClass}>{method.eyebrow}</p>
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {comparison.eyebrow}
+              </p>
+              <h2 className={h2Class}>{comparison.title}</h2>
+              <p className="mt-4 text-lg text-gray-600">{comparison.subtitle}</p>
+            </div>
+            <div className="mt-12 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <table className="w-full min-w-[620px] text-left text-sm md:text-base">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th scope="col" className="px-5 py-4" />
+                    {comparison.columns.map((col, i) => (
+                      <th
+                        key={col}
+                        scope="col"
+                        className={`px-5 py-4 font-semibold ${i === 0 ? 'bg-gradient-to-r from-brand-600 to-brand-400 text-white' : 'text-gray-900'}`}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparison.rows.map((row) => (
+                    <tr key={row.label} className="border-b border-gray-100 last:border-0">
+                      <th scope="row" className="px-5 py-4 font-medium text-gray-900">{row.label}</th>
+                      {row.cells.map((cell, i) => (
+                        <td
+                          key={i}
+                          className={`px-5 py-4 ${i === 0 ? 'bg-brand-50 font-semibold' : ''} ${
+                            cell.startsWith('✓') ? 'text-success-600' : cell.startsWith('✕') ? 'text-error-500' : 'text-gray-600'
+                          }`}
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
+              {comparison.perks.map((perk) => (
+                <li key={perk.text} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 font-medium text-gray-800 shadow-sm">
+                  <span aria-hidden="true">{perk.icon}</span>
+                  {perk.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* 9 Metode + pembuat */}
+        <section className={sectionClass}>
+          <div className={wrapClass}>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className={dotEyebrowClass}>
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                {method.eyebrow}
+              </p>
               <h2 className={h2Class}>{method.title}</h2>
               <p className="mt-5 text-lg text-gray-600">{method.subtitle}</p>
             </div>
@@ -243,43 +410,61 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 6 Harga */}
+        {/* 10 Harga */}
         {SHOW_PRICING && (
           <section id="harga" className={sectionClass}>
             <div className={wrapClass}>
-              <h2 className={`${h2Class} text-center`}>{pricing.title}</h2>
-              <div className="mx-auto mt-10 grid max-w-3xl gap-4 md:grid-cols-2">
-                <div className="flex flex-col rounded-2xl border-2 border-brand-500 bg-white p-6 md:p-8">
-                  <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">{pricing.free.name}</p>
-                  <p className="mt-3 text-4xl font-bold text-gray-900">{pricing.free.price}</p>
-                  <p className="mt-1 text-sm text-gray-600">{pricing.free.note}</p>
-                  <ul className="my-6 flex-1 space-y-3 text-sm">
-                    {pricing.free.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <RiCheckLine aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" />
-                        {feature}
+              <div className="mx-auto max-w-3xl text-center">
+                <p className={dotEyebrowClass}>
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                  {pricing.eyebrow}
+                </p>
+                <h2 className={h2Class}>{pricing.title}</h2>
+                <p className="mt-4 text-lg text-gray-600">{pricing.subtitle}</p>
+              </div>
+              <div className="mx-auto mt-12 max-w-xl overflow-hidden rounded-3xl border-2 border-brand-400 bg-white shadow-xl shadow-brand-500/15">
+                <div aria-hidden="true" className="h-2 bg-gradient-to-r from-brand-600 to-brand-400" />
+                <div className="p-6 md:p-10">
+                  <span className="inline-block rounded-full bg-brand-50 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-brand-600">
+                    {pricing.badge}
+                  </span>
+                  <div className="mt-6 flex items-center gap-3">
+                    <p className="text-5xl font-bold tracking-tight text-gray-900 md:text-6xl">{pricing.price}</p>
+                    <span className="rounded-full bg-success-600 px-3 py-1 text-sm font-semibold text-white">{pricing.priceTag}</span>
+                  </div>
+                  <p className="mt-3 text-gray-500">{pricing.note}</p>
+                  <ul className="mt-8 space-y-4">
+                    {pricing.features.map((feature) => (
+                      <li key={feature.text} className="flex items-start gap-3 text-gray-800">
+                        <RiCheckLine aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-success-600" />
+                        <span>
+                          {feature.bold && <strong className="font-semibold text-gray-900">{feature.bold}</strong>}
+                          {feature.text}
+                        </span>
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup" className={ctaClass}>{pricing.free.cta}</Link>
-                </div>
-                <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 md:p-8">
-                  <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                    {pricing.pro.name}
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs normal-case text-gray-600">{pricing.pro.badge}</span>
-                  </p>
-                  <p className="mt-3 text-2xl font-bold text-gray-900">{pricing.pro.price}</p>
-                  <p className="mt-1 flex-1 text-sm text-gray-600">{pricing.pro.note}</p>
-                  <div className="mt-6">
-                    <Button variant="outline" disabled className="min-h-11 w-full">{pricing.pro.cta}</Button>
+                  <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-dashed border-brand-200 bg-brand-25 p-5 sm:flex-row sm:items-start">
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600">
+                      ✦ {pricing.boxLabel}
+                    </span>
+                    <p className="text-sm text-gray-600">{pricing.boxText}</p>
                   </div>
+                  <Link href="/signup" className={`${ctaClass} mt-8 w-full py-4 text-base`}>
+                    {pricing.cta}
+                    <RiArrowRightLine aria-hidden="true" className="h-5 w-5" />
+                  </Link>
+                  <p className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+                    <RiShieldCheckLine aria-hidden="true" className="h-4 w-4" />
+                    {pricing.footnote}
+                  </p>
                 </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* 7 Tanya jawab */}
+        {/* 11 FAQ */}
         <section id="faq" className={sectionClass}>
           <div className={`${wrapClass} max-w-3xl`}>
             <div className="text-center">
@@ -308,7 +493,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 8 Penutup */}
+        {/* 12 Penutup */}
         <section className="relative overflow-hidden bg-gray-950 py-20 text-center md:py-28">
           <div
             aria-hidden="true"
@@ -338,6 +523,7 @@ export default function LandingPage() {
             <nav aria-label={footer.productTitle}>
               <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-white">{footer.productTitle}</p>
               <ul className="space-y-1">
+                <li><a href="#fitur" className={footerLinkClass}>{nav.features}</a></li>
                 <li><a href="#cara-kerja" className={footerLinkClass}>{nav.howItWorks}</a></li>
                 {SHOW_PRICING && <li><a href="#harga" className={footerLinkClass}>{nav.pricing}</a></li>}
                 <li><a href="#faq" className={footerLinkClass}>{nav.faq}</a></li>

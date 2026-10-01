@@ -9,6 +9,7 @@ export const SIZE = {
 
 export const copy = {
   nav: {
+    features: 'Fitur',
     howItWorks: 'Cara kerja',
     pricing: 'Harga',
     faq: 'FAQ',
@@ -28,7 +29,8 @@ export const copy = {
     ],
     cta: 'Mulai Sekarang',
     secondaryCta: 'Lihat cara kerja',
-    checks: ['Gratis selama masa awal', 'Cukup daftar dengan email', 'Bisa dipasang di HP'],
+    // Chip pertama tampil dengan ikon globe.
+    checks: ['Aplikasi web, bukan Google Sheets', 'Gratis selama masa awal', 'Cukup daftar dengan email', 'Bisa di-install di HP'],
     browserUrl: 'planner.abuabdirohman.com',
     image: {
       desktop: `${IMG}/hero-desktop.jpg`,
@@ -36,38 +38,61 @@ export const copy = {
       alt: 'Halaman Daily Sync Better Planner: daftar tugas hari ini, timer fokus, dan jadwal harian',
     },
   },
+  stats: [
+    { value: 'Web App', label: 'Bisa di-install di HP' },
+    { value: '12 Minggu', label: 'Satu siklus fokus' },
+    { value: '3 Goal', label: 'Bukan 30 to-do' },
+    { value: 'Rp0', label: 'Selama masa awal' },
+  ],
+  callout: {
+    title: 'Bukan spreadsheet, bukan buku planner. Ini aplikasi yang bekerja untukmu.',
+    body: 'Banyak orang menjalankan metode 12 minggu di spreadsheet atau buku. Semua diisi dan dihitung manual, dan goal yang tertinggal baru ketahuan di akhir 12 minggu. Di Better Planner, semuanya sudah tersambung, dari visi sampai jadwal hari ini.',
+    no: ['template Google Sheets / Excel', 'buku planner yang diisi tangan'],
+    yes: 'aplikasi yang langsung memberi tahu goal mana yang tertinggal',
+    yesLabel: 'Ya,',
+    noLabel: 'Bukan',
+  },
   problem: {
-    eyebrow: 'Terdengar familiar?',
-    title: 'Bukan kurang rajin. Kurang arah.',
-    body: 'Daftar tugasmu 40 baris. Kalender penuh rapat. Tiap malam kamu capek, tapi kalau ditanya "goal besarmu maju berapa minggu ini?" — jawabannya diam. Masalahnya jarang di kemauan. Kamu sibuk mengerjakan yang mendesak, sementara yang penting menunggu giliran yang tidak pernah datang.',
-    punchline: 'Tiga bulan lewat lagi, dan target yang sama masih ada di daftar.',
-    todo: {
-      title: 'Hari ini',
-      items: [
-        'Balas 23 chat grup',
-        'Rapat mingguan',
-        'Rapikan folder laptop',
-        'Beli token listrik',
-        'Revisi slide presentasi',
-      ],
-      faded: ['Belajar untuk sertifikasi', 'Riset usaha sampingan'],
-      more: '+ 32 lagi',
-    },
+    eyebrow: 'Masalahnya',
+    title: 'Kenapa target besar sering tidak bergerak?',
+    subtitle: 'Bukan karena kurang rajin. Karena tidak ada sistem yang menjaga arahnya.',
+    items: [
+      { icon: '🤹', title: 'Terlalu banyak target', body: 'Sepuluh hal ingin dicapai sekaligus. Tenaga terbagi rata, tidak ada yang selesai.' },
+      { icon: '🚨', title: 'Yang mendesak selalu menang', body: 'Chat, rapat, dan urusan kecil menghabiskan hari. Yang penting terus menunggu "nanti".' },
+      { icon: '🧩', title: 'Rencana dan kenyataan terpisah', body: 'Rencana ada di kepala atau buku, kerjaan di tempat lain. Tidak ada yang menyandingkan keduanya.' },
+      { icon: '⌛', title: 'Baru sadar di akhir', body: 'Evaluasi baru terjadi setelah 12 minggu lewat, saat sudah terlambat untuk mengejar.' },
+    ],
+  },
+  solution: {
+    eyebrow: 'Solusinya',
+    title: 'Satu sistem, dari visi sampai jadwal hari ini',
+    subtitle: 'Tiap bagian saling tersambung, bukan kumpulan fitur lepas.',
+    // Urutan = urutan warna SOLUTION_GRADIENTS di LandingPage.tsx.
+    items: [
+      { icon: '🧭', title: 'Visi & 12 Week Quest', body: 'Tulis visi, adu semua ide goal berpasangan, lalu ambil 3 teratas untuk 12 minggu.', tag: 'Highest First' },
+      { icon: '🎯', title: 'Main Quest & milestone', body: 'Tiap goal dipecah jadi milestone, langkah, dan sub-langkah yang bisa langsung dikerjakan.', tag: '3 Goal' },
+      { icon: '🗓️', title: 'Weekly Sync', body: 'Rencana minggu ini ditarik dari 3 goal, plus To Don\'t List untuk hal yang sengaja tidak dikerjakan.', tag: 'Tiap minggu' },
+      { icon: '⏱️', title: 'Daily Sync & timer fokus', body: 'Tarik tugas ke hari ini, pasang di jam, lalu mulai Pomodoro. Tiap sesi tercatat sendiri.', tag: 'Pomodoro' },
+      { icon: '📈', title: 'Progres mingguan per goal', body: 'Tiap goal punya persentase progres minggu ini, dan grafik 12 minggu menunjukkan trennya. Yang tertinggal langsung kelihatan.', tag: 'Progres' },
+      { icon: '⚖️', title: 'Rencana vs kenyataan', body: 'Kalender yang menyandingkan jadwal dengan yang benar-benar terjadi, dengan Best Week sebagai patokan.', tag: 'Plan · Actual' },
+      { icon: '✅', title: 'Habit tracker', body: 'Target per hari, hari tertentu, dan runtun yang tidak putus tiap ganti bulan.', tag: 'Konsisten' },
+      { icon: '📝', title: 'Jurnal & evaluasi', body: 'Catatan singkat tiap sesi fokus, lalu 12 Week Sync di minggu terakhir untuk menilai tiap goal.', tag: 'Refleksi' },
+    ],
   },
   howItWorks: {
     eyebrow: 'Cara kerjanya',
-    title: 'Tiga langkah, diulang tiap kuartal',
+    title: 'Tiga langkah, diulang tiap 12 minggu',
     subtitle:
-      'Tentukan arah sekali di awal. Jalankan tiap minggu dan tiap hari. Cek, lalu sesuaikan. Semuanya di satu tempat, jadi kamu tidak perlu menyambungkannya sendiri.',
+      'Tentukan arah sekali di awal. Jalankan tiap minggu dan tiap hari. Evaluasi, lalu sesuaikan. Semuanya di satu tempat, jadi kamu tidak perlu menyambungkannya sendiri.',
   },
   steps: [
     {
       tag: 'Langkah 1 · Arah',
       title: 'Pilih 3 goal untuk 12 minggu ke depan',
-      body: 'Mulai dari visimu, tulis semua yang ingin dicapai kuartal ini, lalu adu satu lawan satu sampai ketemu tiga yang paling penting. Tiga, bukan sepuluh — supaya tenagamu tidak terbagi rata ke semua hal.',
+      body: 'Mulai dari visimu, tulis semua yang ingin dicapai dalam 12 minggu ke depan, lalu adu satu lawan satu sampai ketemu tiga yang paling penting. Tiga, bukan sepuluh — supaya tenagamu tidak terbagi rata ke semua hal.',
       image: {
         src: `${IMG}/l1-main-quests.jpg`,
-        alt: 'Tiga goal kuartal berjajar, masing-masing dengan milestone dan langkahnya',
+        alt: 'Tiga goal 12 minggu berjajar, masing-masing dengan milestone dan langkahnya',
       },
       cards: [
         {
@@ -84,9 +109,9 @@ export const copy = {
           },
         },
         {
-          title: 'Jatah jam per goal',
-          body: 'Tiap goal dipecah jadi milestone dan diberi jatah jam per minggu.',
-          image: { src: `${IMG}/l1-jatah-jam.jpg`, alt: 'Goal dengan jatah jam per minggu' },
+          title: 'Milestone per goal',
+          body: 'Tiap goal dipecah jadi 3 milestone, lalu langkah-langkah kecil di bawahnya.',
+          image: { src: `${IMG}/l1-milestone.jpg`, alt: 'Tiga milestone dan langkah selanjutnya untuk satu goal' },
         },
       ],
     },
@@ -120,18 +145,18 @@ export const copy = {
       ],
     },
     {
-      tag: 'Langkah 3 · Cek',
+      tag: 'Langkah 3 · Evaluasi',
       title: 'Tahu goal mana yang tertinggal, sebelum terlambat',
-      body: 'Tiap goal diberi status ON TRACK atau AT RISK, dihitung dari jam fokus yang benar-benar kamu habiskan minggu ini dibanding jatahnya. Kamu tahu harus menambah jam di mana — bukan baru sadar di minggu ke-11.',
+      body: 'Tiap minggu, progres ketiga goal dihitung dari langkah yang selesai, jadi kamu tahu goal mana yang perlu dikejar — bukan baru sadar di minggu ke-11. Di minggu terakhir, 12 Week Sync membantumu menilai tiap goal dan menyiapkan 12 minggu berikutnya.',
       image: {
-        src: `${IMG}/l3-hfg-status.jpg`,
-        alt: 'Status mingguan tiga goal: jam fokus dibanding jatah, ON TRACK dan AT RISK',
+        src: `${IMG}/l3-evaluasi.jpg`,
+        alt: '12 Week Sync: nilai tiap goal, daftar pencapaian, dan refleksi akhir 12 minggu',
       },
       cards: [
         {
-          title: 'Tanda energi',
-          body: 'Tiap sesi diberi tanda +, =, atau −. Lama-lama kelihatan kerja mana yang menguras dan mana yang mengisi.',
-          image: { src: `${IMG}/l3-energi.jpg`, alt: 'Ringkasan energi minggu ini' },
+          title: 'Progres per goal',
+          body: 'Di Weekly Sync, tiap goal punya cincin progres: berapa langkah minggu ini yang sudah selesai.',
+          image: { src: `${IMG}/l3-goal-progress.jpg`, alt: 'Cincin progres mingguan tiap goal di Weekly Sync' },
         },
         {
           title: 'Minggu ideal',
@@ -139,23 +164,48 @@ export const copy = {
           image: { src: `${IMG}/l3-best-week.jpg`, alt: 'Jadwal minggu ini di atas grid minggu ideal' },
         },
         {
-          title: 'Evaluasi 12 minggu',
-          body: 'Di akhir kuartal, tinjau pencapaian dan refleksi, lalu mulai kuartal baru dengan bahan yang lengkap.',
-          image: { src: `${IMG}/l3-12-week-sync.jpg`, alt: 'Halaman evaluasi akhir kuartal' },
+          title: 'Grafik 12 minggu',
+          body: 'Progres tiap minggu tergambar dari minggu 1 sampai 12, jadi trennya terlihat sekilas.',
+          image: { src: `${IMG}/l3-weekly-progress.jpg`, alt: 'Grafik progres mingguan dari minggu 1 sampai minggu 12' },
         },
       ],
     },
   ],
-  beforeAfter: {
-    title: 'Yang berubah',
-    before: {
-      label: 'Tanpa sistem',
-      body: 'Daftar tugas yang tidak pernah habis, kalender yang tidak pernah bertanya apakah ini penting, dan evaluasi yang baru terjadi setelah kuartal lewat.',
-    },
-    after: {
-      label: 'Dengan Better Planner',
-      body: 'Tiga goal yang jelas, jam yang disisihkan untuk masing-masing, dan peringatan tiap minggu saat salah satunya mulai tertinggal.',
-    },
+  comfort: {
+    eyebrow: 'Nyaman dipakai',
+    title: 'Di laptop atau di HP, terang atau gelap.',
+    body: 'Install Better Planner di HP seperti aplikasi biasa, tanpa lewat Play Store atau App Store. Timer tetap jalan dan mengirim notifikasi walau aplikasinya ditutup, dan datanya sama di HP maupun laptop.',
+    points: [
+      { icon: '📱', text: 'Install di HP' },
+      { icon: '🔔', text: 'Notifikasi saat sesi fokus selesai' },
+      { icon: '🌗', text: 'Mode terang & gelap' },
+      { icon: '🔄', text: 'Data sama di HP dan laptop' },
+    ],
+    image: { src: `${IMG}/hero-mobile.jpg`, alt: 'Better Planner di HP: timer fokus dan daftar tugas hari ini' },
+  },
+  comparison: {
+    eyebrow: 'Kenapa Better Planner?',
+    title: 'Bukan sekadar spreadsheet atau buku planner',
+    subtitle: 'Satu sistem 12 minggu yang langsung jalan. Bandingkan sendiri.',
+    columns: ['Better Planner', 'Google Sheets', 'Buku planner'],
+    // Sel diawali ✓ tampil hijau, diawali ✕ tampil merah.
+    rows: [
+      { label: 'Visi sampai jadwal hari ini tersambung', cells: ['✓ otomatis', 'rumus & link sendiri', 'ditulis ulang'] },
+      { label: 'Memilih 3 goal terpenting', cells: ['✓ dipandu', 'manual', 'manual'] },
+      { label: 'Progres mingguan per goal', cells: ['✓ + grafik 12 minggu', 'rumus manual', 'dihitung manual'] },
+      { label: 'Timer fokus & catatan sesi', cells: ['✓ tercatat sendiri', '✕', '✕'] },
+      { label: 'Rencana vs kenyataan', cells: ['✓ berdampingan', 'manual', 'ditulis tangan'] },
+      { label: 'Habit tracker', cells: ['✓ menyatu', 'rumus sendiri', 'tabel di kertas'] },
+      { label: 'Dipakai di HP', cells: ['✓ bisa di-install', 'berat di layar kecil', 'harus dibawa'] },
+      { label: 'Biaya', cells: ['Gratis selama masa awal', 'gratis tapi ribet', 'beli buku berkala'] },
+    ],
+    perks: [
+      { icon: '⚡', text: 'Langsung pakai, tanpa setup' },
+      { icon: '📱', text: 'Bisa di-install di HP' },
+      { icon: '🔔', text: 'Notifikasi timer' },
+      { icon: '🔄', text: 'Data sama di semua perangkat' },
+      { icon: '🎁', text: 'Gratis selama masa awal' },
+    ],
   },
   method: {
     eyebrow: 'Dasarnya',
@@ -177,33 +227,32 @@ export const copy = {
       },
     ],
     quote:
-      'Sistem 12 minggu ini awalnya saya jalankan di Google Sheets. Lama-lama sheet-nya makin berat: susah dibuka di HP, semua hubungan antar data diisi manual, dan saya baru sadar sebuah target tertinggal ketika kuartalnya hampir habis. Better Planner saya bangun untuk menutup celah itu, dan sampai sekarang saya pakai tiap hari untuk merencanakan dan mencatat kerja.',
+      'Sebelum ada aplikasi ini, saya menjalankan metode Sync Planner di bukunya, sampai sekitar 16 buku terisi. Lama-lama terasa ribet dan bikin kewalahan, jadi saya pindah ke Google Sheets. Sheet-nya pun makin berat: susah dibuka di HP, semua hubungan antar data diisi manual, dan saya baru sadar sebuah target tertinggal ketika 12 minggunya hampir habis. Better Planner saya bangun untuk menutup celah itu, dan sampai sekarang saya pakai tiap hari.',
     author: 'Abu Abdirohman',
     role: 'pembuat Better Planner',
     initials: 'AA',
   },
   pricing: {
-    title: 'Mulai gratis',
-    free: {
-      name: 'Gratis',
-      price: 'Rp0',
-      note: 'Semua fitur, selama masa awal',
-      features: [
-        '3 goal & rencana 12 minggu',
-        'Weekly Sync & Daily Sync',
-        'Timer fokus + catatan otomatis',
-        'Habit tracker',
-        'Bisa dipasang di HP',
-      ],
-      cta: 'Coba gratis',
-    },
-    pro: {
-      name: 'Pro',
-      badge: 'Segera',
-      price: 'Diumumkan nanti',
-      note: 'Untuk yang ingin lebih dari dasar',
-      cta: 'Segera hadir',
-    },
+    eyebrow: 'Harga',
+    title: 'Gratis selama masa awal. Semua fitur terbuka.',
+    subtitle: 'Tanpa kartu kredit, tanpa fitur yang dikunci. Cukup daftar dengan email, langsung pakai.',
+    badge: 'Akses masa awal',
+    price: 'Rp0',
+    priceTag: 'Gratis',
+    note: 'Semua fitur · tanpa kartu kredit · daftar dengan email',
+    // Potongan pertama butir pertama ditebalkan.
+    features: [
+      { bold: 'Sistem 12 minggu lengkap', text: ': Visi, 12 Week Quest, Main Quest, Weekly Sync, Daily Sync & 12 Week Sync' },
+      { text: 'Timer Pomodoro + catatan sesi otomatis & notifikasi' },
+      { text: 'Progres mingguan per goal + grafik 12 minggu' },
+      { text: 'Kalender rencana vs kenyataan + Best Week' },
+      { text: 'Habit tracker & jurnal tiap sesi fokus' },
+      { text: 'Bisa di-install di HP, mode terang/gelap, data sama di semua perangkat' },
+    ],
+    boxLabel: 'Masa awal',
+    boxText: 'Better Planner masih dikembangkan aktif dan dipakai pembuatnya tiap hari. Masukanmu ikut menentukan fitur berikutnya.',
+    cta: 'Mulai Sekarang',
+    footnote: 'Tanpa kartu kredit',
   },
   faq: {
     eyebrow: 'FAQ',
@@ -215,11 +264,11 @@ export const copy = {
       },
       {
         q: 'Belum pernah pakai metode 12 minggu, bisa?',
-        a: 'Bisa. Urutannya dipandu: visi, pilih goal, pecah jadi milestone, lalu rencana mingguan. Cukup disusun sekali di awal kuartal.',
+        a: 'Bisa. Urutannya dipandu: visi, pilih goal, pecah jadi milestone, lalu rencana mingguan. Cukup disusun sekali di awal tiap 12 minggu.',
       },
       {
         q: 'Bisa dipakai di HP?',
-        a: 'Bisa. Better Planner jalan di browser dan bisa dipasang ke layar utama HP seperti aplikasi. Timer tetap mengirim notifikasi.',
+        a: 'Bisa. Better Planner jalan di browser dan bisa di-install di HP seperti aplikasi. Timer tetap mengirim notifikasi.',
       },
       {
         q: 'Data saya aman?',
