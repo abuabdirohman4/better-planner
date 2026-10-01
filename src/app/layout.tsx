@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={outfit.className} suppressHydrationWarning>
+    <html lang="id" className={outfit.className} suppressHydrationWarning>
       <body>
         {/* Pasang class dark sebelum paint supaya tidak kedip putih (di body, bukan head: extension suka sisip script ke head → hydration mismatch) */}
         <script
