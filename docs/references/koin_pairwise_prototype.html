@@ -1,0 +1,243 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Koin Pairwise Q4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --ground:#EDF0F2; --panel:#FFFFFF; --ink:#18212B; --muted:#5E6B78; --line:#D5DBE0;
+  --brass:#B98A2F; --brass-hi:#E6C36E; --brass-lo:#7E5A17;
+  --teal:#1E6B66; --teal-soft:#DCEBE9; --rose:#A5423A; --rose-soft:#F4E1DE;
+  --shadow:0 1px 2px rgba(24,33,43,.06),0 8px 24px rgba(24,33,43,.07);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#11161B; --panel:#1A2128; --ink:#E4E8EC; --muted:#93A0AC; --line:#2C353F;
+  --teal:#5FB6AE; --teal-soft:#1B3331; --rose:#E08A80; --rose-soft:#3A2220;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#11161B; --panel:#1A2128; --ink:#E4E8EC; --muted:#93A0AC; --line:#2C353F;
+  --teal:#5FB6AE; --teal-soft:#1B3331; --rose:#E08A80; --rose-soft:#3A2220;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font:15px/1.55 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:20px}
+header h1{font:400 clamp(26px,5vw,34px)/1.15 "Young Serif",Georgia,serif;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.progress{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--teal);width:0;transition:width .3s}
+
+.duel{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center}
+.side{display:grid;gap:4px;padding:12px;border-radius:10px;border:1px solid var(--line);min-height:100%}
+.side .tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.side .lbl{font:400 28px/1 "Young Serif",Georgia,serif}
+.side .nm{font-weight:600;line-height:1.3}
+.side.win{border-color:var(--teal);background:var(--teal-soft)}
+.side:last-child{text-align:right}
+.vs{font-size:12px;color:var(--muted);letter-spacing:.1em}
+
+.stage{display:grid;justify-items:center;gap:14px;padding-block:18px 4px}
+.coinbox{perspective:900px;width:180px;height:180px;max-width:100%}
+.coin{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.7s cubic-bezier(.2,.75,.25,1)}
+.face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;display:grid;place-items:center;text-align:center;
+  background:radial-gradient(circle at 35% 30%,var(--brass-hi),var(--brass) 55%,var(--brass-lo));
+  box-shadow:inset 0 0 0 6px rgba(126,90,23,.55),inset 0 0 0 9px rgba(230,195,110,.6),0 10px 24px rgba(24,33,43,.25);color:#3A2A08}
+.face.back{transform:rotateY(180deg)}
+.face .big{font:400 58px/1 "Young Serif",Georgia,serif}
+.face .small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:2px;font-weight:700}
+.result{text-align:center;min-height:52px}
+.result b{font:400 20px/1.3 "Young Serif",Georgia,serif}
+.result span{display:block;color:var(--muted);font-size:13px}
+
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+button{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:11px 16px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+.primary{background:var(--brass);border-color:var(--brass-lo);color:#2A1E05}
+.good{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+.bad{background:var(--rose-soft);border-color:var(--rose);color:var(--rose)}
+.link{border:none;background:none;color:var(--muted);text-decoration:underline;padding:6px 8px;font-weight:500}
+.direct{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:13px;color:var(--muted);align-items:center}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px}
+.chip{font:500 13px "JetBrains Mono",ui-monospace,monospace;padding:7px 0;text-align:center;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted)}
+.chip.done{color:var(--ink);background:var(--teal-soft);border-color:transparent}
+.chip.now{border-color:var(--brass);color:var(--ink);box-shadow:0 0 0 1px var(--brass)}
+h2{font:400 19px/1.3 "Young Serif",Georgia,serif;margin:0 0 12px}
+.rank{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.rank li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center}
+.rank .l{font:400 18px "Young Serif",Georgia,serif}
+.rank .n{font-weight:500}
+.rank .w{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.rank li.top .n{font-weight:700}
+.rank li.top .l{color:var(--teal)}
+.meter{grid-column:2/4;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--teal)}
+textarea{width:100%;min-height:120px;font:13px/1.5 "JetBrains Mono",ui-monospace,monospace;background:var(--ground);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.note{font-size:13px;color:var(--muted)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+@media (max-width:520px){
+  .duel{grid-template-columns:1fr 1fr}.vs{display:none}
+  .coinbox{width:150px;height:150px}.face .big{font-size:48px}
+}
+@media (prefers-reduced-motion:reduce){.coin{transition:none}.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Koin Pairwise Q4 2026</h1>
+    <p>Lempar koin untuk tiap pasang. Yang penting bukan hasil koinnya, tapi rasa pertamamu saat melihat hasilnya: lega berarti pilih itu, kecewa berarti hatimu memilih lawannya.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="pairTitle">
+    <div class="progress">
+      <span id="pairTitle" class="mono">Pasang 1 dari 36</span>
+      <span id="doneCount">0 selesai</span>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+
+    <div class="duel" style="margin-top:16px">
+      <div class="side" id="sideL"><span class="tag">Kepala</span><span class="lbl" id="lblL">A</span><span class="nm" id="nmL"></span></div>
+      <span class="vs">VS</span>
+      <div class="side" id="sideR"><span class="tag">Ekor</span><span class="lbl" id="lblR">B</span><span class="nm" id="nmR"></span></div>
+    </div>
+
+    <div class="stage">
+      <div class="coinbox"><div class="coin" id="coin">
+        <div class="face front"><div><div class="big" id="faceL">A</div><div class="small">Kepala</div></div></div>
+        <div class="face back"><div><div class="big" id="faceR">B</div><div class="small">Ekor</div></div></div>
+      </div></div>
+      <div class="result" id="result" aria-live="polite"><span>Tekan lempar, lalu perhatikan rasa pertamamu.</span></div>
+      <div class="btns" id="flipBtns"><button class="primary" id="flip">Lempar koin</button></div>
+      <div class="btns" id="feelBtns" hidden>
+        <button class="good" id="relief"></button>
+        <button class="bad" id="regret"></button>
+        <button id="again">Datar, lempar lagi</button>
+      </div>
+      <p class="note" id="flatHint" hidden style="text-align:center;max-width:46ch;margin:0">Sudah beberapa kali terasa datar. Coba tanya: <b>"Kalau 20 Desember cuma satu ini yang tuntas, mana yang bikin lebih lega?"</b> Atau anggap pasang ini seri, pilih mana saja, lalu lanjut. Satu pasang tidak mengubah hasil akhir.</p>
+      <div class="direct">Sudah yakin tanpa koin?
+        <button class="link" id="pickL"></button><button class="link" id="pickR"></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="row" style="margin-bottom:12px"><h2 style="margin:0">36 pasang</h2><span class="note">Klik pasang mana saja untuk mengulang.</span></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Peringkat sementara</h2>
+    <ol class="rank" id="rank"></ol>
+  </section>
+
+  <section class="panel">
+    <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Hasil untuk BePlan</h2><button id="copy">Salin</button></div>
+    <label class="note" for="out">Pindahkan ke matriks BePlan, atau tempel ke Claude supaya dicatat.</label>
+    <textarea id="out" readonly></textarea>
+    <div class="row" style="margin-top:12px">
+      <button id="undo">Batalkan terakhir</button>
+      <div class="confirm" id="resetBox"><button class="link" id="reset">Mulai ulang semua</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const Q=[
+ ["A","TalentaBola — demo SSB"],
+ ["B","YouTube Finance"],
+ ["C","Web Portfolio v2"],
+ ["D","Sistem Konten otomatis"],
+ ["E","Fora Tech — e-course vibe coding"],
+ ["F","Generus Mandiri — laporan & jadwal"],
+ ["G","Better Finance v2"],
+ ["H","Sistem Sabilillah"],
+ ["I","YouTube Music AI — channel baru"]
+];
+const NAME=Object.fromEntries(Q);
+const PAIRS=[];for(let i=0;i<Q.length;i++)for(let j=i+1;j<Q.length;j++)PAIRS.push([Q[i][0],Q[j][0]]);
+const KEY="koin-pairwise-q4-2026";
+let res={},order=[],idx=0,landed=null,turns=0,flatCount=0;
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s){res=s.res||{};order=s.order||[]}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({res,order}))}catch(e){}};
+const $=id=>document.getElementById(id);
+const k=p=>p[0]+"-"+p[1];
+const firstOpen=()=>{const i=PAIRS.findIndex(p=>!res[k(p)]);return i<0?PAIRS.length-1:i};
+idx=firstOpen();
+
+function rand(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%2}
+
+function showPair(){
+  const [l,r]=PAIRS[idx];
+  $("pairTitle").textContent=`Pasang ${idx+1} dari 36 · ${l}${r}`;
+  $("lblL").textContent=l;$("nmL").textContent=NAME[l];
+  $("lblR").textContent=r;$("nmR").textContent=NAME[r];
+  $("faceL").textContent=l;$("faceR").textContent=r;
+  const w=res[k(PAIRS[idx])];
+  $("sideL").classList.toggle("win",w===l);$("sideR").classList.toggle("win",w===r);
+  $("pickL").textContent="Pilih "+l;$("pickR").textContent="Pilih "+r;
+  landed=null;flatCount=0;$("flatHint").hidden=true;$("feelBtns").hidden=true;$("flipBtns").hidden=false;$("flip").disabled=false;
+  $("result").innerHTML=w?`<span>Sudah dipilih: <b>${w}</b>. Lempar lagi kalau mau menguji ulang.</span>`:"<span>Tekan lempar, lalu perhatikan rasa pertamamu.</span>";
+  render();
+}
+
+function flip(){
+  $("flip").disabled=true;
+  const r=rand();landed=r;
+  turns+=5;
+  const base=turns*360+(r?180:0);
+  $("coin").style.transform=`rotateY(${base}deg)`;
+  const done=()=>{
+    const [l,rr]=PAIRS[idx];const up=r?rr:l,other=r?l:rr;
+    const tally=flatCount?` · lemparan ke-${flatCount+1}`:"";
+    $("result").innerHTML=`<b>${up} · ${NAME[up]}</b><span>Rasa pertamamu?${tally}</span>`;
+    $("relief").textContent=`Lega → pilih ${up}`;
+    $("regret").textContent=`Kecewa → pilih ${other}`;
+    $("relief").dataset.w=up;$("regret").dataset.w=other;
+    $("flipBtns").hidden=true;$("feelBtns").hidden=false;$("relief").focus();
+  };
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)done();else setTimeout(done,1750);
+}
+
+function choose(w){
+  const key=k(PAIRS[idx]);res[key]=w;order=order.filter(x=>x!==key);order.push(key);save();
+  const next=PAIRS.findIndex((p,i)=>i>idx&&!res[k(p)]);
+  idx=next>=0?next:firstOpen();showPair();
+}
+
+function render(){
+  const n=Object.keys(res).length;
+  $("doneCount").textContent=`${n} selesai`;$("barFill").style.width=(n/36*100)+"%";
+  const g=$("grid");g.innerHTML="";
+  PAIRS.forEach((p,i)=>{const b=document.createElement("button");b.className="chip"+(res[k(p)]?" done":"")+(i===idx?" now":"");
+    b.textContent=res[k(p)]?`${p[0]}${p[1]}·${res[k(p)]}`:p[0]+p[1];b.setAttribute("aria-label",`Pasang ${p[0]} lawan ${p[1]}`);
+    b.onclick=()=>{idx=i;showPair()};g.appendChild(b)});
+  const wins=Object.fromEntries(Q.map(q=>[q[0],0]));Object.values(res).forEach(w=>wins[w]++);
+  const sorted=Q.map(q=>q[0]).sort((a,b)=>wins[b]-wins[a]||a.localeCompare(b));
+  $("rank").innerHTML=sorted.map((l,i)=>`<li class="${i<3&&wins[l]>0?"top":""}"><span class="l">${l}</span><span class="n">${NAME[l]}</span><span class="w">${wins[l]} menang</span><span class="meter"><i style="width:${wins[l]/8*100}%"></i></span></li>`).join("");
+  $("out").value=PAIRS.filter(p=>res[k(p)]).map(p=>`${k(p)}: ${res[k(p)]}`).join("\n")+(n?`\n\nPeringkat: ${sorted.map(l=>l+"="+wins[l]).join(", ")}`:"");
+  $("undo").disabled=!order.length;
+}
+
+$("flip").onclick=flip;
+$("again").onclick=()=>{flatCount++;$("flatHint").hidden=flatCount<3;$("feelBtns").hidden=true;$("flipBtns").hidden=false;flip()};
+$("relief").onclick=e=>choose(e.target.dataset.w);
+$("regret").onclick=e=>choose(e.target.dataset.w);
+$("pickL").onclick=()=>choose(PAIRS[idx][0]);
+$("pickR").onclick=()=>choose(PAIRS[idx][1]);
+$("undo").onclick=()=>{const key=order.pop();if(!key)return;delete res[key];save();idx=PAIRS.findIndex(p=>k(p)===key);showPair()};
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("out").value);$("copy").textContent="Tersalin"}catch(e){$("out").select();$("copy").textContent="Teks sudah dipilih"}setTimeout(()=>$("copy").textContent="Salin",1600)};
+function restoreReset(){$("resetBox").innerHTML='<button class="link" id="reset">Mulai ulang semua</button>';bindReset()}
+function bindReset(){$("reset").onclick=()=>{$("resetBox").innerHTML='<span>Hapus semua 36 jawaban?</span><button class="bad" id="yes">Ya, hapus</button><button class="link" id="no">Batal</button>';
+  $("yes").onclick=()=>{res={};order=[];save();idx=0;restoreReset();showPair()};$("no").onclick=restoreReset}}
+bindReset();
+showPair();
+</script>
+
+</body></html>
