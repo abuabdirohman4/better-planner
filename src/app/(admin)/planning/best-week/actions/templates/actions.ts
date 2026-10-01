@@ -64,7 +64,7 @@ export async function deleteTemplate(templateId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
-  await deleteTemplateById(supabase, templateId);
+  await deleteTemplateById(supabase, user.id, templateId);
   revalidatePath('/planning/best-week');
   return { message: 'Template berhasil dihapus' };
 }

@@ -76,11 +76,13 @@ export async function updateTemplateName(
 
 export async function deleteTemplateById(
   supabase: SupabaseClient,
+  userId: string,
   templateId: string
 ): Promise<void> {
   const { error } = await supabase
     .from('best_week_templates')
     .delete()
-    .eq('id', templateId);
+    .eq('id', templateId)
+    .eq('user_id', userId);
   if (error) throw new Error('Gagal menghapus template');
 }

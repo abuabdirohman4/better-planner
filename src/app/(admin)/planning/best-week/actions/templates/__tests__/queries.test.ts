@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
 import { makeQueryBuilder } from '@/test-utils/supabase-mock';
-import { updateTemplateName } from '../queries';
+import { updateTemplateName, deleteTemplateById } from '../queries';
 import { validateTemplateName } from '../logic';
 
 describe('updateTemplateName', () => {
@@ -18,6 +18,18 @@ describe('updateTemplateName', () => {
   it('lempar error kalau gagal', async () => {
     const builder = makeQueryBuilder({ data: null, error: { message: 'x' } });
     await expect(updateTemplateName({ from: () => builder } as any, 'u', 't', 'n')).rejects.toThrow();
+  });
+});
+
+describe('deleteTemplateById', () => {
+  it('hapus dengan filter id dan user_id', async () => {
+    const builder = makeQueryBuilder({ data: null, error: null });
+    const supabase = { from: vi.fn().mockReturnValue(builder) } as any;
+    await deleteTemplateById(supabase, 'user-1', 't1');
+    expect(supabase.from).toHaveBeenCalledWith('best_week_templates');
+    expect(builder.delete).toHaveBeenCalled();
+    expect(builder.eq).toHaveBeenCalledWith('id', 't1');
+    expect(builder.eq).toHaveBeenCalledWith('user_id', 'user-1');
   });
 });
 
