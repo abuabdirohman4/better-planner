@@ -1,23 +1,22 @@
-import { Metadata } from "next";
-import LandingPageClient from "@/components/landing/LandingPageClient";
+import type { Metadata } from 'next';
+import LandingPage from '@/components/landing/LandingPage';
+import { copy } from '@/components/landing/copy.id';
 
 export const metadata: Metadata = {
-  title: "Better Planner - Transform Your Goals Into Achievements",
-  description: "The ultimate productivity companion for ambitious individuals. Strategic planning, task management, and goal achievement with cutting-edge technology.",
-  keywords: "productivity, planning, task management, goal setting, project management, time tracking",
+  metadataBase: new URL('https://planner.abuabdirohman.com'),
+  title: copy.meta.title,
+  description: copy.meta.description,
+  keywords: copy.meta.keywords,
   openGraph: {
-    title: "Better Planner - Transform Your Goals Into Achievements",
-    description: "The ultimate productivity companion for ambitious individuals. Strategic planning, task management, and goal achievement with cutting-edge technology.",
-    type: "website",
-    locale: "en_US",
+    title: copy.meta.title,
+    description: copy.meta.description,
+    type: 'website',
+    locale: 'id_ID',
+    images: '/images/landing/og.jpg',
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Better Planner - Transform Your Goals Into Achievements",
-    description: "The ultimate productivity companion for ambitious individuals. Strategic planning, task management, and goal achievement with cutting-edge technology.",
-  },
+  twitter: { card: 'summary_large_image', title: copy.meta.title, description: copy.meta.description },
 };
 
-export default function LandingPage() {
-  return <LandingPageClient />;
+export default function Page() {
+  return <LandingPage />;
 }
