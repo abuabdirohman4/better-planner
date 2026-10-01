@@ -61,9 +61,5 @@ test.describe('Pomodoro Timer', () => {
     // Stop → sesi selesai → break prompt atau journal modal bisa muncul; stop button hilang
     await stopBtn.click();
     await expect(stopBtn).toBeHidden({ timeout: 15000 });
-
-    // Tutup overlay bila muncul (skip break) supaya state bersih untuk test berikut
-    const skipBreak = page.locator('[data-testid="break-skip-btn"]');
-    if (await skipBreak.isVisible().catch(() => false)) await skipBreak.click();
   });
 });

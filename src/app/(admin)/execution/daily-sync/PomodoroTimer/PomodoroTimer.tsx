@@ -17,7 +17,6 @@ import { isTimerDisabled, getTimerDevStatusMessage } from '@/lib/timerDevUtils';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { useCompletedSessions } from '../DailyQuest/hooks/useCompletedSessions';
 import DebugTimer from './components/DebugTimer';
-import BreakPrompt from './components/BreakPrompt';
 import FloatingTimer from './components/FloatingTimer';
 import { useDocumentPiP } from '@/hooks/useDocumentPiP';
 import { getFocusDuration, getTotalSeconds, getProgress, formatTime, getBreakOptions, BREAK_MINUTES } from '@/lib/timerDisplay';
@@ -99,9 +98,6 @@ export default function PomodoroTimer({ onMarkDone, isTaskDone }: PomodoroTimerP
     resumeTimer,
     stopTimer,
     isProcessingCompletion,
-    waitingForBreak,
-    lastFocusDuration,
-    dismissBreakPrompt,
     lastActiveTask, // ✅ Get last active task
     resumeLastTask, // ✅ New action
     checkDailyReset // ✅ New action for daily reset
@@ -314,14 +310,6 @@ export default function PomodoroTimer({ onMarkDone, isTaskDone }: PomodoroTimerP
           <Spinner size={14} colorClass='border-green-500' className="mr-2" /> Processing completion...
         </div>
       )}
-
-      {/* Break Prompt Overlay */}
-      <BreakPrompt
-        isVisible={waitingForBreak}
-        lastFocusDuration={lastFocusDuration}
-        onStartBreak={startBreak}
-        onSkip={dismissBreakPrompt}
-      />
 
       {/* Timer lingkaran dan kontrol play/pause */}
       <div className={`flex items-center gap-6`}>
