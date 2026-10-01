@@ -260,3 +260,8 @@ Sengaja TIDAK diklaim (tidak benar untuk kita): offline 100%, data hanya di pera
 - Ikon jadi **emoji** (pola Acuan): Masalah 🤹🚨🧩⌛ di kotak merah muda; Solusi 🧭🎯🗓️⏱️📈⚖️✅📝 di kotak bergradasi warna-warni; Nyaman dipakai 📱🔔🌗🔄; chip perbandingan ⚡📱🔔🔄🎁; callout & chip hero 🌐.
 - Tabel perbandingan: kolom "Aplikasi to-do" dihapus, urutan **Better Planner | Google Sheets | Buku planner**, sel dipendekkan (satu baris), ✓ hijau / ✕ merah, judul "Bukan sekadar spreadsheet atau buku planner".
 - "Kuartal" diganti "12 minggu" di seluruh copy (mis. "Tiga langkah, diulang tiap 12 minggu"; "di akhir kuartal" → "di minggu terakhir"/"di akhir 12 minggu").
+
+## Revisi 7 (Abu, 1 Okt 2026) — tampilan HP & animasi ala Acuan
+
+- Ukuran di HP disamakan dengan acuan.co.id (diukur di 390px): judul hero 36→32px, judul seksi 30→27,2px, judul kartu 18→16px, teks kartu 16→14px, subjudul 18→16px, jarak seksi 64→56px, padding kartu 24→20px. Desktop (≥ md) tidak berubah.
+- Animasi muncul saat di-scroll (pola Acuan `.rv`): `RevealOnScroll.tsx` (IntersectionObserver, threshold 0.12) memberi kelas `is-in` ke elemen `[data-reveal]`; CSS di `globals.css` naik 26px + fade 0,7 dtk. Elemen hanya disembunyikan setelah komponen aktif (`html[data-reveal-ready]`) → tanpa JS / crawler tetap melihat isi; `prefers-reduced-motion` mematikan animasi. Hero tidak dianimasikan.

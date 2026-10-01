@@ -9,6 +9,7 @@ import {
 
 
 import { copy, SIZE } from './copy.id';
+import RevealOnScroll from './RevealOnScroll';
 
 // Warna kotak emoji Solusi, dipasangkan per indeks dengan copy.solution.items.
 const SOLUTION_GRADIENTS = [
@@ -32,8 +33,8 @@ const navCtaClass = `inline-flex min-h-11 items-center justify-center rounded-fu
 const navLinkClass = 'inline-flex min-h-11 items-center hover:text-gray-900';
 const footerLinkClass = 'inline-flex min-h-11 items-center hover:text-white';
 const wrapClass = 'mx-auto max-w-6xl px-4 sm:px-6';
-const sectionClass = 'py-16 md:py-24';
-const h2Class = 'text-3xl font-bold tracking-tight text-gray-900 md:text-4xl';
+const sectionClass = 'py-14 md:py-24';
+const h2Class = 'text-[1.7rem] font-bold leading-tight tracking-tight text-gray-900 md:text-4xl';
 const eyebrowClass = 'mb-3 text-sm font-semibold uppercase tracking-wide text-brand-500';
 const dotEyebrowClass = `${eyebrowClass} inline-flex items-center gap-2`;
 const imgClass = 'h-auto w-full rounded-xl border border-gray-200 shadow-sm';
@@ -43,6 +44,7 @@ export default function LandingPage() {
 
   return (
     <div id="top" data-landing className="min-h-screen bg-[linear-gradient(180deg,var(--color-brand-50)_0%,var(--color-brand-25)_18%,#ffffff_38%,var(--color-brand-25)_58%,#ffffff_78%,var(--color-brand-50)_100%)] text-gray-700">
+      <RevealOnScroll />
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-brand-100/70 bg-white/70 backdrop-blur">
         <div className={`${wrapClass} flex h-16 items-center gap-2`}>
@@ -63,16 +65,16 @@ export default function LandingPage() {
         {/* 1 Hero */}
         <section>
           <div className={`${wrapClass} pb-16 pt-12 md:pb-24 md:pt-20`}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-1.5 text-sm font-medium text-brand-600 shadow-sm">
                 <span aria-hidden="true" className="h-2 w-2 rounded-full bg-brand-500" />
                 {hero.eyebrow}
               </p>
-              <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-bold leading-tight tracking-tight text-gray-900 md:text-5xl">
+              <h1 className="mx-auto mt-6 max-w-2xl text-[2rem] font-bold leading-tight tracking-tight text-gray-900 md:text-5xl">
                 {hero.titleLead}{' '}
                 <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">{hero.titleAccent}</span>
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
+              <p className="mx-auto mt-6 max-w-2xl text-base text-gray-600 md:text-lg">
                 {hero.subtitle.map((part) =>
                   part.bold ? <strong key={part.text} className="font-semibold text-gray-900">{part.text}</strong> : part.text,
                 )}
@@ -137,7 +139,7 @@ export default function LandingPage() {
         <section aria-label="Ringkasan" className="bg-gray-950">
           <div className={`${wrapClass} grid grid-cols-2 gap-6 py-8 text-center md:grid-cols-4 md:py-10`}>
             {stats.map((stat) => (
-              <div key={stat.value}>
+              <div key={stat.value} data-reveal>
                 <p className="whitespace-nowrap bg-gradient-to-r from-brand-400 to-brand-200 bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl lg:text-4xl">
                   {stat.value}
                 </p>
@@ -150,13 +152,13 @@ export default function LandingPage() {
         {/* 3 Bukan spreadsheet */}
         <section className="pt-12 md:pt-16">
           <div className={wrapClass}>
-            <div className="flex flex-col gap-5 rounded-3xl border border-brand-200 bg-brand-50/70 p-6 md:flex-row md:items-center md:gap-8 md:px-8 md:py-7">
+            <div data-reveal className="flex flex-col gap-5 rounded-3xl border border-brand-200 bg-brand-50/70 p-6 md:flex-row md:items-center md:gap-8 md:px-8 md:py-7">
               <span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">
                 🌐
               </span>
               <div>
                 <h2 className="text-xl font-bold tracking-tight text-gray-900 md:text-2xl">{callout.title}</h2>
-                <p className="mt-2 text-gray-600">{callout.body}</p>
+                <p className="mt-2 text-sm text-gray-600 md:text-base">{callout.body}</p>
                 <ul className="mt-5 flex flex-wrap gap-2.5 text-sm">
                   {callout.no.map((item) => (
                     <li key={item} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-gray-800 shadow-sm">
@@ -177,22 +179,22 @@ export default function LandingPage() {
         {/* 4 Masalah */}
         <section id="masalah" className={sectionClass}>
           <div className={wrapClass}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className={dotEyebrowClass}>
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 {problem.eyebrow}
               </p>
               <h2 className={h2Class}>{problem.title}</h2>
-              <p className="mt-4 text-lg text-gray-600">{problem.subtitle}</p>
+              <p className="mt-4 text-base text-gray-600 md:text-lg">{problem.subtitle}</p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {problem.items.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div key={item.title} data-reveal className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
                   <span aria-hidden="true" className="flex h-12 w-12 items-center justify-center rounded-xl bg-error-50 text-2xl">
                     {item.icon}
                   </span>
-                  <h3 className="mt-5 text-lg font-semibold text-gray-900">{item.title}</h3>
-                  <p className="mt-2 text-gray-600">{item.body}</p>
+                  <h3 className="mt-4 text-base font-semibold md:mt-5 md:text-lg text-gray-900">{item.title}</h3>
+                  <p className="mt-2 text-sm text-gray-600 md:text-base">{item.body}</p>
                 </div>
               ))}
             </div>
@@ -202,26 +204,26 @@ export default function LandingPage() {
         {/* 5 Solusi */}
         <section id="fitur" className={sectionClass}>
           <div className={wrapClass}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className={dotEyebrowClass}>
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 {solution.eyebrow}
               </p>
               <h2 className={h2Class}>{solution.title}</h2>
-              <p className="mt-4 text-lg text-gray-600">{solution.subtitle}</p>
+              <p className="mt-4 text-base text-gray-600 md:text-lg">{solution.subtitle}</p>
             </div>
             <div className="mt-12 grid gap-4 md:grid-cols-2">
               {solution.items.map((item, i) => {
                 return (
-                  <div key={item.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+                  <div key={item.title} data-reveal className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6 md:p-8">
                     <span
                       aria-hidden="true"
                       className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl shadow-md ${SOLUTION_GRADIENTS[i]}`}
                     >
                       {item.icon}
                     </span>
-                    <h3 className="mt-5 text-lg font-semibold text-gray-900">{item.title}</h3>
-                    <p className="mt-2 text-gray-600">{item.body}</p>
+                    <h3 className="mt-4 text-base font-semibold md:mt-5 md:text-lg text-gray-900">{item.title}</h3>
+                    <p className="mt-2 text-sm text-gray-600 md:text-base">{item.body}</p>
                     <span className="mt-5 inline-block rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-600">
                       {item.tag}
                     </span>
@@ -235,19 +237,19 @@ export default function LandingPage() {
         {/* 6 Cara kerja */}
         <section id="cara-kerja" className={sectionClass}>
           <div className={wrapClass}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className={dotEyebrowClass}>
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 {howItWorks.eyebrow}
               </p>
               <h2 className={h2Class}>{howItWorks.title}</h2>
-              <p className="mt-5 text-lg text-gray-600">{howItWorks.subtitle}</p>
+              <p className="mt-5 text-base text-gray-600 md:text-lg">{howItWorks.subtitle}</p>
             </div>
 
             <div className="mt-14 space-y-16 md:space-y-20">
               {steps.map((step) => (
                 <div key={step.tag}>
-                  <div className="grid items-center gap-8 rounded-2xl border border-gray-200 bg-white p-6 md:grid-cols-5 md:p-10">
+                  <div data-reveal className="grid items-center gap-8 rounded-2xl border border-gray-200 bg-white p-6 md:grid-cols-5 md:p-10">
                     <div className="md:col-span-2">
                       <p className={eyebrowClass}>{step.tag}</p>
                       <h3 className="text-2xl font-bold tracking-tight text-gray-900">{step.title}</h3>
@@ -265,7 +267,7 @@ export default function LandingPage() {
                   </div>
                   <div className="mt-4 grid gap-4 md:grid-cols-3">
                     {step.cards.map((card) => (
-                      <div key={card.title} className="rounded-2xl border border-gray-200 bg-white p-5">
+                      <div key={card.title} data-reveal className="rounded-2xl border border-gray-200 bg-white p-5">
                         <h4 className="font-semibold text-gray-900">{card.title}</h4>
                         <p className="mb-4 mt-2 text-sm text-gray-600">{card.body}</p>
                         <Image
@@ -293,7 +295,7 @@ export default function LandingPage() {
                 {comfort.eyebrow}
               </p>
               <h2 className={h2Class}>{comfort.title}</h2>
-              <p className="mt-5 text-lg text-gray-600">{comfort.body}</p>
+              <p className="mt-5 text-base text-gray-600 md:text-lg">{comfort.body}</p>
               <ul className="mt-8 grid gap-4 sm:grid-cols-2">
                 {comfort.points.map((point) => (
                   <li key={point.text} className="flex items-center gap-3 font-medium text-gray-900">
@@ -305,7 +307,7 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            <div className="mx-auto w-full max-w-[280px] rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl shadow-brand-500/20">
+            <div data-reveal className="mx-auto w-full max-w-[280px] rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl shadow-brand-500/20">
               <Image
                 src={comfort.image.src}
                 alt={comfort.image.alt}
@@ -320,15 +322,15 @@ export default function LandingPage() {
         {/* 8 Perbandingan */}
         <section className={sectionClass}>
           <div className={wrapClass}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className={dotEyebrowClass}>
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 {comparison.eyebrow}
               </p>
               <h2 className={h2Class}>{comparison.title}</h2>
-              <p className="mt-4 text-lg text-gray-600">{comparison.subtitle}</p>
+              <p className="mt-4 text-base text-gray-600 md:text-lg">{comparison.subtitle}</p>
             </div>
-            <div className="mt-12 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div data-reveal className="mt-12 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
               <table className="w-full min-w-[620px] text-left text-sm md:text-base">
                 <thead>
                   <tr className="border-b border-gray-200">
@@ -377,23 +379,23 @@ export default function LandingPage() {
         {/* 9 Metode + pembuat */}
         <section className={sectionClass}>
           <div className={wrapClass}>
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p className={dotEyebrowClass}>
                 <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 {method.eyebrow}
               </p>
               <h2 className={h2Class}>{method.title}</h2>
-              <p className="mt-5 text-lg text-gray-600">{method.subtitle}</p>
+              <p className="mt-5 text-base text-gray-600 md:text-lg">{method.subtitle}</p>
             </div>
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {method.points.map((point) => (
-                <div key={point.title}>
+                <div key={point.title} data-reveal>
                   <h3 className="text-lg font-semibold text-gray-900">{point.title}</h3>
-                  <p className="mt-2 text-gray-600">{point.body}</p>
+                  <p className="mt-2 text-sm text-gray-600 md:text-base">{point.body}</p>
                 </div>
               ))}
             </div>
-            <figure className="mx-auto mt-14 max-w-3xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
+            <figure data-reveal className="mx-auto mt-14 max-w-3xl rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6 md:p-10">
               <blockquote className="text-lg italic text-gray-800">{method.quote}</blockquote>
               <figcaption className="mt-6 flex items-center gap-3">
                 <span
@@ -414,15 +416,15 @@ export default function LandingPage() {
         {SHOW_PRICING && (
           <section id="harga" className={sectionClass}>
             <div className={wrapClass}>
-              <div className="mx-auto max-w-3xl text-center">
+              <div data-reveal className="mx-auto max-w-3xl text-center">
                 <p className={dotEyebrowClass}>
                   <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                   {pricing.eyebrow}
                 </p>
                 <h2 className={h2Class}>{pricing.title}</h2>
-                <p className="mt-4 text-lg text-gray-600">{pricing.subtitle}</p>
+                <p className="mt-4 text-base text-gray-600 md:text-lg">{pricing.subtitle}</p>
               </div>
-              <div className="mx-auto mt-12 max-w-xl overflow-hidden rounded-3xl border-2 border-brand-400 bg-white shadow-xl shadow-brand-500/15">
+              <div data-reveal className="mx-auto mt-12 max-w-xl overflow-hidden rounded-3xl border-2 border-brand-400 bg-white shadow-xl shadow-brand-500/15">
                 <div aria-hidden="true" className="h-2 bg-gradient-to-r from-brand-600 to-brand-400" />
                 <div className="p-6 md:p-10">
                   <span className="inline-block rounded-full bg-brand-50 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-brand-600">
@@ -476,7 +478,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-10 space-y-3">
               {faq.items.map((item) => (
-                <details key={item.q} className="group rounded-2xl border border-gray-200 bg-white px-5 shadow-sm open:shadow-md md:px-6">
+                <details key={item.q} data-reveal className="group rounded-2xl border border-gray-200 bg-white px-5 shadow-sm open:shadow-md md:px-6">
                   <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold text-gray-900 [&::-webkit-details-marker]:hidden">
                     {item.q}
                     <span
@@ -499,7 +501,7 @@ export default function LandingPage() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-72 max-w-3xl rounded-full bg-brand-500/30 blur-3xl"
           />
-          <div className={`${wrapClass} relative`}>
+          <div data-reveal className={`${wrapClass} relative`}>
             <h2 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-white md:text-4xl">{closing.title}</h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-gray-300">{closing.subtitle}</p>
             <div className="mt-10">
