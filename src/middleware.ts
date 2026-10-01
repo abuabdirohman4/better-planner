@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
 
     // Define public routes that don't require authentication
-    const publicRoutes = ['/', '/signin', '/signup']
+    const publicRoutes = ['/', '/signin', '/signup', '/callback'] // /callback: tukar kode OAuth Google sebelum ada sesi
     const isPublicRoute = publicRoutes.includes(pathname)
     
     // Jika user sudah login dan mencoba mengakses halaman signin/signup atau root, redirect ke dashboard
