@@ -74,8 +74,8 @@ const QuarterSelector: React.FC = () => {
 
   return (
     <div className="flex items-center gap-1">
-      <Button size="sm" sizeClassName="p-2" variant="outline" onClick={handlePrev} aria-label="Sebelumnya" data-testid="quarter-prev">
-        <ChevronLeftIcon className="w-4 h-4" />
+      <Button size="sm" sizeClassName="p-1.5" variant="outline" onClick={handlePrev} aria-label="Sebelumnya" data-testid="quarter-prev">
+        <ChevronLeftIcon className="w-5 h-5" />
       </Button>
       <div className="relative">
         <button
@@ -105,8 +105,8 @@ const QuarterSelector: React.FC = () => {
           </div>
         </Dropdown>
       </div>
-      <Button size="sm" sizeClassName="p-2" variant="outline" onClick={handleNext} aria-label="Berikutnya" data-testid="quarter-next">
-        <ChevronRightIcon className="w-4 h-4" />
+      <Button size="sm" sizeClassName="p-1.5" variant="outline" onClick={handleNext} aria-label="Berikutnya" data-testid="quarter-next">
+        <ChevronRightIcon className="w-5 h-5" />
       </Button>
     </div>
   );

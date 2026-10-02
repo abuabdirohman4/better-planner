@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { createClient } from '@/lib/supabase/server'
-import { EyeIcon, TaskIcon, PieChartIcon, CalenderIcon, ShootingStarIcon, CheckCircleIcon, PencilIcon } from '@/lib/icons';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import WeeklyProgressChartWrapper from './components/WeeklyProgressChartWrapper';
-import WeeklyEnergyCard from './components/WeeklyEnergyCard';
-import HfgWeeklyStatus from './components/HfgWeeklyStatus';
+import DashboardHome from './components/DashboardHome';
+import { getDashboardHome } from './actions/home/actions';
 
 export const metadata: Metadata = {
   title: "Dashboard | Better Planner",
@@ -23,180 +20,18 @@ export default function Dashboard() {
 }
 
 async function DashboardContent() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const home = await getDashboardHome();
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12">
-          <HfgWeeklyStatus />
-        </div>
+        {home && (
+          <div className="col-span-12">
+            <DashboardHome data={home} />
+          </div>
+        )}
 
         <div className="col-span-12">
           <WeeklyProgressChartWrapper />
-        </div>
-
-        <div className="col-span-12">
-          <WeeklyEnergyCard />
-        </div>
-
-        <div className="col-span-12">
-          <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
-            {/* Vision Card */}
-            <Link 
-              href="/planning/vision"
-              data-testid="dashboard-card-planning-vision"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
-                <EyeIcon className="w-6 h-6 text-[#7F56D9] ps-0.5 pt-0.5" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Vision</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Lihat visi utama</p>
-              </div>
-            </Link>
-            {/* 12 Week Quests Card */}
-            <Link 
-              href="/planning/12-week-quests"
-              data-testid="dashboard-card-planning-12-week-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#EFF8FF] group-hover:bg-[#d3eafe] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#2E90FA]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">12 Week Quests</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Rencana 12 minggu</p>
-              </div>
-            </Link>
-            {/* Main Quests Card */}
-            <Link 
-              href="/planning/main-quests"
-              data-testid="dashboard-card-planning-main-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFEFE3] group-hover:bg-[#ffd9bd] transition-colors md:mr-4">
-                <PieChartIcon className="w-6 h-6 text-[#F79009]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Main Quests</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Target utama</p>
-              </div>
-            </Link>
-            {/* Best Week Card */}
-            <Link 
-              href="/planning/best-week"
-              data-testid="dashboard-card-planning-best-week"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
-                <ShootingStarIcon className="w-6 h-6 text-[#13B176]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Best Week</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Minggu Terbaik</p>
-              </div>
-            </Link>
-            {/* Daily Sync Card */}
-            <Link 
-              href="/execution/daily-sync"
-              data-testid="dashboard-card-execution-daily-sync"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FEF3F2] group-hover:bg-[#ffd7d6] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#F04438]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Daily Sync</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Rutinitas harian</p>
-              </div>
-            </Link>
-            {/* Weekly Sync Card */}
-            <Link 
-              href="/execution/weekly-sync"
-              data-testid="dashboard-card-execution-weekly-sync"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FFF6ED] group-hover:bg-[#ffebd3] transition-colors md:mr-4">
-                <CalenderIcon className="w-6 h-6 text-[#FDB022]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Weekly Sync</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Review mingguan</p>
-              </div>
-            </Link>
-            {/* Habit Tracker Card */}
-            <Link 
-              href="/habits/today"
-              data-testid="dashboard-card-habits-today"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
-                <CheckCircleIcon className="w-6 h-6 text-[#7F56D9]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Habit Tracker</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Tracking Habit</p>
-              </div>
-            </Link>
-            {/* Brain Dump Card */}
-            <Link 
-              href="/execution/brain-dump"
-              data-testid="dashboard-card-execution-brain-dump"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#F4EBFF] group-hover:bg-[#e0d5fe] transition-colors md:mr-4">
-                <PencilIcon className="w-6 h-6 text-[#7F56D9]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Brain Dump</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Ide dan refleksi</p>
-              </div>
-            </Link>
-            {/* Work Quests Card */}
-            <Link 
-              href="/quests/work-quests"
-              data-testid="dashboard-card-quests-work-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#EFF8FF] group-hover:bg-[#d3eafe] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#2E90FA]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Work Quests</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Tugas pekerjaan</p>
-              </div>
-            </Link>
-            {/* Daily Quests Card */}
-            <Link 
-              href="/quests/daily-quests"
-              data-testid="dashboard-card-quests-daily-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#E6F5EA] group-hover:bg-[#b7ebcd] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#13B176]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Daily Quests</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Tugas harian</p>
-              </div>
-            </Link>
-            {/* Side Quests Card */}
-            <Link 
-              href="/quests/side-quests"
-              data-testid="dashboard-card-quests-side-quests"
-              className="group flex flex-col md:flex-row items-center gap-4 gap-md-0 bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-gray-800 shadow-none p-5 hover:shadow transition-colors duration-150"
-            >
-              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-[#FDF2FA] group-hover:bg-[#eed4ec] transition-colors md:mr-4">
-                <TaskIcon className="w-6 h-6 text-[#E31B54]" />
-              </div>
-              <div>
-                <h3 className="text-base text-center md:text-left font-semibold text-gray-900 mb-1">Side Quests</h3>
-                <p className="text-xs text-gray-500 hidden md:block">Tugas sampingan</p>
-              </div>
-            </Link>
-          </div>
         </div>
       </div>
   );

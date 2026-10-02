@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import Spinner from '@/components/ui/spinner/Spinner';
 import Button from '@/components/ui/button/Button';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
-import { ENERGY_OPTIONS, type Energy } from '@/lib/energy';
+import type { Energy } from '@/lib/energy';
 
 interface OneMinuteJournalModalProps {
   isOpen: boolean;
@@ -206,35 +206,6 @@ const OneMinuteJournalModal: React.FC<OneMinuteJournalModalProps> = ({
             </div>
           </div>
 
-          {/* Question 3 (opsional) */}
-          <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">
-              3. Bagaimana energi saya setelah sesi ini? <span className="text-sm font-normal text-gray-500">(opsional)</span>
-            </label>
-            <div className="flex gap-3">
-              {ENERGY_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  data-testid={`journal-energy-${o.value}`}
-                  aria-pressed={energy === o.value}
-                  title={o.hint}
-                  disabled={isSaving}
-                  onClick={() => setEnergy(energy === o.value ? null : o.value)}
-                  className={`w-14 h-12 rounded-md border text-xl font-semibold transition-colors ${
-                    energy === o.value
-                      ? 'bg-brand-500 border-brand-500 text-white'
-                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {o.symbol}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Sesi ini bikin kamu lebih bertenaga (+), biasa (=), atau terkuras (−)? Tiap minggu terlihat kerja mana yang menguras.
-            </p>
-          </div>
         </div>
 
         {/* Action Buttons */}
