@@ -14,16 +14,12 @@ test.describe('Dashboard', () => {
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test('renders all navigation cards', async ({ page }) => {
-    const cards = page.locator('[data-testid^="dashboard-card-"]');
-    await expect(cards.first()).toBeVisible({ timeout: 15000 });
-    expect(await cards.count()).toBe(11);
-  });
-
-  test('card navigates to its route', async ({ page }) => {
-    await page.locator('[data-testid="dashboard-card-execution-daily-sync"]').click();
-    await page.waitForURL(/\/execution\/daily-sync/, { timeout: 45000 });
-    expect(page.url()).toContain('/execution/daily-sync');
+  test('renders greeting, habit summary and no old cards', async ({ page }) => {
+    await expect(page.getByTestId('dashboard-greeting')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('dashboard-greeting')).toContainText('Selamat');
+    await expect(page.getByTestId('dashboard-habit-summary')).toBeVisible();
+    // Kartu jam HFG, energi, dan quick action dihapus (app-m8li, app-4d2x).
+    expect(await page.locator('[data-testid="dashboard-hfg-weekly"], [data-testid^="dashboard-card-"]').count()).toBe(0);
   });
 
   test('quarter selector prev/next changes label', async ({ page }) => {

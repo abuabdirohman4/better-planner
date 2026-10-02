@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, TaskIcon, CalenderIcon, CheckCircleIcon } from "@/lib/icons";
+import { GridIcon, TaskIcon, CalenderIcon, CheckCircleIcon, ListIcon } from "@/lib/icons";
+import MenuSheet from "./MenuSheet";
 import Spinner from "@/components/ui/spinner/Spinner";
 
 interface NavItem {
@@ -45,6 +46,8 @@ export default function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();
   
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   
   // Handle navigation with loading state
@@ -73,16 +76,22 @@ export default function BottomNavigation() {
     return loadingRoutes.has(path);
   }, [loadingRoutes]);
 
+  const inMainTabs = navItems.some((i) =>
+    i.href.startsWith("/habits/") ? pathname.startsWith("/habits/") : pathname.startsWith(i.href)
+  );
+  const menuActive = menuOpen || !inMainTabs;
+
   return (
+    <>
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 shadow-lg md:hidden">
       {/* Safe area untuk iPhone dengan home indicator */}
       <div className="pb-safe">
         <div className="flex items-center justify-around px-1 py-1">
           {navItems.map((item) => {
             // /habits/today and /habits/monthly are sibling tabs of one nav entry
-            const isActive = item.href.startsWith("/habits/")
+            const isActive = !menuOpen && (item.href.startsWith("/habits/")
               ? pathname.startsWith("/habits/")
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href));
             const isRouteLoading = isLoadingRoute(item.href);
             
             return (
@@ -115,8 +124,24 @@ export default function BottomNavigation() {
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            data-testid="bottom-nav-menu"
+            className={cn("bottom-nav-item", menuActive ? "bottom-nav-item-active" : "bottom-nav-item-inactive")}
+          >
+            <div className={cn("bottom-nav-icon", menuActive ? "bottom-nav-icon-active" : "bottom-nav-icon-inactive")}>
+              <ListIcon />
+            </div>
+            <span className={cn("bottom-nav-label", menuActive ? "bottom-nav-label-active" : "bottom-nav-label-inactive")}>
+              Menu
+            </span>
+          </button>
         </div>
       </div>
     </nav>
+    <MenuSheet open={menuOpen} onClose={closeMenu} />
+    </>
   );
 }
