@@ -37,9 +37,16 @@ function Hero({ data }: { data: Data }) {
             <p className="mt-3 max-w-2xl text-sm md:text-base text-gray-600 dark:text-gray-400">“{data.vision.text}”</p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
-              {data.weekLabel}
-            </span>
+            {data.isCurrentQuarter ? (
+              <span className="inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
+                {data.weekLabel}
+              </span>
+            ) : (
+              <span data-testid="dashboard-viewing-other-quarter" className="inline-flex items-center gap-2 rounded-full bg-amber-50 dark:bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                Sedang melihat {data.viewed.label}
+                <Link href={`/dashboard?q=${data.currentQParam}`} className="underline underline-offset-2 hover:no-underline">Kembali ke kuartal ini</Link>
+              </span>
+            )}
             {data.vision && (
               <span className="inline-flex items-center rounded-full bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
                 Visi {data.vision.area}
@@ -53,7 +60,7 @@ function Hero({ data }: { data: Data }) {
               <span className="text-4xl font-extrabold text-brand-500 leading-none">{done}<span className="text-base font-semibold text-brand-400">/{total}</span></span>
               <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">langkah HFG</span>
             </Ring>
-            <p className="text-xs text-gray-500 text-center max-w-[10rem]">Langkah selesai dari 3 HFG kuartal ini</p>
+            <p className="text-xs text-gray-500 text-center max-w-[10rem]">Langkah selesai dari 3 HFG {data.isCurrentQuarter ? 'kuartal ini' : data.viewed.label}</p>
           </div>
         )}
       </div>
@@ -128,7 +135,7 @@ function HabitToday({ days }: { days: HabitDay[] }) {
   );
 }
 
-function HfgCard({ c, rank }: { c: HfgStepCard; rank: number }) {
+function HfgCard({ c, rank, current }: { c: HfgStepCard; rank: number; current: boolean }) {
   return (
     <div data-testid="dashboard-hfg-step-card" className="flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 p-4 hover:border-brand-300 transition-colors">
       <div className="flex items-center gap-3">
@@ -145,7 +152,7 @@ function HfgCard({ c, rank }: { c: HfgStepCard; rank: number }) {
         <div className="mt-4 flex flex-1 flex-col rounded-lg bg-gray-50 dark:bg-white/[0.03] p-3">
           <p className="text-xs text-gray-500">Berikutnya · {c.next.milestoneTitle}</p>
           <p className="mt-0.5 text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2" title={c.next.title}>{c.next.title}</p>
-          <div className="mt-auto pt-3 flex items-center justify-between gap-2 text-xs">
+          {current && <div className="mt-auto pt-3 flex items-center justify-between gap-2 text-xs">
             {c.next.planned ? (
               <>
                 <span className="text-green-600 dark:text-green-400">✓ Ada di rencana minggu ini</span>
@@ -157,7 +164,7 @@ function HfgCard({ c, rank }: { c: HfgStepCard; rank: number }) {
                 <Link href="/execution/weekly-sync" className="font-semibold text-brand-500 hover:underline whitespace-nowrap">Weekly Sync →</Link>
               </>
             )}
-          </div>
+          </div>}
         </div>
       ) : (
         <p className="mt-4 text-sm text-green-600 dark:text-green-400">Semua langkah selesai 🎉</p>
@@ -174,6 +181,7 @@ export default function DashboardHome({ data }: { data: Data }) {
     <div className="flex flex-col gap-4 md:gap-6">
       <Hero data={data} />
 
+      {data.isCurrentQuarter && <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Stat href="/planning/main-quests" tone="bg-brand-50 text-brand-500 dark:bg-brand-500/15" icon={<ShootingStarIcon className="h-6 w-6" />}
           value={hfgDone} unit={`/${hfgTotal}`} label="Langkah HFG" />
@@ -186,17 +194,23 @@ export default function DashboardHome({ data }: { data: Data }) {
       </div>
 
       <HabitToday days={data.habitDays} />
+      </>}
 
-      {data.hfg.length > 0 && (
+      {data.hfg.length === 0 ? (
+        <section className={`${card} p-5 md:p-6 text-sm text-gray-500`}>
+          Belum ada HFG di {data.viewed.label}.{' '}
+          <Link href="/planning/main-quests" className="font-semibold text-brand-500 hover:underline">Atur di Main Quests →</Link>
+        </section>
+      ) : (
         <section data-testid="dashboard-hfg-steps" className={`${card} p-5 md:p-6`}>
           <h2 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white mb-4">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-500/15">
               <ShootingStarIcon className="h-6 w-6 text-brand-500" />
             </span>
-            Progress HFG
+            Progress HFG{!data.isCurrentQuarter && <span className="text-sm font-normal text-gray-500">· {data.viewed.label}</span>}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {data.hfg.map((c, i) => <HfgCard key={c.questId} c={c} rank={i + 1} />)}
+            {data.hfg.map((c, i) => <HfgCard key={c.questId} c={c} rank={i + 1} current={data.isCurrentQuarter} />)}
           </div>
         </section>
       )}

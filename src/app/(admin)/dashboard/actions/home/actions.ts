@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { getLocalDateString } from '@/lib/dateUtils';
+import { formatQParam } from '@/lib/quarterUtils';
 import { queryCommittedQuests } from '@/app/(admin)/planning/main-quests/actions/quests/queries';
 import { queryVisionsByUserId } from '@/app/(admin)/planning/vision/queries';
 import { queryHabits } from '@/app/(admin)/habits/actions/habits/queries';
@@ -20,6 +21,10 @@ export interface DashboardHome {
   greeting: string;
   dateLabel: string;
   weekLabel: string;
+  // Kuartal yang dilihat lewat QuarterSelector; bagian "hari ini" hanya berarti di kuartal berjalan.
+  viewed: { year: number; quarter: number; label: string };
+  isCurrentQuarter: boolean;
+  currentQParam: string;
   vision: { area: string; text: string } | null;
   hfg: HfgStepCard[];
   habitDays: HabitDay[];
@@ -27,7 +32,7 @@ export interface DashboardHome {
   tasksToday: { done: number; total: number };
 }
 
-export async function getDashboardHome(): Promise<DashboardHome | null> {
+export async function getDashboardHome(viewed: { year: number; quarter: number }): Promise<DashboardHome | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -37,11 +42,12 @@ export async function getDashboardHome(): Promise<DashboardHome | null> {
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: 'numeric', hourCycle: 'h23' }).format(now));
   const week = weekInfo(today);
   const dates = lastNDates(today, 14);
+  const isCurrentQuarter = viewed.year === week.year && viewed.quarter === week.quarter;
   const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '').split(' ')[0];
 
   const [visions, quests, habits, completions, planned, focusLogs, planItems] = await Promise.all([
     queryVisionsByUserId(supabase, user.id),
-    queryCommittedQuests(supabase, user.id, week.year, week.quarter, true, 3),
+    queryCommittedQuests(supabase, user.id, viewed.year, viewed.quarter, true, 3),
     queryHabits(supabase, user.id),
     queryCompletionsInRange(supabase, user.id, dates[0], today),
     supabase
@@ -82,6 +88,9 @@ export async function getDashboardHome(): Promise<DashboardHome | null> {
     greeting: name ? `${greetingFor(hour)}, ${name}` : greetingFor(hour),
     dateLabel: now.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
     weekLabel: week.label,
+    viewed: { ...viewed, label: `Q${viewed.quarter} ${viewed.year}` },
+    isCurrentQuarter,
+    currentQParam: formatQParam(week.year, week.quarter),
     vision: pickVisionLine(visions, today),
     hfg: buildHfgStepCards(
       quests,

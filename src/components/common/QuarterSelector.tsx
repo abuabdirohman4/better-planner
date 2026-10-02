@@ -19,7 +19,7 @@ import { useQuarterStore } from "@/stores/quarterStore";
 // Halaman yang tidak terikat quarter.
 const HIDDEN_PATHS = ['/planning/vision', '/settings', '/habits'];
 // Halaman server yang membaca quarter dari ?q=, bukan dari store.
-const URL_QUARTER_PATHS = ['/execution/brain-dump', '/planning/12-week-sync'];
+const URL_QUARTER_PATHS = ['/execution/brain-dump', '/planning/12-week-sync', '/dashboard'];
 
 const QuarterSelector: React.FC = () => {
   const { year, quarter, setQuarter } = useQuarterStore();
