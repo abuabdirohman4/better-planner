@@ -5,6 +5,7 @@ import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useWeekManagement } from './DateSelector/hooks/useWeekManagement';
 import { useTimerManagement } from './PomodoroTimer/hooks/useTimerManagement';
 import { useGlobalTimer } from './PomodoroTimer/hooks/useGlobalTimer';
+import { useLiveTimerNotification } from './PomodoroTimer/hooks/useLiveTimerNotification';
 import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagement';
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
@@ -75,6 +76,8 @@ export default function DailySyncPage() {
 
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
+  // Notifikasi timer di HP (sekali saja — PomodoroTimer dirender 2x: mobile + desktop)
+  useLiveTimerNotification();
 
   useEffect(() => {
     setSelectedDayIdx(getDefaultDayIndexForWeek(currentWeek));

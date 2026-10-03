@@ -10,6 +10,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Main-thread messages: only sound relay is still used
+// (timer notification is shown directly by the page via registration.showNotification)
 self.addEventListener('message', (event) => {
   const { type } = event.data || {};
   if (type === 'PLAY_COMPLETION_SOUND') {
@@ -55,6 +56,25 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
+  // Timer action buttons (Pause/Lanjut/Stop) from the sticky timer notification
+  // (useLiveTimerNotification.ts). Forward to the open page without bringing it to front;
+  // `at` pins the tap time because a backgrounded page may receive the message late.
+  if (['pause', 'resume', 'stop'].includes(event.action)) {
+    event.notification.close();
+    const msg = { type: 'TIMER_ACTION', action: event.action, at: Date.now() };
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        if (clients.length > 0) {
+          clients.forEach((c) => c.postMessage(msg));
+          return;
+        }
+        // App fully closed → open Daily Sync so the user can act on the restored timer
+        return self.clients.openWindow('/execution/daily-sync');
+      })
+    );
+    return;
+  }
+
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(

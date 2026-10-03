@@ -8,7 +8,6 @@ import { useSoundStore } from '@/stores/soundStore';
 import { useTimerPersistence } from './hooks/useTimerPersistence';
 import { useGlobalTimer } from './hooks/useGlobalTimer';
 import { useBackgroundTimer } from './hooks/useBackgroundTimer';
-import { useLiveTimerNotification } from './hooks/useLiveTimerNotification';
 import SoundSelector from './components/SoundSelector';
 import Spinner from '@/components/ui/spinner/Spinner';
 import AudioPermissionPrompt from '@/app/(admin)/execution/daily-sync/PomodoroTimer/components/AudioPermissionPrompt';
@@ -111,9 +110,6 @@ export default function PomodoroTimer({ onMarkDone, isTaskDone }: PomodoroTimerP
 
   // Initialize background timer for notifications and completion handling
   useBackgroundTimer();
-
-  // Initialize live timer notifications for PWA
-  useLiveTimerNotification();
 
   // Reset timer if day changed
   useEffect(() => {

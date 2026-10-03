@@ -33,6 +33,7 @@
 | Web Push notification | Notifikasi browser (timer selesai, reminder) | **Sudah live** (`useLiveTimerNotification.ts`, cron `push-due`). Plan: [web-push](../archive/plans/2026-03-31-web-push-notifications-design.md) |
 | Per-user jam kirim email | Sekarang fixed 06:00 WIB via `daily-pipeline` | Butuh Vercel Pro (multi cron) atau queue per jam |
 | Email tracking (open/click) | Kolom `opened_at/clicked_at` sudah ada di `notification_history` | Butuh Resend webhook |
+| Timer berdetak di notif Android | App native (Capacitor) + chronometer countdown di notif & lock screen | Plan saja (3 Okt 2026): [design](../plans/2026-10-03-native-timer-android-design.md), [implementasi](../plans/2026-10-03-native-timer-android-implementation-plan.md). Versi PWA (notif "Selesai HH:MM" + tombol Pause/Stop) sudah dibuat |
 | Real-time sync antar tab/device | pilihan teknik: Ajax polling, Long Polling, Server-Sent Events, atau WebSocket | Ide, belum ada kebutuhan |
 
 ---
