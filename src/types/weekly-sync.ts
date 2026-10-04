@@ -59,3 +59,9 @@ export interface Rule {
   rule_text: string
   display_order: number
 }
+
+export interface WeeklyRefuel {
+  sleep_hours: number | null
+  activities: string | null
+  achievements: string | null
+}

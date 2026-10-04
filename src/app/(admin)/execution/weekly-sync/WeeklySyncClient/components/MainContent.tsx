@@ -1,7 +1,9 @@
 import React from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { WeekSelector } from './WeekSelector';
 import WeeklySyncTable from '../../WeeklySyncTable/WeeklySyncTable';
 import ToDontListCard from '../../ToDontList/ToDontListCard';
+import RefuelSyncCard from '../../RefuelSync/RefuelSyncCard';
 
 // Memoized components
 const MemoizedWeeklySyncTable = React.memo(WeeklySyncTable);
@@ -30,6 +32,19 @@ export function MainContent({
   handleRefreshToDontList,
   dataSource
 }: MainContentProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab') === 'refuel' ? 'refuel' : 'weekly';
+
+  // Tulis ?tab= tanpa menghapus param lain (mis. ?q=).
+  const setTab = (next: 'weekly' | 'refuel') => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === 'refuel') params.set('tab', 'refuel');
+    else params.delete('tab');
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   return (
     <div className="container mx-auto py-8 pt-0">
@@ -69,6 +84,27 @@ export function MainContent({
         />
       </div>
 
+      {/* Tab bar */}
+      <div className="mb-6 flex gap-1 border-b border-gray-200 dark:border-gray-800" role="tablist">
+        {([['weekly', 'Weekly Sync'], ['refuel', 'Refuel Sync']] as const).map(([key, label]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+              tab === key ? 'border-brand-500 text-brand-500' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'refuel' ? (
+        <RefuelSyncCard year={year} quarter={quarter} weekNumber={displayWeek} goals={mobileOptimizedGoals} />
+      ) : (
+        <>
       {/* Kolom 3 Quest Week */}
       <MemoizedWeeklySyncTable
         year={year}
@@ -90,6 +126,8 @@ export function MainContent({
         loading={toDontListLoading}
         onRefresh={handleRefreshToDontList}
       />
+        </>
+      )}
     </div>
   );
 }
