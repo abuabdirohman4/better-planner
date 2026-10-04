@@ -302,6 +302,7 @@ All detailed documentation is in `docs/claude/`:
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Timezone Handling**: [`docs/claude/timezone-handling.md`](docs/claude/timezone-handling.md)
 - **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
+- **Design System** (gaya visual; symlink ke vault, edit di sana): [`docs/design-system.md`](docs/design-system.md)
 - **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
 - **Release Workflow**: [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
