@@ -79,7 +79,7 @@ const QuarterSelector: React.FC = () => {
       </Button>
       <div className="relative">
         <button
-          className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-[84px] dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center justify-center gap-1 h-8 px-3 text-sm font-medium whitespace-nowrap rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:text-white dark:bg-gray-900 cursor-pointer min-w-[84px] dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={handleDropdownToggle}
           data-testid="quarter-toggle"
           aria-haspopup="listbox"

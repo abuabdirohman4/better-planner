@@ -16,6 +16,7 @@ interface ButtonProps {
   type?: "button" | "submit" | "reset"; // Button type
   formAction?: (formData: FormData) => Promise<never>; // Form action
   "data-testid"?: string; // Test identifier
+  "aria-label"?: string; // Label for icon-only buttons
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -33,6 +34,7 @@ const Button: React.FC<ButtonProps> = ({
   type = "button",
   formAction,
   "data-testid": dataTestId,
+  "aria-label": ariaLabel,
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -75,6 +77,7 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={isDisabled}
       data-testid={dataTestId}
+      aria-label={ariaLabel}
     >
       {loading ? (
         <>
