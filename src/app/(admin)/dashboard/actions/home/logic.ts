@@ -8,7 +8,7 @@ export function greetingFor(hourWIB: number): string {
 }
 
 // today = "YYYY-MM-DD" WIB. Minggu 13 (dan 14 di Q4 tahun 53 minggu) = minggu istirahat.
-export function weekInfo(today: string): { year: number; quarter: number; weekInQuarter: number; label: string } {
+export function weekInfo(today: string): { year: number; quarter: number; weekInQuarter: number; weekOfYear: number; label: string } {
   const [y, m, d] = today.split('-').map(Number);
   const { weekNumber, year } = getWeekAndYearFromDate(new Date(y, m - 1, d, 12));
   const quarter = getQuarterFromWeek(weekNumber);
@@ -16,19 +16,18 @@ export function weekInfo(today: string): { year: number; quarter: number; weekIn
   const label = weekInQuarter > 12
     ? `Minggu istirahat · Q${quarter} ${year}`
     : `Minggu ${weekInQuarter} dari 12 · Q${quarter} ${year}`;
-  return { year, quarter, weekInQuarter, label };
+  return { year, quarter, weekInQuarter, weekOfYear: weekNumber, label };
 }
 
-// Satu visi 3-5 tahun, bergilir per hari supaya tidak itu-itu saja.
-export function pickVisionLine(
-  visions: { life_area: string; vision_3_5_year: string | null }[],
-  today: string,
-): { area: string; text: string } | null {
-  const filled = visions.filter((v) => v.vision_3_5_year?.trim());
-  if (filled.length === 0) return null;
-  const dayIndex = Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000);
-  const v = filled[dayIndex % filled.length];
-  return { area: v.life_area, text: v.vision_3_5_year!.trim() };
+export interface VisionSlide { area: string; t35: string | null; t10: string | null }
+
+// Semua area yang punya minimal satu teks visi; carousel menyaring per jangka.
+export function buildVisionSlides(
+  visions: { life_area: string; vision_3_5_year: string | null; vision_10_year: string | null }[],
+): VisionSlide[] {
+  return visions
+    .map((v) => ({ area: v.life_area, t35: v.vision_3_5_year?.trim() || null, t10: v.vision_10_year?.trim() || null }))
+    .filter((v) => v.t35 || v.t10);
 }
 
 export interface StepMilestone { id: string; quest_id: string; title: string; display_order: number | null }
@@ -37,6 +36,7 @@ export interface StepTask { id: string; milestone_id: string; title: string; sta
 export interface HfgStepCard {
   questId: string;
   title: string;
+  motivation: string | null;
   done: number;
   total: number;
   percent: number;
@@ -45,7 +45,7 @@ export interface HfgStepCard {
 
 // Langkah = task langsung di bawah milestone (subtask sudah dibuang di query).
 export function buildHfgStepCards(
-  quests: { id: string; title: string }[],
+  quests: { id: string; title: string; motivation?: string | null }[],
   milestones: StepMilestone[],
   tasks: StepTask[],
   plannedTaskIds: Set<string>,
@@ -65,6 +65,7 @@ export function buildHfgStepCards(
     return {
       questId: q.id,
       title: q.title,
+      motivation: q.motivation?.trim() || null,
       done,
       total: steps.length,
       percent: steps.length ? Math.round((done / steps.length) * 100) : 0,

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { CheckCircleIcon, TaskIcon, TimeIcon, ShootingStarIcon } from '@/lib/icons';
 import type { DashboardHome as Data } from '../actions/home/actions';
+import HeroCarousel from './HeroCarousel';
+import ExpandableText from './ExpandableText';
 import type { HfgStepCard, HabitDay } from '../actions/home/logic';
 
 const card = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] shadow-sm';
@@ -33,9 +35,7 @@ function Hero({ data }: { data: Data }) {
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />{data.dateLabel}
           </p>
           <h1 className="mt-2 text-2xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">{data.greeting}</h1>
-          {data.vision && (
-            <p className="mt-3 max-w-2xl text-sm md:text-base text-gray-600 dark:text-gray-400">“{data.vision.text}”</p>
-          )}
+          <HeroCarousel quote={data.quote} visions={data.visions} />
           <div className="mt-4 flex flex-wrap gap-2">
             {data.isCurrentQuarter ? (
               <span className="inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
@@ -45,11 +45,6 @@ function Hero({ data }: { data: Data }) {
               <span data-testid="dashboard-viewing-other-quarter" className="inline-flex items-center gap-2 rounded-full bg-amber-50 dark:bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
                 Sedang melihat {data.viewed.label}
                 <Link href={`/dashboard?q=${data.currentQParam}`} className="underline underline-offset-2 hover:no-underline">Kembali ke kuartal ini</Link>
-              </span>
-            )}
-            {data.vision && (
-              <span className="inline-flex items-center rounded-full bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
-                Visi {data.vision.area}
               </span>
             )}
           </div>
@@ -148,6 +143,11 @@ function HfgCard({ c, rank, current }: { c: HfgStepCard; rank: number; current: 
           <p className="text-xs text-gray-500 mt-0.5">{c.done} dari {c.total} langkah</p>
         </div>
       </div>
+      {c.motivation ? (
+        <div className="mt-3"><ExpandableText text={c.motivation} className="text-sm italic text-gray-600 dark:text-gray-400" /></div>
+      ) : (
+        <Link href="/planning/main-quests" className="mt-3 text-xs font-semibold text-brand-500 hover:underline">Tulis motivasi →</Link>
+      )}
       {c.next ? (
         <div className="mt-4 flex flex-1 flex-col rounded-lg bg-gray-50 dark:bg-white/[0.03] p-3">
           <p className="text-xs text-gray-500">Berikutnya · {c.next.milestoneTitle}</p>

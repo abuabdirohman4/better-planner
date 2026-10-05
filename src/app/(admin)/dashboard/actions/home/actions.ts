@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { formatQParam } from '@/lib/quarterUtils';
+import { quoteOfWeek, type Quote } from '@/lib/quotes';
 import { queryCommittedQuests } from '@/app/(admin)/planning/main-quests/actions/quests/queries';
 import { queryVisionsByUserId } from '@/app/(admin)/planning/vision/queries';
 import { queryHabits } from '@/app/(admin)/habits/actions/habits/queries';
@@ -9,11 +10,12 @@ import { isScheduledOn } from '@/app/(admin)/habits/actions/habits/logic';
 import {
   greetingFor,
   weekInfo,
-  pickVisionLine,
+  buildVisionSlides,
   buildHfgStepCards,
   buildHabitDays,
   lastNDates,
   type HfgStepCard,
+  type VisionSlide,
   type HabitDay,
 } from './logic';
 
@@ -25,7 +27,8 @@ export interface DashboardHome {
   viewed: { year: number; quarter: number; label: string };
   isCurrentQuarter: boolean;
   currentQParam: string;
-  vision: { area: string; text: string } | null;
+  quote: Quote;
+  visions: VisionSlide[];
   hfg: HfgStepCard[];
   habitDays: HabitDay[];
   focusMinutesToday: number;
@@ -91,7 +94,8 @@ export async function getDashboardHome(viewed: { year: number; quarter: number }
     viewed: { ...viewed, label: `Q${viewed.quarter} ${viewed.year}` },
     isCurrentQuarter,
     currentQParam: formatQParam(week.year, week.quarter),
-    vision: pickVisionLine(visions, today),
+    quote: quoteOfWeek(week.weekOfYear),
+    visions: buildVisionSlides(visions),
     hfg: buildHfgStepCards(
       quests,
       milestones ?? [],

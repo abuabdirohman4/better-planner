@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { greetingFor, weekInfo, pickVisionLine, buildHfgStepCards, buildHabitDays, lastNDates } from '../logic';
+import { greetingFor, weekInfo, buildVisionSlides, buildHfgStepCards, buildHabitDays, lastNDates } from '../logic';
 import { isScheduledOn } from '@/app/(admin)/habits/actions/habits/logic';
 
 describe('greetingFor', () => {
@@ -22,16 +22,18 @@ describe('weekInfo', () => {
   });
 });
 
-describe('pickVisionLine', () => {
-  it('lewati visi kosong, null kalau tidak ada', () => {
-    expect(pickVisionLine([{ life_area: 'A', vision_3_5_year: ' ' }], '2026-10-01')).toBeNull();
-    expect(pickVisionLine([{ life_area: 'A', vision_3_5_year: null }, { life_area: 'B', vision_3_5_year: 'x' }], '2026-10-01'))
-      .toEqual({ area: 'B', text: 'x' });
+describe('buildVisionSlides', () => {
+  it('buang area tanpa teks, trim sisanya', () => {
+    expect(buildVisionSlides([
+      { life_area: 'A', vision_3_5_year: ' ', vision_10_year: null },
+      { life_area: 'B', vision_3_5_year: ' x ', vision_10_year: null },
+      { life_area: 'C', vision_3_5_year: null, vision_10_year: 'y' },
+    ])).toEqual([{ area: 'B', t35: 'x', t10: null }, { area: 'C', t35: null, t10: 'y' }]);
   });
 });
 
 describe('buildHfgStepCards', () => {
-  const quests = [{ id: 'q1', title: 'Q1' }];
+  const quests = [{ id: 'q1', title: 'Q1', motivation: '  biar mandiri ' }];
   const milestones = [
     { id: 'm2', quest_id: 'q1', title: 'M2', display_order: 2 },
     { id: 'm1', quest_id: 'q1', title: 'M1', display_order: 1 },
@@ -44,7 +46,7 @@ describe('buildHfgStepCards', () => {
 
   it('hitung langkah DONE dan cari langkah berikutnya urut milestone lalu task', () => {
     const [c] = buildHfgStepCards(quests, milestones, tasks, new Set(['t2']));
-    expect(c).toMatchObject({ done: 1, total: 3, percent: 33 });
+    expect(c).toMatchObject({ done: 1, total: 3, percent: 33, motivation: 'biar mandiri' });
     expect(c.next).toEqual({ taskId: 't2', title: '1.2', milestoneTitle: 'M1', planned: true });
   });
 
