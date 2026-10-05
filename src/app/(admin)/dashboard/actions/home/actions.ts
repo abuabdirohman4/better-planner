@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { formatQParam } from '@/lib/quarterUtils';
-import { quoteOfWeek, type Quote } from '@/lib/quotes';
+import { quoteOfDay, type Quote } from '@/lib/quotes';
 import { queryCommittedQuests } from '@/app/(admin)/planning/main-quests/actions/quests/queries';
 import { queryVisionsByUserId } from '@/app/(admin)/planning/vision/queries';
 import { queryHabits } from '@/app/(admin)/habits/actions/habits/queries';
@@ -94,7 +94,7 @@ export async function getDashboardHome(viewed: { year: number; quarter: number }
     viewed: { ...viewed, label: `Q${viewed.quarter} ${viewed.year}` },
     isCurrentQuarter,
     currentQParam: formatQParam(week.year, week.quarter),
-    quote: quoteOfWeek(week.weekOfYear),
+    quote: quoteOfDay(today),
     visions: buildVisionSlides(visions),
     hfg: buildHfgStepCards(
       quests,

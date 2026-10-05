@@ -6,11 +6,13 @@ import type { VisionSlide } from '../actions/home/logic';
 
 type Term = 't35' | 't10';
 const KEY = 'bp-hero-carousel';
+const AUTOPLAY_MS = 8000;
 
 export default function HeroCarousel({ quote, visions }: { quote: Quote; visions: VisionSlide[] }) {
   const [index, setIndex] = useState(0);
   const [term, setTerm] = useState<Term>('t35');
   const touchX = useRef<number | null>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     try {
@@ -31,10 +33,20 @@ export default function HeroCarousel({ quote, visions }: { quote: Quote; visions
   const pick = (t: Term) => { setTerm(t); save(cur, t); };
   const slide = cur === 0 ? null : filled[cur - 1];
 
+  // Geser otomatis; jeda saat disentuh/di-hover/difokus, mati bila user minta kurangi gerakan.
+  useEffect(() => {
+    if (paused || count < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setTimeout(() => setIndex((cur + 1) % count), AUTOPLAY_MS);
+    return () => clearTimeout(id);
+  }, [paused, count, cur]);
+
   return (
     <div className="mt-3 max-w-2xl"
-      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
+      onTouchStart={(e) => { touchX.current = e.touches[0].clientX; setPaused(true); }}
       onTouchEnd={(e) => {
+        setPaused(false);
         if (touchX.current === null) return;
         const dx = e.changedTouches[0].clientX - touchX.current;
         touchX.current = null;
@@ -42,7 +54,7 @@ export default function HeroCarousel({ quote, visions }: { quote: Quote; visions
       }}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500" data-testid="hero-carousel-label">
-          {slide ? `Visi · ${slide.area}` : 'Quote minggu ini'}
+          {slide ? `Visi · ${slide.area}` : 'Quote hari ini'}
         </p>
         <div className="flex items-center gap-1">
           {slide && (

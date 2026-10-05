@@ -44,8 +44,9 @@ export const QUOTES: Quote[] = [
   { text: 'Habis gelap terbitlah terang.', author: 'R.A. Kartini' },
 ];
 
-// weekOfYear = minggu tahun perencanaan (1-based); deterministik, bergilir.
-export function quoteOfWeek(weekOfYear: number): Quote {
+// date = "YYYY-MM-DD" (WIB); sama sepanjang hari, bergilir tiap hari.
+export function quoteOfDay(date: string): Quote {
   const n = QUOTES.length;
-  return QUOTES[(((Math.trunc(weekOfYear) - 1) % n) + n) % n];
+  const day = Math.floor(Date.parse(date + 'T00:00:00Z') / 86400000);
+  return QUOTES[((day % n) + n) % n];
 }

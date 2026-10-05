@@ -8,7 +8,7 @@ export function greetingFor(hourWIB: number): string {
 }
 
 // today = "YYYY-MM-DD" WIB. Minggu 13 (dan 14 di Q4 tahun 53 minggu) = minggu istirahat.
-export function weekInfo(today: string): { year: number; quarter: number; weekInQuarter: number; weekOfYear: number; label: string } {
+export function weekInfo(today: string): { year: number; quarter: number; weekInQuarter: number; label: string } {
   const [y, m, d] = today.split('-').map(Number);
   const { weekNumber, year } = getWeekAndYearFromDate(new Date(y, m - 1, d, 12));
   const quarter = getQuarterFromWeek(weekNumber);
@@ -16,7 +16,7 @@ export function weekInfo(today: string): { year: number; quarter: number; weekIn
   const label = weekInQuarter > 12
     ? `Minggu istirahat · Q${quarter} ${year}`
     : `Minggu ${weekInQuarter} dari 12 · Q${quarter} ${year}`;
-  return { year, quarter, weekInQuarter, weekOfYear: weekNumber, label };
+  return { year, quarter, weekInQuarter, label };
 }
 
 export interface VisionSlide { area: string; t35: string | null; t10: string | null }
