@@ -81,9 +81,9 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
     }
   }, [expandedItems, expandedKey]);
 
-  // Convert work quests to hierarchical structure (only TODO tasks)
+  // Convert work quests to hierarchical structure (task yang belum DONE, termasuk IN_PROGRESS)
   const hierarchicalItems: HierarchicalItem[] = workQuests.map(quest => {
-    const todoTasks = quest.tasks?.filter(task => task.status === 'TODO') || [];
+    const todoTasks = quest.tasks?.filter(task => task.status !== 'DONE') || [];
     return {
       id: quest.id,
       title: quest.title,
@@ -99,7 +99,7 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
       })),
       taskCount: todoTasks.length
     };
-  }).filter(quest => quest.children.length > 0); // Only show projects that have TODO tasks
+  }).filter(quest => quest.children.length > 0); // Only show projects that still have open tasks
 
   // Filter hierarchical items based on search term
   const filteredHierarchicalItems = hierarchicalItems.filter(item =>

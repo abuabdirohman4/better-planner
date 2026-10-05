@@ -75,8 +75,8 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
   const filteredSideQuests = sideQuests.filter(quest => {
     const matchesSearch = quest.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quest.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    // const matchesCompleted = showCompleted || quest.status !== 'DONE';
-    const matchesCompleted = quest.status === 'TODO';
+    // Semua yang belum DONE, termasuk IN_PROGRESS.
+    const matchesCompleted = quest.status !== 'DONE';
     return matchesSearch && matchesCompleted;
   });
 
