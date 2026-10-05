@@ -61,7 +61,6 @@ export interface Rule {
 }
 
 export interface WeeklyRefuel {
-  sleep_hours: number | null
   activities: string | null
   achievements: string | null
 }

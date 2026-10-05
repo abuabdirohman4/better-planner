@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import Button from "@/components/ui/button/Button";
 import Skeleton from "@/components/ui/skeleton/Skeleton";
-import { CheckCircleIcon, ShootingStarIcon, TimeIcon } from "@/lib/icons";
+import { CheckCircleIcon, ShootingStarIcon } from "@/lib/icons";
 import { swrMutate } from "@/lib/swr";
 import type { WeeklyGoal } from "@/types/weekly-sync";
 
@@ -40,7 +40,6 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
     revalidateOnFocus: false,
   });
 
-  const [sleep, setSleep] = useState("");
   const [activities, setActivities] = useState("");
   const [achievements, setAchievements] = useState("");
   const [saving, setSaving] = useState(false);
@@ -48,7 +47,6 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
   // Isi form dari data server tiap ganti minggu / data baru datang.
   useEffect(() => {
     const d = res?.data;
-    setSleep(d?.sleep_hours != null ? String(d.sleep_hours) : "");
     setActivities(d?.activities ?? "");
     setAchievements(d?.achievements ?? "");
   }, [res]);
@@ -57,7 +55,7 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
 
   const handleSave = async () => {
     setSaving(true);
-    const r = await saveWeeklyRefuel(year, quarter, weekNumber, { sleepHours: sleep, activities, achievements });
+    const r = await saveWeeklyRefuel(year, quarter, weekNumber, { activities, achievements });
     setSaving(false);
     if (r.success) {
       toast.success(r.message ?? "Tersimpan");
@@ -70,7 +68,6 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-28 w-full !rounded-2xl" />
         <Skeleton className="h-40 w-full !rounded-2xl" />
         <Skeleton className="h-52 w-full !rounded-2xl" />
       </div>
@@ -86,37 +83,7 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
       )}
 
       <section className={cardCls}>
-        <SectionHeader icon={<TimeIcon className="h-5 w-5" />} title="Target jam tidur akhir pekan" />
-        <div className="flex items-baseline gap-2">
-          <input
-            inputMode="decimal"
-            value={sleep}
-            onChange={(e) => setSleep(e.target.value)}
-            placeholder="8"
-            aria-label="Target jam tidur akhir pekan"
-            className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-1 text-4xl font-extrabold leading-none text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-          />
-          <span className="text-base font-semibold text-gray-500">jam</span>
-        </div>
-      </section>
-
-      <section className={cardCls}>
-        <SectionHeader
-          icon={<ShootingStarIcon className="h-6 w-6" />}
-          title="Aktivitas pemulihan"
-          hint="Mental, spiritual, keluarga: baca buku, nonton bareng, piknik, ibadah. Rencanakan sejak Jumat."
-        />
-        <textarea
-          rows={5}
-          value={activities}
-          onChange={(e) => setActivities(e.target.value)}
-          placeholder="Satu aktivitas per baris"
-          className={fieldCls}
-        />
-      </section>
-
-      <section className={cardCls}>
-        <SectionHeader icon={<CheckCircleIcon className="h-6 w-6" />} title="Pencapaian minggu ini" hint="Diisi hari Minggu, mengisi tangki pencapaian." />
+        <SectionHeader icon={<CheckCircleIcon className="h-6 w-6" />} title="Pencapaian Minggu ini" hint="Diisi hari Minggu, mengisi tangki pencapaian." />
         <div className="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-white/[0.03]">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Goal selesai ({doneTitles.length})</p>
           {doneTitles.length === 0 ? (
@@ -137,6 +104,21 @@ export default function RefuelSyncCard({ year, quarter, weekNumber, goals }: Pro
           value={achievements}
           onChange={(e) => setAchievements(e.target.value)}
           placeholder="Pencapaian lain di luar goal"
+          className={fieldCls}
+        />
+      </section>
+
+      <section className={cardCls}>
+        <SectionHeader
+          icon={<ShootingStarIcon className="h-6 w-6" />}
+          title="Aktivitas untuk memulihkan Energi, Perhatian, Mental dan Spiritual"
+          hint="Mis. baca buku, nonton bareng keluarga, piknik, ibadah."
+        />
+        <textarea
+          rows={5}
+          value={activities}
+          onChange={(e) => setActivities(e.target.value)}
+          placeholder="Satu aktivitas per baris"
           className={fieldCls}
         />
       </section>

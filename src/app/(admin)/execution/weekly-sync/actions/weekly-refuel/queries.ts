@@ -11,14 +11,14 @@ export async function queryWeeklyRefuel(
 ): Promise<WeeklyRefuel | null> {
   const { data, error } = await supabase
     .from('weekly_refuels')
-    .select('sleep_hours, activities, achievements')
+    .select('activities, achievements')
     .eq('user_id', userId)
     .eq('year', year)
     .eq('quarter', quarter)
     .eq('week_number', weekNumber)
     .maybeSingle();
   if (error) throw error;
-  return data ? { ...data, sleep_hours: data.sleep_hours === null ? null : Number(data.sleep_hours) } : null;
+  return data;
 }
 
 export async function upsertWeeklyRefuel(
