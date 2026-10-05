@@ -52,7 +52,7 @@ export default function HeroCarousel({ quote, visions }: { quote: Quote; visions
         touchX.current = null;
         if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
       }}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex h-7 items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500" data-testid="hero-carousel-label">
           {slide ? `Visi · ${slide.area}` : 'Quote hari ini'}
         </p>
@@ -71,15 +71,15 @@ export default function HeroCarousel({ quote, visions }: { quote: Quote; visions
             className="hidden md:inline-flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10">›</button>
         </div>
       </div>
-      <div className="mt-1 min-h-[6.5rem] md:min-h-[5rem]">
-        {slide ? (
-          <p className="line-clamp-4 text-sm md:text-base text-gray-600 dark:text-gray-400">“{slide[term]}”</p>
-        ) : (
-          <>
-            <p className="line-clamp-4 text-sm md:text-base text-gray-600 dark:text-gray-400">“{quote.text}”</p>
-            <p className="mt-1 text-xs text-gray-500">— {quote.author}</p>
-          </>
-        )}
+      {/* Semua slide ditumpuk di satu sel grid: tinggi = slide terpanjang, tanpa lompat & tanpa ruang kosong. */}
+      <div className="mt-1 grid">
+        {[null, ...filled].map((v, i) => (
+          <div key={v ? v.area : 'quote'} aria-hidden={i !== cur}
+            className={`col-start-1 row-start-1 transition-opacity duration-300 ${i === cur ? 'opacity-100' : 'invisible opacity-0'}`}>
+            <p className="line-clamp-4 text-sm md:text-base text-gray-600 dark:text-gray-400">“{v ? v[term] : quote.text}”</p>
+            {!v && <p className="mt-1 text-xs text-gray-500">— {quote.author}</p>}
+          </div>
+        ))}
       </div>
       <div className="mt-1 flex items-center gap-1.5">
         {Array.from({ length: count }, (_, i) => (
