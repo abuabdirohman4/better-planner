@@ -8,7 +8,6 @@ import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useActivityLogs } from './hooks/useActivityLogs';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange, getLocalDateString } from '@/lib/dateUtils';
-import { energyLabel, type Energy } from '@/lib/energy';
 import CalendarView, { CalendarEvent } from './components/CalendarView';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
 import { updateSchedule, createSchedule } from '../DailyQuest/actions';
@@ -55,11 +54,6 @@ const JournalEntry: React.FC<{ log: ActivityLogItem; viewMode?: 'GROUPED' | 'TIM
               {log.what_think || '-'}
             </div>
           </div>
-          {energyLabel(log.energy as Energy | null) && (
-            <div className="mt-2 text-xs text-gray-700 dark:text-gray-300">
-              Energi: <span className="font-semibold">{energyLabel(log.energy as Energy | null)}</span>
-            </div>
-          )}
         </>
       )}
     </div>

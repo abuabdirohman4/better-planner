@@ -91,7 +91,7 @@ export default function DailyFocusCard({ core, bonus, missingHfg, renderItem, on
         onClick={() => onAdd('MAIN_QUEST')}
         className="mt-2 w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600"
       >
-        Pilih Quest
+        Pilih Fokus
       </button>
     </DailyCardShell>
   );

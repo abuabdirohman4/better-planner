@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { formatTimeRange } from '@/lib/dateUtils';
-import { energyLabel, type Energy } from '@/lib/energy';
+import JournalFields from '../../Journal/JournalFields';
 
 interface CalendarTaskDetailProps {
   item: ActivityLogItem | null;
@@ -77,40 +77,18 @@ const CalendarTaskDetail: React.FC<CalendarTaskDetailProps> = ({ item, onClose, 
             )}
             <button
               onClick={onClose}
+              aria-label="Tutup"
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6 bg-blue-50/50 dark:bg-gray-900/50 min-h-[300px]">
-          <div>
-            <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Apa yang diselesaikan:
-            </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg text-base text-gray-800 dark:text-gray-200 shadow-sm min-h-[48px]">
-              {item.what_done || '-'}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Yang masih dipikirkan:
-            </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg text-base text-gray-800 dark:text-gray-200 shadow-sm min-h-[48px]">
-              {item.what_think || '-'}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Energi:
-            </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg text-base text-gray-800 dark:text-gray-200 shadow-sm min-h-[48px]">
-              {energyLabel(item.energy as Energy | null) ?? '-'}
-            </div>
-          </div>
+        <div className="p-6 bg-blue-50/50 dark:bg-gray-900/50">
+          <JournalFields logId={item.id} whatDone={item.what_done} whatThink={item.what_think} />
         </div>
       </div>
     </div>

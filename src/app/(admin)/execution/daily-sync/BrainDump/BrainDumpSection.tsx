@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useBrainDump } from './hooks/useBrainDump';
 import { toast } from 'sonner';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
 import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
-import Button from '@/components/ui/button/Button';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 interface BrainDumpSectionProps {
@@ -25,24 +24,33 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
     isSaving
   } = useBrainDump({ date });
 
-  // Update content when brainDump data changes
+  // Isi editor dari server sekali per tanggal; jangan ditimpa hasil simpan otomatis saat masih mengetik.
+  const loadedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (brainDump) {
-      setContent(brainDump.content);
-    } else {
-      setContent('');
-    }
-  }, [brainDump]);
+    if (isLoading || loadedFor.current === date) return;
+    loadedFor.current = date;
+    setContent(brainDump?.content ?? '');
+  }, [date, isLoading, brainDump]);
 
-  const handleSave = async () => {
+  const handleSave = async (text = content) => {
     try {
-      await saveBrainDump(content);
-      toast.success('Brain dump berhasil disimpan');
+      await saveBrainDump(text);
     } catch (error) {
       toast.error('Gagal menyimpan brain dump');
       console.error('Error saving brain dump:', error);
     }
   };
+
+  // Simpan otomatis 1,5 detik setelah berhenti mengetik (app-2pxn); Cmd/Ctrl+Enter tetap simpan langsung.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saved = brainDump?.content ?? '';
+  useEffect(() => {
+    if (isLoading || content === saved) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => handleSave(content), 1500);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, saved, isLoading]);
 
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -69,7 +77,7 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   }
 
   return (
-    <div className="mt-6">
+    <div>
       <CollapsibleCard
         isCollapsed={cardCollapsed.brainDump}
         onToggle={() => toggleCardCollapsed('brainDump')}
@@ -106,19 +114,11 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
               placeholder="Tuliskan apa yang ada di pikiran Anda..."
               className="w-full"
               rows={10}
-              disabled={isSaving}
             />
             
-            <Button
-              onClick={handleSave}
-              loading={isSaving}
-              loadingText="Menyimpan..."
-              className="w-full"
-              size="md"
-              variant="primary"
-            >
-              Simpan
-            </Button>
+            <p className="text-right text-xs text-gray-400" data-testid="brain-dump-status">
+              {isSaving ? 'Menyimpan…' : content === saved ? 'Tersimpan otomatis' : 'Belum tersimpan…'}
+            </p>
           </div>
         )}
         </div>

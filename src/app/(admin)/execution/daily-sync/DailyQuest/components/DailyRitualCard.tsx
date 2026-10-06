@@ -16,7 +16,10 @@ export default function DailyRitualCard({ selectedDate }: { selectedDate: string
 
   const todayWIB = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
   const isFuture = date > todayWIB;
-  const touched = pillars.filter((p) => p.isDone).length;
+  // SDC menunggu fitur SDC tersendiri (tabelnya sudah ada): tampil nonaktif, tidak dihitung.
+  const DISABLED_PILLARS = ['sdc'];
+  const active = pillars.filter((p) => !DISABLED_PILLARS.includes(p.pillar));
+  const touched = active.filter((p) => p.isDone).length;
 
   const toggle = async (habitId: string) => {
     try {
@@ -34,12 +37,23 @@ export default function DailyRitualCard({ selectedDate }: { selectedDate: string
       hint="Ritual pagi — 60 menit pertama setelah bangun"
       action={
         <span className="whitespace-nowrap rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold tabular-nums text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
-          {touched}/4 pilar
+          {touched}/{active.length} pilar
         </span>
       }
     >
       <ul>
-        {pillars.map((block) => (
+        {pillars.map((block) => DISABLED_PILLARS.includes(block.pillar) ? (
+          <li
+            key={block.pillar}
+            data-testid={`ritual-pillar-${block.pillar}`}
+            aria-disabled
+            className="flex items-center gap-3 py-2.5 opacity-50 last:pb-0"
+          >
+            <span className="h-6 w-6 flex-shrink-0 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600" aria-hidden />
+            <span className="w-20 flex-shrink-0 text-sm font-semibold text-gray-500">{block.label}</span>
+            <span className="text-xs text-gray-400">Segera hadir — terhubung ke fitur SDC</span>
+          </li>
+        ) : (
           <li
             key={block.pillar}
             data-testid={`ritual-pillar-${block.pillar}`}

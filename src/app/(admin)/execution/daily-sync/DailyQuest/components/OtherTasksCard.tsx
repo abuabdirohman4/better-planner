@@ -108,7 +108,7 @@ export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, on
         onClick={() => onAdd('SIDE_QUEST')}
         className="mt-2 w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600"
       >
-        Pilih Quest
+        Pilih Tugas
       </button>
     </DailyCardShell>
   );

@@ -4,7 +4,7 @@
 export { saveTimerSession, getActiveTimerSession, findFocusSession } from './timerSession/sessionManagement';
 
 // Session Control
-export { pauseTimerSession, resumeTimerSession, updateTimerSessionTarget, switchTimerSessionTask, setTimerSessionNotes, setActivityLogNotes } from './timerSession/sessionControl';
+export { pauseTimerSession, resumeTimerSession, updateTimerSessionTarget, switchTimerSessionTask, setTimerSessionNotes, setActivityLogNotes, setActivityLogJournalField } from './timerSession/sessionControl';
 
 // Session Completion
 export { completeTimerSession } from './timerSession/sessionCompletion';

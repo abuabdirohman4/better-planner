@@ -9,7 +9,7 @@ import { useLiveTimerNotification } from './PomodoroTimer/hooks/useLiveTimerNoti
 import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagement';
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
-import BrainDumpSection from './BrainDump/BrainDumpSection';
+import JournalTab from './Journal/JournalTab';
 import ActivityLog from './ActivityLog/ActivityLog';
 import TimerEngine from './PomodoroTimer/TimerEngine';
 import DailySyncClient from './DailyQuest/DailySyncClient';
@@ -40,6 +40,9 @@ export default function DailySyncPage() {
   const { loading, initialLoading, dailyPlan } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
+
+  // Halaman kiri buku = Perencanaan, halaman kanan = Jurnal (app-2pxn).
+  const [pageTab, setPageTab] = useState<'plan' | 'journal'>('plan');
 
   // Card collapse states
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
@@ -96,7 +99,30 @@ export default function DailySyncPage() {
               setSelectedDayIdx={setSelectedDayIdx}
             />
           </div>
-          
+
+          <div className="mb-4 flex w-full rounded-lg bg-gray-100 p-1 dark:bg-gray-800" role="tablist" data-testid="daily-sync-page-tabs">
+            {([['plan', 'Perencanaan'], ['journal', 'Jurnal']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={pageTab === key}
+                data-testid={`page-tab-${key}`}
+                onClick={() => setPageTab(key)}
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                  pageTab === key
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {pageTab === 'journal' ? (
+            <JournalTab date={selectedDateStr} />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <DailySyncClient
@@ -126,7 +152,7 @@ export default function DailySyncPage() {
               </CollapsibleCard>
             </div>
           </div>
-          <BrainDumpSection date={selectedDateStr} />
+          )}
         </>
       )}
 

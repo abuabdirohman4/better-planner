@@ -118,16 +118,21 @@ export async function setTimerSessionNotes(sessionId: string, notes: string) {
   return updateOpenSession(sessionId, { notes: notes || null });
 }
 
-/** Catatan yang ditulis saat break masuk ke log siklus yang baru selesai. */
-export async function setActivityLogNotes(activityLogId: string, notes: string) {
+/** Isi OMJ satu log: what_done (apa yang diselesaikan) atau what_think (yang masih dipikirkan). */
+export async function setActivityLogJournalField(activityLogId: string, field: 'what_done' | 'what_think', text: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
+  if (field !== 'what_done' && field !== 'what_think') throw new Error('Field tidak dikenal');
   const { error } = await supabase
     .from('activity_logs')
-    .update({ what_done: notes || null })
+    .update({ [field]: text || null })
     .eq('id', activityLogId)
     .eq('user_id', user.id);
   if (error) throw error;
-  revalidatePath('/execution/daily-sync');
+}
+
+/** Catatan yang ditulis saat break masuk ke log siklus yang baru selesai. */
+export async function setActivityLogNotes(activityLogId: string, notes: string) {
+  return setActivityLogJournalField(activityLogId, 'what_done', notes);
 }
