@@ -31,7 +31,7 @@ describe('isScheduledOn', () => {
 const rawRow = (over: Partial<RawHabitRow> = {}): RawHabitRow => ({
   id: 'h1', user_id: 'u', name: 'Ngaji', description: null, category: 'spiritual',
   frequency: 'weekly', monthly_goal: 4, daily_target: 1, target_days: [1, 4],
-  show_in_daily_sync: false, tracking_type: 'positive', target_time: null, deadline_time: null, is_archived: false, sort_order: 0,
+  show_in_daily_sync: false, ritual_pillar: null, tracking_type: 'positive', target_time: null, deadline_time: null, is_archived: false, sort_order: 0,
   created_at: '', updated_at: '', ...over,
 });
 
@@ -81,5 +81,26 @@ describe('parseHabitFormInput show_in_daily_sync', () => {
 
   it('stays undefined when not supplied, so updates never clear it by accident', () => {
     expect(parseHabitFormInput(form({ frequency: 'daily' })).show_in_daily_sync).toBeUndefined();
+  });
+});
+
+describe('ritual_pillar (app-70vs)', () => {
+  it('toHabit maps a valid pillar, anything else to null', () => {
+    expect(toHabit(rawRow({ ritual_pillar: 'sdc' })).ritual_pillar).toBe('sdc');
+    expect(toHabit(rawRow({ ritual_pillar: undefined })).ritual_pillar).toBeNull();
+    expect(toHabit(rawRow({ ritual_pillar: 'kpd' })).ritual_pillar).toBeNull();
+  });
+
+  it('parseHabitFormInput accepts the 4 pillars, null/empty clears, undefined stays untouched', () => {
+    for (const p of ['tubuh', 'pikiran', 'spiritual', 'sdc']) {
+      expect(parseHabitFormInput(form({ frequency: 'daily', ritual_pillar: p })).ritual_pillar).toBe(p);
+    }
+    expect(parseHabitFormInput(form({ frequency: 'daily', ritual_pillar: null })).ritual_pillar).toBeNull();
+    expect(parseHabitFormInput(form({ frequency: 'daily', ritual_pillar: '' })).ritual_pillar).toBeNull();
+    expect(parseHabitFormInput(form({ frequency: 'daily' })).ritual_pillar).toBeUndefined();
+  });
+
+  it('parseHabitFormInput rejects an unknown pillar', () => {
+    expect(() => parseHabitFormInput(form({ frequency: 'daily', ritual_pillar: 'kpd' }))).toThrow(/ritual_pillar/);
   });
 });

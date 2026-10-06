@@ -14,6 +14,7 @@ export interface RawDailyPlanItem {
   status: string;
   daily_session_target: number;
   focus_duration: number;
+  display_order?: number;
   daily_plan_id?: string;
 }
 
@@ -45,7 +46,7 @@ export async function queryExistingPlanItems(
 ): Promise<RawDailyPlanItem[]> {
   const { data } = await supabase
     .from('daily_plan_items')
-    .select('id, item_id, status, item_type, daily_session_target, focus_duration')
+    .select('id, item_id, status, item_type, daily_session_target, focus_duration, display_order')
     .eq('daily_plan_id', dailyPlanId);
   return data || [];
 }

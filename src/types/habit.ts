@@ -9,6 +9,8 @@ export type HabitCategory =
   | 'kontribusi'
   | 'other';
 export type HabitTrackingType = 'positive' | 'negative';
+/** Pilar ritual pagi (app-70vs). SDC = Self Development Curriculum. */
+export type RitualPillar = 'tubuh' | 'pikiran' | 'spiritual' | 'sdc';
 
 export interface Habit {
   id: string;
@@ -21,6 +23,7 @@ export interface Habit {
   daily_target: number; // 1 = binary, >1 = N completions/day
   target_days: number[] | null; // 0=Sun..6=Sat scheduled days; null/empty = every day
   show_in_daily_sync: boolean; // tickable row in Daily Sync's daily quest list (app-cr6i)
+  ritual_pillar: RitualPillar | null; // hanya habit ritual pagi; null = bukan ritual (app-70vs)
   tracking_type: HabitTrackingType;
   target_time: string | null; // "HH:MM" or null — kapan DIINGATKAN (cron push-due)
   deadline_time: string | null; // "HH:MM" or null — batas tepat waktu (app-r02c); null = tidak dinilai
@@ -52,6 +55,7 @@ export interface HabitFormInput {
   daily_target?: number; // default 1
   target_days?: number[] | null;
   show_in_daily_sync?: boolean;
+  ritual_pillar?: RitualPillar | null; // null = lepas dari ritual, undefined = jangan ubah
   tracking_type: HabitTrackingType;
   target_time?: string; // "HH:MM" or undefined
   deadline_time?: string | null; // "HH:MM"; null = hapus batas, undefined = jangan ubah

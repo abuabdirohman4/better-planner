@@ -71,6 +71,7 @@ export default function HabitFormModal({
         daily_target: habit.daily_target ?? 1,
         target_days: habit.target_days,
         show_in_daily_sync: habit.show_in_daily_sync,
+        ritual_pillar: habit.ritual_pillar,
         tracking_type: habit.tracking_type,
         description: habit.description ?? undefined,
         target_time: habit.target_time ?? undefined,

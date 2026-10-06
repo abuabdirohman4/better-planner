@@ -6,6 +6,7 @@ import {
   getItemIdsToDelete,
   extractScheduleBackups,
   buildItemsToInsert,
+  defaultFocusDuration,
   remapSchedules,
 } from '../logic';
 import { RawDailyPlanItem, RawTaskSchedule } from '../queries';
@@ -112,13 +113,43 @@ describe('buildItemsToInsert', () => {
   });
 
   it('uses defaults for new items not in existing map', () => {
-    const selected = [{ item_id: 'new-task', item_type: 'WORK' }];
+    const selected = [{ item_id: 'new-task', item_type: 'WORK_QUEST' }];
     const items = buildItemsToInsert(selected, 'plan-1', new Map());
     expect(items[0]).toMatchObject({
       status: 'TODO',
       daily_session_target: 1,
-      focus_duration: 25,
+      focus_duration: 60, // Work default (app-70vs)
     });
+  });
+
+  it('default cycle per item type: HFG 90, Work 60, Side/Daily 25', () => {
+    expect(defaultFocusDuration('MAIN_QUEST')).toBe(90);
+    expect(defaultFocusDuration('WORK_QUEST')).toBe(60);
+    expect(defaultFocusDuration('SIDE_QUEST')).toBe(25);
+    expect(defaultFocusDuration('DAILY_QUEST')).toBe(25);
+  });
+
+  it('puts a new item after the highest existing display_order', () => {
+    const existingMap = new Map([['a', makeItem({ item_id: 'a', display_order: 7 })]]);
+    const items = buildItemsToInsert(
+      [{ item_id: 'a', item_type: 'DAILY' }, { item_id: 'n1', item_type: 'WORK_QUEST' }, { item_id: 'n2', item_type: 'WORK_QUEST' }],
+      'plan-1', existingMap
+    );
+    expect(items.map((i: any) => i.display_order)).toEqual([7, 8, 9]);
+  });
+
+  it('keeps display_order when an item is re-saved', () => {
+    const existingMap = new Map([
+      ['hfg', makeItem({ item_id: 'hfg', item_type: 'MAIN_QUEST', display_order: 4 })],
+      ['work', makeItem({ item_id: 'work', item_type: 'WORK_QUEST', display_order: 2 })],
+    ]);
+    const items = buildItemsToInsert(
+      [{ item_id: 'hfg', item_type: 'MAIN_QUEST' }, { item_id: 'work', item_type: 'WORK_QUEST' }],
+      'plan-1',
+      existingMap
+    );
+    expect(items[0]).toMatchObject({ display_order: 4 });
+    expect(items[1]).toMatchObject({ display_order: 2 });
   });
 });
 

@@ -3,6 +3,7 @@ import {
   selectDailySyncHabits,
   countPendingOtherHabits,
   countScheduledOtherHabits,
+  groupRitualPillars,
 } from '../habitRows';
 import type { Habit } from '@/types/habit';
 
@@ -21,6 +22,7 @@ const habit = (over: Partial<Habit> = {}): Habit => ({
   daily_target: 1,
   target_days: null,
   show_in_daily_sync: false,
+  ritual_pillar: null,
   tracking_type: 'positive',
   target_time: null, deadline_time: null,
   is_archived: false,
@@ -100,5 +102,42 @@ describe('countScheduledOtherHabits', () => {
 
   it('is zero when there are no other habits — the reminder line hides', () => {
     expect(countScheduledOtherHabits([habit({ show_in_daily_sync: true })], MON)).toBe(0);
+  });
+});
+
+describe('groupRitualPillars (app-70vs)', () => {
+  it('always returns the 4 pillars in order, empty ones not done', () => {
+    const blocks = groupRitualPillars([], MON, completed());
+    expect(blocks.map((b) => b.pillar)).toEqual(['tubuh', 'pikiran', 'spiritual', 'sdc']);
+    expect(blocks.every((b) => !b.isDone && b.habits.length === 0)).toBe(true);
+  });
+
+  it('groups by pillar and is done only when every habit of the pillar is done', () => {
+    const habits = [
+      habit({ id: 'a', ritual_pillar: 'tubuh' }),
+      habit({ id: 'b', ritual_pillar: 'tubuh' }),
+      habit({ id: 'c', ritual_pillar: 'sdc' }),
+      habit({ id: 'd' }),
+    ];
+    const blocks = groupRitualPillars(habits, MON, completed('a', 'c'));
+    const by = (p: string) => blocks.find((b) => b.pillar === p)!;
+    expect(by('tubuh')).toMatchObject({ doneCount: 1, isDone: false });
+    expect(by('sdc')).toMatchObject({ doneCount: 1, isDone: true });
+    expect(blocks.flatMap((b) => b.habits.map((h) => h.id)).includes('d')).toBe(false);
+  });
+
+  it('skips archived and not-scheduled habits', () => {
+    const habits = [
+      habit({ id: 'a', ritual_pillar: 'tubuh', is_archived: true }),
+      habit({ id: 'b', ritual_pillar: 'tubuh', frequency: 'weekly', target_days: [1] }),
+    ];
+    expect(groupRitualPillars(habits, TUE, completed())[0].habits).toEqual([]);
+    expect(groupRitualPillars(habits, MON, completed())[0].habits.map((h) => h.id)).toEqual(['b']);
+  });
+
+  it('ritual habits are not doubled in "habit lain" nor counted as other', () => {
+    const habits = [habit({ id: 'a', ritual_pillar: 'tubuh', show_in_daily_sync: true })];
+    expect(selectDailySyncHabits(habits, MON)).toEqual([]);
+    expect(countScheduledOtherHabits(habits, MON)).toBe(0);
   });
 });

@@ -3,13 +3,12 @@ import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { addDailyQuest } from '../actions/dailyQuestActions';
-import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest } from '../actions';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest, updateDailyPlanItemsDisplayOrder } from '../actions';
 import type { DailyPlanItem } from '@/types/daily-plan';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
 import { createClient } from '@/lib/supabase/client';
 import { useCompletedSessions } from './useCompletedSessions';
-import { useTargetFocusStore } from '../../TargetFocus/stores/targetFocusStore';
 import { getQuarterDates } from '@/lib/quarterUtils';
 import { useQuarterStore } from '@/stores/quarterStore';
 
@@ -238,9 +237,6 @@ export function useDailyPlanManagement(
   weekNumber: number,
   selectedDate: string
 ) {
-  // ✅ NEW: Get optimistic update functions from TargetFocus store
-  const { updateChecklistModeOptimistically, removeItemOptimistically } = useTargetFocusStore();
-
   // Data fetching
   const {
     data: dailyPlan,
@@ -558,7 +554,6 @@ export function useDailyPlanManagement(
     }
   };
 
-
   const handleAddSideQuest = async (title: string) => {
     try {
       const formData = new FormData();
@@ -590,6 +585,28 @@ export function useDailyPlanManagement(
     }
   };
 
+  // Drag reorder Daily Focus: optimistik, simpan ke display_order, gagal = balik ke data server.
+  const handleReorder = async (order: { id: string; display_order: number }[]) => {
+    const orderById = new Map(order.map(o => [o.id, o.display_order]));
+    try {
+      await mutateDailyPlan(
+        (current: any) => current && {
+          ...current,
+          daily_plan_items: (current.daily_plan_items ?? []).map((i: DailyPlanItem) =>
+            orderById.has(i.id) ? { ...i, display_order: orderById.get(i.id) } : i
+          ),
+        },
+        { revalidate: false }
+      );
+      await updateDailyPlanItemsDisplayOrder(order);
+      await mutateDailyPlan();
+    } catch (err) {
+      console.error('Error reordering focus:', err);
+      toast.error('Gagal mengubah urutan. Silakan coba lagi.');
+      await mutateDailyPlan();
+    }
+  };
+
   const handleTargetChange = async (itemId: string, newTarget: number) => {
     try {
       // Update daily session target in database
@@ -614,41 +631,10 @@ export function useDailyPlanManagement(
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
-      const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
-      const taskItemId = dailyPlanItem?.item_id;
-
-      // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
-      if (taskItemId) {
-        removeItemOptimistically(taskItemId);
-      }
-
       await removeDailyPlanItem(itemId);
 
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
-      await Promise.all([
-        // Invalidate specific TargetFocus cache with forced revalidation
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 2) {
-            return key[0] === 'daily-sync' && key[1] === 'target-focus';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-        // Also invalidate actualFocusTime cache
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 3) {
-            return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-      ]);
 
       await mutateDailyPlan(); // Refresh data
       toast.success('Item berhasil dihapus dari plan hari ini');
@@ -662,44 +648,10 @@ export function useDailyPlanManagement(
 
   const handleConvertToChecklist = async (itemId: string) => {
     try {
-      // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
-      const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
-      const taskItemId = dailyPlanItem?.item_id;
-
-      // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
-      if (taskItemId) {
-        updateChecklistModeOptimistically(taskItemId, true); // true = convert to checklist
-      }
-
       await convertToChecklist(itemId);
 
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
-      // This ensures fresh data is fetched when daily plan refreshes
-      await Promise.all([
-        // Invalidate specific TargetFocus cache with forced revalidation
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 2) {
-            return key[0] === 'daily-sync' && key[1] === 'target-focus';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-        // ✅ CRITICAL: Invalidate ALL actualFocusTime caches (regardless of taskIds)
-        // Because taskIds might change after conversion, we need to invalidate all variations
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 3) {
-            // Match pattern: ['daily-sync', 'actual-focus-time', date, ...taskIds]
-            return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-      ]);
 
       // Then refresh daily plan
       await mutateDailyPlan();
@@ -708,58 +660,16 @@ export function useDailyPlanManagement(
     } catch (error) {
       console.error('Error converting to checklist:', error);
       toast.error('Gagal mengubah ke checklist');
-      // ✅ OPTIMISTIC: Revert optimistic update on error
-      if (dailyPlan?.daily_plan_items) {
-        const dailyPlanItem = dailyPlan.daily_plan_items.find((item: DailyPlanItem) => item.id === itemId);
-        const taskItemId = dailyPlanItem?.item_id;
-        if (taskItemId) {
-          updateChecklistModeOptimistically(taskItemId, false); // Revert to quest mode
-        }
-      }
       throw error;
     }
   };
 
   const handleConvertToQuest = async (itemId: string) => {
     try {
-      // ✅ CRITICAL: Find the item_id (task_id) from dailyPlan to pass to optimistic update
-      const dailyPlanItem = dailyPlan?.daily_plan_items?.find((item: DailyPlanItem) => item.id === itemId);
-      const taskItemId = dailyPlanItem?.item_id;
-
-      // ✅ OPTIMISTIC: Update Zustand store immediately for instant UI feedback
-      if (taskItemId) {
-        updateChecklistModeOptimistically(taskItemId, false); // false = convert to quest
-      }
-
       await convertToQuest(itemId);
 
       // ✅ CRITICAL: Wait a bit for database commit to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-
-      // ✅ CRITICAL: Invalidate TargetFocus cache BEFORE refreshing daily plan
-      // This ensures fresh data is fetched when daily plan refreshes
-      await Promise.all([
-        // Invalidate specific TargetFocus cache with forced revalidation
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 2) {
-            return key[0] === 'daily-sync' && key[1] === 'target-focus';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-        // ✅ CRITICAL: Invalidate ALL actualFocusTime caches (regardless of taskIds)
-        // Because taskIds might change after conversion, we need to invalidate all variations
-        globalMutate((key) => {
-          if (Array.isArray(key) && key.length >= 3) {
-            // Match pattern: ['daily-sync', 'actual-focus-time', date, ...taskIds]
-            return key[0] === 'daily-sync' && key[1] === 'actual-focus-time';
-          }
-          return false;
-        }, undefined, {
-          revalidate: true,
-        }),
-      ]);
 
       // Then refresh daily plan
       await mutateDailyPlan();
@@ -768,14 +678,6 @@ export function useDailyPlanManagement(
     } catch (error) {
       console.error('Error converting to quest:', error);
       toast.error('Gagal mengubah ke quest');
-      // ✅ OPTIMISTIC: Revert optimistic update on error
-      if (dailyPlan?.daily_plan_items) {
-        const dailyPlanItem = dailyPlan.daily_plan_items.find((item: DailyPlanItem) => item.id === itemId);
-        const taskItemId = dailyPlanItem?.item_id;
-        if (taskItemId) {
-          updateChecklistModeOptimistically(taskItemId, true); // Revert to checklist mode
-        }
-      }
       throw error;
     }
   };
@@ -801,6 +703,7 @@ export function useDailyPlanManagement(
     handleAddSideQuest,
     handleTargetChange,
     handleFocusDurationChange,
+    handleReorder,
     handleRemoveItem, // NEW: Handler untuk remove item
     handleConvertToChecklist, // NEW: Handler untuk convert to checklist
     handleConvertToQuest,

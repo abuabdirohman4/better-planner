@@ -1,20 +1,25 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 import DailySyncSkeleton from '@/components/ui/skeleton/DailySyncSkeleton';
 import { useDailyPlanManagement } from './hooks/useDailyPlanManagement';
-import MainQuestListSection from './MainQuestListSection';
-import SideQuestListSection from './SideQuestListSection';
-import WorkQuestListSection from './WorkQuestListSection';
-import DailyQuestListSection from './DailyQuestListSection';
 import MainQuestModal from './components/MainQuestModal';
 import WorkQuestModal from './components/WorkQuestModal';
 import DailyQuestModal from './components/DailyQuestModal';
+import SideQuestModal from './components/SideQuestModal';
+import TaskItemCard from './components/TaskItemCard';
+import SortableTaskItemCard from './components/SortableTaskItemCard';
+import DailyFocusCard from './components/DailyFocusCard';
+import OtherTasksCard from './components/OtherTasksCard';
+import DailyRitualCard from './components/DailyRitualCard';
+import type { AddKind } from './components/AddItemMenu';
 import { groupItemsByType } from "./utils/groupItemsByType";
+import { splitDailyItems } from './utils/dailyFocus';
 import { DailySyncClientProps } from './types';
-import CollapsibleCard from '@/components/common/CollapsibleCard';
-import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
+import type { DailyPlanItem } from '@/types/daily-plan';
+import type { SideQuest } from '@/types/side-quest';
 
+// Susunan kolom kiri (app-70vs): Daily Focus (3 inti + bonus) → Tugas Lain → Daily Ritual.
 const DailySyncClient: React.FC<DailySyncClientProps> = ({
   year,
   quarter,
@@ -26,8 +31,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   refreshSessionKey,
   forceRefreshTaskId
 }) => {
-  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
-
   const {
     dailyPlan: hookDailyPlan,
     weeklyTasks: hookWeeklyTasks,
@@ -42,12 +45,11 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleSaveSelection,
     handleStatusChange,
     handleAddSideQuest,
-    handleTargetChange,
     handleFocusDurationChange,
-    handleRemoveItem, // NEW: Handler untuk remove item
-    handleConvertToChecklist, // NEW: Handler untuk convert to checklist
-    handleConvertToQuest, // NEW: Handler untuk convert to quest
-    // Daily Quest manual selection state
+    handleReorder,
+    handleRemoveItem,
+    handleConvertToChecklist,
+    handleConvertToQuest,
     isDailyQuestModalOpen,
     setIsDailyQuestModalOpen,
     dailyQuests,
@@ -56,21 +58,18 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleSaveDailyQuestSelection,
     isLoadingDailyQuests,
     isSavingDailyQuests,
-    // Work Quest state (unified)
     modalState,
     selectedWorkQuests,
   } = useDailyPlanManagement(year, quarter, weekNumber, selectedDate);
 
-  // Use hook data
+  const [showSideModal, setShowSideModal] = useState(false);
+
   const effectiveDailyPlan = hookDailyPlan || dailyPlan;
   const effectiveWeeklyTasks = hookWeeklyTasks;
 
-  // ✅ FIX BLINK: Only show skeleton on initial load (no data yet),
-  // not during revalidation or mutation where data already exists
+  // ✅ FIX BLINK: skeleton hanya saat load awal (belum ada data)
   const hasData = effectiveDailyPlan !== undefined;
-  const isInitialLoad = !hasData && (hookLoading || loading);
-
-  if (isInitialLoad) {
+  if (!hasData && (hookLoading || loading)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-16">
         <DailySyncSkeleton />
@@ -79,117 +78,56 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   }
 
   const groupedItems = groupItemsByType(effectiveDailyPlan?.daily_plan_items);
+  const { core, bonus, side, routine, missingHfg } = splitDailyItems(effectiveDailyPlan?.daily_plan_items);
+
+  const openAdd = (kind: AddKind) => {
+    if (kind === 'MAIN_QUEST') handleOpenModal('main');
+    else if (kind === 'WORK_QUEST') handleOpenModal('work');
+    else if (kind === 'SIDE_QUEST') setShowSideModal(true);
+    else setIsDailyQuestModalOpen(true);
+  };
+
+  const cardProps = (item: DailyPlanItem) => ({
+    item,
+    onStatusChange: handleStatusChange,
+    onSetActiveTask,
+    selectedDate,
+    onFocusDurationChange: handleFocusDurationChange,
+    completedSessions,
+    refreshKey: refreshSessionKey?.[item.id],
+    forceRefreshTaskId,
+    onRemove: handleRemoveItem,
+    onConvertToChecklist: handleConvertToChecklist,
+    onConvertToQuest: handleConvertToQuest,
+  });
+  const renderItem = (item: DailyPlanItem) => <TaskItemCard {...cardProps(item)} />;
+  const renderSortable = (item: DailyPlanItem) => <SortableTaskItemCard id={item.id} {...cardProps(item)} />;
+
+  const existingSideQuestIds = groupedItems.SIDE_QUEST.map(i => i.item_id);
 
   return (
     <div className="mx-auto relative">
-      <div className="flex flex-col gap-6">
-        {/* Main Quest Section */}
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.mainQuest}
-          onToggle={() => toggleCardCollapsed('mainQuest')}
-          className="main-quest-card"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <MainQuestListSection
-              title="Main Quest"
-              items={groupedItems['MAIN_QUEST']}
-              onStatusChange={handleStatusChange}
-              onSelectTasks={() => handleOpenModal('main')}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
-              showAddQuestButton={true}
-              onRemove={handleRemoveItem}
-              onConvertToChecklist={handleConvertToChecklist}
-              onConvertToQuest={handleConvertToQuest}
-            />
-          </div>
-        </CollapsibleCard>
-
-        {/* Work Quest Section */}
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.workQuest}
-          onToggle={() => toggleCardCollapsed('workQuest')}
-          className="work-quest-card"
-        >
-          <div data-testid="daily-sync-work-quest-section" className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <WorkQuestListSection
-              title="Work Quest"
-              items={groupedItems['WORK_QUEST'] || []}
-              onStatusChange={handleStatusChange}
-              onSelectTasks={() => handleOpenModal('work')}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
-              showAddQuestButton={true}
-              onRemove={handleRemoveItem}
-              onConvertToChecklist={handleConvertToChecklist}
-              onConvertToQuest={handleConvertToQuest}
-            />
-          </div>
-        </CollapsibleCard>
-
-        {/* Daily Quest Section */}
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.dailyQuest}
-          onToggle={() => toggleCardCollapsed('dailyQuest')}
-          className="daily-quest-card"
-        >
-          <div data-testid="daily-sync-daily-quest-section" className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <DailyQuestListSection
-              title="Daily Quest"
-              items={groupedItems['DAILY_QUEST'] || []}
-              onStatusChange={handleStatusChange}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate || new Date().toISOString().split('T')[0]}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
-              onRemove={handleRemoveItem}
-              onConvertToChecklist={handleConvertToChecklist}
-              onConvertToQuest={handleConvertToQuest}
-              showAddQuestButton={true}
-              onSelectTasks={() => setIsDailyQuestModalOpen(true)}
-            />
-          </div>
-        </CollapsibleCard>
-
-        {/* Side Quest Section */}
-        <CollapsibleCard
-          isCollapsed={cardCollapsed.sideQuest}
-          onToggle={() => toggleCardCollapsed('sideQuest')}
-          className="side-quest-card"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-4 shadow-sm border border-gray-200 dark:border-gray-700">
-            <SideQuestListSection
-              title="Side Quest"
-              items={groupedItems['SIDE_QUEST']}
-              onStatusChange={handleStatusChange}
-              onAddSideQuest={handleAddSideQuest}
-              onSelectTasks={(newItems) => handleSaveSelection(newItems, true)}
-              onSetActiveTask={onSetActiveTask}
-              selectedDate={selectedDate}
-              onTargetChange={handleTargetChange}
-              onFocusDurationChange={handleFocusDurationChange}
-              completedSessions={completedSessions}
-              refreshSessionKey={refreshSessionKey}
-              forceRefreshTaskId={forceRefreshTaskId}
-              onRemove={handleRemoveItem}
-              onConvertToChecklist={handleConvertToChecklist}
-              onConvertToQuest={handleConvertToQuest}
-            />
-          </div>
-        </CollapsibleCard>
+      <div className="flex flex-col gap-4 md:gap-6">
+        <DailyFocusCard
+          core={core}
+          bonus={bonus}
+          missingHfg={missingHfg}
+          renderItem={renderSortable}
+          onReorder={handleReorder}
+          onAdd={openAdd}
+        />
+        <OtherTasksCard
+          items={side}
+          renderItem={renderItem}
+          onAdd={openAdd}
+          onQuickAddSide={handleAddSideQuest}
+        />
+        <DailyRitualCard
+          selectedDate={selectedDate}
+          routine={routine}
+          renderItem={renderItem}
+          onAddDaily={() => openAdd('DAILY_QUEST')}
+        />
       </div>
 
       <MainQuestModal
@@ -201,16 +139,12 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         onSave={() => {
           const selectedItems = Object.entries(selectedTasks)
             .filter(([, selected]) => selected)
-            .map(([taskId]) => ({
-              item_id: taskId,
-              item_type: 'MAIN_QUEST'
-            }));
-
+            .map(([taskId]) => ({ item_id: taskId, item_type: 'MAIN_QUEST' }));
           handleSaveSelection(selectedItems, true);
         }}
         isLoading={modalLoading}
         savingLoading={savingLoading}
-        completedTodayCount={groupedItems.MAIN_QUEST?.filter((item: any) => item.status === 'DONE').length || 0}
+        completedTodayCount={groupedItems.MAIN_QUEST.filter(item => item.status === 'DONE').length}
       />
 
       <WorkQuestModal
@@ -219,26 +153,38 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         selectedTasks={selectedWorkQuests}
         onTaskToggle={(taskId) => handleTaskToggle(taskId, 'work')}
         onSave={() => {
-          const workQuestItems = selectedWorkQuests.map(taskId => ({
-            item_id: taskId,
-            item_type: 'WORK_QUEST'
-          }));
-
+          const workQuestItems = selectedWorkQuests.map(taskId => ({ item_id: taskId, item_type: 'WORK_QUEST' }));
           handleSaveSelection(workQuestItems, true);
         }}
         isLoading={modalLoading}
         savingLoading={savingLoading}
-        completedTodayCount={groupedItems.WORK_QUEST?.filter((item: any) => item.status === 'DONE').length || 0}
+        completedTodayCount={groupedItems.WORK_QUEST.filter(item => item.status === 'DONE').length}
       />
+
       <DailyQuestModal
         isOpen={isDailyQuestModalOpen}
         onClose={() => setIsDailyQuestModalOpen(false)}
         tasks={dailyQuests}
         selectedTasks={selectedDailyQuestIds}
         onTaskToggle={handleDailyQuestToggle}
-        onSave={handleSaveDailyQuestSelection}
+        onSave={() => handleSaveDailyQuestSelection()}
         isLoading={isLoadingDailyQuests}
         savingLoading={isSavingDailyQuests}
+      />
+
+      <SideQuestModal
+        isOpen={showSideModal}
+        onClose={() => setShowSideModal(false)}
+        onSave={async (quests: SideQuest[]) => {
+          await handleSaveSelection(
+            quests.map(q => ({ item_id: q.id, item_type: 'SIDE_QUEST' })),
+            true
+          );
+          setShowSideModal(false);
+        }}
+        selectedCount={existingSideQuestIds.length}
+        completedTodayCount={groupedItems.SIDE_QUEST.filter(item => item.status === 'DONE').length}
+        existingSideQuests={existingSideQuestIds}
       />
     </div>
   );

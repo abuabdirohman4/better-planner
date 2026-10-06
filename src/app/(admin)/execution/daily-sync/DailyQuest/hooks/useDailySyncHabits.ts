@@ -8,6 +8,7 @@ import {
   selectDailySyncHabits,
   countPendingOtherHabits,
   countScheduledOtherHabits,
+  groupRitualPillars,
 } from "../utils/habitRows";
 
 /**
@@ -41,6 +42,7 @@ export function useDailySyncHabits(date: string) {
   return {
     date: day,
     habits: shownHabits,
+    pillars: groupRitualPillars(habits, day, isCompleted),
     isCompleted,
     toggleCompletion,
     streakOf,

@@ -1,5 +1,5 @@
 // NO "use server"
-import type { Habit, HabitFormInput, HabitFrequency, HabitCategory, HabitTrackingType } from '@/types/habit';
+import type { Habit, HabitFormInput, HabitFrequency, HabitCategory, HabitTrackingType, RitualPillar } from '@/types/habit';
 import type { RawHabitRow } from './queries';
 
 export function toHabit(row: RawHabitRow): Habit {
@@ -14,6 +14,7 @@ export function toHabit(row: RawHabitRow): Habit {
     daily_target: row.daily_target ?? 1,
     target_days: row.target_days ?? null,
     show_in_daily_sync: row.show_in_daily_sync ?? false,
+    ritual_pillar: (RITUAL_PILLARS as readonly string[]).includes(row.ritual_pillar ?? '') ? (row.ritual_pillar as RitualPillar) : null,
     tracking_type: row.tracking_type as HabitTrackingType,
     target_time: row.target_time,
     deadline_time: row.deadline_time ? row.deadline_time.slice(0, 5) : null,
@@ -23,6 +24,8 @@ export function toHabit(row: RawHabitRow): Habit {
     updated_at: row.updated_at,
   };
 }
+
+export const RITUAL_PILLARS = ['tubuh', 'pikiran', 'spiritual', 'sdc'] as const;
 
 const VALID_CATEGORIES: HabitCategory[] = [
   'spiritual',
@@ -101,6 +104,16 @@ export function parseHabitFormInput(raw: unknown): HabitFormInput {
 
   if (data.show_in_daily_sync !== undefined) {
     result.show_in_daily_sync = Boolean(data.show_in_daily_sync);
+  }
+
+  if (data.ritual_pillar !== undefined) {
+    if (data.ritual_pillar === null || data.ritual_pillar === '') {
+      result.ritual_pillar = null;
+    } else if ((RITUAL_PILLARS as readonly string[]).includes(String(data.ritual_pillar))) {
+      result.ritual_pillar = data.ritual_pillar as RitualPillar;
+    } else {
+      throw new Error(`Invalid habit form input: ritual_pillar must be one of ${RITUAL_PILLARS.join(', ')}`);
+    }
   }
 
   if (result.frequency === 'weekly' && (result.target_days ?? []).length === 0) {

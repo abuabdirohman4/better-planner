@@ -85,7 +85,7 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
         dailyQuest: false,
         activityLog: false,
         brainDump: false,
-        bestWeekRef: true,
+        bestWeekRef: false, // false = Best Week tampil di kalender
       },
       setCardCollapsed: (cardId, collapsed) =>
         set((state) => ({

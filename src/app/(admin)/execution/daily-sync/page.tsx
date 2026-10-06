@@ -10,7 +10,6 @@ import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagemen
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
 import BrainDumpSection from './BrainDump/BrainDumpSection';
-import BestWeekReferenceSection from './BestWeekReference/BestWeekReferenceSection';
 import ActivityLog from './ActivityLog/ActivityLog';
 import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
 import DailySyncClient from './DailyQuest/DailySyncClient';
@@ -19,8 +18,6 @@ import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
 import { useJournal } from './Journal/hooks/useJournal';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
-import TargetFocus from "./TargetFocus/TargetFocus";
-import DailyStats from "./DailyStats/DailyStats";
 
 export default function DailySyncPage() {
   const {
@@ -42,7 +39,7 @@ export default function DailySyncPage() {
   const selectedDateStr = getLocalDateString(selectedDate);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-  const { loading, initialLoading, dailyPlan, mutate, completedSessions, handleStatusChange } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
+  const { loading, initialLoading, dailyPlan, handleStatusChange } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
 
   // Tombol "Mark as Done" di timer: cari item daily plan dari task yang terakhir dijalankan.
   const findPlanItem = (taskId: string) => dailyPlan?.daily_plan_items?.find((i: { item_id: string }) => i.item_id === taskId);
@@ -120,9 +117,7 @@ export default function DailySyncPage() {
               setSelectedDayIdx={setSelectedDayIdx}
             />
           </div>
-          {/* <BestWeekReferenceSection /> */}
-
-          {/* Daily Stats & Target Focus Component */}
+          
           <div className="block md:hidden mb-6">
             <CollapsibleCard
               isCollapsed={cardCollapsed.pomodoroTimer}
@@ -135,16 +130,8 @@ export default function DailySyncPage() {
             </CollapsibleCard>
           </div>
 
-          <div className="block md:hidden mt-4 mb-6 space-y-4">
-            <TargetFocus selectedDate={selectedDateStr} />
-            <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div className="hidden md:block mb-6">
-                <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
-              </div>
               <DailySyncClient
                 year={year}
                 quarter={quarter}
@@ -158,10 +145,6 @@ export default function DailySyncPage() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              <div className="hidden md:block">
-                <BestWeekReferenceSection />
-                <TargetFocus selectedDate={selectedDateStr} />
-              </div>
               <div className="hidden md:block">
                 <CollapsibleCard
                   isCollapsed={cardCollapsed.pomodoroTimer}

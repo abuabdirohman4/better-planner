@@ -13,6 +13,7 @@ export interface RawHabitRow {
   daily_target: number;
   target_days: number[] | null;
   show_in_daily_sync: boolean;
+  ritual_pillar?: string | null;
   tracking_type: string;
   target_time: string | null;
   deadline_time: string | null;
@@ -59,6 +60,8 @@ export async function insertHabit(
       daily_target: data.daily_target ?? 1,
       target_days: normalizeTargetDays(data),
       show_in_daily_sync: data.show_in_daily_sync ?? false,
+      // Hanya dikirim bila diisi, supaya habit tanpa pilar tidak bergantung pada kolom baru.
+      ...(data.ritual_pillar ? { ritual_pillar: data.ritual_pillar } : {}),
       tracking_type: data.tracking_type,
       target_time: data.target_time ?? null,
       deadline_time: data.deadline_time ?? null,
@@ -88,6 +91,7 @@ export async function updateHabitById(
   if (data.daily_target !== undefined) updates.daily_target = data.daily_target;
   if ('target_days' in data || data.frequency !== undefined) updates.target_days = normalizeTargetDays(data);
   if (data.show_in_daily_sync !== undefined) updates.show_in_daily_sync = data.show_in_daily_sync;
+  if (data.ritual_pillar !== undefined) updates.ritual_pillar = data.ritual_pillar;
   if (data.tracking_type !== undefined) updates.tracking_type = data.tracking_type;
   if ('target_time' in data) updates.target_time = data.target_time ?? null;
   if (data.deadline_time !== undefined) updates.deadline_time = data.deadline_time;

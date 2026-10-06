@@ -201,10 +201,11 @@ const CalendarBlock: React.FC<CalendarBlockProps> = ({
 
   return (
     <div
-      className={`absolute rounded px-2 py-1 text-xs overflow-hidden cursor-pointer transition-all hover:brightness-95 hover:z-20 ${bgClass} ${borderClass} ${colors.text} ${dragCursor} ${liveClass} ${isDragging || isResizing ? 'z-30 shadow-lg opacity-80' : ''} select-none`}
+      className={`absolute rounded px-2 ${isShort ? 'py-0' : 'py-1'} text-xs overflow-hidden cursor-pointer transition-all hover:brightness-95 hover:z-20 ${bgClass} ${borderClass} ${colors.text} ${dragCursor} ${liveClass} ${isDragging || isResizing ? 'z-30 shadow-lg opacity-80' : ''} select-none`}
       style={{
         top: style.top,
         height: style.height,
+        minHeight: 20, // satu baris teks tak terpotong untuk blok 15 menit
         left: columnLeft,
         width: columnWidth,
         zIndex: isDragging || isResizing ? 50 : colIndex + 1,
