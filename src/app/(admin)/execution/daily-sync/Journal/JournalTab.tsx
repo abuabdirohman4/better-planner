@@ -22,7 +22,7 @@ function CycleNote({ log }: { log: ActivityLogItem }) {
           {log.task_title || 'Tanpa judul'}
         </span>
         <span className="flex-shrink-0 text-xs tabular-nums text-gray-400">
-          {state === 'saving' ? 'menyimpan… · ' : state === 'saved' ? 'tersimpan · ' : ''}
+          {state === 'saving' ? 'Menyimpan… · ' : state === 'saved' ? 'Tersimpan · ' : ''}
           {timeWIB(log.start_time)}–{timeWIB(log.end_time)}
         </span>
       </div>

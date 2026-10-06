@@ -41,7 +41,11 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
   completedTodayCount = 0
 }) => {
   const { year, quarter } = useQuarterStore();
-  const { workQuests, isLoading: workQuestsLoading } = useWorkQuests(year, quarter);
+  const { workQuests, isLoading: workQuestsLoading, mutate: refetchWorkQuests } = useWorkQuests(year, quarter);
+  // Task yang baru ditambah di halaman Work Quest memakai kunci cache lain: ambil ulang tiap modal dibuka.
+  useEffect(() => {
+    if (isOpen) refetchWorkQuests();
+  }, [isOpen, refetchWorkQuests]);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Initialize state with data from localStorage

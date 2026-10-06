@@ -55,6 +55,8 @@ interface TimerStoreState {
   cycleSlot: number | null;
   setCycleSlot: (slot: number | null) => void;
   setCycleNotes: (text: string) => void;
+  /** Status simpan catatan siklus (tidak dipersist). */
+  notesStatus: 'idle' | 'saving' | 'saved';
   setFocusMinutes: (minutes: number) => void;
   switchActiveTask: (task: Pick<TimerTask, 'id' | 'title' | 'item_type'>) => void;
   addCycleNote: (text: string) => void;
@@ -136,6 +138,7 @@ export const useTimerStore = create<TimerStoreState>()(
       cycleNotes: '',
       lastCycle: null,
       cycleSlot: null,
+      notesStatus: 'idle',
 
       setCycleSlot: (slot) => set({ cycleSlot: slot }),
 
@@ -144,13 +147,17 @@ export const useTimerStore = create<TimerStoreState>()(
         const { timerState, lastCycle } = get();
         if (notesTimer) clearTimeout(notesTimer);
         const warn = (e: unknown) => console.warn('[timer] gagal menyimpan catatan:', e);
+        const saved = () => set({ notesStatus: 'saved' });
         if (timerState === 'FOCUSING' || timerState === 'PAUSED') {
-          set({ cycleNotes: text });
-          notesTimer = setTimeout(() => withSessionId(get, (id) => setTimerSessionNotes(id, text)), 800);
+          set({ cycleNotes: text, notesStatus: 'saving' });
+          notesTimer = setTimeout(() => withSessionId(get, (id) => setTimerSessionNotes(id, text), saved), 800);
         } else if (lastCycle) {
           set({ lastCycle: { ...lastCycle, notes: text } });
           const logId = lastCycle.logId;
-          if (logId) notesTimer = setTimeout(() => setActivityLogNotes(logId, text).catch(warn), 800);
+          if (logId) {
+            set({ notesStatus: 'saving' });
+            notesTimer = setTimeout(() => setActivityLogNotes(logId, text).then(saved).catch((e) => { warn(e); set({ notesStatus: 'idle' }); }), 800);
+          }
         }
       },
 
@@ -201,6 +208,7 @@ export const useTimerStore = create<TimerStoreState>()(
           waitingForBreak: false, // Ensure prompt is closed
           lastActiveTask: task, // ✅ Save as last active
           cycleNotes: '',
+          notesStatus: 'idle',
         });
         // Persist the session now so the server can finish it even if the app closes.
         // Fire-and-forget: a failed write must never delay or block the local timer.

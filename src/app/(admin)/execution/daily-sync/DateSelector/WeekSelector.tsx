@@ -35,7 +35,7 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({
           aria-haspopup="listbox"
           aria-expanded={isWeekDropdownOpen}
         >
-          <span>Week {displayWeek}</span>
+          <span>Minggu {displayWeek}</span>
         </button>
         <Dropdown className="w-10/12 left-0 mx-auto md:w-28 md:!right-1" isOpen={isWeekDropdownOpen} onClose={() => setIsWeekDropdownOpen(false)}>
           <div className="max-h-64 overflow-y-auto">
@@ -45,7 +45,7 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({
                 onClick={() => handleSelectWeek(i + 1)}
                 className={displayWeek === i + 1 ? "bg-brand-100 dark:bg-brand-900/30 font-semibold !text-center" : "!text-center"}
               >
-                Week {i + 1}
+                Minggu {i + 1}
               </DropdownItem>
             ))}
           </div>

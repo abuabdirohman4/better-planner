@@ -203,7 +203,7 @@ async function getDailyPlan(selectedDate: string) {
 function useDailyQuestsForSelection(year: number, quarter: number) {
   const supabase = createClient();
 
-  const { data: dailyQuests, isLoading, error } = useSWR(
+  const { data: dailyQuests, isLoading, error, mutate: mutateDailyQuests } = useSWR(
     dailySyncKeys.dailyQuests(year, quarter),
     async () => {
       // Get current user for RLS filter
@@ -228,7 +228,7 @@ function useDailyQuestsForSelection(year: number, quarter: number) {
     }
   );
 
-  return { dailyQuests: dailyQuests || [], isLoading, error };
+  return { dailyQuests: dailyQuests || [], isLoading, error, refetch: () => mutateDailyQuests() };
 }
 
 export function useDailyPlanManagement(
@@ -307,12 +307,14 @@ export function useDailyPlanManagement(
   const [isDailyQuestModalOpen, setIsDailyQuestModalOpen] = useState(false);
   // Use quarterStore directly (same pattern as SideQuestModal) for consistent quarter context
   const { year: quarterYear, quarter: storeQuarter } = useQuarterStore();
-  const { dailyQuests, isLoading: isLoadingDailyQuests } = useDailyQuestsForSelection(quarterYear, storeQuarter);
+  const { dailyQuests, isLoading: isLoadingDailyQuests, refetch: refetchDailyQuests } = useDailyQuestsForSelection(quarterYear, storeQuarter);
   const [selectedDailyQuestIds, setSelectedDailyQuestIds] = useState<Record<string, boolean>>({});
   const [isSavingDailyQuests, setIsSavingDailyQuests] = useState(false);
 
   // Initialize selectedDailyQuestIds when modal opens
   useEffect(() => {
+    // Daily Quest baru dari halaman Daily Quests memakai kunci cache lain: ambil ulang tiap modal dibuka.
+    if (isDailyQuestModalOpen) refetchDailyQuests();
     if (isDailyQuestModalOpen && dailyPlan?.daily_plan_items) {
       const selections: Record<string, boolean> = {};
       dailyPlan.daily_plan_items.forEach((item: any) => {

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
-import { Pause, Play, Square, PictureInPicture2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Pause, Play, Square, PictureInPicture2, Volume2 } from 'lucide-react';
 import { useTimer } from '@/stores/timerStore';
 import { getFocusDuration, getTotalSeconds, getProgress, formatTime } from '@/lib/timerDisplay';
 import { useDocumentPiP } from '@/hooks/useDocumentPiP';
 import { isTimerDisabled } from '@/lib/timerDevUtils';
 import FloatingTimer from '../../PomodoroTimer/components/FloatingTimer';
+import SoundSelector from '../../PomodoroTimer/components/SoundSelector';
 import { classifyCycle, cycleLabel } from '../utils/workCycles';
 import { CYCLES } from '../utils/dailyFocus';
 import { selectStyle } from '../utils/selectStyle';
@@ -20,10 +21,11 @@ const BREAK_LABEL = { SHORT: 'Istirahat 5', MEDIUM: 'Istirahat 10', LONG: 'Istir
  */
 export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: DailyPlanItem[]; /** Alternatif 25/5: durasi tidak bisa diubah. */ fixedDuration?: boolean }) {
   const {
-    timerState, secondsElapsed, activeTask, lastActiveTask, breakType, cycleNotes, lastCycle,
+    timerState, secondsElapsed, activeTask, lastActiveTask, breakType, cycleNotes, lastCycle, notesStatus,
     pauseTimer, resumeTimer, stopTimer, setFocusMinutes, switchActiveTask, setCycleNotes,
   } = useTimer();
   const pip = useDocumentPiP();
+  const [showSound, setShowSound] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
   const isBreak = timerState === 'BREAK';
@@ -79,6 +81,15 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
             ))}
           </select>
         )}
+        <button
+          type="button"
+          onClick={() => setShowSound(true)}
+          title="Suara fokus"
+          data-testid="cycle-sound"
+          className="rounded-lg p-1.5 text-gray-500 hover:bg-white/70 dark:hover:bg-white/10"
+        >
+          <Volume2 className="h-4 w-4" />
+        </button>
         {pip.supported && (
           <button
             type="button"
@@ -161,7 +172,12 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
         }`}
       />
 
+      <p className="mt-1 text-right text-xs text-gray-400" data-testid="cycle-notes-status">
+        {notesStatus === 'saving' ? 'Menyimpan…' : notesStatus === 'saved' ? 'Tersimpan' : ''}
+      </p>
+
       {pip.pipWindow && <FloatingTimer pipWindow={pip.pipWindow} />}
+      <SoundSelector isOpen={showSound} onClose={() => setShowSound(false)} />
     </div>
   );
 }

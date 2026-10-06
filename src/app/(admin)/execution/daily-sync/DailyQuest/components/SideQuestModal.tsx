@@ -32,7 +32,12 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
   existingSideQuests = [],
 }) => {
   const { year, quarter } = useQuarterStore();
-  const { sideQuests, isLoading, error } = useSideQuests(year, quarter);
+  const { sideQuests, isLoading, error, refetch: refetchSideQuests } = useSideQuests(year, quarter);
+  // Cache 2 menit: ambil ulang tiap modal dibuka supaya Side Quest baru langsung terlihat.
+  useEffect(() => {
+    if (isOpen) refetchSideQuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
   const [selectedTasks, setSelectedTasks] = useState<SideQuest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompleted, setShowCompleted] = useState(true);
