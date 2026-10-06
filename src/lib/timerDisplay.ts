@@ -1,6 +1,7 @@
 import type { TimerState, TimerTask } from '@/types/timer'
 
-const isDev = process.env.NODE_ENV === 'development'
+// Break pendek hanya bila diminta (dev & production berbagi database). Sama dengan timerStore.
+const isDev = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SHORT_BREAKS_DEV === 'true'
 
 export const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60
 export const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60

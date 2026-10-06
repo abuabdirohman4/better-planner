@@ -308,3 +308,14 @@ describe('siklus berbasis slot (app-mgsb)', () => {
     await vi.waitFor(() => expect(setActivityLogNotes).toHaveBeenLastCalledWith('log-1', 'riset selesai\n✓ Task\nlanjut besok'), { timeout: 2000 });
   });
 });
+
+describe('gema selesai dari perangkat lain', () => {
+  it('saat sudah break, completeTimerFromDatabase tidak menghentikan break', async () => {
+    const store = await freshStore();
+    store.setState({ timerState: 'BREAK', breakType: 'MEDIUM', startTime: new Date().toISOString(), activeTask: null });
+    await store.getState().completeTimerFromDatabase({ taskId: 't1', taskTitle: 'Task', startTime: new Date().toISOString(), duration: 3600, status: 'COMPLETED' });
+    expect(store.getState().timerState).toBe('BREAK');
+    expect(store.getState().breakType).toBe('MEDIUM');
+    expect(store.getState().lastSessionComplete).toBeNull();
+  });
+});

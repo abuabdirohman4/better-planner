@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useTimer, useTimerStore } from '@/stores/timerStore';
+import { useTimer, useTimerStore, BREAK_DURATIONS } from '@/stores/timerStore';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
+import { notifyActivityLogsChanged } from '@/lib/swr';
+import { endBreakSession } from '../actions/timerSession/breakSession';
 
 /**
  * Global Timer Hook - Singleton pattern
@@ -103,17 +105,12 @@ export function useGlobalTimer() {
 
           // ✅ BREAK COMPLETION CHECK
           if (state.timerState === 'BREAK' && state.breakType) {
-            const isDev = process.env.NODE_ENV === 'development';
-            const shortDur = isDev ? 30 : 5 * 60;
-            const mediumDur = isDev ? 45 : 10 * 60;
-            const longDur = isDev ? 60 : 15 * 60;
-
-            let breakDuration = shortDur; // Default Short
-            if (state.breakType === 'MEDIUM') breakDuration = mediumDur;
-            if (state.breakType === 'LONG') breakDuration = longDur;
+            const breakDuration = BREAK_DURATIONS[state.breakType];
 
             if (elapsedSeconds >= breakDuration) {
               useTimerStore.getState().stopFocusSound();
+              // Tutup baris break di server (dulu tertinggal RUNNING) sekaligus mencatatnya sebagai log BREAK.
+              endBreakSession().then(() => notifyActivityLogsChanged()).catch(console.error);
               useTimerStore.setState({
                 timerState: 'IDLE',
                 breakType: null,

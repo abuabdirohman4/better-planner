@@ -6,6 +6,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getDeviceId } from './deviceUtils';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 const BREAK_TYPE_MAP = {
   SHORT: 'SHORT_BREAK',
@@ -82,13 +83,42 @@ export async function endBreakSession(): Promise<void> {
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
+/**
+ * Tutup break yang masih RUNNING lalu catat sebagai activity log BREAK (app-mgsb, 6 Okt 2026), supaya
+ * terlihat kapan break dipakai. Update-lalu-catat: baris yang sudah ditutup perangkat lain tidak tercatat dua kali.
+ */
 async function closeOpenBreaks(supabase: SupabaseClient, userId: string) {
-  const { error } = await supabase
+  const now = new Date();
+  const { data: closed, error } = await supabase
     .from('timer_sessions')
-    .update({ status: 'COMPLETED', end_time: new Date().toISOString() })
+    .update({ status: 'COMPLETED', end_time: now.toISOString() })
     .eq('user_id', userId)
     .eq('status', 'RUNNING')
-    .in('session_type', Object.values(BREAK_TYPE_MAP));
+    .in('session_type', Object.values(BREAK_TYPE_MAP))
+    .select('id, start_time, target_duration_seconds');
 
-  if (error) console.error('[closeOpenBreaks] Error:', error.message);
+  if (error) {
+    console.error('[closeOpenBreaks] Error:', error.message);
+    return;
+  }
+
+  const logs = (closed ?? [])
+    .map((b) => {
+      const startMs = new Date(b.start_time).getTime();
+      const seconds = Math.min(Math.max(0, (now.getTime() - startMs) / 1000), b.target_duration_seconds);
+      return { b, seconds, end: new Date(startMs + seconds * 1000) };
+    })
+    .filter(({ seconds }) => seconds >= 30) // break yang langsung ditimpa perangkat lain tidak dicatat
+    .map(({ b, seconds, end }) => ({
+      user_id: userId,
+      task_id: null,
+      type: 'BREAK',
+      start_time: b.start_time,
+      end_time: end.toISOString(),
+      duration_minutes: Math.max(1, Math.round(seconds / 60)),
+      local_date: getLocalDateString(end),
+    }));
+  if (!logs.length) return;
+  const { error: logError } = await supabase.from('activity_logs').insert(logs);
+  if (logError && logError.code !== '23505') console.error('[closeOpenBreaks] log error:', logError.message);
 }

@@ -296,7 +296,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey, onScheduleC
           id: log.id,
           type: 'LOG',
           subType: log.type as any,
-          title: log.task_title || 'Activity',
+          title: log.type === 'BREAK' ? 'Istirahat' : log.task_title || 'Activity',
           startTime: log.start_time,
           endTime: log.end_time,
           duration: log.duration_minutes,

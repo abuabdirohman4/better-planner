@@ -7,6 +7,7 @@ import { getFocusDuration, getTotalSeconds, getProgress, formatTime } from '@/li
 import { useDocumentPiP } from '@/hooks/useDocumentPiP';
 import { isTimerDisabled } from '@/lib/timerDevUtils';
 import FloatingTimer from '../../PomodoroTimer/components/FloatingTimer';
+import JournalFields from '../../Journal/JournalFields';
 import SoundSelector from '../../PomodoroTimer/components/SoundSelector';
 import { classifyCycle, cycleLabel } from '../utils/workCycles';
 import { CYCLES } from '../utils/dailyFocus';
@@ -52,7 +53,6 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
   const durationOptions: number[] = [...CYCLES.map((c) => c.focus as number), ...(process.env.NODE_ENV === 'development' ? [1] : [])];
   if (!durationOptions.includes(focusMinutes)) durationOptions.unshift(focusMinutes);
 
-  const iconBtn = 'rounded-lg border border-gray-200 bg-white p-2 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300';
 
   return (
     <div
@@ -139,7 +139,7 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
             onClick={stopTimer}
             aria-label={isBreak ? 'Lewati break' : 'Hentikan siklus'}
             title={isBreak ? 'Lewati break' : 'Hentikan siklus'}
-            className={`${iconBtn} hover:text-red-600`}
+            className="rounded-lg bg-red-500 p-2 text-white hover:bg-red-600"
           >
             <Square className="h-4 w-4" />
           </button>
@@ -157,24 +157,34 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
         <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">Timer dimatikan di dev (NEXT_PUBLIC_ENABLE_TIMER_DEV=false)</p>
       )}
 
+      {isBreak && lastCycle?.logId ? (
+        // One Minute Journal saat break: dua pertanyaan buku, langsung ke log siklus tadi.
+        <div className="mt-3 rounded-lg ring-2 ring-green-300 p-3 dark:ring-green-700" data-testid="cycle-break-journal">
+          <p className="mb-2 text-xs font-semibold text-green-700 dark:text-green-400">1 menit: One Minute Journal siklus tadi</p>
+          <JournalFields logId={lastCycle.logId} whatDone={lastCycle.notes} whatThink={null} />
+        </div>
+      ) : (
+      <>
       <textarea
-        ref={notesRef}
-        rows={2}
-        value={notes}
-        onChange={(e) => setCycleNotes(e.target.value)}
-        data-testid="cycle-notes"
-        aria-label="Catatan siklus"
-        placeholder={isBreak ? '1 menit: apa yang selesai di siklus tadi?' : 'Apa yang sedang dikerjakan? Catat progres, ide, atau hambatan…'}
-        className={`mt-3 w-full resize-none overflow-hidden rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 dark:bg-gray-800 dark:text-gray-100 ${
-          isBreak
-            ? 'border-green-400 ring-2 ring-green-300 focus:ring-green-400 dark:border-green-600'
-            : 'border-gray-200 focus:border-brand-400 focus:ring-brand-500/20 dark:border-gray-700'
-        }`}
-      />
-
-      <p className="mt-1 text-right text-xs text-gray-400" data-testid="cycle-notes-status">
-        {notesStatus === 'saving' ? 'Menyimpan…' : notesStatus === 'saved' ? 'Tersimpan' : ''}
-      </p>
+          ref={notesRef}
+          rows={2}
+          value={notes}
+          onChange={(e) => setCycleNotes(e.target.value)}
+          data-testid="cycle-notes"
+          aria-label="Catatan siklus"
+          placeholder={isBreak ? '1 menit: apa yang selesai di siklus tadi?' : 'Apa yang sedang dikerjakan? Catat progres, ide, atau hambatan…'}
+          className={`mt-3 w-full resize-none overflow-hidden rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 dark:bg-gray-800 dark:text-gray-100 ${
+            isBreak
+              ? 'border-green-400 ring-2 ring-green-300 focus:ring-green-400 dark:border-green-600'
+              : 'border-gray-200 focus:border-brand-400 focus:ring-brand-500/20 dark:border-gray-700'
+          }`}
+        />
+  
+        <p className="mt-1 text-right text-xs text-gray-400" data-testid="cycle-notes-status">
+          {notesStatus === 'saving' ? 'Menyimpan…' : notesStatus === 'saved' ? 'Tersimpan' : ''}
+        </p>
+      </>
+      )}
 
       {pip.pipWindow && <FloatingTimer pipWindow={pip.pipWindow} />}
       <SoundSelector isOpen={showSound} onClose={() => setShowSound(false)} />

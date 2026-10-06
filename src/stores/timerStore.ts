@@ -96,9 +96,10 @@ interface TimerStoreState {
 
 // Durasi default (detik)
 // Durasi default (detik)
-const isDev = process.env.NODE_ENV === 'development';
+// Break pendek untuk uji hanya bila diminta: dev memakai database yang sama dengan production, jadi break
+// 30/45/60 detik dari tab localhost ikut menimpa break di HP (dan memicu push "Istirahat selesai" lebih awal).
+const isDev = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_SHORT_BREAKS_DEV === 'true';
 const FOCUS_DURATION = 25 * 60; // 25 menit default
-// In dev, make breaks 30 seconds for testing
 const SHORT_BREAK_DURATION = isDev ? 30 : 5 * 60;
 const MEDIUM_BREAK_DURATION = isDev ? 45 : 10 * 60;
 const LONG_BREAK_DURATION = isDev ? 60 : 15 * 60;
@@ -526,6 +527,11 @@ export const useTimerStore = create<TimerStoreState>()(
 
       completeTimerFromDatabase: async (sessionData) => {
         const now = Date.now();
+
+        // Gema dari perangkat lain (realtime) saat perangkat ini sudah break/idle: tidak ada yang perlu
+        // diselesaikan. Tanpa ini, suara selesai diputar ulang (memotong yang sedang bunyi) dan break berhenti.
+        const cur = get();
+        if (cur.timerState === 'BREAK' || (cur.timerState === 'IDLE' && !cur.activeTask)) return;
 
         // ✅ FIX: Prevent multiple completions for the same task
         if (completionInProgress ||
