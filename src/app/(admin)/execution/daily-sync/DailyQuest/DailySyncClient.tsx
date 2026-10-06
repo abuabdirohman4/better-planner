@@ -10,6 +10,7 @@ import SideQuestModal from './components/SideQuestModal';
 import TaskItemCard from './components/TaskItemCard';
 import SortableTaskItemCard from './components/SortableTaskItemCard';
 import DailyFocusCard from './components/DailyFocusCard';
+import WorkCyclesCard from './components/WorkCyclesCard';
 import OtherTasksCard from './components/OtherTasksCard';
 import DailyRitualCard from './components/DailyRitualCard';
 import type { AddKind } from './components/AddItemMenu';
@@ -116,6 +117,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onReorder={handleReorder}
           onAdd={openAdd}
         />
+        <WorkCyclesCard date={selectedDate} />
         <OtherTasksCard
           items={side}
           renderItem={renderItem}
