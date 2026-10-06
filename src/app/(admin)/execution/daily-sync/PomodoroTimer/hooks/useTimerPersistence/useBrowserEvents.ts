@@ -59,7 +59,7 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
           console.log('🔄 Tab became visible - syncing timer with server...');
           
           try {
-            const activeSession = await getActiveTimerSession();
+            const activeSession = await getActiveTimerSession({ sessionId: useTimerStore.getState().sessionId, taskId: useTimerStore.getState().activeTask?.id });
             if (!activeSession) {
               setGlobalRecoveryInProgress(false);
               return;
@@ -76,7 +76,8 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
                 duration: result.elapsedSeconds,
-                status: 'COMPLETED'
+                status: 'COMPLETED',
+                sessionId: activeSession.id
               });
               console.log('⏰ Timer completed while tab was inactive');
             } else {
@@ -87,7 +88,8 @@ export function useBrowserEvents({ debouncedSave }: UseBrowserEventsProps) {
                 startTime: activeSession.start_time,
                 currentDuration: result.elapsedSeconds,
                 status: activeSession.status,
-                focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
+                focus_duration: activeSession.focus_duration, // ✅ TAMBAHKAN
+                sessionId: activeSession.id
               });
               console.log('🔄 Timer synced with server:', result.elapsedSeconds, 'seconds');
             }

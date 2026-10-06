@@ -57,7 +57,7 @@ export function useTimerPersistence() {
     if (recoveryCompleted && !isRecovering && timerState === 'FOCUSING' && activeTask && startTime && recoveryInProgress) {
       const checkSession = async () => {
         try {
-          const activeSession = await getActiveTimerSession();
+          const activeSession = await getActiveTimerSession({ sessionId: useTimerStore.getState().sessionId, taskId: useTimerStore.getState().activeTask?.id });
           if (!activeSession) {
             useTimerStore.getState().stopTimer();
           }

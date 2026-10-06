@@ -3,11 +3,19 @@ import { persist } from 'zustand/middleware';
 import { playTimerCompleteSound, playSound, stopCurrentSound, playFocusSoundLoop } from '@/lib/soundUtils';
 import { useSoundStore } from './soundStore';
 import { startBreakSession, endBreakSession } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSession/breakSession';
+import { saveTimerSession, abandonTimerSession, pauseTimerSession, resumeTimerSession } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSessionActions';
+import { getClientDeviceId } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/hooks/deviceUtils';
+import { getLocalDateString } from '@/lib/dateUtils';
+import { shouldDailyReset } from '@/lib/timerSessionLogic';
 
 // Global completion lock to prevent multiple completions
 let completionInProgress = false;
 let lastCompletedTaskId: string | null = null;
 let lastCompletionTime = 0;
+
+// Focus-session write still in flight (not persisted). Lets pause/resume/stop that happen before
+// the row id returns still reach the right row.
+let inflightStart: { abandon: boolean; ready: Promise<string | null> } | null = null;
 
 import type { TimerState, TimerTask } from '@/types/timer';
 
@@ -19,6 +27,7 @@ interface SessionCompleteData {
   startTime: string;
   endTime: string;
   completed?: boolean; // ✅ Add completed flag for auto-completion
+  sessionId?: string | null; // timer_sessions row to complete (per-session, never "latest FOCUSING")
 }
 
 interface TimerStoreState {
@@ -29,6 +38,8 @@ interface TimerStoreState {
   breakType: 'SHORT' | 'MEDIUM' | 'LONG' | null;
   lastSessionComplete: SessionCompleteData | null;
   startTime: string | null;
+  pausedStartTime: string | null; // start asli saat pause (startTime di-null-kan), dipakai Stop supaya log cocok dengan baris server
+  sessionId: string | null; // timer_sessions row of the running focus session
   isProcessingCompletion: boolean;
   focusSoundPlaying: boolean;
   waitingForBreak: boolean;
@@ -53,6 +64,7 @@ interface TimerStoreState {
     currentDuration: number;
     status: string;
     focus_duration?: number;
+    sessionId?: string;
   }) => void;
   startFocusSound: () => Promise<void>;
   stopFocusSound: () => void;
@@ -62,6 +74,7 @@ interface TimerStoreState {
     startTime: string;
     duration: number;
     status: string;
+    sessionId?: string;
   }) => void;
   checkDailyReset: () => void;
 }
@@ -81,6 +94,14 @@ export const BREAK_DURATIONS = {
   LONG: LONG_BREAK_DURATION,
 } as const;
 
+/** Run a server write against this session's row; waits for the start write if its id isn't back yet. */
+function withSessionId(get: () => { sessionId: string | null }, cb: (id: string) => Promise<unknown>, onResult?: (r: unknown) => void) {
+  const warn = (e: unknown) => console.warn('[timer] gagal menulis ke server:', e);
+  const id = get().sessionId;
+  if (id) { cb(id).then(onResult).catch(warn); return; }
+  inflightStart?.ready.then((rid) => (rid ? cb(rid).then(onResult) : undefined)).catch(warn);
+}
+
 export const useTimerStore = create<TimerStoreState>()(
   persist(
     (set, get) => ({
@@ -91,6 +112,8 @@ export const useTimerStore = create<TimerStoreState>()(
       breakType: null,
       lastSessionComplete: null,
       startTime: null,
+      pausedStartTime: null,
+      sessionId: null,
       isProcessingCompletion: false,
       focusSoundPlaying: false,
       waitingForBreak: false,
@@ -100,15 +123,51 @@ export const useTimerStore = create<TimerStoreState>()(
 
       startFocusSession: (task: TimerTask) => {
         if (get().timerState === 'BREAK') endBreakSession().catch(console.error);
+        // Sesi lain masih jalan: hentikan lewat jalur Stop supaya tercatat durasi sebenarnya, bukan penuh.
+        if ((get().timerState === 'FOCUSING' || get().timerState === 'PAUSED') && get().activeTask) get().stopTimer();
+        const startTime = new Date().toISOString();
         set({
           activeTask: task,
           timerState: 'FOCUSING',
           secondsElapsed: 0,
           breakType: null,
-          startTime: new Date().toISOString(),
+          startTime,
+          pausedStartTime: null,
+          sessionId: null,
           waitingForBreak: false, // Ensure prompt is closed
           lastActiveTask: task, // ✅ Save as last active
         });
+        // Persist the session now so the server can finish it even if the app closes.
+        // Fire-and-forget: a failed write must never delay or block the local timer.
+        const mine: { abandon: boolean; ready: Promise<string | null> } = { abandon: false, ready: Promise.resolve(null) };
+        inflightStart = mine;
+        mine.ready = saveTimerSession({
+          taskId: task.id,
+          taskTitle: task.title,
+          sessionType: 'FOCUS',
+          startTime,
+          targetDuration: (task.focus_duration || 25) * 60,
+          currentDuration: 0,
+          status: 'FOCUSING',
+          deviceId: getClientDeviceId(),
+          focusDuration: task.focus_duration,
+        })
+          .then((row) => {
+            const id: string | null = row?.id ?? null;
+            const isCurrent = inflightStart === mine; // false once a newer start replaced us
+            if (isCurrent) inflightStart = null;
+            if (!id) return null;
+            if (mine.abandon) {
+              // Stopped/reset at second 0 before the id came back: nothing to log, close the row
+              abandonTimerSession(id).catch(console.error);
+              return null;
+            }
+            const st = get();
+            const stillActive = (st.timerState === 'FOCUSING' || st.timerState === 'PAUSED') && st.activeTask?.id === task.id && !st.sessionId && isCurrent;
+            if (stillActive) set({ sessionId: id });
+            return id;
+          })
+          .catch((e) => { console.warn('[startFocusSession] gagal menyimpan sesi:', e); return null; });
         // Start focus sound
         get().startFocusSound().catch(console.error);
       },
@@ -135,8 +194,15 @@ export const useTimerStore = create<TimerStoreState>()(
       },
 
       pauseTimer: () => {
+        const { secondsElapsed, startTime } = get();
+        // Baris sudah ditutup server (sesi jatuh tempo, menit sudah dicatat): akhiri lokal tanpa log.
+        withSessionId(get, (id) => pauseTimerSession(id, secondsElapsed), (r) => {
+          if ((r as { updated?: boolean } | undefined)?.updated !== false || get().timerState !== 'PAUSED') return;
+          set({ timerState: 'IDLE', activeTask: null, sessionId: null, startTime: null, pausedStartTime: null, secondsElapsed: 0 });
+        });
         set({
           timerState: 'PAUSED',
+          pausedStartTime: startTime,
           startTime: null // ✅ Stop time-based calculation
         });
         // Stop focus sound when pausing
@@ -154,8 +220,21 @@ export const useTimerStore = create<TimerStoreState>()(
 
         set({
           timerState: newState,
-          startTime: resumedStartTime
+          startTime: resumedStartTime,
+          pausedStartTime: null,
         });
+        // Same row, shifted start_time: server clock keeps matching the local one.
+        // If the server already closed the row (idle pause > 6h) its minutes are logged: start fresh.
+        if (newState === 'FOCUSING') {
+          withSessionId(get, (id) => resumeTimerSession(id, resumedStartTime), (r) => {
+            const st = get();
+            if ((r as { updated?: boolean } | undefined)?.updated !== false || st.timerState !== 'FOCUSING' || !st.activeTask) return;
+            console.info('[timer] sesi sudah ditutup server saat jeda; memulai sesi baru dari 0');
+            const task = st.activeTask;
+            set({ timerState: 'IDLE', activeTask: null, sessionId: null, startTime: null, secondsElapsed: 0 });
+            get().startFocusSession(task);
+          });
+        }
 
         // Start focus sound when resuming focus session
         if (newState === 'FOCUSING') {
@@ -181,7 +260,7 @@ export const useTimerStore = create<TimerStoreState>()(
           // Cap elapsed to target so a manual stop never records more than the focus duration
           const targetSeconds = (state.activeTask.focus_duration || 25) * 60;
           const cappedSeconds = Math.min(Math.round(state.secondsElapsed), targetSeconds);
-          const startTimeStr = state.startTime || new Date(now.getTime() - cappedSeconds * 1000).toISOString();
+          const startTimeStr = (state.timerState === 'PAUSED' ? state.pausedStartTime : null) || state.startTime || new Date(now.getTime() - cappedSeconds * 1000).toISOString();
           // end_time = start + capped so end_time - start_time stays consistent downstream
           const endTime = new Date(new Date(startTimeStr).getTime() + cappedSeconds * 1000).toISOString();
           set({
@@ -191,21 +270,30 @@ export const useTimerStore = create<TimerStoreState>()(
               duration: cappedSeconds,
               type: 'FOCUS',
               startTime: startTimeStr,
-              endTime
+              endTime,
+              sessionId: state.sessionId,
             },
             timerState: 'IDLE',
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
             startTime: null,
+            pausedStartTime: null,
+            sessionId: null,
           });
         } else {
+          // Stop di detik 0: tidak ada yang dicatat; tutup barisnya supaya server tidak mencatat sesi penuh.
+          const wasActive = state.timerState === 'FOCUSING' || state.timerState === 'PAUSED';
+          if (state.sessionId) abandonTimerSession(state.sessionId).catch(console.error);
+          else if (wasActive && inflightStart) inflightStart.abandon = true;
           set({
             timerState: 'IDLE',
             secondsElapsed: 0,
             activeTask: null,
             breakType: null,
             startTime: null,
+            pausedStartTime: null,
+            sessionId: null,
           });
         }
       },
@@ -213,12 +301,17 @@ export const useTimerStore = create<TimerStoreState>()(
       resetTimer: () => {
         // Stop focus sound when resetting timer
         get().stopFocusSound();
+        const { sessionId, timerState } = get();
+        if (sessionId && (timerState === 'FOCUSING' || timerState === 'PAUSED')) abandonTimerSession(sessionId).catch(console.error);
+        else if (!sessionId && inflightStart && (timerState === 'FOCUSING' || timerState === 'PAUSED')) inflightStart.abandon = true;
         if (get().timerState === 'BREAK') endBreakSession().catch(console.error);
         set({
           timerState: 'IDLE',
           secondsElapsed: 0,
           breakType: null,
           activeTask: null,
+          sessionId: null,
+          pausedStartTime: null,
           waitingForBreak: false,
         });
       },
@@ -273,13 +366,15 @@ export const useTimerStore = create<TimerStoreState>()(
                 duration: Math.round(focusDuration),
                 type: 'FOCUS',
                 startTime,
-                endTime
+                endTime,
+                sessionId: state.sessionId,
               },
               timerState: 'IDLE' as TimerState,
               sessionCount: state.sessionCount + 1,
               secondsElapsed: 0,
               activeTask: null,
               breakType: null,
+              sessionId: null,
               lastActiveTask: updatedLastActiveTask,
             };
           }
@@ -347,6 +442,7 @@ export const useTimerStore = create<TimerStoreState>()(
           secondsElapsed: sessionData.currentDuration,
           startTime: syntheticStartTime,
           breakType: null,
+          sessionId: sessionData.sessionId ?? get().sessionId,
         });
 
         // Start focus sound when resuming focus session from database
@@ -427,8 +523,10 @@ export const useTimerStore = create<TimerStoreState>()(
             // even when the app was closed and reopened well past the target.
             endTime: new Date(new Date(sessionData.startTime).getTime() + sessionData.duration * 1000).toISOString(),
             duration: sessionData.duration,
-            completed: true
+            completed: true,
+            sessionId: sessionData.sessionId ?? null,
           },
+          sessionId: null,
           timerState: 'IDLE' as TimerState,
           secondsElapsed: 0,
           activeTask: null,
@@ -485,10 +583,10 @@ export const useTimerStore = create<TimerStoreState>()(
       },
 
       checkDailyReset: () => {
-        const today = new Date().toISOString().split('T')[0]; // Use safer YYYY-MM-DD
-        const { lastUpdatedDay, resetTimer } = get();
-  
-        if (lastUpdatedDay && lastUpdatedDay !== today) {
+        const today = getLocalDateString(new Date()); // WIB, not UTC
+        const { lastUpdatedDay, resetTimer, timerState } = get();
+
+        if (shouldDailyReset(lastUpdatedDay, today, timerState)) {
           console.log('📅 Day changed, resetting timer state...');
           resetTimer();
           set({
@@ -510,6 +608,8 @@ export const useTimerStore = create<TimerStoreState>()(
         sessionCount: state.sessionCount,
         breakType: state.breakType,
         startTime: state.startTime,
+        pausedStartTime: state.pausedStartTime,
+        sessionId: state.sessionId,
         lastActiveTask: state.lastActiveTask,
         lastUpdatedDay: state.lastUpdatedDay,
       }),

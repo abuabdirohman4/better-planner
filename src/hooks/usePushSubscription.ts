@@ -76,7 +76,7 @@ export function usePushSubscription() {
         await subscribeAndPersist()
         return setState('subscribed')
       } catch (err) {
-        console.error('[push] silent resubscribe failed', err)
+        console.warn('[push] silent resubscribe failed', err)
         return setState('unsubscribed')
       }
     }
@@ -93,7 +93,7 @@ export function usePushSubscription() {
           userAgent: navigator.userAgent,
         })
       } catch (err) {
-        console.error('[push] re-persist failed', err)
+        console.warn('[push] re-persist failed', err)
       }
     }
 

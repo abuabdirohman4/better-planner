@@ -1,8 +1,9 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useTimer } from '@/stores/timerStore';
+import { getLocalDateString } from '@/lib/dateUtils';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
-import { completeTimerSession, getActiveTimerSession } from '../actions/timerSessionActions';
+import { completeTimerSession, findFocusSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
@@ -42,6 +43,8 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
     type: 'FOCUS' | 'SHORT_BREAK' | 'MEDIUM_BREAK' | 'LONG_BREAK';
     startTime: string;
     endTime: string;
+    duration?: number;
+    sessionId?: string | null;
   }) => {
     // ✅ DEV CONTROL: Don't complete session if timer is disabled in development
     if (!isTimerEnabledInDev()) {
@@ -64,8 +67,9 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
 
         if (sessionData.type === 'FOCUS') {
           try {
-            // Get active timer session
-            const activeSession = await getActiveTimerSession();
+            // This session's own row (by id, else same task + start ±120s) — never another task's.
+            // Null when the server already finished it; the fallback below dedups against its log.
+            const activeSession = await findFocusSession(sessionData.sessionId, sessionData.taskId, sessionData.startTime);
             if (activeSession) {
               // Get client device ID
               const deviceId = getClientDeviceId();
@@ -83,7 +87,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
               }
 
               // Complete the timer session — returns activityLogId directly, no extra query needed
-              const result = await completeTimerSession(activeSession.id, deviceId);
+              const result = await completeTimerSession(activeSession.id, deviceId, sessionData.duration);
               console.log('✅ Timer session completed successfully');
               activityLogId = result.activityLogId;
 
@@ -96,7 +100,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
               formData.append('taskId', sessionData.taskId);
               formData.append('taskTitle', sessionData.taskTitle);
               formData.append('sessionType', sessionData.type);
-              formData.append('date', selectedDateStr);
+              formData.append('date', getLocalDateString(new Date(sessionData.endTime)));
               formData.append('startTime', sessionData.startTime);
               formData.append('endTime', sessionData.endTime);
               const result = await logActivity(formData);
@@ -112,7 +116,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
             formData.append('taskId', sessionData.taskId);
             formData.append('taskTitle', sessionData.taskTitle);
             formData.append('sessionType', sessionData.type);
-            formData.append('date', selectedDateStr);
+            formData.append('date', getLocalDateString(new Date(sessionData.endTime)));
             formData.append('startTime', sessionData.startTime);
             formData.append('endTime', sessionData.endTime);
             const result = await logActivity(formData);
@@ -144,7 +148,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
           openJournalModal({
             activityId: activityLogId, // ✅ Pass the activity log ID
             taskId: sessionData.taskId,
-            date: selectedDateStr,
+            date: getLocalDateString(new Date(sessionData.endTime)),
             startTime: sessionData.startTime,
             endTime: sessionData.endTime,
             taskTitle: sessionData.taskTitle,

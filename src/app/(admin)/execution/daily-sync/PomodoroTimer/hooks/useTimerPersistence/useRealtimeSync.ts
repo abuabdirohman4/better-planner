@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTimer } from '@/stores/timerStore';
 import { useTimerStore } from '@/stores/timerStore';
+import { isOwnSessionCompletion, shouldAdoptFocusingEcho } from '@/lib/timerSessionLogic';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 import { notifyActivityLogsChanged } from '@/lib/swr';
 import { getActiveTimerSession } from '../../actions/timerSessionActions';
@@ -51,7 +52,8 @@ export function useRealtimeSync() {
             const session = payload.new;
             
             // Check if this is our current active session
-            if (session.status === 'COMPLETED' && session.task_id === activeTask?.id) {
+            const storeSessionId = useTimerStore.getState().sessionId;
+            if (session.status === 'COMPLETED' && isOwnSessionCompletion(session as { id: string; current_duration_seconds: number }, storeSessionId)) {
               console.log('⏰ Timer completed on another device - syncing...');
               
               // Sync timer state with database
@@ -60,16 +62,17 @@ export function useRealtimeSync() {
                 taskTitle: session.task_title || 'Unknown Task',
                 startTime: session.start_time,
                 duration: session.current_duration_seconds,
-                status: session.status
+                status: session.status,
+                sessionId: session.id
               });
-            } else if (session.status === 'FOCUSING' && session.task_id === activeTask?.id) {
+            } else if (session.status === 'FOCUSING' && session.task_id === activeTask?.id && shouldAdoptFocusingEcho(session as { id: string; task_id: string | null }, { sessionId: storeSessionId, timerState: useTimerStore.getState().timerState })) {
               console.log('🔄 Timer session updated on another device - syncing...');
               
               // Use real-time payload data, only fetch focus_duration if missing
               let focusDuration = session.focus_duration;
               if (!focusDuration) {
                 try {
-                  const activeSession = await getActiveTimerSession();
+                  const activeSession = await getActiveTimerSession({ taskId: session.task_id });
                   focusDuration = activeSession?.focus_duration;
                 } catch (error) {
                   console.error('Failed to fetch focus_duration:', error);
@@ -83,7 +86,8 @@ export function useRealtimeSync() {
                 startTime: session.start_time,
                 currentDuration: session.current_duration_seconds,
                 status: session.status,
-                focus_duration: focusDuration
+                focus_duration: focusDuration,
+                sessionId: session.id
               });
             }
           } else if (payload.eventType === 'INSERT') {
