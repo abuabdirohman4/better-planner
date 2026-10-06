@@ -135,7 +135,6 @@ export const dailySyncKeys = {
   allCompletedSessions: (taskIds: string[], date: string) => [...dailySyncKeys.all, 'all-completed-sessions', taskIds.sort().join(','), date] as const,
   dailySyncBatched: (year: number, weekNumber: number, selectedDate: string) => [...dailySyncKeys.all, 'batched', year, weekNumber, selectedDate] as const,
   dailySyncConditional: (year: number, weekNumber: number, selectedDate: string) => [...dailySyncKeys.all, 'conditional', year, weekNumber, selectedDate] as const,
-  targetFocusData: (date: string) => [...dailySyncKeys.all, 'target-focus', date] as const,
   actualFocusTime: (date: string, taskIds: string[]) => [...dailySyncKeys.all, 'actual-focus-time', date, taskIds.sort().join(',')] as const,
   dailyQuests: (year: number, quarter: number) => [...dailySyncKeys.all, 'selectable-daily-quests', year, quarter] as const,
 };

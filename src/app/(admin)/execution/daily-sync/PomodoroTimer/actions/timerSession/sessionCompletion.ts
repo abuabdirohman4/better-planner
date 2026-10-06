@@ -6,9 +6,10 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { logTimerEvent } from './timerEventActions';
 import { getLocalDateString } from '@/lib/dateUtils';
+import { computeCompletionDuration } from '@/lib/timerSessionLogic';
 import { findRecentActivityLog } from '../../../ActivityLog/actions/activity-logging/dedup';
 
-export async function completeTimerSession(sessionId: string, deviceId?: string) {
+export async function completeTimerSession(sessionId: string, deviceId?: string, clientDurationSeconds?: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -28,10 +29,15 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
 
     const now = new Date();
     const startTimeDate = new Date(session.start_time);
-    const rawDurationSeconds = Math.floor((now.getTime() - startTimeDate.getTime()) / 1000);
-    // Cap to target: timer stops at target duration, never records more.
-    // (App closed & reopened later must still record only the target, not wall-clock gap.)
-    const cappedDurationSeconds = Math.min(rawDurationSeconds, session.target_duration_seconds);
+    // Client's own count wins (wall-clock would include pause time); capped to target.
+    const cappedDurationSeconds = computeCompletionDuration({
+      status: session.status,
+      startTime: session.start_time,
+      target: session.target_duration_seconds,
+      currentDuration: session.current_duration_seconds ?? 0,
+      clientDuration: clientDurationSeconds,
+      nowMs: now.getTime(),
+    });
     // end_time = start_time + capped duration, so end_time - start_time stays consistent.
     const endTime = new Date(startTimeDate.getTime() + cappedDurationSeconds * 1000).toISOString();
 
@@ -70,7 +76,8 @@ export async function completeTimerSession(sessionId: string, deviceId?: string)
           start_time: session.start_time,
           end_time: endTime,
           duration_minutes: durationMinutes,
-          local_date: localDate
+          local_date: localDate,
+          what_done: session.notes || null, // catatan siklus (app-mgsb)
         })
         .select('id')
         .single();

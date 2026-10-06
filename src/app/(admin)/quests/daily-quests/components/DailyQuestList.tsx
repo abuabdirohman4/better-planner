@@ -9,6 +9,48 @@ import { toast } from "sonner";
 import Button from "@/components/ui/button/Button";
 import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
+const DAYS: { value: number; label: string }[] = [
+  { value: 1, label: 'Sen' },
+  { value: 2, label: 'Sel' },
+  { value: 3, label: 'Rab' },
+  { value: 4, label: 'Kam' },
+  { value: 5, label: 'Jum' },
+  { value: 6, label: 'Sab' },
+  { value: 0, label: 'Min' },
+];
+
+/** Jadwal rutin: hari terpilih otomatis masuk Tugas Lain di Daily Sync. Kosong = pilih manual (app-fj81). */
+function RepeatDays({ quest, onChange }: { quest: DailyQuest; onChange: (days: number[] | null) => void }) {
+  const days = quest.repeat_days ?? [];
+  const summary = days.length === 0 ? 'Manual' : days.length === 7 ? 'Setiap hari' : 'Otomatis';
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1" data-testid={`daily-quest-repeat-${quest.id}`}>
+      {DAYS.map(({ value, label }) => {
+        const on = days.includes(value);
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => {
+              const next = on ? days.filter((d) => d !== value) : [...days, value].sort((a, b) => a - b);
+              onChange(next.length ? next : null);
+            }}
+            className={`h-6 w-9 rounded-md border text-[11px] font-medium transition-colors ${
+              on
+                ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                : 'border-gray-200 text-gray-400 hover:border-gray-300 dark:border-gray-700 dark:text-gray-500'
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+      <span className="ml-1 text-[11px] text-gray-400">{summary}</span>
+    </div>
+  );
+}
+
 interface DailyQuestListProps {
   quests: DailyQuest[];
   isLoading: boolean;
@@ -243,6 +285,14 @@ const DailyQuestList: React.FC<DailyQuestListProps> = ({
                         {quest.title}
                         {quest.is_archived && <span className="ml-2 text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded not-italic">Archived</span>}
                       </h4>
+                      {!quest.is_archived && (
+                        <RepeatDays
+                          quest={quest}
+                          onChange={(repeat_days) =>
+                            updateQuest(quest.id, { repeat_days }).catch(() => toast.error('Gagal menyimpan jadwal'))
+                          }
+                        />
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

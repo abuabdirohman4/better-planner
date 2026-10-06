@@ -217,6 +217,7 @@ describe('buildCopyRow', () => {
       description: 'Morning meditation',
       status: 'DONE',
       focus_duration: 30,
+      repeat_days: [0],
       created_at: '2026-04-01T00:00:00.000Z',
     };
     const row = buildCopyRow('DAILY_QUEST', task, 'user-1', '2026-07-01T00:00:00.000Z');
@@ -231,6 +232,7 @@ describe('buildCopyRow', () => {
       parent_task_id: null,
       created_at: '2026-07-01T00:00:00.000Z',
       focus_duration: 30,
+      repeat_days: [0],
     });
   });
 

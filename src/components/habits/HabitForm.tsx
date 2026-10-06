@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { HabitFormInput, HabitCategory, HabitFrequency, HabitTrackingType } from "@/types/habit";
+import type { HabitFormInput, HabitCategory, HabitFrequency, HabitTrackingType, RitualPillar } from "@/types/habit";
 
 interface HabitFormProps {
   initialValues?: Partial<HabitFormInput>;
@@ -40,6 +40,14 @@ const DAY_OPTIONS: { value: number; label: string }[] = [
   { value: 0, label: "Min" },
 ];
 
+const PILLAR_OPTIONS: { value: RitualPillar | ""; label: string }[] = [
+  { value: "", label: "(tidak ada)" },
+  { value: "tubuh", label: "Tubuh" },
+  { value: "pikiran", label: "Pikiran" },
+  { value: "spiritual", label: "Spiritual" },
+  { value: "sdc", label: "SDC" },
+];
+
 const DEFAULT_VALUES: HabitFormInput = {
   name: "",
   category: "spiritual",
@@ -48,6 +56,7 @@ const DEFAULT_VALUES: HabitFormInput = {
   daily_target: 1,
   target_days: null,
   show_in_daily_sync: false,
+  ritual_pillar: null,
   tracking_type: "positive",
   description: "",
   target_time: undefined,
@@ -386,22 +395,28 @@ export default function HabitForm({
         )}
       </div>
 
-      {/* Show in Daily Sync (app-cr6i) */}
+
+      {/* Pilar ritual pagi (app-70vs) */}
       <div>
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={values.show_in_daily_sync ?? false}
-            onChange={(e) => handleChange("show_in_daily_sync", e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
-            disabled={isSubmitting}
-            data-testid="habit-show-in-daily-sync"
-          />
-          <span className={labelClass.replace("mb-1", "mb-0")}>Tampilkan di Daily Sync</span>
+        <label htmlFor="habit-ritual-pillar" className={labelClass}>
+          Pilar ritual pagi <span className="text-xs text-gray-400">(opsional)</span>
         </label>
+        <select
+          id="habit-ritual-pillar"
+          value={values.ritual_pillar ?? ""}
+          onChange={(e) => handleChange("ritual_pillar", (e.target.value || null) as RitualPillar | null)}
+          className={inputClass}
+          disabled={isSubmitting}
+          data-testid="habit-ritual-pillar"
+        >
+          {PILLAR_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Muncul sebagai baris di Daily Quest dan bisa dicentang dari sana. Habit lain cukup
-          diwakili satu baris pengingat.
+          Hanya untuk ritual pagi (60 menit pertama setelah bangun).
         </p>
       </div>
 

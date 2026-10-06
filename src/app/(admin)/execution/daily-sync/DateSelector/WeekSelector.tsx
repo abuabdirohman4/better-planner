@@ -2,6 +2,7 @@ import React from 'react';
 import Button from "@/components/ui/button/Button";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/lib/icons";
 
 interface WeekSelectorProps {
   displayWeek: number;
@@ -24,12 +25,12 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <Button size="sm" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1}>
-        &lt;
+      <Button size="sm" sizeClassName="h-10 md:h-14 w-12 shrink-0 p-0" variant="outline" onClick={goPrevWeek} disabled={displayWeek <= 1} aria-label="Minggu sebelumnya">
+        <ChevronLeftIcon className="w-5 h-5" />
       </Button>
       <div className="w-full md:relative">
         <button
-          className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg border border-gray-400 bg-white dark:text-white dark:bg-gray-900 cursor-pointer w-full md:min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="h-10 md:h-14 flex items-center justify-center gap-1 px-3 text-sm font-medium whitespace-nowrap rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:text-white dark:bg-gray-900 cursor-pointer w-full md:min-w-24 dropdown-toggle hover:bg-gray-50 dark:hover:bg-gray-800"
           onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
           aria-haspopup="listbox"
           aria-expanded={isWeekDropdownOpen}
@@ -50,8 +51,8 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({
           </div>
         </Dropdown>
       </div>
-      <Button size="sm" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks}>
-        &gt;
+      <Button size="sm" sizeClassName="h-10 md:h-14 w-12 shrink-0 p-0" variant="outline" onClick={goNextWeek} disabled={displayWeek >= totalWeeks} aria-label="Minggu berikutnya">
+        <ChevronRightIcon className="w-5 h-5" />
       </Button>
     </div>
   );

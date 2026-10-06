@@ -8,14 +8,7 @@ interface SortableTaskItemCardProps extends TaskCardProps {
 }
 
 export default function SortableTaskItemCard({ id, ...props }: SortableTaskItemCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -26,14 +19,7 @@ export default function SortableTaskItemCard({ id, ...props }: SortableTaskItemC
 
   return (
     <div ref={setNodeRef} style={style}>
-      <TaskItemCard 
-        {...props} 
-        dragHandleProps={{
-          listeners,
-          attributes
-        }}
-      />
+      <TaskItemCard {...props} dragHandleProps={{ listeners, attributes }} />
     </div>
   );
 }
-

@@ -1,3 +1,4 @@
+import type React from 'react';
 import type {
   DailyPlan,
   DailyPlanItem,
@@ -71,6 +72,8 @@ export interface TaskSelectionModalProps {
   isLoading: boolean; // Loading untuk konten (skeleton)
   savingLoading?: boolean; // Loading untuk button (spinner)
   completedTodayCount?: number; // Jumlah tugas yang sudah selesai hari ini
+  /** Tab HFG | Work di bawah judul (app-mgsb). */
+  tabs?: React.ReactNode;
 }
 
 

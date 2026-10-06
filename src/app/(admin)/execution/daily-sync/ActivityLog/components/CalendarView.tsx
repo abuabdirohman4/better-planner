@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import useSWR from 'swr';
+import { getActiveTemplate, getBlocksForTemplate } from '@/app/(admin)/planning/best-week/actions';
+import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 import HourlyGrid from './HourlyGrid';
 import CalendarBlock from './CalendarBlock';
 import CalendarTaskDetail from './CalendarTaskDetail';
 import type { ActivityLogItem } from '@/types/activity-log';
 import type { TaskSchedule } from '@/types/daily-plan';
-import { processOverlaps, getVisibleHours, calculateDiscontinuousStyle } from '@/lib/calendarUtils';
+import { processOverlaps, getVisibleHours, calculateDiscontinuousStyle, calculateBlockStyle } from '@/lib/calendarUtils';
 
 // Unified Event Type
 export interface CalendarEvent {
@@ -41,6 +44,37 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const calendarAreaRef = useRef<HTMLDivElement>(null);
   const [selectedTask, setSelectedTask] = useState<CalendarEvent | null>(null);
   const [isDynamicView, setIsDynamicView] = useState(true);
+
+  // Best Week = lapisan latar jadwal ideal; kunci bestWeekRef di store berarti "disembunyikan".
+  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
+  const showBestWeek = !cardCollapsed.bestWeekRef;
+  const { data: template } = useSWR('best-week-active-template', getActiveTemplate);
+  const { data: bwBlocks } = useSWR(
+    template?.id ? `best-week-blocks-${template.id}` : null,
+    () => getBlocksForTemplate(template!.id)
+  );
+  const bestWeekItems = React.useMemo(() => {
+    if (!showBestWeek || !bwBlocks) return [];
+    const code = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date(currentDate + 'T00:00:00').getDay()];
+    return bwBlocks
+      .filter(b => (b.days as string[]).includes(code))
+      .map(b => {
+        const start = new Date(`${currentDate}T${b.start_time}`).toISOString();
+        const end = new Date(`${currentDate}T${b.end_time}`).toISOString();
+        return {
+          id: b.id,
+          title: b.title,
+          label: `${b.start_time.substring(0, 5)}-${b.end_time.substring(0, 5)}`,
+          start,
+          end,
+          // Bentuk yang dipahami processOverlaps: blok Best Week yang bertumpuk dipasang berdampingan.
+          start_time: start,
+          end_time: end,
+          duration_minutes: (new Date(end).getTime() - new Date(start).getTime()) / 60000,
+        };
+      });
+  }, [showBestWeek, bwBlocks, currentDate]);
+  const bestWeekLaid = React.useMemo(() => processOverlaps(bestWeekItems), [bestWeekItems]);
 
   // Current time indicator
   const [currentTimeMinutes, setCurrentTimeMinutes] = useState(() => {
@@ -221,12 +255,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             >Actual</button>
           </div>
         ) : <div />}
-        <button
-          onClick={() => setIsDynamicView(!isDynamicView)}
-          className="text-xs px-2 py-1 rounded transition-colors bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200"
-        >
-          {isDynamicView ? 'Dynamic View' : '24h View'}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            data-testid="calendar-best-week-toggle"
+            aria-pressed={showBestWeek}
+            onClick={() => toggleCardCollapsed('bestWeekRef')}
+            className={`text-xs px-2 py-1 rounded transition-colors ${showBestWeek
+              ? 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
+              : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+              }`}
+          >
+            Best Week
+          </button>
+          <button
+            onClick={() => setIsDynamicView(!isDynamicView)}
+            className="text-xs px-2 py-1 rounded transition-colors bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200"
+          >
+            {isDynamicView ? 'Dynamic View' : '24h View'}
+          </button>
+        </div>
       </div>
 
       <div
@@ -254,6 +301,29 @@ const CalendarView: React.FC<CalendarViewProps> = ({
               <div className="absolute left-3 right-0 h-[2px] bg-red-500 top-1/2 -translate-y-1/2" />
             </div>
           )}
+
+          {/* Best Week: latar samar, tak bisa diklik/drag */}
+          {bestWeekLaid.map(b => {
+            const style = isDynamicView && visibleHours
+              ? calculateDiscontinuousStyle(b.start, b.end, visibleHours)
+              : calculateBlockStyle(b.start, (new Date(b.end).getTime() - new Date(b.start).getTime()) / 60000);
+            if (!style) return null;
+            return (
+              <div
+                key={`bw-${b.id}`}
+                data-testid="best-week-block"
+                className="absolute z-0 overflow-hidden rounded bg-gray-400/15 px-2 text-[10px] leading-4 text-gray-500 pointer-events-none select-none dark:bg-gray-500/15 dark:text-gray-400"
+                style={{
+                  top: style.top,
+                  height: style.height,
+                  left: b.maxCols > 1 ? `calc(10px + (100% - 20px) * ${b.colIndex} / ${b.maxCols})` : '10px',
+                  width: b.maxCols > 1 ? `calc((100% - 20px) / ${b.maxCols} - 2px)` : 'calc(100% - 20px)',
+                }}
+              >
+                <span className="block truncate">{b.title} · {b.label}</span>
+              </div>
+            );
+          })}
 
           {/* Render blocks */}
           {processedItems.map((item: any) => {

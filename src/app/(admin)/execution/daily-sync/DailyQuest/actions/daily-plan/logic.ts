@@ -67,14 +67,24 @@ export function extractScheduleBackups(
   }));
 }
 
+/** Siklus fokus bawaan item baru: HFG 90/15, Work 60/10, sisanya 25/5 (app-70vs). */
+export function defaultFocusDuration(itemType: string): number {
+  if (itemType === 'MAIN_QUEST') return 90;
+  if (itemType === 'WORK_QUEST') return 60;
+  return 25;
+}
+
 /**
- * Build items to insert into daily_plan_items, preserving existing status/target/duration.
+ * Build items to insert into daily_plan_items, preserving existing
+ * status/target/duration/display_order.
  */
 export function buildItemsToInsert(
   selectedItems: SelectedItem[],
   dailyPlanId: string,
   existingItemsMap: Map<string, RawDailyPlanItem>
 ): object[] {
+  // Item baru ditaruh di ujung urutan (kolom bawaannya 0 = akan melompat ke atas).
+  let nextOrder = Math.max(0, ...[...existingItemsMap.values()].map(i => i.display_order ?? 0)) + 1;
   return selectedItems.map(item => {
     const existing = existingItemsMap.get(item.item_id);
     return {
@@ -82,7 +92,8 @@ export function buildItemsToInsert(
       daily_plan_id: dailyPlanId,
       status: existing?.status ?? 'TODO',
       daily_session_target: existing?.daily_session_target ?? 1,
-      focus_duration: existing?.focus_duration ?? 25,
+      focus_duration: existing?.focus_duration ?? defaultFocusDuration(item.item_type),
+      display_order: existing?.display_order ?? nextOrder++,
     };
   });
 }
@@ -109,4 +120,20 @@ export function remapSchedules(
       };
     })
     .filter((s): s is RestoredSchedule => s !== null);
+}
+
+/** Hari (0=Min..6=Sab) dari tanggal "YYYY-MM-DD", tanpa pengaruh zona waktu proses. */
+export const dayOfWeek = (date: string) => new Date(date + 'T00:00:00Z').getUTCDay();
+
+/**
+ * Rutin (Daily Quest berulang) yang perlu dimasukkan ke rencana `date` (app-fj81):
+ * repeat_days memuat hari itu dan belum ada di rencana. repeat_days NULL = tidak berulang.
+ */
+export function pickRoutinesToSeed(
+  tasks: { id: string; repeat_days: number[] | null }[],
+  date: string,
+  existingItemIds: Set<string>
+): string[] {
+  const dow = dayOfWeek(date);
+  return tasks.filter((t) => t.repeat_days?.includes(dow) && !existingItemIds.has(t.id)).map((t) => t.id);
 }

@@ -27,7 +27,12 @@ export function useRecovery() {
       setIsRecovering(true);
       
       try {
-        const activeSession = await getActiveTimerSession();
+        // Only recover this device's own session (store active) or, when idle, the newest not-yet-due one
+        // Sesi lokal sedang dijeda: pertahankan, jangan tertimpa sesi FOCUSING lain (baris PAUSED tidak dicari di sini).
+        const st = useTimerStore.getState();
+        const activeSession = st.timerState === 'PAUSED' && st.sessionId
+          ? null
+          : await getActiveTimerSession({ sessionId: st.sessionId, taskId: st.activeTask?.id });
         
         if (activeSession) {
           // ✅ SERVER-SIDE TIMER: Update session with actual elapsed time
@@ -46,7 +51,8 @@ export function useRecovery() {
                 taskTitle: activeSession.task_title,
                 startTime: activeSession.start_time,
                 duration: result.elapsedSeconds,
-                status: 'COMPLETED'
+                status: 'COMPLETED',
+                sessionId: activeSession.id
               });
             } else {
               // Resume with actual elapsed time from server
@@ -57,7 +63,8 @@ export function useRecovery() {
                 startTime: activeSession.start_time,
                 currentDuration: result.elapsedSeconds,
                 status: activeSession.status,
-                focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
+                focus_duration: activeSession.focus_duration, // ✅ TAMBAHKAN
+                sessionId: activeSession.id
               });
             }
           } catch (error) {
@@ -70,7 +77,8 @@ export function useRecovery() {
               startTime: activeSession.start_time,
               currentDuration: currentDuration,
               status: activeSession.status,
-              focus_duration: activeSession.focus_duration // ✅ TAMBAHKAN
+              focus_duration: activeSession.focus_duration, // ✅ TAMBAHKAN
+              sessionId: activeSession.id
             });
           }
         }

@@ -8,6 +8,7 @@ export interface SourceTask {
   status: 'TODO' | 'IN_PROGRESS' | 'DONE';
   is_archived?: boolean | null;
   focus_duration?: number | null;
+  repeat_days?: number[] | null;
   parent_task_id?: string | null;
   created_at: string;
 }
@@ -163,6 +164,9 @@ export function buildCopyRow(type: CarryOverType, t: SourceTask, userId: string,
     parent_task_id: parentId,
     created_at: createdAt,
   };
-  if (type === 'DAILY_QUEST') row.focus_duration = t.focus_duration ?? 25;
+  if (type === 'DAILY_QUEST') {
+    row.focus_duration = t.focus_duration ?? 25;
+    row.repeat_days = t.repeat_days ?? null;
+  }
   return row;
 }

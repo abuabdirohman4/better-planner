@@ -47,7 +47,7 @@ Peta fitur lengkap dengan status (dipetakan dari kode 29 Sep 2026) ada di second
 - **State global**: Zustand (`src/stores/`: timer, kuartal, sidebar, preferensi UI).
 - **Tipe**: satu file per domain di `src/types/`.
 - **Waktu**: DB simpan UTC, tampil WIB. Hitungan kuartal/minggu/status HFG dikerjakan di SQL, bukan di TS.
-- **Cron**: `src/app/api/cron/*` — `auto-complete-timers` dan `push-due` aktif (`pg_cron → pg_net → Vercel`). Rute `*-emails` dan `daily-pipeline` sisa proyek email yang digugurkan 16 Sep 2026 (belum dibersihkan).
+- **Cron**: `src/app/api/cron/*` — `push-due` aktif (`pg_cron → pg_net → Vercel`) dan juga menutup sesi fokus yang tak diselesaikan klien (`auto-complete-timers` dihapus 6 Okt 2026). Rute `*-emails` dan `daily-pipeline` sisa proyek email yang digugurkan 16 Sep 2026 (belum dibersihkan).
 
 Detail: `claude/architecture-patterns.md`, `claude/business-rules.md`, `claude/database-operations.md`, `claude/timezone-handling.md`.
 

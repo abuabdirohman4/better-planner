@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getDeviceId } from './deviceUtils';
 import { logTimerEvent } from './timerEventActions';
 import { cleanupAbandonedSessions } from './cleanupActions';
+import { pickSessionToComplete, pickRecoverableSession } from '@/lib/timerSessionLogic';
 
 export async function saveTimerSession(sessionData: {
   taskId: string;
@@ -18,67 +19,56 @@ export async function saveTimerSession(sessionData: {
   status: string;
   deviceId?: string;
   focusDuration?: number;
+  sessionId?: string | null;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
 
   try {
-    // Cleanup abandoned sessions first
+    // Cleanup abandoned breaks first
     await cleanupAbandonedSessions();
-    
-    // First, try to find existing running session for this user and task
-    const { data: existingSession, error: findError } = await supabase
+
+    // Reuse the row only if it is THIS session (by id, or same task + start within 120s).
+    // A FOCUSING row with another start_time is a different/older session: leave it for
+    // the server to finish, and open a new row.
+    const { data: openRows } = await supabase
       .from('timer_sessions')
-      .select('id')
+      .select('id, task_id, start_time')
       .eq('user_id', user.id)
       .eq('task_id', sessionData.taskId)
-      .eq('status', 'FOCUSING')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .in('status', ['FOCUSING', 'PAUSED']);
+    const existingSession = pickSessionToComplete(
+      openRows ?? [], sessionData.taskId, sessionData.startTime, sessionData.sessionId,
+    );
 
     let data, error;
-
-    // Cleanup any abandoned sessions for this user and task before creating/updating
-    if (!existingSession) {
-      await supabase
-        .from('timer_sessions')
-        .update({ status: 'COMPLETED' })
-        .eq('user_id', user.id)
-        .eq('task_id', sessionData.taskId)
-        .eq('status', 'FOCUSING');
-    }
+    // ✅ currentDuration must not exceed targetDuration
+    const validCurrentDuration = Math.min(sessionData.currentDuration, sessionData.targetDuration);
 
     if (existingSession) {
-      // ✅ FIX: Validasi currentDuration tidak boleh lebih besar dari targetDuration
-      const validCurrentDuration = Math.min(sessionData.currentDuration, sessionData.targetDuration);
-      
-      // Update existing session
       const result = await supabase
         .from('timer_sessions')
         .update({
           task_title: sessionData.taskTitle,
           session_type: sessionData.sessionType,
-          start_time: sessionData.startTime,
+          // start_time only moves for the session the client explicitly owns (pause/resume
+          // shifts it); a fuzzy match must never overwrite another session's start.
+          ...(existingSession.id === sessionData.sessionId ? { start_time: sessionData.startTime } : {}),
           target_duration_seconds: sessionData.targetDuration,
-          current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
+          current_duration_seconds: validCurrentDuration,
           status: sessionData.status,
-          device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
+          device_id: sessionData.deviceId || getDeviceId(),
           focus_duration: sessionData.focusDuration,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSession.id)
         .select()
         .single();
-      
+
       data = result.data;
       error = result.error;
     } else {
-      // ✅ FIX: Validasi currentDuration tidak boleh lebih besar dari targetDuration
-      const validCurrentDuration = Math.min(sessionData.currentDuration, sessionData.targetDuration);
-      
-      // Create new session
       const result = await supabase
         .from('timer_sessions')
         .insert({
@@ -88,15 +78,15 @@ export async function saveTimerSession(sessionData: {
           session_type: sessionData.sessionType,
           start_time: sessionData.startTime,
           target_duration_seconds: sessionData.targetDuration,
-          current_duration_seconds: validCurrentDuration, // ✅ Use validated duration
+          current_duration_seconds: validCurrentDuration,
           status: sessionData.status,
-          device_id: sessionData.deviceId || getDeviceId(), // ✅ Use provided deviceId or generate new one
+          device_id: sessionData.deviceId || getDeviceId(),
           focus_duration: sessionData.focusDuration,
           updated_at: new Date().toISOString()
         })
         .select()
         .single();
-      
+
       data = result.data;
       error = result.error;
     }
@@ -130,7 +120,12 @@ export async function saveTimerSession(sessionData: {
   }
 }
 
-export async function getActiveTimerSession() {
+/**
+ * FOCUSING session to resume. Pass the store's sessionId/taskId so a session of another
+ * task or device is never picked up by mistake; with neither (store IDLE) it returns the
+ * newest not-yet-due session.
+ */
+export async function getActiveTimerSession(hint: { sessionId?: string | null; taskId?: string | null } = {}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -141,17 +136,27 @@ export async function getActiveTimerSession() {
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'FOCUSING')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
+      .order('start_time', { ascending: false });
 
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
-    
-    return data;
+    if (error) throw error;
+    return pickRecoverableSession(data ?? [], hint, Date.now());
   } catch (error) {
     console.error('[getActiveTimerSession] Exception:', error);
     throw error;
   }
+}
+
+/** FOCUSING row to complete for a finished session: by id, else same task + start ±120s. Null if the server already closed it. */
+export async function findFocusSession(sessionId: string | null | undefined, taskId: string, startTime: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('timer_sessions')
+    .select('*')
+    .eq('user_id', user.id)
+    .in('status', ['FOCUSING', 'PAUSED']);
+  if (error) throw error;
+  return pickSessionToComplete(data ?? [], taskId, startTime, sessionId);
 }

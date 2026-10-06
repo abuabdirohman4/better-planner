@@ -1,10 +1,10 @@
 // Timer session actions - re-export from modular structure
 
 // Session Management
-export { saveTimerSession, getActiveTimerSession } from './timerSession/sessionManagement';
+export { saveTimerSession, getActiveTimerSession, findFocusSession } from './timerSession/sessionManagement';
 
 // Session Control
-export { pauseTimerSession, resumeTimerSession } from './timerSession/sessionControl';
+export { pauseTimerSession, resumeTimerSession, updateTimerSessionTarget, switchTimerSessionTask, setTimerSessionNotes, setActivityLogNotes, setActivityLogJournalField } from './timerSession/sessionControl';
 
 // Session Completion
 export { completeTimerSession } from './timerSession/sessionCompletion';
@@ -16,7 +16,7 @@ export { getActivityLogId, updateActivityLogJournal } from './timerSession/activ
 export { calculateActualElapsedTime, updateSessionWithActualTime } from './timerSession/serverTimerCalculation';
 
 // Cleanup Actions
-export { cleanupAbandonedSessions } from './timerSession/cleanupActions';
+export { cleanupAbandonedSessions, abandonTimerSession } from './timerSession/cleanupActions';
 
 // Device Utils
 export { getDeviceId } from './timerSession/deviceUtils';

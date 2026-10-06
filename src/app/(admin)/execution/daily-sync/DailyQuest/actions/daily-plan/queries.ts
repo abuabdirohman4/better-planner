@@ -14,6 +14,7 @@ export interface RawDailyPlanItem {
   status: string;
   daily_session_target: number;
   focus_duration: number;
+  display_order?: number;
   daily_plan_id?: string;
 }
 
@@ -45,7 +46,7 @@ export async function queryExistingPlanItems(
 ): Promise<RawDailyPlanItem[]> {
   const { data } = await supabase
     .from('daily_plan_items')
-    .select('id, item_id, status, item_type, daily_session_target, focus_duration')
+    .select('id, item_id, status, item_type, daily_session_target, focus_duration, display_order')
     .eq('daily_plan_id', dailyPlanId);
   return data || [];
 }
@@ -186,4 +187,36 @@ export async function updatePlanItemsDisplayOrderBatch(
       if (error) throw error;
     })
   );
+}
+
+/** Daily Quest berulang aktif di rentang kuartal (app-fj81). */
+export async function queryRecurringDailyQuests(
+  supabase: SupabaseClient,
+  userId: string,
+  startIso: string,
+  endExclusiveIso: string
+): Promise<{ id: string; repeat_days: number[] | null }[]> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, repeat_days')
+    .eq('user_id', userId)
+    .eq('type', 'DAILY_QUEST')
+    .eq('is_archived', false)
+    .not('repeat_days', 'is', null)
+    .gte('created_at', startIso)
+    .lt('created_at', endExclusiveIso);
+  if (error) throw error;
+  return data || [];
+}
+
+/** Tandai rencana sudah diisi rutin; false bila sudah ditandai sebelumnya (tab/perangkat lain). */
+export async function claimRoutineSeeding(supabase: SupabaseClient, dailyPlanId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('daily_plans')
+    .update({ routines_seeded_at: new Date().toISOString() })
+    .eq('id', dailyPlanId)
+    .is('routines_seeded_at', null)
+    .select('id');
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }

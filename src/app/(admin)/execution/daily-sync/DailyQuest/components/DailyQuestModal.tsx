@@ -11,6 +11,7 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
   selectedTasks,
   onTaskToggle,
   onSave,
+  tabs,
   isLoading,
   savingLoading = false
 }) => {
@@ -20,11 +21,11 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between mb-4 flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Daily Quest</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Tugas Lain</h2>
             <p className="text-gray-700 font-medium">
               Selected : {selectedCount} Quest
             </p>
@@ -38,6 +39,8 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
             </svg>
           </button>
         </div>
+
+        {tabs}
 
         {/* Quest List */}
         <div className="flex-1 overflow-y-auto mb-6">
@@ -104,7 +107,7 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
           </Button>
           <Button
             onClick={onSave}
-            disabled={selectedCount === 0 || savingLoading}
+            disabled={savingLoading}
             loading={savingLoading}
             loadingText="Menyimpan..."
             variant="primary"

@@ -25,27 +25,25 @@ test.describe('Daily Sync', () => {
 
     // Tunggu skeleton hilang — DailySyncClient render setelah SWR fetch
     await expect(
-      page.locator('[data-testid="daily-sync-daily-quest-section"]')
+      page.locator('[data-testid="daily-sync-focus-section"]')
     ).toBeVisible({ timeout: 15000 });
   });
 
-  test('daily sync page loads with quest sections visible', async ({ page }) => {
-    await expect(
-      page.locator('[data-testid="daily-sync-daily-quest-section"]')
-    ).toBeVisible({ timeout: 15000 });
-    await expect(
-      page.locator('[data-testid="daily-sync-work-quest-section"]')
-    ).toBeVisible({ timeout: 15000 });
+  // app-70vs: Daily Focus → Tugas Lain → Daily Ritual
+  test('daily sync page loads with focus, other and ritual sections visible', async ({ page }) => {
+    for (const id of ['daily-sync-focus-section', 'daily-sync-other-section', 'daily-sync-ritual-section']) {
+      await expect(page.locator(`[data-testid="${id}"]`)).toBeVisible({ timeout: 15000 });
+    }
   });
 
   test('task status can be toggled', async ({ page }) => {
     // Global-setup seeds [E2E] Test Daily Quest task linked to today's daily plan
     // The seeded task should appear because localStorage is set to current quarter/week
 
-    const taskToggles = page.locator('[data-testid^="task-status-"]');
-    await expect(taskToggles.first()).toBeVisible({ timeout: 15000 });
-
-    const firstToggle = taskToggles.first();
+    // Hanya task uji: test user = akun nyata, jadi jangan sentuh task lain di halaman.
+    const seeded = page.locator('[data-testid^="task-card-"]', { hasText: '[E2E] Test Daily Quest' });
+    const firstToggle = seeded.locator('[data-testid^="task-status-"]').first();
+    await expect(firstToggle).toBeVisible({ timeout: 15000 });
     // Get current visual state before clicking
     const initialClass = await firstToggle.getAttribute('class');
     await firstToggle.click();

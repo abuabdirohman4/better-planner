@@ -9,18 +9,13 @@ import { useLiveTimerNotification } from './PomodoroTimer/hooks/useLiveTimerNoti
 import { useDailyPlanManagement } from './DailyQuest/hooks/useDailyPlanManagement';
 import WeekSelector from './DateSelector/WeekSelector';
 import DaySelector from './DateSelector/DaySelector';
-import BrainDumpSection from './BrainDump/BrainDumpSection';
-import BestWeekReferenceSection from './BestWeekReference/BestWeekReferenceSection';
+import JournalTab from './Journal/JournalTab';
 import ActivityLog from './ActivityLog/ActivityLog';
-import PomodoroTimer from './PomodoroTimer/PomodoroTimer';
+import TimerEngine from './PomodoroTimer/TimerEngine';
 import DailySyncClient from './DailyQuest/DailySyncClient';
 import { getWeekDates, getLocalDateString } from '@/lib/dateUtils';
-import OneMinuteJournalModal from './Journal/OneMinuteJournalModal';
-import { useJournal } from './Journal/hooks/useJournal';
 import CollapsibleCard from '@/components/common/CollapsibleCard';
 import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
-import TargetFocus from "./TargetFocus/TargetFocus";
-import DailyStats from "./DailyStats/DailyStats";
 
 export default function DailySyncPage() {
   const {
@@ -42,28 +37,12 @@ export default function DailySyncPage() {
   const selectedDateStr = getLocalDateString(selectedDate);
 
   const { displayWeek, totalWeeks } = weekCalculations;
-  const { loading, initialLoading, dailyPlan, mutate, completedSessions, handleStatusChange } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
+  const { loading, initialLoading, dailyPlan } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
 
-  // Tombol "Mark as Done" di timer: cari item daily plan dari task yang terakhir dijalankan.
-  const findPlanItem = (taskId: string) => dailyPlan?.daily_plan_items?.find((i: { item_id: string }) => i.item_id === taskId);
-  const markTimerTaskDone = async (taskId: string) => {
-    const item = findPlanItem(taskId);
-    if (item) await handleStatusChange(item.id, 'DONE');
-  };
-  const isTimerTaskDone = (taskId: string) => { const item = findPlanItem(taskId); return !item || item.status === 'DONE'; };
+  const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
 
-  // Journal modal hook
-  const {
-    isJournalModalOpen,
-    pendingActivityData,
-    closeJournalModal,
-    saveJournal,
-    openJournalModal,
-    isRetrying,
-    retryCount,
-  } = useJournal();
-
-  const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr, openJournalModal);
+  // Halaman kiri buku = Perencanaan, halaman kanan = Jurnal (app-2pxn).
+  const [pageTab, setPageTab] = useState<'plan' | 'journal'>('plan');
 
   // Card collapse states
   const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
@@ -76,7 +55,7 @@ export default function DailySyncPage() {
 
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
-  // Notifikasi timer di HP (sekali saja — PomodoroTimer dirender 2x: mobile + desktop)
+  // Notifikasi timer di HP
   useLiveTimerNotification();
 
   useEffect(() => {
@@ -120,31 +99,32 @@ export default function DailySyncPage() {
               setSelectedDayIdx={setSelectedDayIdx}
             />
           </div>
-          {/* <BestWeekReferenceSection /> */}
 
-          {/* Daily Stats & Target Focus Component */}
-          <div className="block md:hidden mb-6">
-            <CollapsibleCard
-              isCollapsed={cardCollapsed.pomodoroTimer}
-              onToggle={() => toggleCardCollapsed('pomodoroTimer')}
-            >
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 relative">
-                <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                <PomodoroTimer onMarkDone={markTimerTaskDone} isTaskDone={isTimerTaskDone} />
-              </div>
-            </CollapsibleCard>
+          <div className="mb-4 flex w-full rounded-lg bg-gray-100 p-1 dark:bg-gray-800" role="tablist" data-testid="daily-sync-page-tabs">
+            {([['plan', 'Perencanaan'], ['journal', 'Jurnal']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={pageTab === key}
+                data-testid={`page-tab-${key}`}
+                onClick={() => setPageTab(key)}
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                  pageTab === key
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          <div className="block md:hidden mt-4 mb-6 space-y-4">
-            <TargetFocus selectedDate={selectedDateStr} />
-            <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
-          </div>
-
+          {pageTab === 'journal' ? (
+            <JournalTab date={selectedDateStr} />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div className="hidden md:block mb-6">
-                <DailyStats dailyPlan={dailyPlan} completedSessions={completedSessions} />
-              </div>
               <DailySyncClient
                 year={year}
                 quarter={quarter}
@@ -158,21 +138,6 @@ export default function DailySyncPage() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              <div className="hidden md:block">
-                <BestWeekReferenceSection />
-                <TargetFocus selectedDate={selectedDateStr} />
-              </div>
-              <div className="hidden md:block">
-                <CollapsibleCard
-                  isCollapsed={cardCollapsed.pomodoroTimer}
-                  onToggle={() => toggleCardCollapsed('pomodoroTimer')}
-                >
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 pomodoro-timer relative">
-                    <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">Pomodoro Timer</h3>
-                    <PomodoroTimer onMarkDone={markTimerTaskDone} isTaskDone={isTimerTaskDone} />
-                  </div>
-                </CollapsibleCard>
-              </div>
               <CollapsibleCard
                 isCollapsed={cardCollapsed.activityLog}
                 onToggle={() => toggleCardCollapsed('activityLog')}
@@ -187,22 +152,11 @@ export default function DailySyncPage() {
               </CollapsibleCard>
             </div>
           </div>
-          <BrainDumpSection date={selectedDateStr} />
+          )}
         </>
       )}
 
-      {/* One Minute Journal Modal */}
-      <OneMinuteJournalModal
-        isOpen={isJournalModalOpen}
-        onClose={closeJournalModal}
-        onSave={async (whatDone, whatThink, energy) => {
-          await saveJournal({ whatDone, whatThink, energy });
-        }}
-        taskTitle={pendingActivityData?.taskTitle}
-        duration={pendingActivityData?.duration || 0}
-        isRetrying={isRetrying}
-        retryCount={retryCount}
-      />
+      <TimerEngine />
     </div>
   );
 }

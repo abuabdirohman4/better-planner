@@ -8,6 +8,7 @@ import { verifyCronRequest } from '@/lib/notifications/utils/cronAuth'
 import { createServiceClient } from '@/lib/supabase/service'
 import { computeDue, DEFAULT_PUSH_SETTINGS, type DueInput, type PushSettings } from '@/lib/notifications/services/pushDue'
 import { sendPushToUser } from '@/lib/notifications/services/pushService'
+import { completeDueFocusSessions } from '@/lib/timerSessionServer'
 import { isScheduledOn } from '@/app/(admin)/habits/actions/habits/logic'
 
 export const maxDuration = 30
@@ -38,7 +39,10 @@ export async function POST(request: Request) {
       timezone: p.notification_settings?.timezone || 'Asia/Jakarta',
       push: { ...DEFAULT_PUSH_SETTINGS, ...(p.notification_settings?.push as Partial<PushSettings>) },
     }))
-    if (!users.length) return Response.json({ success: true, checked: 0, sent: 0, skipped: 0 })
+    if (!users.length) {
+      await finishDueSessions(supabase, now)
+      return Response.json({ success: true, checked: 0, sent: 0, skipped: 0 })
+    }
 
     const userIds = users.map(u => u.user_id)
 
@@ -119,9 +123,22 @@ export async function POST(request: Request) {
       }
     }
 
-    return Response.json({ success: true, checked: due.length, sent, skipped, errors })
+    // After the push loop on purpose: the end-of-focus push reads FOCUSING rows, so closing first would drop it
+    const completedSessions = await finishDueSessions(supabase, now)
+
+    return Response.json({ success: true, checked: due.length, sent, skipped, errors, completedSessions })
   } catch (error) {
     console.error('[cron/push-due]', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+/** Safety net for focus sessions the client never completed; must never break the push run. */
+async function finishDueSessions(supabase: ReturnType<typeof createServiceClient>, now: Date) {
+  try {
+    return await completeDueFocusSessions(supabase, now)
+  } catch (err) {
+    console.error('[cron/push-due] completeDueFocusSessions', err)
+    return 0
   }
 }

@@ -13,6 +13,7 @@ interface WorkQuestModalProps {
   selectedTasks: string[];
   onTaskToggle: (taskId: string) => void;
   onSave: () => void;
+  tabs?: React.ReactNode;
   isLoading: boolean;
   savingLoading: boolean;
   completedTodayCount?: number;
@@ -34,6 +35,7 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
   selectedTasks,
   onTaskToggle,
   onSave,
+  tabs,
   isLoading,
   savingLoading,
   completedTodayCount = 0
@@ -173,7 +175,7 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Pilih Work Quest
+              Daily Focus
             </h2>
             <p className="text-gray-700 font-medium">
               Selected : {selectedCount} Quest
@@ -196,6 +198,8 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
             </svg>
           </button>
         </div>
+
+        {tabs}
 
         {/* Search */}
         {/* <div className="mb-4">
