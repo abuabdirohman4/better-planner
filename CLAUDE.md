@@ -155,6 +155,8 @@ bd create --title="[beplan] ..." --type=task --priority=2 --label=beplan
 
 **📖 For complete application structure, component organization, and architecture patterns, READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)**
 
+**🧭 Better Planner = versi digital Sync Planner (buku 4.0, Pak Agus).** Sebelum menyentuh fitur perencanaan (quest/HFG, weekly sync, daily sync, timer/siklus, habit/ritual), BACA [`docs/references/sync-planner.md`](docs/references/sync-planner.md): istilah, aturan (Power of 3, Daily Focus, Siklus Kerja, Tugas Lain, Daily Rutin), peta ke tabel, dan keputusan desain Abu. Buku menang atas kebiasaan app lama.
+
 ---
 
 ## 🔧 Development Commands
