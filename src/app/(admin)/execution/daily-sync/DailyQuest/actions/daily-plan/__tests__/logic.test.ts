@@ -8,6 +8,7 @@ import {
   buildItemsToInsert,
   defaultFocusDuration,
   remapSchedules,
+  pickRoutinesToSeed,
 } from '../logic';
 import { RawDailyPlanItem, RawTaskSchedule } from '../queries';
 
@@ -174,5 +175,22 @@ describe('remapSchedules', () => {
 
   it('returns empty array for empty inputs', () => {
     expect(remapSchedules([], [])).toEqual([]);
+  });
+});
+
+describe('pickRoutinesToSeed (app-fj81)', () => {
+  const tasks = [
+    { id: 'clean', repeat_days: [0, 1, 2, 3, 4, 5, 6] },
+    { id: 'weekly', repeat_days: [0] },
+    { id: 'manual', repeat_days: null },
+    { id: 'aw', repeat_days: [1, 2, 3, 4, 5] },
+  ];
+
+  it('Minggu: harian + Weekly Sync, tanpa yang manual/hari kerja', () => {
+    expect(pickRoutinesToSeed(tasks, '2026-10-11', new Set())).toEqual(['clean', 'weekly']);
+  });
+
+  it('Selasa: harian + hari kerja; yang sudah ada di rencana tidak dimasukkan lagi', () => {
+    expect(pickRoutinesToSeed(tasks, '2026-10-06', new Set(['clean']))).toEqual(['aw']);
   });
 });

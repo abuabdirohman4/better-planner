@@ -2,7 +2,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CarryOverType, SourceTask } from './logic';
 
-const COLS = 'id, title, description, status, is_archived, focus_duration, parent_task_id, created_at';
+const COLS = 'id, title, description, status, is_archived, focus_duration, repeat_days, parent_task_id, created_at';
 
 export async function queryTopTasksBefore(
   supabase: SupabaseClient,

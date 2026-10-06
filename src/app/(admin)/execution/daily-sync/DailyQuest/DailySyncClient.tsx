@@ -7,7 +7,6 @@ import MainQuestModal from './components/MainQuestModal';
 import WorkQuestModal from './components/WorkQuestModal';
 import DailyQuestModal from './components/DailyQuestModal';
 import SideQuestModal from './components/SideQuestModal';
-import TaskItemCard from './components/TaskItemCard';
 import SortableTaskItemCard from './components/SortableTaskItemCard';
 import DailyFocusCard from './components/DailyFocusCard';
 import WorkCyclesCard from './components/WorkCyclesCard';
@@ -79,7 +78,7 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   }
 
   const groupedItems = groupItemsByType(effectiveDailyPlan?.daily_plan_items);
-  const { core, bonus, side, routine, missingHfg } = splitDailyItems(effectiveDailyPlan?.daily_plan_items);
+  const { core, bonus, other, missingHfg } = splitDailyItems(effectiveDailyPlan?.daily_plan_items);
 
   const openAdd = (kind: AddKind) => {
     if (kind === 'MAIN_QUEST') handleOpenModal('main');
@@ -101,7 +100,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     onConvertToChecklist: handleConvertToChecklist,
     onConvertToQuest: handleConvertToQuest,
   });
-  const renderItem = (item: DailyPlanItem) => <TaskItemCard {...cardProps(item)} />;
   const renderSortable = (item: DailyPlanItem) => <SortableTaskItemCard id={item.id} {...cardProps(item)} />;
 
   const existingSideQuestIds = groupedItems.SIDE_QUEST.map(i => i.item_id);
@@ -119,17 +117,13 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
         />
         <WorkCyclesCard date={selectedDate} />
         <OtherTasksCard
-          items={side}
-          renderItem={renderItem}
+          items={other}
+          renderItem={renderSortable}
+          onReorder={handleReorder}
           onAdd={openAdd}
           onQuickAddSide={handleAddSideQuest}
         />
-        <DailyRitualCard
-          selectedDate={selectedDate}
-          routine={routine}
-          renderItem={renderItem}
-          onAddDaily={() => openAdd('DAILY_QUEST')}
-        />
+        <DailyRitualCard selectedDate={selectedDate} />
       </div>
 
       <MainQuestModal

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { addDailyQuest } from '../actions/dailyQuestActions';
-import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest, updateDailyPlanItemsDisplayOrder } from '../actions';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest, updateDailyPlanItemsDisplayOrder, seedRecurringRoutines } from '../actions';
 import type { DailyPlanItem } from '@/types/daily-plan';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
@@ -245,7 +245,13 @@ export function useDailyPlanManagement(
     mutate: mutateDailyPlan
   } = useSWR(
     selectedDate ? dailySyncKeys.dailyPlan(selectedDate) : null,
-    () => getDailyPlan(selectedDate),
+    async () => {
+      const plan = await getDailyPlan(selectedDate);
+      // Rutin terjadwal masuk sekali per rencana (app-fj81); server menolak tanggal lampau & isi ganda.
+      if (plan?.routines_seeded_at) return plan;
+      const { added } = await seedRecurringRoutines(selectedDate);
+      return added > 0 ? getDailyPlan(selectedDate) : plan;
+    },
     {
       revalidateOnFocus: false, // ✅ OPTIMIZED: Disabled - daily plan doesn't need focus revalidation
       revalidateIfStale: true, // ✅ ENABLED - Allow revalidation of stale data

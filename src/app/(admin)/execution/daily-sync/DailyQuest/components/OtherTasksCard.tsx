@@ -3,20 +3,34 @@
 import React, { useState } from 'react';
 import { ListTodo } from 'lucide-react';
 import type { DailyPlanItem } from '@/types/daily-plan';
-import { CORE_SLOTS } from '../utils/dailyFocus';
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CORE_SLOTS, reorderIds } from '../utils/dailyFocus';
 import DailyCardShell from './DailyCardShell';
 import AddItemMenu, { type AddKind } from './AddItemMenu';
 
 interface OtherTasksCardProps {
+  /** Side + rutin Daily, sudah urut display_order. */
   items: DailyPlanItem[];
+  /** Harus merender kartu yang sortable (SortableTaskItemCard). */
   renderItem: (item: DailyPlanItem) => React.ReactNode;
+  onReorder: (order: { id: string; display_order: number }[]) => void;
   onAdd: (kind: AddKind) => void;
   onQuickAddSide: (title: string) => Promise<void> | void;
 }
 
-const KINDS: AddKind[] = ['SIDE_QUEST'];
+const KINDS: AddKind[] = ['SIDE_QUEST', 'DAILY_QUEST'];
 
-export default function OtherTasksCard({ items, renderItem, onAdd, onQuickAddSide }: OtherTasksCardProps) {
+export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, onQuickAddSide }: OtherTasksCardProps) {
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor), useSensor(KeyboardSensor));
+  const ids = items.map((i) => i.id);
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over) return;
+    const order = reorderIds(ids, String(active.id), String(over.id));
+    if (order) onReorder(order);
+  };
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -33,22 +47,22 @@ export default function OtherTasksCard({ items, renderItem, onAdd, onQuickAddSid
     }
   };
 
-  const sorted = [...items].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
-  const core = sorted.slice(0, CORE_SLOTS);
-  const bonus = sorted.slice(CORE_SLOTS);
+  const core = items.slice(0, CORE_SLOTS);
+  const bonus = items.slice(CORE_SLOTS);
 
   return (
     <DailyCardShell
       testId="daily-sync-other-section"
       icon={<ListTodo className="h-5 w-5" />}
       title="Tugas Lain"
-      hint="Side Quest kecil"
-      action={<AddItemMenu kinds={KINDS} onPick={onAdd} testId="other-add" label="Pilih Side" />}
+      hint="Tugas kecil ≤30 menit + rutin hari ini"
+      action={<AddItemMenu kinds={KINDS} onPick={onAdd} testId="other-add" />}
     >
       {items.length === 0 ? (
         <p className="py-4 text-center text-sm text-gray-500">Tidak ada tugas lain hari ini</p>
       ) : (
-        <>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {core.map((item, idx) => (
             <div key={item.id} data-testid="other-core-item" className="flex items-center gap-2">
               <span className="mb-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{idx + 1}</span>
@@ -68,7 +82,8 @@ export default function OtherTasksCard({ items, renderItem, onAdd, onQuickAddSid
               ))}
             </div>
           ) : null}
-        </>
+        </SortableContext>
+        </DndContext>
       )}
 
       <form onSubmit={submit} className="mt-1 flex gap-2">

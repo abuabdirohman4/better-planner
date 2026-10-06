@@ -35,16 +35,15 @@ describe('splitDailyItems', () => {
     expect(splitDailyItems(items).missingHfg).toBe(true);
   });
 
-  it('Side and Daily never enter focus; each ordered by display_order', () => {
+  it('Side + Daily go to Tugas Lain in one display_order list, never to focus (app-fj81)', () => {
     const items = [
       item('d2', { item_type: 'DAILY_QUEST', display_order: 2 }),
       item('d1', { item_type: 'DAILY_QUEST', display_order: 1 }),
-      item('s1', { item_type: 'SIDE_QUEST', display_order: 1 }),
+      item('s1', { item_type: 'SIDE_QUEST', display_order: 3 }),
       item('w', { display_order: 1 }),
     ];
     const r = splitDailyItems(items);
-    expect(r.side.map((i) => i.id)).toEqual(['s1']);
-    expect(r.routine.map((i) => i.id)).toEqual(['d1', 'd2']);
+    expect(r.other.map((i) => i.id)).toEqual(['d1', 'd2', 's1']);
     expect(r.core.map((i) => i.id)).toEqual(['w']);
   });
 });

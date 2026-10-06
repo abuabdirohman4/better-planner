@@ -1,10 +1,11 @@
 // app-70vs: pengelompokan halaman Daily Sync menurut JENIS item (bukan flag).
-// Daily Focus = HFG + Work (urut display_order; 3 teratas = inti), Tugas Lain = Side, Rutinitas = Daily.
+// Daily Focus = HFG + Work (urut display_order; 3 teratas = inti), Tugas Lain = Side + rutin Daily (app-fj81).
 import type { DailyPlanItem } from '@/types/daily-plan';
 
 export const CORE_SLOTS = 3;
 
 const FOCUS_TYPES = ['MAIN_QUEST', 'WORK_QUEST'];
+const OTHER_TYPES = ['SIDE_QUEST', 'DAILY_QUEST'];
 
 const KIND_LABEL: Record<string, string> = {
   MAIN_QUEST: 'HFG',
@@ -22,10 +23,8 @@ export interface SplitItems {
   core: DailyPlanItem[];
   /** Sisanya, dikerjakan setelah inti beres. */
   bonus: DailyPlanItem[];
-  /** Side Quest. */
-  side: DailyPlanItem[];
-  /** Daily Quest (Rutinitas). */
-  routine: DailyPlanItem[];
+  /** Tugas Lain: Side Quest + rutin (Daily Quest), satu urutan drag. */
+  other: DailyPlanItem[];
   /** Ada item inti tapi tak satu pun HFG. */
   missingHfg: boolean;
 }
@@ -36,8 +35,7 @@ export function splitDailyItems(items: DailyPlanItem[] = []): SplitItems {
   return {
     core,
     bonus: focus.slice(CORE_SLOTS),
-    side: items.filter((i) => i.item_type === 'SIDE_QUEST').sort(byOrder),
-    routine: items.filter((i) => i.item_type === 'DAILY_QUEST').sort(byOrder),
+    other: items.filter((i) => OTHER_TYPES.includes(i.item_type)).sort(byOrder),
     missingHfg: core.length > 0 && !core.some((i) => i.item_type === 'MAIN_QUEST'),
   };
 }

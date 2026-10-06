@@ -15,6 +15,8 @@ import {
   queryWeeklyGoalIdsForWeek,
   deletePlanItem,
   updatePlanItemsDisplayOrderBatch,
+  queryRecurringDailyQuests,
+  claimRoutineSeeding,
 } from './queries';
 import {
   buildExistingItemsMap,
@@ -23,7 +25,10 @@ import {
   extractScheduleBackups,
   buildItemsToInsert,
   remapSchedules,
+  dayOfWeek,
+  pickRoutinesToSeed,
 } from './logic';
+import { getQuarterDates, quarterOfDate } from '@/lib/quarterUtils';
 
 function revalidatePlanning() {
   revalidatePath('/planning/main-quests');
@@ -180,4 +185,36 @@ export async function updateDailyPlanItemsDisplayOrder(
     console.error('Error updating daily plan items order:', error);
     throw new Error('Gagal update urutan task: ' + ((error as Error).message || ''));
   }
+}
+
+/**
+ * Isi rutin terjadwal ke rencana `date`, SEKALI per rencana (app-fj81). Rutin yang Abu hapus
+ * tidak muncul lagi hari itu. Tanggal lampau tidak diisi.
+ */
+export async function seedRecurringRoutines(date: string): Promise<{ added: number }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { added: 0 };
+
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+  if (date < today) return { added: 0 };
+
+  const { year, quarter } = quarterOfDate(new Date(`${date}T12:00:00+07:00`));
+  const { startDate, endExclusive } = getQuarterDates(year, quarter);
+  const recurring = await queryRecurringDailyQuests(supabase, user.id, startDate.toISOString(), endExclusive.toISOString());
+  const dow = dayOfWeek(date);
+  if (!recurring.some((t) => t.repeat_days?.includes(dow))) return { added: 0 };
+
+  const plan = await upsertDailyPlan(supabase, user.id, date);
+  if (!(await claimRoutineSeeding(supabase, plan.id))) return { added: 0 };
+
+  const existing = await queryExistingPlanItems(supabase, plan.id);
+  const ids = pickRoutinesToSeed(recurring, date, new Set(existing.map((i) => i.item_id)));
+  if (ids.length === 0) return { added: 0 };
+
+  await insertPlanItems(
+    supabase,
+    buildItemsToInsert(ids.map((item_id) => ({ item_id, item_type: 'DAILY_QUEST' })), plan.id, buildExistingItemsMap(existing))
+  );
+  return { added: ids.length };
 }

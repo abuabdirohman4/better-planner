@@ -121,3 +121,19 @@ export function remapSchedules(
     })
     .filter((s): s is RestoredSchedule => s !== null);
 }
+
+/** Hari (0=Min..6=Sab) dari tanggal "YYYY-MM-DD", tanpa pengaruh zona waktu proses. */
+export const dayOfWeek = (date: string) => new Date(date + 'T00:00:00Z').getUTCDay();
+
+/**
+ * Rutin (Daily Quest berulang) yang perlu dimasukkan ke rencana `date` (app-fj81):
+ * repeat_days memuat hari itu dan belum ada di rencana. repeat_days NULL = tidak berulang.
+ */
+export function pickRoutinesToSeed(
+  tasks: { id: string; repeat_days: number[] | null }[],
+  date: string,
+  existingItemIds: Set<string>
+): string[] {
+  const dow = dayOfWeek(date);
+  return tasks.filter((t) => t.repeat_days?.includes(dow) && !existingItemIds.has(t.id)).map((t) => t.id);
+}

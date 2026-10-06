@@ -8,6 +8,7 @@ export {
   convertToChecklist,
   convertToQuest,
   updateDailyPlanItemsDisplayOrder,
+  seedRecurringRoutines,
 } from './daily-plan/actions';
 
 export {
