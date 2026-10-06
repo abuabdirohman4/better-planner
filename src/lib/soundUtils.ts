@@ -112,20 +112,35 @@ export const FOCUS_SOUND_OPTIONS: SoundOption[] = [
   }
 ];
 
-// Load custom audio file
+// Satu AudioContext untuk semua suara. Dulu tiap decode membuat AudioContext baru yang tak pernah ditutup;
+// browser membatasi jumlahnya (Chrome ~6, iOS lebih sedikit), jadi setelah beberapa siklus suara mati
+// sampai halaman di-refresh.
+function getAudioContext(): AudioContext {
+  if (!globalAudioContext || globalAudioContext.state === 'closed') {
+    globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return globalAudioContext;
+}
+
+const decodedAudio = new Map<string, Promise<AudioBuffer>>();
+
+// Load custom audio file (sekali per file; hasil decode dipakai ulang)
 async function loadCustomAudio(filePath: string): Promise<AudioBuffer> {
+  let pending = decodedAudio.get(filePath);
+  if (!pending) {
+    pending = (async () => {
+      const response = await fetch(filePath);
+      if (!response.ok) {
+        throw new Error(`Failed to load audio file: ${response.status} ${response.statusText}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      return getAudioContext().decodeAudioData(arrayBuffer);
+    })();
+    decodedAudio.set(filePath, pending);
+    pending.catch(() => decodedAudio.delete(filePath)); // gagal = boleh dicoba lagi
+  }
   try {
-    const response = await fetch(filePath);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load audio file: ${response.status} ${response.statusText}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
-    return audioBuffer;
+    return await pending;
   } catch (error) {
     console.error('Error loading custom audio:', error);
     throw error;
@@ -226,12 +241,9 @@ export function initializeAudioContext(): Promise<void> {
 
     const initAudio = async () => {
       try {
-        if (!globalAudioContext) {
-          globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-        
-        if (globalAudioContext.state === 'suspended') {
-          await globalAudioContext.resume();
+        const ctx = getAudioContext();
+        if (ctx.state !== 'running') {
+          await ctx.resume();
         }
         
         audioContextInitialized = true;
@@ -278,9 +290,7 @@ export async function playSound(soundId: string, volume: number = 0.5): Promise<
     }
 
     // Create or reuse audio context
-    if (!globalAudioContext) {
-      globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
+    getAudioContext();
     
     if (!globalAudioContext) {
       console.warn('Web Audio API not supported, falling back to system sound');
@@ -289,7 +299,7 @@ export async function playSound(soundId: string, volume: number = 0.5): Promise<
     }
 
     // Resume audio context if suspended (required for user interaction)
-    if (globalAudioContext.state === 'suspended') {
+    if (globalAudioContext.state !== 'running') {
       await globalAudioContext.resume();
     }
 
@@ -387,13 +397,15 @@ export async function playFocusSoundLoop(soundId: string, volume: number = 0.5):
     }
 
     // Resume audio context if suspended (required for user interaction)
-    if (globalAudioContext.state === 'suspended') {
+    if (globalAudioContext.state !== 'running') {
       try {
         await globalAudioContext.resume();
       } catch (error) {
         console.warn('Failed to resume AudioContext:', error);
-        // Try to create new context
-        globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        // Ganti konteks: tutup yang lama dulu supaya tidak menumpuk
+        globalAudioContext.close().catch(() => {});
+        globalAudioContext = null;
+        getAudioContext();
       }
     }
 
