@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSoundStore } from '@/stores/soundStore';
 import { TIMER_SOUND_OPTIONS, COMPLETION_SOUND_OPTIONS, FOCUS_SOUND_OPTIONS, playSound, stopCurrentSound } from '@/lib/soundUtils';
 
@@ -23,17 +23,20 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   // Load settings from server when component mounts
+  const wasOpen = useRef(false);
   useEffect(() => {
     if (isOpen && !hasLoaded) {
       loadSettings().then(() => {
         setHasLoaded(true);
       });
     } else if (!isOpen) {
-      // Stop any playing sound when modal is closed
-      stopCurrentSound();
+      // Hentikan pratinjau HANYA saat modal ditutup setelah terbuka. Dulu ikut jalan saat komponen sekadar
+      // terpasang tertutup (panel siklus ganti ke break) dan memotong suara selesai siklus.
+      if (wasOpen.current) stopCurrentSound();
       setIsPlaying(null);
       setHasLoaded(false); // Reset for next time
     }
+    wasOpen.current = isOpen;
   }, [isOpen, loadSettings, hasLoaded]);
 
   if (!isOpen) return null;
