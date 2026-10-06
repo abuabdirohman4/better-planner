@@ -49,7 +49,7 @@ const DaySelector: React.FC<DaySelectorProps> = ({
         <button
           key={`day-${date.toISOString()}`}
           onClick={() => setSelectedDayIdx(idx)}
-          className={`flex-shrink-0 w-20 min-w-[80px] px-2 py-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
+          className={`flex-shrink-0 w-20 min-w-[80px] h-14 px-2 rounded-lg border text-sm font-medium transition-all text-center ${selectedDayIdx === idx ? 'bg-brand-500 text-white border-brand-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-brand-100 dark:hover:bg-brand-900/30'}`}
         >
           <div className="flex flex-col items-center">
             <span className="text-xs font-semibold">{daysOfWeek[idx]}</span>

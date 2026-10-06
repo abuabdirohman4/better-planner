@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { ListTodo } from 'lucide-react';
 import type { DailyPlanItem } from '@/types/daily-plan';
 import {
-  DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
+  DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CORE_SLOTS, reorderIds } from '../utils/dailyFocus';
 import DailyCardShell from './DailyCardShell';
-import AddItemMenu, { type AddKind } from './AddItemMenu';
+import type { AddKind } from './AddItemMenu';
 
 interface OtherTasksCardProps {
   /** Side + rutin Daily, sudah urut display_order. */
@@ -21,10 +21,14 @@ interface OtherTasksCardProps {
   onQuickAddSide: (title: string) => Promise<void> | void;
 }
 
-const KINDS: AddKind[] = ['SIDE_QUEST', 'DAILY_QUEST'];
 
 export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, onQuickAddSide }: OtherTasksCardProps) {
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor), useSensor(KeyboardSensor));
+  // Mouse: geser 5px; sentuh: tekan 150 ms dulu supaya gulir halaman tidak dianggap drag (app-mgsb).
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
   const ids = items.map((i) => i.id);
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over) return;
@@ -56,18 +60,14 @@ export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, on
       icon={<ListTodo className="h-5 w-5" />}
       title="Tugas Lain"
       hint="Tugas kecil ≤30 menit + rutin hari ini"
-      action={<AddItemMenu kinds={KINDS} onPick={onAdd} testId="other-add" />}
     >
       {items.length === 0 ? (
         <p className="py-4 text-center text-sm text-gray-500">Tidak ada tugas lain hari ini</p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {core.map((item, idx) => (
-            <div key={item.id} data-testid="other-core-item" className="flex items-center gap-2">
-              <span className="mb-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">{idx + 1}</span>
-              <div className="min-w-0 flex-1">{renderItem(item)}</div>
-            </div>
+          {core.map((item) => (
+            <div key={item.id} data-testid="other-core-item">{renderItem(item)}</div>
           ))}
           {bonus.length > 0 ? (
             <div data-testid="other-bonus">
@@ -75,16 +75,14 @@ export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, on
                 Tambahan — setelah 3 inti beres
               </p>
               {bonus.map((item) => (
-                <div key={item.id} className="flex items-center gap-2">
-                  <span className="mb-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 text-sm font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">+</span>
-                  <div className="min-w-0 flex-1">{renderItem(item)}</div>
-                </div>
+                <div key={item.id}>{renderItem(item)}</div>
               ))}
             </div>
           ) : null}
         </SortableContext>
         </DndContext>
       )}
+
 
       <form onSubmit={submit} className="mt-1 flex gap-2">
         <input
@@ -103,6 +101,15 @@ export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, on
           Tambah
         </button>
       </form>
+
+      <button
+        type="button"
+        data-testid="other-add"
+        onClick={() => onAdd('SIDE_QUEST')}
+        className="mt-2 w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600"
+      >
+        Pilih Quest
+      </button>
     </DailyCardShell>
   );
 }

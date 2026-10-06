@@ -4,6 +4,7 @@ import { classifyCycle, buildWorkCycles, type FocusLog } from '../workCycles';
 const log = (id: string, minutes: number, over: Partial<FocusLog> = {}): FocusLog => ({
   id,
   type: 'FOCUS',
+  task_id: `task-${id}`,
   task_title: `Task ${id}`,
   task_type: 'WORK_QUEST',
   start_time: `2026-10-05T0${id}:00:00Z`,
@@ -19,53 +20,54 @@ describe('classifyCycle', () => {
     expect(classifyCycle(79)).toBe(60);
     expect(classifyCycle(50)).toBe(60);
     expect(classifyCycle(49)).toBe(25);
-    expect(classifyCycle(25)).toBe(25);
   });
 });
 
-describe('buildWorkCycles', () => {
-  it('90 HFG mengisi kotak HFG; 90 non-HFG & 60 ke routine; 25 jadi titik', () => {
-    const c = buildWorkCycles([
-      log('1', 90, { task_type: 'MAIN_QUEST', task_title: 'HFG A' }),
-      log('2', 85, { task_type: 'WORK_QUEST', task_title: 'Work 90' }),
-      log('3', 60, { task_title: 'FM-2' }),
-      log('4', 25, { task_title: 'PR #715' }),
-      log('5', 25, { task_title: 'PR #715' }),
-      log('6', 20, { task_title: 'GM' }),
-      log('7', 5, { type: 'SHORT_BREAK' }),
-    ]);
-    expect(c.hfg?.title).toBe('HFG A');
-    expect(c.routine.map((r) => r.title)).toEqual(['Work 90', 'FM-2']);
-    expect(c.routine.map((r) => r.cls)).toEqual([90, 60]);
-    expect(c.mainDone).toBe(3);
-    expect(c.short).toEqual({ count: 3, minutes: 70, tasks: [{ title: 'PR #715', count: 2, minutes: 50 }, { title: 'GM', count: 1, minutes: 20 }] });
+describe('buildWorkCycles (app-mgsb)', () => {
+  it('tanpa rencana: bawaan 90 + 3x60; 90 jenis apa pun mengisi baris 90', () => {
+    const c = buildWorkCycles([log('1', 90, { task_type: 'SIDE_QUEST' }), log('2', 60)]);
+    expect(c.rows.map((r) => r.minutes)).toEqual([90, 60, 60, 60]);
+    expect(c.rows[0].done?.id).toBe('1');
+    expect(c.rows[1].done?.id).toBe('2');
+    expect(c.done).toBe(2);
   });
 
-  it('task 25/5 diurut sesi terbanyak, lalu menit', () => {
-    const c = buildWorkCycles([
-      log('1', 20, { task_title: 'A' }),
-      log('2', 25, { task_title: 'B' }),
-      log('3', 25, { task_title: 'C' }),
-      log('4', 25, { task_title: 'C' }),
-    ]);
-    expect(c.short.tasks.map((t) => t.title)).toEqual(['C', 'B', 'A']);
+  it('log mengisi baris yang merencanakan task itu, walau bukan baris kosong pertama', () => {
+    const plan = [
+      { minutes: 90, item_id: null },
+      { minutes: 60, item_id: 'task-a' },
+      { minutes: 60, item_id: 'task-b' },
+    ];
+    const c = buildWorkCycles([log('1', 60, { task_id: 'task-b' })], plan);
+    expect(c.rows[2].done?.id).toBe('1');
+    expect(c.rows[1].done).toBeNull();
   });
 
-  it('HFG 90 kedua masuk routine; mainDone maksimal 4', () => {
-    const c = buildWorkCycles([
-      log('1', 90, { task_type: 'MAIN_QUEST' }),
-      log('2', 90, { task_type: 'MAIN_QUEST' }),
-      log('3', 60),
-      log('4', 60),
-      log('5', 60),
-    ]);
-    expect(c.routine).toHaveLength(4);
-    expect(c.mainDone).toBe(4);
+  it('60 diperpanjang jadi 90 tetap mengisi baris rencananya', () => {
+    const c = buildWorkCycles([log('1', 90, { task_id: 'task-a' })], [{ minutes: 60, item_id: 'task-a' }]);
+    expect(c.rows[0].done?.cls).toBe(90);
   });
 
-  it('60 menit task HFG tidak mengisi kotak HFG', () => {
-    const c = buildWorkCycles([log('1', 60, { task_type: 'MAIN_QUEST' })]);
-    expect(c.hfg).toBeNull();
-    expect(c.routine).toHaveLength(1);
+  it('kelebihan 60/90 jadi extra; semua 25 menit ke Alternatif 25/5', () => {
+    const c = buildWorkCycles(
+      [log('1', 60), log('2', 60), log('3', 25, { task_title: 'PR' }), log('4', 20, { task_title: 'PR' })],
+      [{ minutes: 60, item_id: null }],
+    );
+    expect(c.extra.map((e) => e.id)).toEqual(['2']);
+    expect(c.short).toEqual({ count: 2, minutes: 45, tasks: [{ title: 'PR', count: 2, minutes: 45 }] });
+  });
+
+  it('25 menit tidak mencentang baris 90/60 walau task-nya sama; baris rencana < 50 menit diabaikan', () => {
+    const plan = [{ minutes: 90, item_id: 'task-pr' }, { minutes: 25, item_id: null }, { minutes: 60, item_id: null }];
+    const c = buildWorkCycles([log('1', 25, { task_id: 'task-pr' })], plan);
+    expect(c.rows.map((r) => r.minutes)).toEqual([90, 60]);
+    expect(c.rows.every((r) => !r.done)).toBe(true);
+    expect(c.short.count).toBe(1);
+  });
+
+  it('siklus task lain tidak menempati baris yang sudah direncanakan untuk task berbeda', () => {
+    const c = buildWorkCycles([log('1', 60, { task_id: 'task-x' })], [{ minutes: 60, item_id: 'task-a' }]);
+    expect(c.rows[0].done).toBeNull();
+    expect(c.extra.map((e) => e.id)).toEqual(['1']);
   });
 });

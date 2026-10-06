@@ -390,10 +390,10 @@ export function useDailyPlanManagement(
 
     const currentSelections = getCurrentDailyPlanSelections(modalType);
 
-    if (modalType === 'main') {
-      setSelectedTasks(currentSelections as Record<string, boolean>);
-    } else if (modalType === 'work') {
-      setSelectedWorkQuests(currentSelections as string[]);
+    if (modalType === 'main' || modalType === 'work') {
+      // Satu modal Daily Focus bertab (app-mgsb): isi dua-duanya supaya pindah tab tidak menghapus pilihan.
+      setSelectedTasks(getCurrentDailyPlanSelections('main') as Record<string, boolean>);
+      setSelectedWorkQuests(getCurrentDailyPlanSelections('work') as string[]);
     } else {
       setSelectedDailyQuests(currentSelections as string[]);
     }
@@ -433,7 +433,7 @@ export function useDailyPlanManagement(
     }
   };
 
-  const handleSaveSelection = async (newItems: { item_id: string; item_type: string }[], preserveOtherTypes: boolean = true) => {
+  const handleSaveSelection = async (newItems: { item_id: string; item_type: string }[], preserveOtherTypes: boolean = true, replaceTypes?: string[]) => {
     setModalState(prev => ({ ...prev, savingLoading: true }));
 
     try {
@@ -458,7 +458,8 @@ export function useDailyPlanManagement(
         ) || [];
 
         // Get the types of new items to determine what to preserve
-        const newItemTypes = [...new Set(newItems.map(item => item.item_type))];
+        // replaceTypes: jenis yang diganti penuh walau pilihannya kosong (modal Daily Focus bertab).
+        const newItemTypes = replaceTypes ?? [...new Set(newItems.map(item => item.item_type))];
 
         // Preserve items that are NOT in the new items types
         const itemsToPreserve = [
@@ -700,6 +701,7 @@ export function useDailyPlanManagement(
     selectedTasks,
     showModal: modalState.showModal,
     setShowModal: (show: boolean) => setModalState(prev => ({ ...prev, showModal: show })),
+    switchFocusTab: (modalType: 'main' | 'work') => setModalState(prev => ({ ...prev, modalType })),
     modalLoading: modalState.modalLoading,
     savingLoading: modalState.savingLoading,
     handleOpenModal,

@@ -16,12 +16,17 @@ interface SideQuestModalProps {
   selectedCount?: number;
   completedTodayCount?: number;
   existingSideQuests?: string[]; // Array of existing side quest IDs for today
+  tabs?: React.ReactNode;
+  /** Pilihan terkini, untuk simpan gabungan dengan tab Daily (app-mgsb). */
+  onSelectionChange?: (quests: SideQuest[]) => void;
 }
 
 const SideQuestModal: React.FC<SideQuestModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  tabs,
+  onSelectionChange,
   selectedCount = 0,
   completedTodayCount = 0,
   existingSideQuests = [],
@@ -106,6 +111,10 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
   };
 
   // Handle save
+  useEffect(() => {
+    onSelectionChange?.(selectedTasks);
+  }, [selectedTasks, onSelectionChange]);
+
   const handleSave = () => {
     onSave(selectedTasks);
     onClose();
@@ -137,7 +146,7 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Main Quest</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Tugas Lain</h2>
             <p className="text-gray-700 font-medium">
               Selected : {selectedCount} Quest
             </p>
@@ -159,6 +168,8 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
             </svg>
           </button>
         </div>
+
+        {tabs}
 
         {/* Search and Toggle */}
         {/* <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -304,7 +315,6 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
             variant="primary"
             size="md"
             onClick={handleSave}
-            disabled={selectedTasks.length === 0}
           >
             Submit
           </Button>

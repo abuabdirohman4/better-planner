@@ -12,6 +12,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   selectedTasks, 
   onTaskToggle, 
   onSave, 
+  tabs,
   isLoading,
   savingLoading = false,
   completedTodayCount = 0
@@ -351,7 +352,7 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Main Quest</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Daily Focus</h2>
             <p className="text-gray-700 font-medium">
               Selected : {selectedCount} Quest
             </p>
@@ -373,6 +374,8 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
             </svg>
           </button>
         </div>
+
+        {tabs}
 
         {/* Main Quest List */}
         {isLoading ? (

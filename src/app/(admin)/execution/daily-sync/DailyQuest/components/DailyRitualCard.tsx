@@ -76,7 +76,7 @@ export default function DailyRitualCard({ selectedDate }: { selectedDate: string
                       onClick={() => toggle(h.id)}
                       disabled={isFuture}
                       aria-pressed={done}
-                      className={`flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      className={`flex max-w-full items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                         done
                           ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-400'
                           : 'border-gray-200 text-gray-700 hover:border-green-300 dark:border-gray-700 dark:text-gray-200'

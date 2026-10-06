@@ -4,11 +4,19 @@ const saveTimerSession = vi.fn();
 const abandonTimerSession = vi.fn().mockResolvedValue(undefined);
 const pauseTimerSession = vi.fn().mockResolvedValue({ success: true });
 const resumeTimerSession = vi.fn().mockResolvedValue({ success: true });
+const updateTimerSessionTarget = vi.fn().mockResolvedValue({ updated: true });
+const switchTimerSessionTask = vi.fn().mockResolvedValue({ updated: true });
+const setTimerSessionNotes = vi.fn().mockResolvedValue({ updated: true });
+const setActivityLogNotes = vi.fn().mockResolvedValue(undefined);
 vi.mock('@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSessionActions', () => ({
   saveTimerSession: (...a: unknown[]) => saveTimerSession(...a),
   abandonTimerSession: (...a: unknown[]) => abandonTimerSession(...a),
   pauseTimerSession: (...a: unknown[]) => pauseTimerSession(...a),
   resumeTimerSession: (...a: unknown[]) => resumeTimerSession(...a),
+  updateTimerSessionTarget: (...a: unknown[]) => updateTimerSessionTarget(...a),
+  switchTimerSessionTask: (...a: unknown[]) => switchTimerSessionTask(...a),
+  setTimerSessionNotes: (...a: unknown[]) => setTimerSessionNotes(...a),
+  setActivityLogNotes: (...a: unknown[]) => setActivityLogNotes(...a),
 }));
 vi.mock('@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSession/breakSession', () => ({
   startBreakSession: vi.fn().mockResolvedValue('b1'),
@@ -260,5 +268,43 @@ describe('pause pada baris yang sudah ditutup server', () => {
     await vi.waitFor(() => expect(store.getState().timerState).toBe('IDLE'));
     expect(store.getState().lastSessionComplete).toBeNull();
     expect(store.getState().sessionId).toBeNull();
+  });
+});
+
+describe('siklus berbasis slot (app-mgsb)', () => {
+  it('ubah durasi & ganti task di tengah siklus ikut ditulis ke baris sesi', async () => {
+    saveTimerSession.mockResolvedValue({ id: 'sess-9' });
+    const store = await freshStore();
+    store.getState().startFocusSession(task);
+    await vi.waitFor(() => expect(store.getState().sessionId).toBe('sess-9'));
+
+    store.getState().setFocusMinutes(90);
+    expect(store.getState().activeTask?.focus_duration).toBe(90);
+    await vi.waitFor(() => expect(updateTimerSessionTarget).toHaveBeenCalledWith('sess-9', 90));
+
+    store.getState().switchActiveTask({ id: 't2', title: 'Lain', item_type: 'WORK_QUEST' });
+    expect(store.getState().activeTask).toMatchObject({ id: 't2', title: 'Lain', focus_duration: 90 });
+    await vi.waitFor(() => expect(switchTimerSessionTask).toHaveBeenCalledWith('sess-9', 't2', 'Lain'));
+  });
+
+  it('catatan teks bebas: saat fokus ke baris sesi (debounce); setelah siklus ditutup, edit break ke log siklus itu', async () => {
+    saveTimerSession.mockResolvedValue({ id: 'sess-7' });
+    const store = await freshStore();
+    store.getState().startFocusSession(task);
+    await vi.waitFor(() => expect(store.getState().sessionId).toBe('sess-7'));
+
+    store.getState().setCycleNotes('riset');
+    store.getState().setCycleNotes('riset selesai');
+    store.getState().addCycleNote('✓ Task');
+    expect(store.getState().cycleNotes).toBe('riset selesai\n✓ Task');
+    await vi.waitFor(() => expect(setTimerSessionNotes).toHaveBeenCalledWith('sess-7', 'riset selesai\n✓ Task'), { timeout: 2000 });
+    expect(setTimerSessionNotes).toHaveBeenCalledTimes(1);
+
+    store.setState({ timerState: 'BREAK' });
+    store.getState().closeCycle('log-1');
+    expect(store.getState().cycleNotes).toBe('');
+    expect(setActivityLogNotes).toHaveBeenLastCalledWith('log-1', 'riset selesai\n✓ Task');
+    store.getState().setCycleNotes('riset selesai\n✓ Task\nlanjut besok');
+    await vi.waitFor(() => expect(setActivityLogNotes).toHaveBeenLastCalledWith('log-1', 'riset selesai\n✓ Task\nlanjut besok'), { timeout: 2000 });
   });
 });

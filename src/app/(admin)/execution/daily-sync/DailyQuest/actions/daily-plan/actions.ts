@@ -218,3 +218,18 @@ export async function seedRecurringRoutines(date: string): Promise<{ added: numb
   );
   return { added: ids.length };
 }
+
+/** Rencana Siklus Kerja hari itu (app-mgsb): [{ minutes, item_id }]. Disimpan utuh, bukan per baris. */
+export async function saveCyclePlan(date: string, rows: { minutes: number; item_id: string | null }[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  const clean = rows.slice(0, 12).map((r) => ({
+    minutes: Math.min(240, Math.max(1, Math.round(Number(r.minutes) || 60))),
+    item_id: typeof r.item_id === 'string' && r.item_id ? r.item_id : null,
+  }));
+  const plan = await upsertDailyPlan(supabase, user.id, date);
+  const { error } = await supabase.from('daily_plans').update({ cycle_plan: clean }).eq('id', plan.id).eq('user_id', user.id);
+  if (error) throw error;
+  return { success: true };
+}

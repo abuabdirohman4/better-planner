@@ -85,3 +85,49 @@ export async function resumeTimerSession(sessionId: string, startTime?: string) 
     throw error;
   }
 }
+
+type SessionUpdate = { target_duration_seconds?: number; focus_duration?: number; task_id?: string; task_title?: string; notes?: string | null };
+
+/** Ubah sesi fokus yang masih terbuka (durasi target, task, catatan) — app-mgsb. updated:false = sudah ditutup. */
+async function updateOpenSession(sessionId: string, patch: SessionUpdate) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  const { data, error } = await supabase
+    .from('timer_sessions')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', sessionId)
+    .eq('user_id', user.id)
+    .in('status', ['FOCUSING', 'PAUSED'])
+    .select('id');
+  if (error) throw error;
+  return { updated: (data?.length ?? 0) > 0 };
+}
+
+/** Durasi siklus diubah di tengah jalan (60 -> 90, +30 mnt): cron ikut memakai target baru. */
+export async function updateTimerSessionTarget(sessionId: string, focusMinutes: number) {
+  return updateOpenSession(sessionId, { target_duration_seconds: focusMinutes * 60, focus_duration: focusMinutes });
+}
+
+export async function switchTimerSessionTask(sessionId: string, taskId: string, taskTitle: string) {
+  return updateOpenSession(sessionId, { task_id: taskId, task_title: taskTitle });
+}
+
+/** Catatan siklus lengkap (bukan tambahan), supaya tulisan berulang tetap idempoten. */
+export async function setTimerSessionNotes(sessionId: string, notes: string) {
+  return updateOpenSession(sessionId, { notes: notes || null });
+}
+
+/** Catatan yang ditulis saat break masuk ke log siklus yang baru selesai. */
+export async function setActivityLogNotes(activityLogId: string, notes: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+  const { error } = await supabase
+    .from('activity_logs')
+    .update({ what_done: notes || null })
+    .eq('id', activityLogId)
+    .eq('user_id', user.id);
+  if (error) throw error;
+  revalidatePath('/execution/daily-sync');
+}

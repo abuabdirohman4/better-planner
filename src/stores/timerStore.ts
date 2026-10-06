@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { playTimerCompleteSound, playSound, stopCurrentSound, playFocusSoundLoop } from '@/lib/soundUtils';
 import { useSoundStore } from './soundStore';
 import { startBreakSession, endBreakSession } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSession/breakSession';
-import { saveTimerSession, abandonTimerSession, pauseTimerSession, resumeTimerSession } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSessionActions';
+import { saveTimerSession, abandonTimerSession, pauseTimerSession, resumeTimerSession, updateTimerSessionTarget, switchTimerSessionTask, setTimerSessionNotes, setActivityLogNotes } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/actions/timerSessionActions';
 import { getClientDeviceId } from '@/app/(admin)/execution/daily-sync/PomodoroTimer/hooks/deviceUtils';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { shouldDailyReset } from '@/lib/timerSessionLogic';
@@ -16,6 +16,7 @@ let lastCompletionTime = 0;
 // Focus-session write still in flight (not persisted). Lets pause/resume/stop that happen before
 // the row id returns still reach the right row.
 let inflightStart: { abandon: boolean; ready: Promise<string | null> } | null = null;
+let notesTimer: ReturnType<typeof setTimeout> | null = null;
 
 import type { TimerState, TimerTask } from '@/types/timer';
 
@@ -46,6 +47,18 @@ interface TimerStoreState {
   lastFocusDuration: number;
   lastActiveTask: TimerTask | null; // ✅ Persist last active task for idle display
   lastUpdatedDay: string | null; // ✅ Track last date for reset
+  /** Catatan siklus yang sedang berjalan, baris "HH:MM teks" (app-mgsb). */
+  cycleNotes: string;
+  /** Siklus yang baru selesai: catatan saat break ditambahkan ke log ini. */
+  lastCycle: { logId: string | null; notes: string } | null;
+  /** Indeks baris Siklus Kerja yang sedang dijalankan (panel tampil di baris itu). */
+  cycleSlot: number | null;
+  setCycleSlot: (slot: number | null) => void;
+  setCycleNotes: (text: string) => void;
+  setFocusMinutes: (minutes: number) => void;
+  switchActiveTask: (task: Pick<TimerTask, 'id' | 'title' | 'item_type'>) => void;
+  addCycleNote: (text: string) => void;
+  closeCycle: (logId: string | null) => void;
   startFocusSession: (task: TimerTask) => void;
   startBreak: (type: 'SHORT' | 'MEDIUM' | 'LONG') => void;
   dismissBreakPrompt: () => void;
@@ -120,6 +133,57 @@ export const useTimerStore = create<TimerStoreState>()(
       lastFocusDuration: 0,
       lastActiveTask: null,
       lastUpdatedDay: null,
+      cycleNotes: '',
+      lastCycle: null,
+      cycleSlot: null,
+
+      setCycleSlot: (slot) => set({ cycleSlot: slot }),
+
+      // Catatan teks bebas (app-mgsb): ketik kapan saja; tersimpan otomatis 800 ms setelah berhenti mengetik.
+      setCycleNotes: (text: string) => {
+        const { timerState, lastCycle } = get();
+        if (notesTimer) clearTimeout(notesTimer);
+        const warn = (e: unknown) => console.warn('[timer] gagal menyimpan catatan:', e);
+        if (timerState === 'FOCUSING' || timerState === 'PAUSED') {
+          set({ cycleNotes: text });
+          notesTimer = setTimeout(() => withSessionId(get, (id) => setTimerSessionNotes(id, text)), 800);
+        } else if (lastCycle) {
+          set({ lastCycle: { ...lastCycle, notes: text } });
+          const logId = lastCycle.logId;
+          if (logId) notesTimer = setTimeout(() => setActivityLogNotes(logId, text).catch(warn), 800);
+        }
+      },
+
+      setFocusMinutes: (minutes: number) => {
+        const { activeTask, timerState } = get();
+        if (!activeTask || (timerState !== 'FOCUSING' && timerState !== 'PAUSED') || minutes < 1) return;
+        const next = { ...activeTask, focus_duration: minutes };
+        set({ activeTask: next, lastActiveTask: next });
+        withSessionId(get, (id) => updateTimerSessionTarget(id, minutes));
+      },
+
+      switchActiveTask: (task) => {
+        const { activeTask, timerState } = get();
+        if (!activeTask || (timerState !== 'FOCUSING' && timerState !== 'PAUSED') || activeTask.id === task.id) return;
+        const next = { ...activeTask, id: task.id, title: task.title, item_type: task.item_type };
+        set({ activeTask: next, lastActiveTask: next });
+        withSessionId(get, (id) => switchTimerSessionTask(id, task.id, task.title));
+      },
+
+      addCycleNote: (text: string) => {
+        const t = text.trim();
+        const { timerState, cycleNotes } = get();
+        if (!t || (timerState !== 'FOCUSING' && timerState !== 'PAUSED')) return;
+        get().setCycleNotes(cycleNotes ? `${cycleNotes.replace(/\s+$/, '')}\n${t}` : t);
+      },
+
+      closeCycle: (logId: string | null) => {
+        if (notesTimer) clearTimeout(notesTimer);
+        const notes = get().cycleNotes;
+        set({ lastCycle: { logId, notes }, cycleNotes: '' });
+        // Catatan terakhir mungkin belum sampai ke baris sesi sebelum log dibuat: tulis langsung ke log.
+        if (logId && notes.trim()) setActivityLogNotes(logId, notes).catch((e) => console.warn('[timer] gagal menyimpan catatan:', e));
+      },
 
       startFocusSession: (task: TimerTask) => {
         if (get().timerState === 'BREAK') endBreakSession().catch(console.error);
@@ -136,6 +200,7 @@ export const useTimerStore = create<TimerStoreState>()(
           sessionId: null,
           waitingForBreak: false, // Ensure prompt is closed
           lastActiveTask: task, // ✅ Save as last active
+          cycleNotes: '',
         });
         // Persist the session now so the server can finish it even if the app closes.
         // Fire-and-forget: a failed write must never delay or block the local timer.
@@ -612,7 +677,13 @@ export const useTimerStore = create<TimerStoreState>()(
         sessionId: state.sessionId,
         lastActiveTask: state.lastActiveTask,
         lastUpdatedDay: state.lastUpdatedDay,
+        cycleNotes: state.cycleNotes,
+        lastCycle: state.lastCycle,
+        cycleSlot: state.cycleSlot,
       }),
+      // v1: catatan siklus berubah dari daftar baris jadi teks bebas.
+      version: 1,
+      migrate: (persisted) => ({ ...(persisted as object), cycleNotes: '', lastCycle: null, cycleSlot: null }) as never,
     }
   )
 );

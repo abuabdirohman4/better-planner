@@ -76,7 +76,8 @@ export async function completeTimerSession(sessionId: string, deviceId?: string,
           start_time: session.start_time,
           end_time: endTime,
           duration_minutes: durationMinutes,
-          local_date: localDate
+          local_date: localDate,
+          what_done: session.notes || null, // catatan siklus (app-mgsb)
         })
         .select('id')
         .single();

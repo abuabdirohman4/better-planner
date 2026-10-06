@@ -10,12 +10,12 @@ import { findRecentActivityLog } from '@/app/(admin)/execution/daily-sync/Activi
 export async function completeDueFocusSessions(supabase: SupabaseClient, now = new Date()): Promise<number> {
   const { data, error } = await supabase
     .from('timer_sessions')
-    .select('id, user_id, task_id, status, session_type, start_time, target_duration_seconds, updated_at, current_duration_seconds')
+    .select('id, user_id, task_id, status, session_type, start_time, target_duration_seconds, updated_at, current_duration_seconds, notes')
     .in('status', ['FOCUSING', 'PAUSED'])
     .not('task_id', 'is', null);
   if (error) throw error;
 
-  const byId = new Map(((data ?? []) as ClosableSessionRow[]).map(r => [r.id, r]));
+  const byId = new Map(((data ?? []) as (ClosableSessionRow & { notes?: string | null })[]).map(r => [r.id, r]));
   let completed = 0;
   for (const c of planServerClosures((data ?? []) as ClosableSessionRow[], now)) {
     const s = byId.get(c.id)!;
@@ -24,7 +24,7 @@ export async function completeDueFocusSessions(supabase: SupabaseClient, now = n
       endTime = c.log.end_time;
       const existing = await findRecentActivityLog(supabase, s.user_id, s.task_id!, s.session_type, s.start_time);
       if (!existing) {
-        const { error: logError } = await supabase.from('activity_logs').insert(c.log);
+        const { error: logError } = await supabase.from('activity_logs').insert({ ...c.log, what_done: s.notes || null });
         // 23505 = a client path inserted the same log meanwhile; 23503 = task deleted -> close without log
         if (logError && logError.code !== '23505' && logError.code !== '23503') {
           console.error('[completeDueFocusSessions] log insert failed', s.id, logError.message);

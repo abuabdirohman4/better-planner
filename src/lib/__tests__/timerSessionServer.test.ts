@@ -32,6 +32,13 @@ describe('completeDueFocusSessions', () => {
     expect(updates[0]).toMatchObject({ table: 'timer_sessions', v: { status: 'COMPLETED' } });
   });
 
+  it('catatan siklus di baris sesi ikut jadi what_done log (app-mgsb)', async () => {
+    findRecent.mockResolvedValue(null);
+    const { client, inserts } = fakeSupabase([{ ...due, notes: '09:10 riset' }]);
+    await completeDueFocusSessions(client, NOW);
+    expect(inserts[0]).toMatchObject({ v: { what_done: '09:10 riset' } });
+  });
+
   it('log sudah ditulis klien -> tidak membuat log ganda, sesi tetap ditutup', async () => {
     findRecent.mockResolvedValue({ id: 'existing' });
     const { client, inserts, updates } = fakeSupabase([due]);

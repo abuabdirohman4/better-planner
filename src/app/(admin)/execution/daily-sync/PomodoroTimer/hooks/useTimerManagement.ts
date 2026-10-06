@@ -1,21 +1,14 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { notifyActivityLogsChanged } from '@/lib/swr';
-import { useTimer } from '@/stores/timerStore';
+import { useTimer, useTimerStore } from '@/stores/timerStore';
+import { getBreakOptions } from '@/lib/timerDisplay';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, findFocusSession } from '../actions/timerSessionActions';
 import { getClientDeviceId } from './deviceUtils';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 
-export function useTimerManagement(selectedDateStr: string, openJournalModal: (data: {
-  activityId?: string;
-  taskId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  taskTitle?: string;
-  duration: number;
-}) => void) {
+export function useTimerManagement(selectedDateStr: string) {
   const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete, isProcessingCompletion, setProcessingCompletion } = useTimer();
   const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
   const [, startTransition] = useTransition();
@@ -45,6 +38,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
     endTime: string;
     duration?: number;
     sessionId?: string | null;
+    completed?: boolean;
   }) => {
     // ✅ DEV CONTROL: Don't complete session if timer is disabled in development
     if (!isTimerEnabledInDev()) {
@@ -141,19 +135,13 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         // One signal: activity list, quest counters, Total focus bar, timer progress
         await notifyActivityLogsChanged();
 
-        // ✅ FIX: Open journal modal for FOCUS sessions only, with activity log ID
+        // Catatan siklus menempel ke log ini; siklus yang selesai penuh langsung lanjut break (app-mgsb).
         if (sessionData.type === 'FOCUS') {
-          const durationInSeconds = Math.round((new Date(sessionData.endTime).getTime() - new Date(sessionData.startTime).getTime()) / 1000);
-          const durationInMinutes = Math.max(1, Math.round(durationInSeconds / 60));
-          openJournalModal({
-            activityId: activityLogId, // ✅ Pass the activity log ID
-            taskId: sessionData.taskId,
-            date: getLocalDateString(new Date(sessionData.endTime)),
-            startTime: sessionData.startTime,
-            endTime: sessionData.endTime,
-            taskTitle: sessionData.taskTitle,
-            duration: durationInMinutes,
-          });
+          const store = useTimerStore.getState();
+          store.closeCycle(activityLogId ?? null);
+          if (sessionData.completed && store.timerState === 'IDLE') {
+            store.startBreak(getBreakOptions(sessionData.duration ?? 25 * 60)[0]);
+          }
         }
       } catch (err) {
         console.error('Error logging session:', err);
@@ -162,7 +150,7 @@ export function useTimerManagement(selectedDateStr: string, openJournalModal: (d
         setProcessingCompletion(false);
       }
     });
-  }, [selectedDateStr, setActivityLogRefreshKey, openJournalModal, setProcessingCompletion]);
+  }, [selectedDateStr, setActivityLogRefreshKey, setProcessingCompletion]);
 
   const handleSetActiveTask = (task: { id: string; title: string; item_type: string; focus_duration?: number }) => {
     startFocusSession(task);
