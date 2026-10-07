@@ -125,14 +125,17 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
     onClose();
   };
 
-  // Initialize selected tasks based on existing side quests
+  // Isi pilihan awal dari rencana SEKALI per pembukaan modal. Dulu jalan tiap halaman induk render ulang
+  // (existingSideQuests = array baru), jadi centang langsung dibatalkan begitu pilihan dikirim ke induk.
+  const initialized = useRef(false);
   useEffect(() => {
-    if (isOpen && sideQuests.length > 0) {
-      const existingQuests = sideQuests.filter(quest => 
-        existingSideQuests.includes(quest.id)
-      );
-      setSelectedTasks(existingQuests);
+    if (!isOpen) {
+      initialized.current = false;
+      return;
     }
+    if (initialized.current || sideQuests.length === 0) return;
+    initialized.current = true;
+    setSelectedTasks(sideQuests.filter(quest => existingSideQuests.includes(quest.id)));
   }, [isOpen, sideQuests, existingSideQuests]);
 
   // Reset selection when modal closes
