@@ -3,7 +3,6 @@ import Checkbox from '@/components/form/input/Checkbox';
 
 interface QuestPickRowProps {
   title: string;
-  subtitle?: string;
   selected: boolean;
   done?: boolean;
   /** false = induk virtual tanpa kotak centang. */
@@ -31,9 +30,9 @@ export const ChevronButton: React.FC<{ expanded: boolean; onClick: () => void }>
 
 export const ChevronSpacer = () => <div className="w-4 h-4" />;
 
-/** Baris pilih quest yang sama di semua modal. Klik kotak ATAU judul = toggle sekali. */
+/** Baris pilih quest yang sama di semua modal: kotak + judul saja (tanpa keterangan). Klik kotak ATAU judul = toggle sekali. */
 const QuestPickRow: React.FC<QuestPickRowProps> = ({
-  title, subtitle, selected, done, showCheckbox = true, disabled, onToggle, chevron, trailing,
+  title, selected, done, showCheckbox = true, disabled, onToggle, chevron, trailing,
 }) => (
   <div
     className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
@@ -57,8 +56,6 @@ const QuestPickRow: React.FC<QuestPickRowProps> = ({
       >
         {title}
       </div>
-      {/* Satu baris saja: deskripsi task bisa panjang (Side Quest proyek); teks penuh lewat tooltip. */}
-      {subtitle && <div className="truncate text-xs text-gray-500 dark:text-gray-400" title={subtitle}>{subtitle}</div>}
     </div>
     {trailing}
   </div>

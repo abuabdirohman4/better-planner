@@ -45,7 +45,6 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
             <QuestPickRow
               key={task.id}
               title={task.title}
-              subtitle={task.quest_title}
               selected={!!selectedTasks[task.id]}
               disabled={savingLoading}
               onToggle={() => onTaskToggle(task.id)}

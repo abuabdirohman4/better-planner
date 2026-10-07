@@ -202,7 +202,6 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
               <div key={project.id} className="space-y-1">
                 <QuestPickRow
                   title={project.title}
-                  subtitle={project.description}
                   selected={areAllChildrenSelected(project.id)}
                   onToggle={() => handleParentToggle(project.id)}
                   chevron={hasChildren
@@ -224,7 +223,6 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                         <QuestPickRow
                           key={task.id}
                           title={task.title}
-                          subtitle={task.description}
                           selected={selectedTasks.includes(task.id)}
                           onToggle={() => onTaskToggle(task.id)}
                         />

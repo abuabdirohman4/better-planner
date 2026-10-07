@@ -172,7 +172,6 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
             <QuestPickRow
               key={quest.id}
               title={quest.title || 'Untitled Task'}
-              subtitle={quest.description || undefined}
               selected={selectedTasks.some(task => task.id === quest.id)}
               done={quest.status === 'DONE'}
               onToggle={() => handleTaskToggle(quest)}
