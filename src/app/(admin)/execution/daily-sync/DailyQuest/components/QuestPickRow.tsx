@@ -57,7 +57,8 @@ const QuestPickRow: React.FC<QuestPickRowProps> = ({
       >
         {title}
       </div>
-      {subtitle && <div className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</div>}
+      {/* Satu baris saja: deskripsi task bisa panjang (Side Quest proyek); teks penuh lewat tooltip. */}
+      {subtitle && <div className="truncate text-xs text-gray-500 dark:text-gray-400" title={subtitle}>{subtitle}</div>}
     </div>
     {trailing}
   </div>
