@@ -27,6 +27,7 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
   } = useTimer();
   const pip = useDocumentPiP();
   const [showSound, setShowSound] = useState(false);
+  const [breakSave, setBreakSave] = useState<'idle' | 'saving' | 'saved'>('idle');
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
   const isBreak = timerState === 'BREAK';
@@ -161,7 +162,10 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
         // One Minute Journal saat break: dua pertanyaan buku, langsung ke log siklus tadi.
         <div className="mt-3 rounded-lg ring-2 ring-green-300 p-3 dark:ring-green-700" data-testid="cycle-break-journal">
           <p className="mb-2 text-xs font-semibold text-green-700 dark:text-green-400">1 menit: One Minute Journal siklus tadi</p>
-          <JournalFields logId={lastCycle.logId} whatDone={lastCycle.notes} whatThink={null} />
+          <JournalFields logId={lastCycle.logId} whatDone={lastCycle.notes} whatThink={null} onStatus={setBreakSave} />
+          <p className="mt-1 text-right text-xs text-gray-400" data-testid="cycle-break-journal-status">
+            {breakSave === 'saving' ? 'Menyimpan…' : breakSave === 'saved' ? 'Tersimpan' : ''}
+          </p>
         </div>
       ) : (
       <>
