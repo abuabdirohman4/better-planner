@@ -3,6 +3,19 @@ import { useTimer, useTimerStore, BREAK_DURATIONS } from '@/stores/timerStore';
 import { isTimerEnabledInDev } from '@/lib/timerDevUtils';
 import { notifyActivityLogsChanged } from '@/lib/swr';
 import { endBreakSession } from '../actions/timerSession/breakSession';
+import { playSound } from '@/lib/soundUtils';
+import { useSoundStore } from '@/stores/soundStore';
+
+/** Suara istirahat habis: pengaturan server terbaru, cadangan pengaturan lokal; kosong = suara selesai fokus. */
+async function playBreakEndSound() {
+  let settings = useSoundStore.getState().settings;
+  try {
+    const { getSoundSettings } = await import('@/app/(admin)/settings/profile/actions/userProfileActions');
+    settings = await getSoundSettings();
+  } catch { /* pakai pengaturan lokal */ }
+  const id = settings.breakEndSoundId ?? settings.soundId;
+  if (id && id !== 'none') await playSound(id, settings.volume);
+}
 
 /**
  * Global Timer Hook - Singleton pattern
@@ -111,6 +124,8 @@ export function useGlobalTimer() {
               useTimerStore.getState().stopFocusSound();
               // Tutup baris break di server (dulu tertinggal RUNNING) sekaligus mencatatnya sebagai log BREAK.
               endBreakSession().then(() => notifyActivityLogsChanged()).catch(console.error);
+              // Tanda waktunya siklus berikutnya (hanya saat break habis sendiri, bukan dilewati).
+              playBreakEndSound().catch(console.error);
               useTimerStore.setState({
                 timerState: 'IDLE',
                 breakType: null,

@@ -3,6 +3,8 @@ export interface SoundSettings {
   volume: number
   taskCompletionSoundId: string
   focusSoundId: string
+  /** Suara saat istirahat habis; kosong = ikut soundId (selesai fokus). */
+  breakEndSoundId?: string
 }
 
 export interface SoundOption {

@@ -47,6 +47,11 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
     await playPreview(soundId);
   };
 
+  const handleBreakEndSoundSelect = async (soundId: string) => {
+    updateSettings({ breakEndSoundId: soundId });
+    await playPreview(soundId);
+  };
+
   const handleTaskCompletionSoundSelect = async (soundId: string) => {
     updateTaskCompletionSettings({ soundId });
     // Auto-play sound when selected
@@ -206,6 +211,31 @@ const SoundSelector: React.FC<SoundSelectorProps> = ({ isOpen, onClose }) => {
                       onClick={() => handleSoundSelect(option.id)}
                       className={`flex items-center space-x-2 px-3 py-2 rounded-full border transition-colors ${
                         settings.soundId === option.id
+                          ? 'border-yellow-400 bg-yellow-100 dark:bg-yellow-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="text-sm">{option.emoji}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {option.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* When break ends */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  When break ends
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {TIMER_SOUND_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleBreakEndSoundSelect(option.id)}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-full border transition-colors ${
+                        (settings.breakEndSoundId ?? settings.soundId) === option.id
                           ? 'border-yellow-400 bg-yellow-100 dark:bg-yellow-900/20'
                           : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
