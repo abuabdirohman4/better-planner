@@ -4,9 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuarterStore } from "@/stores/quarterStore";
 import { useSideQuests } from "@/app/(admin)/quests/side-quests/hooks/useSideQuests";
 import type { SideQuest } from '@/types/side-quest';
-import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
-import Checkbox from "@/components/form/input/Checkbox";
-import Button from "@/components/ui/button/Button";
+import QuestPickerShell from "./QuestPickerShell";
+import QuestPickRow from "./QuestPickRow";
 import { TaskItemSkeleton } from "@/components/ui/skeleton";
 
 interface SideQuestModalProps {
@@ -149,188 +148,39 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Tugas Lain</h2>
-            <p className="text-gray-700 font-medium">
-              Selected : {selectedCount} Quest
-            </p>
-
-            {completedTodayCount > 0 && (
-              <>
-                <p className="text-gray-700 font-medium">
-                  Done : {completedTodayCount} Quest
-                </p>
-              </>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <QuestPickerShell
+      title="Tugas Lain"
+      selectedCount={selectedCount}
+      completedTodayCount={completedTodayCount}
+      onClose={onClose}
+      onSave={handleSave}
+      tabs={tabs}
+    >
+      {isLoading ? (
+        <TaskItemSkeleton count={3} showButton={false} />
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-500">Error: {error}</p>
         </div>
-
-        {tabs}
-
-        {/* Search and Toggle */}
-        {/* <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search side quests..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+      ) : filteredSideQuests.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400">Belum ada Side Quest di kuartal ini</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {filteredSideQuests.map((quest) => (
+            <QuestPickRow
+              key={quest.id}
+              title={quest.title || 'Untitled Task'}
+              subtitle={quest.description || undefined}
+              selected={selectedTasks.some(task => task.id === quest.id)}
+              done={quest.status === 'DONE'}
+              onToggle={() => handleTaskToggle(quest)}
             />
-          </div>
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className={`p-2 rounded-md transition-colors ${
-              showCompleted
-                ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/30'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-            }`}
-            title={showCompleted ? 'Hide completed tasks' : 'Show completed tasks'}
-          >
-            {showCompleted ? (
-              <EyeIcon className="w-5 h-5" />
-            ) : (
-              <EyeCloseIcon className="w-5 h-5" />
-            )}
-          </button>
-        </div> */}
-
-        {/* Content */}
-        <div className="max-h-96 overflow-y-auto">
-          {isLoading ? (
-            <TaskItemSkeleton count={3} showButton={false} />
-          ) : error ? (
-            <div className="text-center py-8">
-              <p className="text-red-500">Error: {error}</p>
-            </div>
-          ) : filteredSideQuests.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm || !showCompleted
-                  ? 'No side quests match your filters' 
-                  : 'No side quests available'
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredSideQuests.map((quest) => {
-                const isExpanded = expandedItems.has(quest.id);
-                const isSelected = selectedTasks.some(task => task.id === quest.id);
-                
-                return (
-                  <div key={quest.id} className="space-y-1">
-                    <div
-                      className={`group relative flex items-center space-x-3 py-2 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded ${
-                        quest.status === 'DONE' 
-                          ? 'opacity-75' 
-                          : ''
-                      }`}
-                    >
-                      {/* Expand/Collapse Button */}
-                      <button
-                        // onClick={(e) => {
-                        //   e.stopPropagation();
-                        //   toggleExpanded(quest.id);
-                        // }}
-                        className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                      >
-                        {/* <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"></div> */}
-                        <svg
-                          className={`w-3 h-3 transition-all duration-300 ease-in-out ${
-                            isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-
-                      {/* Selection Checkbox */}
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => handleTaskToggle(quest)}
-                        />
-                      </div>
-                      
-                      {/* Quest Title: klik = sama dengan klik kotak */}
-                      <span
-                        onClick={() => handleTaskToggle(quest)}
-                        className={`flex-1 cursor-pointer select-none text-sm font-medium ${
-                        quest.status === 'DONE' 
-                          ? 'text-gray-500 dark:text-gray-400 line-through' 
-                          : 'text-gray-900 dark:text-white'
-                      }`}>
-                        {quest.title || 'Untitled Task'}
-                      </span>
-                    </div>
-                    
-                    {/* Expanded Content with Smooth Animation */}
-                    <div 
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        isExpanded 
-                          ? 'max-h-96 opacity-100 transform translate-y-0' 
-                          : 'max-h-0 opacity-0 transform -translate-y-2'
-                      }`}
-                    >
-                      <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                        {quest.description && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {quest.description}
-                          </p>
-                        )}
-                        {quest.due_date && (
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Due: {new Date(quest.due_date).toLocaleDateString()}
-                          </p>
-                        )}
-                        <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-500">
-                          <span>Created: {quest.created_at ? new Date(quest.created_at).toLocaleDateString() : 'Unknown'}</span>
-                          <span>Updated: {quest.updated_at ? new Date(quest.updated_at).toLocaleDateString() : 'Unknown'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          ))}
         </div>
-
-        {/* Footer */}
-        <div className="flex justify-end space-x-3 mt-6">
-          <Button
-            variant="outline"
-            size="md"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleSave}
-          >
-            Submit
-          </Button>
-        </div>
-      </div>
-    </div>
+      )}
+    </QuestPickerShell>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
-import Button from '@/components/ui/button/Button';
-import Checkbox from '@/components/form/input/Checkbox';
+import QuestPickerShell from './QuestPickerShell';
+import QuestPickRow, { ChevronButton, ChevronSpacer } from './QuestPickRow';
 import { TaskSelectionModalProps } from '../types';
 import { getTaskTitles } from '@/app/(admin)/execution/weekly-sync/actions/weeklyTaskActions';
 
@@ -246,100 +246,42 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   };
 
   // Render item recursively like HierarchicalGoalDisplay
-  const renderItem = (item: any, level: number = 0, isChild: boolean = false) => {
+  const renderItem = (item: any, level: number = 0): React.ReactNode => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.id);
     const isSelected = selectedTasks[item.id] || false;
-    
-    // ✅ NEW: Detect if this is a virtual parent (not selected, only shown for hierarchy)
+    // Induk virtual: hanya penanda hierarki, tanpa kotak centang
     const isVirtualParent = item.status === undefined || item.isVirtualParent === true;
-    
+
     return (
       <div key={item.id} className="space-y-1">
-        <div
-          className={`group relative flex items-center space-x-3 py-1 text-sm transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-            level > 0 ? 'ml-9 border-l-2 border-gray-200 dark:border-gray-600' : ''
-          } ${
-            item.status === 'DONE' 
-              ? 'opacity-75' 
-              : ''
-          }`}
-        >
-          {/* Expand/Collapse Button */}
-          {hasChildren && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleExpanded(item.id);
-              }}
-              className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-            >
-              <svg
-                className={`w-3 h-3 transition-all duration-300 ease-in-out ${
-                  isExpanded ? 'rotate-90 scale-110' : 'rotate-0 scale-100'
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+        <QuestPickRow
+          title={item.title || 'Untitled Task'}
+          selected={!isVirtualParent && isSelected}
+          done={item.status === 'DONE'}
+          showCheckbox={!isVirtualParent}
+          disabled={savingLoading}
+          // Induk virtual: klik judul = buka/tutup; lainnya = pilih
+          onToggle={() => {
+            if (isVirtualParent) { if (hasChildren) toggleExpanded(item.id); }
+            else if (!savingLoading) onTaskToggle(item.id);
+          }}
+          chevron={hasChildren
+            ? <ChevronButton expanded={isExpanded} onClick={() => toggleExpanded(item.id)} />
+            : <ChevronSpacer />}
+          trailing={hasChildren && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">({item.children.length})</span>
           )}
-          
-          {/* Spacer for items without children */}
-          {!hasChildren && <div className="w-4 h-2" />}
+        />
 
-          {/* ✅ NEW: Render dash for virtual parent, checkbox for selected items */}
-          {isVirtualParent ? (
-            // Dash display for virtual parent (not selected)
-            <div className="w-4 h-4 flex items-center justify-center text-gray-200">
-              <span className="text-lg font-medium select-none ml-0.5">|</span>
-            </div>
-          ) : (
-            // Existing checkbox for selected items
-            <Checkbox
-              checked={isSelected}
-              onChange={() => onTaskToggle(item.id)}
-              disabled={savingLoading}
-            />
-          )}
-          
-          {/* Task Title: klik = sama dengan klik kotak (induk virtual = buka/tutup) */}
-          <span
-            onClick={() => {
-              if (isVirtualParent) { if (hasChildren) toggleExpanded(item.id); }
-              else if (!savingLoading) onTaskToggle(item.id);
-            }}
-            className={`flex-1 cursor-pointer select-none text-sm font-medium ${
-            item.status === 'DONE' 
-              ? 'text-gray-500 dark:text-gray-400 line-through' 
-              : 'text-gray-900 dark:text-white'
-          }`}>
-            {item.title || 'Untitled Task'}
-          </span>
-          
-          {/* Children Count Indicator */}
-          {hasChildren && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              ({item.children.length})
-            </span>
-          )}
-        </div>
-        
-        {/* Render Children with Smooth Animation */}
         {hasChildren && (
-          <div 
+          <div
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              isExpanded 
-                ? 'max-h-96 opacity-100 transform translate-y-0' 
-                : 'max-h-0 opacity-0 transform -translate-y-2'
+              isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
-            <div className="space-y-1">
-              {item.children.map((child: any) => 
-                renderItem(child, level + 1, true)
-              )}
+            <div className="ml-9 space-y-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+              {item.children.map((child: any) => renderItem(child, level + 1))}
             </div>
           </div>
         )}
@@ -352,122 +294,58 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
   const selectedCount = Object.values(selectedTasks).filter(Boolean).length;
 
   return (
-    <div className="fixed inset-0 bg-black/40 bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Daily Focus</h2>
-            <p className="text-gray-700 font-medium">
-              Selected : {selectedCount} Quest
-            </p>
-
-            {completedTodayCount > 0 && (
-              <>
-                <p className="text-gray-700 font-medium">
-                  Done : {completedTodayCount} Quest
-                </p>
-              </>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <QuestPickerShell
+      title="Daily Focus"
+      selectedCount={selectedCount}
+      completedTodayCount={completedTodayCount}
+      onClose={onClose}
+      onSave={onSave}
+      tabs={tabs}
+      cancelDisabled={savingLoading}
+      saveDisabled={selectedCount === 0}
+      saving={savingLoading}
+    >
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={`skeleton-task-${i}`} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5">
+              <Skeleton className="w-4 h-4 rounded" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          ))}
         </div>
+      ) : Object.keys(groupedTasks).length === 0 ? (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <p className="font-medium">Belum ada task HFG minggu ini</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => {
+            const hierarchy = buildHierarchy(slotTasks, Number(goalSlot));
+            const rootItems = Object.values(hierarchy);
 
-        {tabs}
-
-        {/* Main Quest List */}
-        {isLoading ? (
-          <div className="space-y-6">
-            {/* Skeleton for 2-3 goal slot groups */}
-            {Array.from({ length: 1 }).map((_, groupIndex) => (
-              <div key={`skeleton-group-${groupIndex}`} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                {/* Goal slot title skeleton */}
-                <Skeleton className="h-6 w-48 mb-4" />
-                
-                {/* Task items skeleton */}
-                <div className="space-y-3">
-                  {Array.from({ length: 3 + (groupIndex % 3) }).map((_, taskIndex) => (
-                    <div key={`skeleton-task-${taskIndex}`} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-                      {/* Checkbox skeleton */}
-                      <Skeleton className="w-4 h-4 rounded" />
-                      
-                      {/* Task content skeleton */}
-                      <div className="flex-1">
-                        {/* Task title skeleton */}
-                        <Skeleton className="h-4 w-3/4 mb-2" />
-                        {/* Task subtitle skeleton */}
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                    </div>
-                  ))}
+            return (
+              <div key={goalSlot}>
+                <h3 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 px-3 mb-1">
+                  Goal Mingguan {goalSlot}
+                </h3>
+                <div className="space-y-1">
+                  {rootItems.length > 0 ? (
+                    rootItems.map((item: any) => renderItem(item))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 px-3 py-2">
+                      Tidak ada task di goal slot ini
+                    </p>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-6 max-h-96 overflow-y-auto">
-            {Object.entries(groupedTasks).map(([goalSlot, slotTasks]) => {
-              const hierarchy = buildHierarchy(slotTasks, Number(goalSlot));
-              const rootItems = Object.values(hierarchy);
-              
-              return (
-                <div key={goalSlot} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-bold text-gray-900 mb-4">Goal Mingguan {goalSlot}</h3>
-                  <div className="space-y-2">
-                    {rootItems.length > 0 ? (
-                      rootItems.map((item: any) => renderItem(item))
-                    ) : (
-                      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                        </div>
-                        <p className="text-sm font-medium mb-1">
-                          Tidak ada task di goal slot ini
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                          Klik edit untuk menambahkan task
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-          <Button
-            onClick={onClose}
-            disabled={savingLoading}
-            variant="outline"
-            size="md"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={onSave}
-            disabled={selectedCount === 0}
-            loading={savingLoading}
-            loadingText="Menyimpan..."
-            variant="primary"
-            size="md"
-          >
-            Submit
-          </Button>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      )}
+    </QuestPickerShell>
   );
 };
 
