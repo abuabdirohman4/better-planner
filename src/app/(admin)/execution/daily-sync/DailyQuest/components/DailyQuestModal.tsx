@@ -61,17 +61,20 @@ const DailyQuestModal: React.FC<TaskSelectionModalProps> = ({
                   return (
                     <div
                       key={task.id}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer ${isSelected
+                      className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer select-none ${isSelected
                         ? 'border-brand-500 bg-brand-50/50'
                         : 'border-gray-200 hover:border-brand-200 hover:bg-gray-50'
                         }`}
                       onClick={() => onTaskToggle(task.id)}
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={() => onTaskToggle(task.id)}
-                        disabled={savingLoading}
-                      />
+                      {/* Klik kotak jangan diteruskan ke baris: dulu terbalik dua kali (baris juga toggle) */}
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => onTaskToggle(task.id)}
+                          disabled={savingLoading}
+                        />
+                      </div>
                       <div className="flex-1">
                         <span className={`text-sm font-medium ${isSelected ? 'text-brand-900' : 'text-gray-900'}`}>
                           {task.title}

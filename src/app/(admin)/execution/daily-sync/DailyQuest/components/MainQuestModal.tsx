@@ -305,8 +305,13 @@ const MainQuestModal: React.FC<TaskSelectionModalProps> = ({
             />
           )}
           
-          {/* Task Title */}
-          <span className={`flex-1 text-sm font-medium ${
+          {/* Task Title: klik = sama dengan klik kotak (induk virtual = buka/tutup) */}
+          <span
+            onClick={() => {
+              if (isVirtualParent) { if (hasChildren) toggleExpanded(item.id); }
+              else if (!savingLoading) onTaskToggle(item.id);
+            }}
+            className={`flex-1 cursor-pointer select-none text-sm font-medium ${
             item.status === 'DONE' 
               ? 'text-gray-500 dark:text-gray-400 line-through' 
               : 'text-gray-900 dark:text-white'

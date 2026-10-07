@@ -266,7 +266,7 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                           checked={areAllChildrenSelected(project.id)}
                           onChange={() => handleParentToggle(project.id)}
                         />
-                        <div className="flex-1">
+                        <div className="flex-1 cursor-pointer select-none" onClick={() => handleParentToggle(project.id)}>
                           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
                             {project.title}
                             {hasChildren && (
@@ -304,7 +304,7 @@ const WorkQuestModal: React.FC<WorkQuestModalProps> = ({
                                   checked={selectedTasks.includes(task.id)}
                                   onChange={() => onTaskToggle(task.id)}
                                 />
-                                <div className="flex-1">
+                                <div className="flex-1 cursor-pointer select-none" onClick={() => onTaskToggle(task.id)}>
                                   <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200">
                                     {task.title}
                                   </h5>

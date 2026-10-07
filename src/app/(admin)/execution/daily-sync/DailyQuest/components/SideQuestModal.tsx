@@ -268,8 +268,10 @@ const SideQuestModal: React.FC<SideQuestModalProps> = ({
                         />
                       </div>
                       
-                      {/* Quest Title */}
-                      <span className={`flex-1 text-sm font-medium ${
+                      {/* Quest Title: klik = sama dengan klik kotak */}
+                      <span
+                        onClick={() => handleTaskToggle(quest)}
+                        className={`flex-1 cursor-pointer select-none text-sm font-medium ${
                         quest.status === 'DONE' 
                           ? 'text-gray-500 dark:text-gray-400 line-through' 
                           : 'text-gray-900 dark:text-white'

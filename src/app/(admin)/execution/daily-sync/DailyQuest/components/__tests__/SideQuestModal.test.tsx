@@ -36,4 +36,10 @@ describe('SideQuestModal (bug 7 Okt 2026: Side Quest tidak bisa dipilih)', () =>
     fireEvent.click(boxes[0]); // lepas q1
     expect(screen.getByTestId('picks').textContent).toBe('q2');
   });
+
+  it('klik teks quest juga memilih', () => {
+    render(<Host />);
+    fireEvent.click(screen.getByText('Telepon bengkel'));
+    expect(screen.getByTestId('picks').textContent).toBe('q1,q2');
+  });
 });
