@@ -24,11 +24,19 @@ function JournalField({ logId, field, label, initial, placeholder, onStatus, com
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
   useEffect(() => setText(initial), [logId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Tinggi isi dipasang sebagai min-height: kotak tumbuh mengikuti isi, dan di dua kolom (compact) bisa meregang
+  // menyamai kotak sebelahnya.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Ukur tanpa peregangan (flex none), kalau tidak yang terbaca tinggi regangan, bukan tinggi isi.
+    el.style.flex = 'none';
+    el.style.minHeight = '0';
     el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
+    const h = el.scrollHeight;
+    el.style.height = '';
+    el.style.flex = '';
+    el.style.minHeight = `${h}px`;
   }, [text]);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
@@ -50,7 +58,7 @@ function JournalField({ logId, field, label, initial, placeholder, onStatus, com
   };
 
   return (
-    <label className="block">
+    <label className={compact ? 'flex flex-col' : 'block'}>
       {compact ? <span className="sr-only">{label}</span> : <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span>}
       <textarea
         ref={ref}
@@ -58,22 +66,23 @@ function JournalField({ logId, field, label, initial, placeholder, onStatus, com
         value={text}
         onChange={(e) => change(e.target.value)}
         data-testid={`journal-${field}-${logId}`}
-        placeholder={compact ? `${label}?` : placeholder}
-        className="mt-1 w-full resize-none overflow-hidden rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+        placeholder={placeholder}
+        className={`mt-1 w-full resize-none ${compact ? 'flex-1' : ''} overflow-hidden rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
       />
     </label>
   );
 }
 
-/** Dua pertanyaan One Minute Journal satu siklus (app-2pxn); `compact` = label jadi teks samar di kotak. */
+/** Dua pertanyaan One Minute Journal satu siklus (app-2pxn), kalimatnya persis buku; `compact` = label disembunyikan. */
 export default function JournalFields({ logId, whatDone, whatThink, onStatus = () => {}, compact = false }: {
   logId: string; whatDone: string | null | undefined; whatThink: string | null | undefined;
   onStatus?: (s: 'saving' | 'saved' | 'idle') => void; compact?: boolean;
 }) {
   return (
-    <div className="space-y-2">
-      <JournalField logId={logId} field="what_done" label="Apa yang diselesaikan" initial={whatDone ?? ''} placeholder="Apa yang selesai di siklus ini?" onStatus={onStatus} compact={compact} />
-      <JournalField logId={logId} field="what_think" label="Yang masih dipikirkan" initial={whatThink ?? ''} placeholder="Ide, hambatan, atau langkah berikutnya" onStatus={onStatus} compact={compact} />
+    // compact (tab Jurnal): dua pertanyaan berdampingan di desktop.
+    <div className={compact ? 'grid gap-2 md:grid-cols-2' : 'space-y-2'}>
+      <JournalField logId={logId} field="what_done" label="Apa yang diselesaikan" initial={whatDone ?? ''} placeholder="Proyek/tugas apa yang baru saja saya selesaikan?" onStatus={onStatus} compact={compact} />
+      <JournalField logId={logId} field="what_think" label="Yang masih dipikirkan" initial={whatThink ?? ''} placeholder="Apakah ada bagian proyek/tugas itu yang masih saya pikirkan?" onStatus={onStatus} compact={compact} />
     </div>
   );
 }

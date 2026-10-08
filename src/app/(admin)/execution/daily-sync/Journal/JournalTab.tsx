@@ -63,13 +63,14 @@ export default function JournalTab({ date }: { date: string }) {
   const { logs, isLoading } = useActivityLogs({ date });
   const groups = groupCycles(logs);
 
+  // OMJ selebar halaman (dua pertanyaan berdampingan di desktop), Brain Dump di bawahnya.
   return (
-    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <DailyCardShell
         testId="journal-omj"
         icon={<NotebookPen className="h-5 w-5" />}
         title="One Minute Journal"
-        hint="Dua pertanyaan singkat tiap siklus · tersimpan otomatis"
+        hint="Jurnalkan jawaban atas pertanyaan berikut setiap kali Anda selesai menjalani Siklus Kerja 90/15 dan 60/10 · tersimpan otomatis"
       >
         {isLoading ? (
           <div className="h-24 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />

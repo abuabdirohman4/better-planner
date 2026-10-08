@@ -76,7 +76,7 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   return (
     <div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5  shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Brain Dump</h3>
               <Tooltip
@@ -87,6 +87,12 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
                 showIcon={true}
               />
             </div>
+            {/* Status simpan di baris judul supaya tetap terlihat walau kotak tulis memanjang. */}
+            {!isLoading && (
+              <p className="text-xs text-gray-400" data-testid="brain-dump-status">
+                {isSaving ? 'Menyimpan…' : content === saved ? 'Tersimpan otomatis' : 'Belum tersimpan…'}
+              </p>
+            )}
           </div>
 
         {/* Brain dump textarea */}
@@ -99,20 +105,14 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <RichTextEditor
-              value={content}
-              onChange={setContent}
-              onKeyDown={handleKeyDown}
-              placeholder="Tuliskan apa yang ada di pikiran Anda..."
-              className="w-full"
-              rows={10}
-            />
-            
-            <p className="text-right text-xs text-gray-400" data-testid="brain-dump-status">
-              {isSaving ? 'Menyimpan…' : content === saved ? 'Tersimpan otomatis' : 'Belum tersimpan…'}
-            </p>
-          </div>
+          <RichTextEditor
+            value={content}
+            onChange={setContent}
+            onKeyDown={handleKeyDown}
+            placeholder="Tuliskan apa yang ada di pikiran Anda..."
+            className="w-full"
+            rows={10}
+          />
         )}
         </div>
     </div>
