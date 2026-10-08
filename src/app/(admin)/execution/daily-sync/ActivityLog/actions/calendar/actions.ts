@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_FIRST_HOUR, DEFAULT_LAST_HOUR, validateHour } from '../hourly-notes/logic';
 import { calendarName, eventsForDay, googleCalendarSettingsUrl, isGoogleIcalUrl, type CalendarEvent } from './logic';
@@ -25,19 +26,25 @@ async function getUserClient() {
   return { supabase, user };
 }
 
-// ponytail: cache Next 15 menit per URL; perubahan di Google baru tampil setelahnya.
-async function fetchIcs(url: string): Promise<string> {
-  const res = await fetch(url, { next: { revalidate: 900 } });
+const icalTag = (userId: string) => `ical-${userId}`;
+
+// ponytail: cache Next 15 menit per URL; tombol refresh (fresh) melewati cache dan membuangnya.
+async function fetchIcs(url: string, userId: string, fresh = false): Promise<string> {
+  const res = fresh
+    ? await fetch(url, { cache: 'no-store' })
+    : await fetch(url, { next: { revalidate: 900, tags: [icalTag(userId)] } });
   if (!res.ok) throw new Error(`iCal ${res.status}`);
   return res.text();
 }
 
 /** Setelan timeline + acara semua kalender tersambung pada tanggal itu. */
-export async function getTimelineData(date: string): Promise<TimelineData> {
+/** `fresh` = ambil langsung dari Google (tombol refresh) dan buang cache 15 menit user ini. */
+export async function getTimelineData(date: string, fresh = false): Promise<TimelineData> {
   const { supabase, user } = await getUserClient();
+  if (fresh) revalidateTag(icalTag(user.id));
   const p = await queryTimelineProfile(supabase, user.id);
   const cals = p?.ical_calendars ?? [];
-  const results = await Promise.allSettled(cals.map(async (c) => eventsForDay(await fetchIcs(c.url), date)));
+  const results = await Promise.allSettled(cals.map(async (c) => eventsForDay(await fetchIcs(c.url, user.id, fresh), date)));
   const failed = results.filter((r) => r.status === 'rejected');
   if (failed.length) console.error('Gagal membaca Google Calendar:', failed);
   return {
@@ -70,7 +77,7 @@ export async function addIcalCalendar(url: string): Promise<{ error: string | nu
   if (cals.length >= MAX_CALENDARS) return { error: `Maksimal ${MAX_CALENDARS} kalender` };
   let name: string;
   try {
-    const ics = await fetchIcs(clean);
+    const ics = await fetchIcs(clean, user.id, true);
     eventsForDay(ics, date10());
     name = calendarName(ics);
   } catch {

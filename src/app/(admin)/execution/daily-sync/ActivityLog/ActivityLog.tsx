@@ -1,7 +1,8 @@
 'use client';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { RefreshCw } from 'lucide-react';
 import useSWR from 'swr';
 
 import { useActivityStore } from '@/stores/activityStore';
@@ -43,7 +44,21 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   };
 
   const { scheduledTasks } = useScheduledTasks(date);
-  const { data: timeline } = useSWR(['timeline-data-v2', date], () => getTimelineData(date), { revalidateOnFocus: false });
+  const { data: timeline, mutate: mutateTimeline } = useSWR(['timeline-data-v2', date], () => getTimelineData(date), {
+    revalidateOnFocus: false,
+    refreshInterval: 15 * 60 * 1000, // acara Google Calendar ikut cache server 15 menit
+  });
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshCalendar = async () => {
+    setRefreshing(true);
+    try {
+      await mutateTimeline(getTimelineData(date, true), { revalidate: false });
+    } catch {
+      toast.error('Gagal memuat ulang Google Calendar');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Siklus yang sedang berjalan belum punya baris log, jadi chip-nya diambil dari timer.
   const timerState = useTimerStore(s => s.timerState);
@@ -92,6 +107,22 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
           <Link href="/settings/profile#timeline" className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">
             + Google Calendar
           </Link>
+        )}
+        {timeline && timeline.calendars.length > 0 && (
+          <span className="flex items-center gap-2">
+          <span className="text-[11px] text-gray-400">Kalender otomatis tiap 15 mnt</span>
+          <button
+            type="button"
+            data-testid="calendar-refresh"
+            onClick={refreshCalendar}
+            disabled={refreshing}
+            title="Acara Google Calendar diperbarui otomatis tiap 15 menit. Klik untuk ambil yang terbaru sekarang."
+            className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-brand-600 disabled:opacity-50 dark:text-gray-400"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Memuat…' : 'Perbarui'}
+          </button>
+          </span>
         )}
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">

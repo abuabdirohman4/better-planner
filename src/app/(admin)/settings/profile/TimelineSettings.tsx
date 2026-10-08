@@ -149,7 +149,7 @@ export function TimelineSettings() {
         <Button onClick={addCalendar} disabled={!url.trim()} loading={saving === 'ical'} loadingText="Memeriksa...">
           Tambah kalender
         </Button>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Link ini rahasia: hanya disimpan di server BePlan. Acara diperbarui tiap ±15 menit.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Link ini rahasia: hanya disimpan di server BePlan. Acara diperbarui otomatis tiap 15 menit; kalau mau langsung, klik <b>Perbarui</b> di kartu Timeline Harian.</p>
       </div>
     </div>
   )
