@@ -4,9 +4,7 @@ import { login, clearSession, injectQuarterState, getCurrentQuarter } from './he
 
 dotenv.config({ path: '.env.test' });
 
-test.describe.configure({ mode: 'serial' });
-
-test.describe('Activity Plan — view switching', () => {
+test.describe('Timeline Harian (app-6god)', () => {
   test.beforeEach(async ({ page }) => {
     await clearSession(page);
     const { year, quarter } = getCurrentQuarter();
@@ -16,25 +14,11 @@ test.describe('Activity Plan — view switching', () => {
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test('Calendar / List / Quest buttons toggle aria-pressed', async ({ page }) => {
-    const sw = page.locator('[data-testid="activity-view-switch"]').filter({ visible: true }).first();
-    await expect(sw).toBeVisible({ timeout: 15000 });
-
-    const cal = sw.locator('[data-testid="activity-view-calendar"]');
-    const list = sw.locator('[data-testid="activity-view-list"]');
-    const quest = sw.locator('[data-testid="activity-view-quest"]');
-
-    await expect(cal).toHaveAttribute('aria-pressed', 'true');
-
-    await list.click();
-    await expect(list).toHaveAttribute('aria-pressed', 'true');
-    await expect(cal).toHaveAttribute('aria-pressed', 'false');
-
-    await quest.click();
-    await expect(quest).toHaveAttribute('aria-pressed', 'true');
-    await expect(list).toHaveAttribute('aria-pressed', 'false');
-
-    await cal.click();
-    await expect(cal).toHaveAttribute('aria-pressed', 'true');
+  test('baris jam 04:00-22:00 tampil, tanpa toggle tampilan', async ({ page }) => {
+    const timeline = page.getByTestId('hourly-timeline').filter({ visible: true }).first();
+    await expect(timeline).toBeVisible({ timeout: 15000 });
+    await expect(timeline.getByTestId('hour-row-4')).toBeVisible();
+    await expect(timeline.getByTestId('hour-row-22')).toBeVisible();
+    await expect(page.locator('[data-testid="activity-view-switch"]')).toHaveCount(0);
   });
 });

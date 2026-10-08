@@ -56,16 +56,6 @@ const UI_PREFERENCES = JSON.stringify({
     showCompletedWorkQuest: true,
     showCompletedDailyQuest: true,
     showAllTasksAutomatically: false,
-    cardCollapsed: {
-      pomodoroTimer: false,
-      mainQuest: false,
-      sideQuest: false,
-      workQuest: false,
-      dailyQuest: false,
-      activityLog: false,
-      brainDump: false,
-      bestWeekRef: false,
-    },
   },
   version: 0,
 });
@@ -101,7 +91,7 @@ export async function injectQuarterState(
         'quarter-storage',
         JSON.stringify({ state: { year: y, quarter: q }, version: 0 })
       );
-      // Pastikan semua CollapsibleCard tidak collapsed saat test
+      // Preferensi tampilan bawaan supaya tes tidak terpengaruh setelan lama
       localStorage.setItem('ui-preferences-storage', uiPrefs);
     },
     { y: year, q: quarter, uiPrefs: UI_PREFERENCES }

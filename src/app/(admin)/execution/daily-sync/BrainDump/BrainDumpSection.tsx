@@ -5,8 +5,6 @@ import { useBrainDump } from './hooks/useBrainDump';
 import { toast } from 'sonner';
 import Tooltip from '@/components/ui/tooltip/Tooltip';
 import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor';
-import CollapsibleCard from '@/components/common/CollapsibleCard';
-import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 interface BrainDumpSectionProps {
   date: string;
@@ -14,7 +12,6 @@ interface BrainDumpSectionProps {
 
 const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
   const [content, setContent] = useState('');
-  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
 
   const {
     brainDump,
@@ -78,10 +75,6 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
 
   return (
     <div>
-      <CollapsibleCard
-        isCollapsed={cardCollapsed.brainDump}
-        onToggle={() => toggleCardCollapsed('brainDump')}
-      >
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5  shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="mb-4">
             <div className="flex items-center gap-2">
@@ -122,7 +115,6 @@ const BrainDumpSection: React.FC<BrainDumpSectionProps> = ({ date }) => {
           </div>
         )}
         </div>
-      </CollapsibleCard>
     </div>
   );
 };

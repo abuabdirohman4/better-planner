@@ -14,8 +14,6 @@ import ActivityLog from './ActivityLog/ActivityLog';
 import TimerEngine from './PomodoroTimer/TimerEngine';
 import DailySyncClient from './DailyQuest/DailySyncClient';
 import { getWeekDates, getLocalDateString } from '@/lib/dateUtils';
-import CollapsibleCard from '@/components/common/CollapsibleCard';
-import { useUIPreferencesStore } from '@/stores/uiPreferencesStore';
 
 export default function DailySyncPage() {
   const {
@@ -44,14 +42,6 @@ export default function DailySyncPage() {
   // Halaman kiri buku = Perencanaan, halaman kanan = Jurnal (app-2pxn).
   const [pageTab, setPageTab] = useState<'plan' | 'journal'>('plan');
 
-  // Card collapse states
-  const { cardCollapsed, toggleCardCollapsed } = useUIPreferencesStore();
-
-  // Activity Log calendar mode for dynamic title
-  const [activityCalendarMode, setActivityCalendarMode] = useState<'BOTH' | 'PLAN' | 'ACTUAL'>('BOTH');
-  const activityTitle = activityCalendarMode === 'PLAN' ? 'Activity Plan'
-    : activityCalendarMode === 'ACTUAL' ? 'Activity Log'
-      : 'Activity Plan & Log';
 
   // Global timer - hanya ada 1 interval untuk seluruh aplikasi
   useGlobalTimer();
@@ -138,18 +128,12 @@ export default function DailySyncPage() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              <CollapsibleCard
-                isCollapsed={cardCollapsed.activityLog}
-                onToggle={() => toggleCardCollapsed('activityLog')}
-                className="h-full flex flex-col"
-              >
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                  <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">{activityTitle}</h3>
+                  <h3 className="font-bold text-lg mb-3 text-gray-900 dark:text-gray-100">Timeline Harian</h3>
                   <div className="flex-1">
-                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} onCalendarModeChange={setActivityCalendarMode} />
+                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
                   </div>
                 </div>
-              </CollapsibleCard>
             </div>
           </div>
           )}
