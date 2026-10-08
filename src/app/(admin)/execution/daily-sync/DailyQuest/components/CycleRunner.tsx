@@ -11,7 +11,6 @@ import JournalFields from '../../Journal/JournalFields';
 import SoundSelector from '../../PomodoroTimer/components/SoundSelector';
 import { classifyCycle, cycleLabel } from '../utils/workCycles';
 import { CYCLES } from '../utils/dailyFocus';
-import { selectStyle } from '../utils/selectStyle';
 import type { DailyPlanItem } from '@/types/daily-plan';
 
 const BREAK_LABEL = { SHORT: 'Istirahat 5', MEDIUM: 'Istirahat 10', LONG: 'Istirahat 15' } as const;
@@ -115,7 +114,6 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
                 data-testid="cycle-duration-select"
                 value={focusMinutes}
                 onChange={(e) => setFocusMinutes(Number(e.target.value))}
-                style={selectStyle}
                 className="appearance-none rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold tabular-nums text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
               >
                 {durationOptions.map((m) => (

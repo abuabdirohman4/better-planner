@@ -9,12 +9,12 @@ import DailyQuestModal from './components/DailyQuestModal';
 import SideQuestModal from './components/SideQuestModal';
 import SortableTaskItemCard from './components/SortableTaskItemCard';
 import DailyFocusCard from './components/DailyFocusCard';
-import WorkCyclesCard from './components/WorkCyclesCard';
 import { useTimerStore } from '@/stores/timerStore';
 import OtherTasksCard from './components/OtherTasksCard';
 import type { AddKind } from './components/AddItemMenu';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { splitDailyItems } from './utils/dailyFocus';
+import DailyRitualCard from './components/DailyRitualCard';
 import { DailySyncClientProps } from './types';
 import type { DailyPlanItem } from '@/types/daily-plan';
 import type { SideQuest } from '@/types/side-quest';
@@ -172,8 +172,8 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   const existingSideQuestIds = groupedItems.SIDE_QUEST.map(i => i.item_id);
 
   return (
-    <div className="mx-auto relative">
-      <div className="flex flex-col gap-4 md:gap-6">
+    <div className="mx-auto relative flex w-full flex-1 flex-col">
+      <div className="flex flex-1 flex-col gap-4 md:gap-6">
         <DailyFocusCard
           core={core}
           bonus={bonus}
@@ -182,7 +182,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onReorder={handleReorder}
           onAdd={openAdd}
         />
-        <WorkCyclesCard date={selectedDate} tasks={[...core, ...bonus]} otherTasks={other} plan={effectiveDailyPlan?.cycle_plan ?? null} />
         <OtherTasksCard
           items={other}
           renderItem={renderSortable}
@@ -190,6 +189,10 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onAdd={openAdd}
           onQuickAddSide={handleAddSideQuest}
         />
+        {/* grid + flex-1: kartu terbawah memanjang supaya rata dengan kolom kanan */}
+        <div className="grid flex-1">
+          <DailyRitualCard selectedDate={selectedDate} />
+        </div>
       </div>
 
       <MainQuestModal

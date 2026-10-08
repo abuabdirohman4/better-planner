@@ -11,7 +11,6 @@ import { saveCyclePlan } from '../actions';
 import {
   buildWorkCycles, classifyCycle, cycleLabel, DEFAULT_CYCLE_PLAN, type CyclePlanRow, type FilledCycle,
 } from '../utils/workCycles';
-import { selectStyle } from '../utils/selectStyle';
 import DailyCardShell from './DailyCardShell';
 import CycleRunner from './CycleRunner';
 
@@ -132,7 +131,6 @@ export default function WorkCyclesCard({ date, tasks, otherTasks, plan }: WorkCy
                 data-testid={`cycle-row-select-${i}`}
                 value={row.item_id ?? ''}
                 onChange={(e) => setItem(i, e.target.value || null)}
-                style={selectStyle}
                 className="min-w-0 flex-1 appearance-none truncate rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="">{altTasks.length ? 'Pilih task' : 'Belum ada Daily Focus'}</option>

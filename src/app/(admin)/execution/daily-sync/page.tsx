@@ -13,7 +13,8 @@ import JournalTab from './Journal/JournalTab';
 import ActivityLog from './ActivityLog/ActivityLog';
 import TimerEngine from './PomodoroTimer/TimerEngine';
 import DailySyncClient from './DailyQuest/DailySyncClient';
-import DailyRitualCard from './DailyQuest/components/DailyRitualCard';
+import WorkCyclesCard from './DailyQuest/components/WorkCyclesCard';
+import { splitDailyItems } from './DailyQuest/utils/dailyFocus';
 import { getWeekDates, getLocalDateString } from '@/lib/dateUtils';
 
 export default function DailySyncPage() {
@@ -39,6 +40,8 @@ export default function DailySyncPage() {
   const { loading, initialLoading, dailyPlan } = useDailyPlanManagement(year, quarter, displayWeek, selectedDateStr);
 
   const { handleSetActiveTask, activityLogRefreshKey } = useTimerManagement(selectedDateStr);
+  // Siklus Kerja di kolom kanan atas; pilihan task-nya = Daily Focus + Tugas Lain.
+  const focusSplit = splitDailyItems(dailyPlan?.daily_plan_items);
 
   // Halaman kiri buku = Perencanaan, halaman kanan = Jurnal (app-2pxn).
   const [pageTab, setPageTab] = useState<'plan' | 'journal'>('plan');
@@ -115,7 +118,8 @@ export default function DailySyncPage() {
             <JournalTab date={selectedDateStr} />
           ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            {/* Dua kolom sama tinggi: kartu terbawah kolom yang lebih pendek memanjang. */}
+            <div className="flex flex-col">
               <DailySyncClient
                 year={year}
                 quarter={quarter}
@@ -129,12 +133,15 @@ export default function DailySyncPage() {
               />
             </div>
             <div className="flex flex-col gap-6">
-              <DailyRitualCard selectedDate={selectedDateStr} />
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                  <div className="flex-1">
-                    <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
-                  </div>
-                </div>
+              <WorkCyclesCard
+                date={selectedDateStr}
+                tasks={[...focusSplit.core, ...focusSplit.bonus]}
+                otherTasks={focusSplit.other}
+                plan={dailyPlan?.cycle_plan ?? null}
+              />
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
+              </div>
             </div>
           </div>
           )}
