@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { ProfileForm } from './ProfileForm'
+import { TimelineSettings } from './TimelineSettings'
 
 export const metadata: Metadata = {
   title: 'Profile Settings | Better Planner',
@@ -16,6 +17,7 @@ export default function ProfilePage() {
         </p>
       </div>
       <ProfileForm />
+      <TimelineSettings />
     </div>
   )
 }

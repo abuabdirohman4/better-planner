@@ -20,6 +20,11 @@ describe('visibleHours', () => {
     expect(h[0]).toBe(2);
     expect(h[h.length - 1]).toBe(23);
   });
+  it('ikut rentang setelan user', () => {
+    const h = visibleHours([], 6, 23);
+    expect([h[0], h[h.length - 1]]).toEqual([6, 23]);
+    expect(visibleHours([4], 6, 23)[0]).toBe(4);
+  });
 });
 
 describe('validateHour', () => {

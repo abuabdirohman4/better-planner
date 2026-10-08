@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { toast } from 'sonner';
+import { CalendarDays } from 'lucide-react';
+import type { CalendarEvent } from '../actions/calendar/logic';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { getHourlyNotes, saveHourlyNote } from '../actions/hourly-notes/actions';
 import { hourWIB, visibleHours } from '../actions/hourly-notes/logic';
@@ -20,6 +22,10 @@ interface HourlyTimelineProps {
   /** Rencana (task_schedules) per jam, tampil samar di baris yang belum diisi. */
   plans: Record<number, string>;
   onDeleteChip: (logId: string) => void;
+  /** Acara Google Calendar (read-only). */
+  events: CalendarEvent[];
+  startHour: number;
+  endHour: number;
 }
 
 /** Chip siklus; klik = tawarkan hapus (log salah tetap bisa dibuang). Siklus yang berjalan tidak bisa dihapus. */
@@ -55,12 +61,13 @@ function Chip({ chip, onDelete }: { chip: CycleChip; onDelete: (id: string) => v
 
 const pad = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
-function HourRow({ hour, saved, plan, chips, isNow, onSave, onDeleteChip }: {
+function HourRow({ hour, saved, plan, chips, events, isNow, onSave, onDeleteChip }: {
   hour: number;
   saved: string;
   plan?: string;
   chips: CycleChip[];
   isNow: boolean;
+  events: CalendarEvent[];
   onSave: (hour: number, content: string) => void;
   onDeleteChip: (logId: string) => void;
 }) {
@@ -88,6 +95,16 @@ function HourRow({ hour, saved, plan, chips, isNow, onSave, onDeleteChip }: {
         aria-label={`Catatan jam ${pad(hour)}`}
         className="min-w-0 flex-1 rounded bg-transparent px-1.5 py-1 text-sm text-gray-900 placeholder:text-gray-400 placeholder:italic focus:bg-gray-50 focus:outline-none dark:text-gray-100 dark:focus:bg-gray-700"
       />
+      {events.length > 0 && (
+        <span
+          data-testid="hour-calendar-event"
+          title={events.map(e => e.title).join(' · ')}
+          className="flex min-w-0 max-w-[40%] flex-shrink items-center gap-1 truncate text-xs text-gray-500 dark:text-gray-400"
+        >
+          <CalendarDays className="h-3.5 w-3.5 flex-shrink-0" aria-label="Google Calendar" />
+          <span className="truncate">{events.map(e => e.title).join(' · ')}</span>
+        </span>
+      )}
       {chips.length > 0 && (
         <span className="flex max-w-[45%] flex-shrink-0 flex-wrap justify-end gap-1">
           {chips.map(c => <Chip key={c.id} chip={c} onDelete={onDeleteChip} />)}
@@ -98,7 +115,7 @@ function HourRow({ hour, saved, plan, chips, isNow, onSave, onDeleteChip }: {
 }
 
 /** Timeline harian = catatan per jam yang diketik langsung; siklus timer tampil otomatis (app-6god). */
-export default function HourlyTimeline({ date, chips, plans, onDeleteChip }: HourlyTimelineProps) {
+export default function HourlyTimeline({ date, chips, plans, onDeleteChip, events, startHour, endHour }: HourlyTimelineProps) {
   const { data: notes = [], mutate } = useSWR(['hourly-notes', date], () => getHourlyNotes(date), {
     revalidateOnFocus: false,
   });
@@ -108,7 +125,8 @@ export default function HourlyTimeline({ date, chips, plans, onDeleteChip }: Hou
     ...notes.map(n => n.hour),
     ...chips.map(c => c.hour),
     ...Object.keys(plans).map(Number),
-  ]);
+    ...events.map(e => e.hour),
+  ], startHour, endHour);
   const nowHour = date === getLocalDateString(new Date()) ? hourWIB(new Date().toISOString()) : -1;
 
   const handleSave = async (hour: number, content: string) => {
@@ -132,6 +150,7 @@ export default function HourlyTimeline({ date, chips, plans, onDeleteChip }: Hou
           saved={byHour.get(h) ?? ''}
           plan={plans[h]}
           chips={chips.filter(c => c.hour === h)}
+          events={events.filter(e => e.hour === h)}
           isNow={h === nowHour}
           onSave={handleSave}
           onDeleteChip={onDeleteChip}

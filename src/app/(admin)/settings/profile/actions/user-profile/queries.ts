@@ -5,7 +5,7 @@ import type { SoundSettings } from '@/types/sound';
 export async function queryUserProfile(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('*')
+    .select('id, user_id, sound_settings, created_at, updated_at') // tanpa ical_url (rahasia)
     .eq('user_id', userId)
     .single();
   if (error) {

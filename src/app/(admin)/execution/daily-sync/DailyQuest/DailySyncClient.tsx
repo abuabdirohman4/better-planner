@@ -12,7 +12,6 @@ import DailyFocusCard from './components/DailyFocusCard';
 import WorkCyclesCard from './components/WorkCyclesCard';
 import { useTimerStore } from '@/stores/timerStore';
 import OtherTasksCard from './components/OtherTasksCard';
-import DailyRitualCard from './components/DailyRitualCard';
 import type { AddKind } from './components/AddItemMenu';
 import { groupItemsByType } from "./utils/groupItemsByType";
 import { splitDailyItems } from './utils/dailyFocus';
@@ -191,7 +190,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
           onAdd={openAdd}
           onQuickAddSide={handleAddSideQuest}
         />
-        <DailyRitualCard selectedDate={selectedDate} />
       </div>
 
       <MainQuestModal

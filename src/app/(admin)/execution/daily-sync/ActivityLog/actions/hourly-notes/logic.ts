@@ -7,10 +7,10 @@ export function hourWIB(iso: string): number {
   return Number(h) % 24;
 }
 
-/** Baris jam yang tampil: default 04-22, melebar bila ada isi di luar rentang itu. */
-export function visibleHours(usedHours: number[]): number[] {
-  const first = Math.min(DEFAULT_FIRST_HOUR, ...usedHours);
-  const last = Math.max(DEFAULT_LAST_HOUR, ...usedHours);
+/** Baris jam yang tampil: rentang setelan user (bawaan 04-22), melebar bila ada isi di luar rentang itu. */
+export function visibleHours(usedHours: number[], from = DEFAULT_FIRST_HOUR, to = DEFAULT_LAST_HOUR): number[] {
+  const first = Math.min(from, ...usedHours);
+  const last = Math.max(to, ...usedHours);
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
 

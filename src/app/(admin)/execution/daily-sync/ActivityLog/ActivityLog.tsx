@@ -1,6 +1,8 @@
 'use client';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import useSWR from 'swr';
 
 import { useActivityStore } from '@/stores/activityStore';
 import { useTimerStore } from '@/stores/timerStore';
@@ -10,6 +12,8 @@ import HourlyTimeline, { type CycleChip } from './components/HourlyTimeline';
 import { hourWIB } from './actions/hourly-notes/logic';
 import { useScheduledTasks } from '../DailyQuest/hooks/useScheduledTasks';
 import { deleteActivityLog } from './actions/activityLoggingActions';
+import { getTimelineData } from './actions/calendar/actions';
+import { DEFAULT_FIRST_HOUR, DEFAULT_LAST_HOUR } from './actions/hourly-notes/logic';
 
 interface ActivityLogProps {
   date: string;
@@ -18,7 +22,6 @@ interface ActivityLogProps {
 
 /** Kartu Timeline Harian (app-6god): catatan per jam + chip siklus; satu tampilan saja. */
 const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
-  const [dynamicHeight, setDynamicHeight] = useState('auto');
 
   const { lastActivityTimestamp } = useActivityStore();
   const { logs, isLoading, error, mutate } = useActivityLogs({ date, refreshKey, lastActivityTimestamp });
@@ -40,47 +43,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   };
 
   const { scheduledTasks } = useScheduledTasks(date);
-
-  // Dynamic height calculation
-  useEffect(() => {
-    const calculateHeight = () => {
-      try {
-        // Check if screen size is md or above
-        const isMdAndAbove = window.innerWidth >= 768;
-        if (!isMdAndAbove) {
-          return;
-        }
-
-        // Get Main Quest + Side Quest + Pomodoro Timer
-        const mainQuestCard = document.querySelector('.main-quest-card');
-        const sideQuestCard = document.querySelector('.side-quest-card');
-        const workQuestCard = document.querySelector('.work-quest-card');
-        const dailyQuestCard = document.querySelector('.daily-quest-card');
-        const pomodoroTimer = document.querySelector('.pomodoro-timer');
-
-        // Get viewport height
-        const mainQuestHeight = mainQuestCard ? mainQuestCard.getBoundingClientRect().height : 0;
-        const sideQuestHeight = sideQuestCard ? sideQuestCard.getBoundingClientRect().height : 0;
-        const workQuestHeight = workQuestCard ? workQuestCard.getBoundingClientRect().height : 0;
-        const dailyQuestHeight = dailyQuestCard ? dailyQuestCard.getBoundingClientRect().height : 0;
-        const pomodoroHeight = pomodoroTimer ? pomodoroTimer.getBoundingClientRect().height : 0;
-
-        // Calculate heights
-        const finalHeight = (mainQuestHeight + sideQuestHeight + workQuestHeight + dailyQuestHeight) - pomodoroHeight - 72;
-
-        // Set dynamic height based on available space
-        setDynamicHeight(`${finalHeight}px`);
-
-      } catch (error) {
-        console.warn('Error calculating dynamic height:', error);
-      }
-    };
-
-    setTimeout(calculateHeight, 100);
-    window.addEventListener('resize', calculateHeight);
-
-    return () => window.removeEventListener('resize', calculateHeight);
-  }, [date]);
+  const { data: timeline } = useSWR(['timeline-data-v2', date], () => getTimelineData(date), { revalidateOnFocus: false });
 
   // Siklus yang sedang berjalan belum punya baris log, jadi chip-nya diambil dari timer.
   const timerState = useTimerStore(s => s.timerState);
@@ -120,7 +83,15 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
   }, [scheduledTasks]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 flex flex-col" style={{ height: dynamicHeight }}>
+    <div className="bg-white dark:bg-gray-800 flex flex-col">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Timeline Harian</h3>
+        {timeline && timeline.calendars.length === 0 && (
+          <Link href="/settings/profile#timeline" className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">
+            + Google Calendar
+          </Link>
+        )}
+      </div>
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {isLoading ? (
           <div className="h-64 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700" />
@@ -129,7 +100,20 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
             Error loading activity logs: {error}
           </div>
         ) : (
-          <HourlyTimeline date={date} chips={chips} plans={plans} onDeleteChip={handleDeleteLog} />
+          <>
+            {timeline?.calendarError && (
+              <p className="mb-2 text-xs text-amber-600">Sebagian Google Calendar gagal dibaca; cek di Settings.</p>
+            )}
+            <HourlyTimeline
+              date={date}
+              chips={chips}
+              plans={plans}
+              onDeleteChip={handleDeleteLog}
+              events={timeline?.events ?? []}
+              startHour={timeline?.startHour ?? DEFAULT_FIRST_HOUR}
+              endHour={timeline?.endHour ?? DEFAULT_LAST_HOUR}
+            />
+          </>
         )}
       </div>
     </div>
