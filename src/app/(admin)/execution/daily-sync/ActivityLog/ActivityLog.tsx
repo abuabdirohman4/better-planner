@@ -121,7 +121,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Memuat…' : 'Perbarui'}
           </button>
-          <span className="text-[11px] text-gray-400">Otomatis tiap 15 menit</span>
+          <span className="text-[11px] text-gray-400">Diperbarui tiap 15 menit</span>
           </span>
         )}
       </div>
