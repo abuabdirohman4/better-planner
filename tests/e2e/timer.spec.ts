@@ -23,11 +23,14 @@ test.describe('Siklus Kerja timer', () => {
     await expect(page.getByTestId('daily-sync-work-cycles')).toBeVisible({ timeout: 15000 });
   });
 
-  test('Alternatif 25/5 -> pilih task [E2E] -> jeda -> stop (app-mgsb)', async ({ page }) => {
+  test('baris 25/5 -> pilih task [E2E] -> jeda -> stop (app-mgsb)', async ({ page }) => {
     test.skip(!TIMER_ENABLED, 'NEXT_PUBLIC_ENABLE_TIMER_DEV != true');
     // Hanya task [E2E] dari global-setup (Daily Quest di Tugas Lain) — akun e2e = akun asli Abu.
-    await page.getByTestId('cycle-alt-start').click();
-    await page.getByRole('button', { name: /\[E2E\] Test Daily Quest/ }).first().click();
+    await page.getByTestId('cycle-add-25').click();
+    const select = page.locator('[data-testid^="cycle-row-select-"]').last();
+    const value = await select.locator('option', { hasText: '[E2E] Test Daily Quest' }).first().getAttribute('value');
+    await select.selectOption(value!);
+    await page.locator('[data-testid^="cycle-row-play-"]').last().click();
 
     const runner = page.getByTestId('cycle-runner');
     await expect(runner).toBeVisible({ timeout: 15000 });
@@ -43,5 +46,7 @@ test.describe('Siklus Kerja timer', () => {
 
     await page.getByTestId('cycle-stop').click();
     await expect(runner).toBeHidden({ timeout: 15000 });
+    // Baris tambahan dibuang lagi supaya rencana siklus akun asli tidak berubah.
+    await page.getByRole('button', { name: 'Hapus baris siklus' }).last().click();
   });
 });

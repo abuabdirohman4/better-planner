@@ -4,49 +4,64 @@ import React, { useState } from 'react';
 import { NotebookPen } from 'lucide-react';
 import type { ActivityLogItem } from '@/types/activity-log';
 import { useActivityLogs } from '../ActivityLog/hooks/useActivityLogs';
-import { classifyCycle, cycleLabel, type CycleClass } from '../DailyQuest/utils/workCycles';
+import { classifyCycle, cycleLabel } from '../DailyQuest/utils/workCycles';
+import { kindLabel } from '../DailyQuest/utils/dailyFocus';
 import DailyCardShell from '../DailyQuest/components/DailyCardShell';
 import BrainDumpSection from '../BrainDump/BrainDumpSection';
 import JournalFields from './JournalFields';
+import { groupCycles, type CycleGroup } from './groupCycles';
 
 const timeWIB = (iso: string) =>
   new Date(iso).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
 
-/** Satu siklus: task + jam + dua isian OMJ yang diedit di tempat. */
+/** Satu siklus: jam + jenis siklus, lalu dua isian OMJ yang diedit di tempat. */
 function CycleNote({ log }: { log: ActivityLogItem }) {
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
   return (
-    <li className="border-b border-gray-100 py-3 last:border-0 dark:border-gray-800" data-testid={`journal-cycle-${log.id}`}>
-      <div className="mb-1.5 flex items-baseline justify-between gap-3">
-        <span className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-white" title={log.task_title ?? ''}>
-          {log.task_title || 'Tanpa judul'}
+    <li data-testid={`journal-cycle-${log.id}`}>
+      <p className="mb-1.5 flex items-baseline justify-between gap-3 text-xs tabular-nums text-gray-500">
+        <span>
+          {timeWIB(log.start_time)}–{timeWIB(log.end_time)} · {cycleLabel(classifyCycle(log.duration_minutes))}
         </span>
-        <span className="flex-shrink-0 text-xs tabular-nums text-gray-400">
-          {state === 'saving' ? 'Menyimpan… · ' : state === 'saved' ? 'Tersimpan · ' : ''}
-          {timeWIB(log.start_time)}–{timeWIB(log.end_time)}
-        </span>
-      </div>
-      <JournalFields logId={log.id} whatDone={log.what_done} whatThink={log.what_think} onStatus={setState} />
+        <span className="text-gray-400">{state === 'saving' ? 'Menyimpan…' : state === 'saved' ? 'Tersimpan' : ''}</span>
+      </p>
+      <JournalFields logId={log.id} whatDone={log.what_done} whatThink={log.what_think} onStatus={setState} compact />
     </li>
   );
 }
 
-const GROUPS: { cls: CycleClass; title: string }[] = [
-  { cls: 90, title: '90/15' },
-  { cls: 60, title: '60/10' },
-];
+/** Satu task: judul sekali, garis kiri berwarna menurut jenis quest, siklus-siklusnya di bawahnya. */
+function TaskGroup({ group }: { group: CycleGroup }) {
+  const hfg = group.taskType === 'MAIN_QUEST';
+  return (
+    <section
+      data-testid="journal-task-group"
+      className={`border-l-4 pl-4 ${hfg ? 'border-brand-500' : 'border-gray-300 dark:border-gray-600'}`}
+    >
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h4 className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-white" title={group.title}>
+          {group.title}
+        </h4>
+        {group.taskType && (
+          <span className={`flex-shrink-0 text-[10px] font-semibold uppercase tracking-wider ${hfg ? 'text-brand-600 dark:text-brand-300' : 'text-gray-400'}`}>
+            {kindLabel(group.taskType)}
+          </span>
+        )}
+      </div>
+      <ul className="space-y-4">
+        {group.logs.map((l) => <CycleNote key={l.id} log={l} />)}
+      </ul>
+    </section>
+  );
+}
 
 /**
- * Halaman kanan buku (app-2pxn): One Minute Journal per siklus hari itu, lalu Brain Dump.
+ * Halaman kanan buku (app-2pxn): One Minute Journal per siklus hari itu, urut jam, lalu Brain Dump.
  * Catatan = activity_logs.what_done, yang juga ditulis dari panel timer (app-mgsb).
  */
 export default function JournalTab({ date }: { date: string }) {
   const { logs, isLoading } = useActivityLogs({ date });
-  const focus = logs
-    .filter((l) => l.type === 'FOCUS')
-    .sort((a, b) => a.start_time.localeCompare(b.start_time));
-  const byClass = (cls: CycleClass) => focus.filter((l) => classifyCycle(l.duration_minutes) === cls);
-  const short = byClass(25);
+  const groups = groupCycles(logs);
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
@@ -58,34 +73,11 @@ export default function JournalTab({ date }: { date: string }) {
       >
         {isLoading ? (
           <div className="h-24 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
-        ) : focus.length === 0 ? (
+        ) : groups.length === 0 ? (
           <p className="py-4 text-center text-sm text-gray-500">Belum ada siklus hari ini</p>
         ) : (
-          <div className="space-y-4">
-            {GROUPS.map(({ cls, title }) => {
-              const list = byClass(cls);
-              if (!list.length) return null;
-              return (
-                <section key={cls}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                    {title} · {list.length} siklus
-                  </p>
-                  <ul>
-                    {list.map((l) => <CycleNote key={l.id} log={l} />)}
-                  </ul>
-                </section>
-              );
-            })}
-            {short.length > 0 && (
-              <details className="group">
-                <summary className="cursor-pointer select-none text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                  {cycleLabel(25)} · {short.length} siklus
-                </summary>
-                <ul>
-                  {short.map((l) => <CycleNote key={l.id} log={l} />)}
-                </ul>
-              </details>
-            )}
+          <div className="space-y-6">
+            {groups.map((g) => <TaskGroup key={g.key} group={g} />)}
           </div>
         )}
       </DailyCardShell>

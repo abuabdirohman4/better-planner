@@ -1,7 +1,7 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { notifyActivityLogsChanged } from '@/lib/swr';
 import { useTimer, useTimerStore } from '@/stores/timerStore';
-import { getBreakOptions } from '@/lib/timerDisplay';
+import { getBreakOptions, getFocusDuration, getTotalSeconds, formatTime } from '@/lib/timerDisplay';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { logActivity } from '../../ActivityLog/actions/activityLoggingActions';
 import { completeTimerSession, findFocusSession } from '../actions/timerSessionActions';
@@ -12,23 +12,26 @@ export function useTimerManagement(selectedDateStr: string) {
   const { startFocusSession, timerState, secondsElapsed, activeTask: activeTaskCtx, lastSessionComplete, setLastSessionComplete, isProcessingCompletion, setProcessingCompletion } = useTimer();
   const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
   const [, startTransition] = useTransition();
+  const lastActiveTask = useTimerStore(s => s.lastActiveTask);
+  const breakType = useTimerStore(s => s.breakType);
 
+  // Judul tab = sisa waktu, sama dengan panel siklus (hitung mundur).
   useEffect(() => {
     const defaultTitle = 'Daily Sync | Better Planner';
-    function formatTime(secs: number) {
-      const m = Math.floor(secs / 60).toString().padStart(2, '0');
-      const s = (secs % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    }
-    if (timerState === 'FOCUSING' && activeTaskCtx) {
-      document.title = `${formatTime(secondsElapsed)} ${activeTaskCtx.title}`;
+    const total = getTotalSeconds(timerState, breakType, getFocusDuration(activeTaskCtx, lastActiveTask));
+    const remaining = formatTime(total - secondsElapsed);
+    const onBreak = timerState === 'BREAK' || (timerState === 'PAUSED' && !!breakType);
+    if (onBreak) {
+      document.title = `Istirahat ${remaining}`;
+    } else if ((timerState === 'FOCUSING' || timerState === 'PAUSED') && activeTaskCtx) {
+      document.title = `${remaining} ${activeTaskCtx.title}`;
     } else {
       document.title = defaultTitle;
     }
     return () => {
       document.title = defaultTitle;
     };
-  }, [timerState, secondsElapsed, activeTaskCtx]);
+  }, [timerState, secondsElapsed, activeTaskCtx, lastActiveTask, breakType]);
 
   const handleSessionComplete = useCallback(async (sessionData: {
     taskId: string;

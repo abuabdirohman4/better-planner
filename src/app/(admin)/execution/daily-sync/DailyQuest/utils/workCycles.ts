@@ -60,13 +60,12 @@ export function classifyCycle(minutes: number): CycleClass {
 }
 
 /**
- * Daftar hanya berisi siklus 90/15 dan 60/10 (rencana < 50 menit diabaikan). Log mengisi baris:
- * (1) baris yang merencanakan task itu, asal durasinya setara/lebih panjang dari baris; (2) baris tanpa rencana
- * dengan durasi sama. Log 60/90 yang tak dapat baris jadi `extra`; semua log 25 menit masuk Alternatif 25/5.
+ * Log mengisi baris: (1) baris yang merencanakan task itu, asal durasinya setara/lebih panjang dari baris;
+ * (2) baris tanpa rencana dengan durasi sama. Log 60/90 yang tak dapat baris jadi `extra`; semua log 25 menit
+ * masuk ringkasan Alternatif 25/5 (baris 25/5 yang terisi disembunyikan UI, `done` hanya menghitung 90/60).
  */
 export function buildWorkCycles(logs: FocusLog[], plan: CyclePlanRow[] | null = null): WorkCycles {
-  const planned = (plan ?? []).filter((r) => r.minutes >= 50);
-  const rows: CycleRow[] = (planned.length ? planned : DEFAULT_CYCLE_PLAN).map((r) => ({ ...r, done: null }));
+  const rows: CycleRow[] = (plan?.length ? plan : DEFAULT_CYCLE_PLAN).map((r) => ({ ...r, done: null }));
   const extra: FilledCycle[] = [];
   const shortTasks = new Map<string, { count: number; minutes: number }>();
   let shortCount = 0;
@@ -76,26 +75,27 @@ export function buildWorkCycles(logs: FocusLog[], plan: CyclePlanRow[] | null = 
   for (const l of focus) {
     const title = l.task_title?.trim() || 'Tanpa judul';
     const cls = classifyCycle(l.duration_minutes);
+    const cycle = { id: l.id, title, cls, start: l.start_time, end: l.end_time };
+    // Baris 25/5 hanya untuk log 25 menit, baris 90/60 hanya untuk log 60/90.
+    const free = rows.filter((r) => !r.done && (r.minutes < 50) === (cls === 25));
+    const row =
+      free.find((r) => l.task_id && r.item_id === l.task_id && cls >= classifyCycle(r.minutes)) ??
+      free.find((r) => !r.item_id && classifyCycle(r.minutes) === cls);
+    if (row) row.done = cycle;
     if (cls === 25) {
       shortCount += 1;
       shortMinutes += l.duration_minutes;
       const t = shortTasks.get(title) ?? { count: 0, minutes: 0 };
       shortTasks.set(title, { count: t.count + 1, minutes: t.minutes + l.duration_minutes });
-      continue;
+    } else if (!row) {
+      extra.push(cycle);
     }
-    const cycle = { id: l.id, title, cls, start: l.start_time, end: l.end_time };
-    const free = rows.filter((r) => !r.done);
-    const row =
-      free.find((r) => l.task_id && r.item_id === l.task_id && cls >= classifyCycle(r.minutes)) ??
-      free.find((r) => !r.item_id && classifyCycle(r.minutes) === cls);
-    if (row) row.done = cycle;
-    else extra.push(cycle);
   }
 
   return {
     rows,
     extra,
-    done: rows.filter((r) => r.done).length,
+    done: rows.filter((r) => r.done && r.minutes >= 50).length,
     short: {
       count: shortCount,
       minutes: shortMinutes,

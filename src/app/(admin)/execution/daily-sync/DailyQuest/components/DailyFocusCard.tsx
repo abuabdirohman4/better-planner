@@ -9,6 +9,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CORE_SLOTS, reorderIds } from '../utils/dailyFocus';
 import DailyCardShell from './DailyCardShell';
+import EmptySlots from './EmptySlots';
 import type { AddKind } from './AddItemMenu';
 
 interface DailyFocusCardProps {
@@ -60,16 +61,7 @@ export default function DailyFocusCard({ core, bonus, missingHfg, renderItem, on
           <div key={item.id} data-testid="focus-core-item">{renderItem(item)}</div>
         ))}
 
-        {Array.from({ length: emptySlots }).map((_, i) => (
-          <div
-            key={`slot-${i}`}
-            data-testid="focus-empty-slot"
-            className="mb-2 flex items-center gap-3 rounded-lg border border-dashed border-gray-200 px-3 py-2.5 dark:border-gray-700"
-          >
-            <span className="h-6 w-6 flex-shrink-0 rounded-md border-2 border-gray-200 dark:border-gray-700" aria-hidden />
-            <span className="flex-1 border-b border-dotted border-gray-300 dark:border-gray-600" aria-hidden />
-          </div>
-        ))}
+        <EmptySlots count={emptySlots} testId="focus-empty-slot" />
       </div>
 
       {bonus.length > 0 ? (

@@ -8,8 +8,8 @@ import { setActivityLogJournalField } from '../PomodoroTimer/actions/timerSessio
 type Field = 'what_done' | 'what_think';
 
 /** Satu isian OMJ: tumbuh mengikuti isi, tersimpan 800 ms setelah berhenti mengetik. */
-function JournalField({ logId, field, label, initial, placeholder, onStatus }: {
-  logId: string; field: Field; label: string; initial: string; placeholder: string;
+function JournalField({ logId, field, label, initial, placeholder, onStatus, compact }: {
+  logId: string; field: Field; label: string; initial: string; placeholder: string; compact: boolean;
   onStatus: (s: 'saving' | 'saved' | 'idle') => void;
 }) {
   const [text, setText] = useState(initial);
@@ -51,29 +51,29 @@ function JournalField({ logId, field, label, initial, placeholder, onStatus }: {
 
   return (
     <label className="block">
-      <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span>
+      {compact ? <span className="sr-only">{label}</span> : <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{label}</span>}
       <textarea
         ref={ref}
         rows={1}
         value={text}
         onChange={(e) => change(e.target.value)}
         data-testid={`journal-${field}-${logId}`}
-        placeholder={placeholder}
+        placeholder={compact ? `${label}?` : placeholder}
         className="mt-1 w-full resize-none overflow-hidden rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
       />
     </label>
   );
 }
 
-/** Dua pertanyaan One Minute Journal satu siklus (app-2pxn); dipakai tab Jurnal & detail kalender. */
-export default function JournalFields({ logId, whatDone, whatThink, onStatus = () => {} }: {
+/** Dua pertanyaan One Minute Journal satu siklus (app-2pxn); `compact` = label jadi teks samar di kotak. */
+export default function JournalFields({ logId, whatDone, whatThink, onStatus = () => {}, compact = false }: {
   logId: string; whatDone: string | null | undefined; whatThink: string | null | undefined;
-  onStatus?: (s: 'saving' | 'saved' | 'idle') => void;
+  onStatus?: (s: 'saving' | 'saved' | 'idle') => void; compact?: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <JournalField logId={logId} field="what_done" label="Apa yang diselesaikan" initial={whatDone ?? ''} placeholder="Apa yang selesai di siklus ini?" onStatus={onStatus} />
-      <JournalField logId={logId} field="what_think" label="Yang masih dipikirkan" initial={whatThink ?? ''} placeholder="Ide, hambatan, atau langkah berikutnya" onStatus={onStatus} />
+      <JournalField logId={logId} field="what_done" label="Apa yang diselesaikan" initial={whatDone ?? ''} placeholder="Apa yang selesai di siklus ini?" onStatus={onStatus} compact={compact} />
+      <JournalField logId={logId} field="what_think" label="Yang masih dipikirkan" initial={whatThink ?? ''} placeholder="Ide, hambatan, atau langkah berikutnya" onStatus={onStatus} compact={compact} />
     </div>
   );
 }

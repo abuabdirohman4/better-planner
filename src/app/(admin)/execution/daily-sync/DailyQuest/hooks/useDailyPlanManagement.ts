@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useTasksForWeek } from './useDailySync';
 import { addSideQuest } from '../actions/sideQuestActions';
 import { addDailyQuest } from '../actions/dailyQuestActions';
-import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, convertToChecklist, convertToQuest, updateDailyPlanItemsDisplayOrder, seedRecurringRoutines } from '../actions';
+import { setDailyPlan, updateDailyPlanItemFocusDuration, updateDailyPlanItemAndTaskStatus, removeDailyPlanItem, updateDailyPlanItemsDisplayOrder, seedRecurringRoutines } from '../actions';
 import type { DailyPlanItem } from '@/types/daily-plan';
 import useSWR, { mutate as globalMutate } from 'swr';
 import { dailySyncKeys } from '@/lib/swr';
@@ -655,42 +655,6 @@ export function useDailyPlanManagement(
     }
   };
 
-  const handleConvertToChecklist = async (itemId: string) => {
-    try {
-      await convertToChecklist(itemId);
-
-      // ✅ CRITICAL: Wait a bit for database commit to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Then refresh daily plan
-      await mutateDailyPlan();
-
-      toast.success('Task berhasil diubah menjadi checklist');
-    } catch (error) {
-      console.error('Error converting to checklist:', error);
-      toast.error('Gagal mengubah ke checklist');
-      throw error;
-    }
-  };
-
-  const handleConvertToQuest = async (itemId: string) => {
-    try {
-      await convertToQuest(itemId);
-
-      // ✅ CRITICAL: Wait a bit for database commit to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Then refresh daily plan
-      await mutateDailyPlan();
-
-      toast.success('Task berhasil diubah menjadi quest');
-    } catch (error) {
-      console.error('Error converting to quest:', error);
-      toast.error('Gagal mengubah ke quest');
-      throw error;
-    }
-  };
-
   return {
     // Data
     dailyPlan,
@@ -715,8 +679,6 @@ export function useDailyPlanManagement(
     handleFocusDurationChange,
     handleReorder,
     handleRemoveItem, // NEW: Handler untuk remove item
-    handleConvertToChecklist, // NEW: Handler untuk convert to checklist
-    handleConvertToQuest,
 
     // Daily Quest selection state
     isDailyQuestModalOpen,

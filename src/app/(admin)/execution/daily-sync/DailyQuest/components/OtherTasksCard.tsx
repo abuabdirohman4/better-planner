@@ -9,6 +9,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CORE_SLOTS, reorderIds } from '../utils/dailyFocus';
 import DailyCardShell from './DailyCardShell';
+import EmptySlots from './EmptySlots';
 import type { AddKind } from './AddItemMenu';
 
 interface OtherTasksCardProps {
@@ -61,27 +62,24 @@ export default function OtherTasksCard({ items, renderItem, onReorder, onAdd, on
       title="Tugas Lain"
       hint="Tugas kecil ≤30 menit + rutin hari ini"
     >
-      {items.length === 0 ? (
-        <p className="py-4 text-center text-sm text-gray-500">Tidak ada tugas lain hari ini</p>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {core.map((item) => (
-            <div key={item.id} data-testid="other-core-item">{renderItem(item)}</div>
-          ))}
-          {bonus.length > 0 ? (
-            <div data-testid="other-bonus">
-              <p className="mb-3 mt-2 border-t border-gray-200 pt-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800">
-                Tambahan — setelah 3 inti beres
-              </p>
-              {bonus.map((item) => (
-                <div key={item.id}>{renderItem(item)}</div>
-              ))}
-            </div>
-          ) : null}
-        </SortableContext>
-        </DndContext>
-      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        {core.map((item) => (
+          <div key={item.id} data-testid="other-core-item">{renderItem(item)}</div>
+        ))}
+        <EmptySlots count={CORE_SLOTS - core.length} testId="other-empty-slot" />
+        {bonus.length > 0 ? (
+          <div data-testid="other-bonus">
+            <p className="mb-3 mt-2 border-t border-gray-200 pt-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800">
+              Tambahan — setelah 3 inti beres
+            </p>
+            {bonus.map((item) => (
+              <div key={item.id}>{renderItem(item)}</div>
+            ))}
+          </div>
+        ) : null}
+      </SortableContext>
+      </DndContext>
 
 
       <form onSubmit={submit} className="mt-1 flex gap-2">

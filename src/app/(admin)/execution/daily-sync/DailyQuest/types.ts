@@ -33,8 +33,6 @@ export interface TaskColumnProps {
   forceRefreshTaskId?: string | null;
   showAddQuestButton?: boolean;
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
-  onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
-  onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
   // Drag handle props (optional, for sortable cards)
   dragHandleProps?: {
     listeners?: any;
@@ -53,8 +51,6 @@ export interface TaskCardProps {
   refreshKey?: number;
   forceRefreshTaskId?: string | null;
   onRemove?: (itemId: string) => Promise<void>; // NEW: Handler untuk remove item
-  onConvertToChecklist?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to checklist
-  onConvertToQuest?: (itemId: string) => Promise<void>; // NEW: Handler untuk convert to quest
   // Drag handle props (optional, for sortable cards)
   dragHandleProps?: {
     listeners?: any;

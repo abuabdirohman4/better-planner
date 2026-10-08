@@ -5,8 +5,6 @@ export {
   updateDailyPlanItemFocusDuration,
   updateDailyPlanItemAndTaskStatus,
   removeDailyPlanItem,
-  convertToChecklist,
-  convertToQuest,
   updateDailyPlanItemsDisplayOrder,
   seedRecurringRoutines,
   saveCyclePlan,

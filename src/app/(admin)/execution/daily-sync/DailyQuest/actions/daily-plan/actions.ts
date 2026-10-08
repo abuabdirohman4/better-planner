@@ -140,36 +140,6 @@ export async function removeDailyPlanItem(dailyPlanItemId: string) {
   }
 }
 
-export async function convertToChecklist(dailyPlanItemId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
-
-  try {
-    await updatePlanItemField(supabase, dailyPlanItemId, { focus_duration: 0, daily_session_target: 0 });
-    revalidatePlanning();
-    return { success: true };
-  } catch (error) {
-    console.error('Error converting to checklist:', error);
-    throw error;
-  }
-}
-
-export async function convertToQuest(dailyPlanItemId: string, defaultFocusDuration: number = 25) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
-
-  try {
-    await updatePlanItemField(supabase, dailyPlanItemId, { focus_duration: defaultFocusDuration, daily_session_target: 1 });
-    revalidatePlanning();
-    return { success: true };
-  } catch (error) {
-    console.error('Error converting to quest:', error);
-    throw error;
-  }
-}
-
 export async function updateDailyPlanItemsDisplayOrder(
   items: { id: string; display_order: number }[]
 ) {

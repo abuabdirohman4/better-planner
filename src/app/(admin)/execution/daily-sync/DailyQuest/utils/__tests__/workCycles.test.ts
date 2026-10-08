@@ -57,12 +57,28 @@ describe('buildWorkCycles (app-mgsb)', () => {
     expect(c.short).toEqual({ count: 2, minutes: 45, tasks: [{ title: 'PR', count: 2, minutes: 45 }] });
   });
 
-  it('25 menit tidak mencentang baris 90/60 walau task-nya sama; baris rencana < 50 menit diabaikan', () => {
+  it('25 menit tidak mencentang baris 90/60 walau task-nya sama; baris rencana 25/5 ikut tampil', () => {
     const plan = [{ minutes: 90, item_id: 'task-pr' }, { minutes: 25, item_id: null }, { minutes: 60, item_id: null }];
     const c = buildWorkCycles([log('1', 25, { task_id: 'task-pr' })], plan);
-    expect(c.rows.map((r) => r.minutes)).toEqual([90, 60]);
-    expect(c.rows.every((r) => !r.done)).toBe(true);
+    expect(c.rows.map((r) => r.minutes)).toEqual([90, 25, 60]);
+    expect(c.rows[0].done).toBeNull();
+    expect(c.rows[1].done?.id).toBe('1');
+    // Siklus 25/5 selalu masuk ringkasan Alternatif dan tidak dihitung di penghitung 90/60.
     expect(c.short.count).toBe(1);
+    expect(c.done).toBe(0);
+  });
+
+  it('25 menit dengan atau tanpa baris 25/5 sama-sama masuk ringkasan Alternatif', () => {
+    const plan = [{ minutes: 25, item_id: 'task-a' }];
+    const c = buildWorkCycles([log('1', 25, { task_id: 'task-a' }), log('2', 25, { task_id: 'task-b' })], plan);
+    expect(c.rows[0].done?.id).toBe('1');
+    expect(c.short.count).toBe(2);
+  });
+
+  it('60 menit tidak mengisi baris 25/5 walau task-nya sama (tidak hilang dari daftar)', () => {
+    const c = buildWorkCycles([log('1', 60, { task_id: 'task-a' })], [{ minutes: 25, item_id: 'task-a' }]);
+    expect(c.rows[0].done).toBeNull();
+    expect(c.extra.map((e) => e.id)).toEqual(['1']);
   });
 
   it('siklus task lain tidak menempati baris yang sudah direncanakan untuk task berbeda', () => {

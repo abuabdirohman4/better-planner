@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ConfirmModal } from '@/components/ui/modal';
-import { Clock, Swords, ListChecks, Trash2, Check, GripVertical } from 'lucide-react';
+import { Clock, Trash2, Check, GripVertical } from 'lucide-react';
 import { ScheduleManagementModal } from './ScheduleManagementModal';
 import { useTaskSchedules } from '../hooks/useTaskSchedules';
 import { useTaskSession } from '../hooks/useTaskSession';
@@ -15,14 +15,10 @@ interface MenuProps {
   showMenu: boolean;
   setShowMenu: (show: boolean) => void;
   menuRef: React.RefObject<HTMLDivElement | null>;
-  isChecklistMode: boolean;
-  onConvertToChecklist?: (itemId: string) => Promise<void>;
-  onConvertToQuest?: (itemId: string) => Promise<void>;
   onRemove?: (itemId: string) => Promise<void>;
   setShowConfirmModal: (show: boolean) => void;
   itemId: string;
   itemType: string;
-  setIsChecklistMode: (mode: boolean) => void;
   onSchedule: () => void;
 }
 
@@ -30,14 +26,10 @@ const TaskItemMenu: React.FC<MenuProps> = ({
   showMenu,
   setShowMenu,
   menuRef,
-  isChecklistMode,
-  onConvertToChecklist,
-  onConvertToQuest,
   onRemove,
   setShowConfirmModal,
   itemId,
   itemType,
-  setIsChecklistMode,
   onSchedule
 }) => {
   return (
@@ -69,46 +61,6 @@ const TaskItemMenu: React.FC<MenuProps> = ({
             Schedule Time
           </button>
 
-          {isChecklistMode ? (
-            onConvertToQuest && (
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setShowMenu(false);
-                  try {
-                    await onConvertToQuest(itemId);
-                    setIsChecklistMode(false);
-                  } catch (error) {
-                    console.error('Error converting to quest:', error);
-                  }
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-              >
-                <Swords className="w-4 h-4" />
-                Convert to Quest
-              </button>
-            )
-          ) : (
-            onConvertToChecklist && (
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setShowMenu(false);
-                  try {
-                    await onConvertToChecklist(itemId);
-                    setIsChecklistMode(true);
-                  } catch (error) {
-                    console.error('Error converting to checklist:', error);
-                  }
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-              >
-                <ListChecks className="w-4 h-4" />
-                Convert to Checklist
-              </button>
-            )
-          )}
-
           {onRemove && (
             <button
               onClick={(e) => {
@@ -136,8 +88,6 @@ const TaskItemCardContent = ({
   refreshKey,
   forceRefreshTaskId,
   onRemove,
-  onConvertToChecklist,
-  onConvertToQuest,
   dragHandleProps
 }: TaskCardProps) => {
   const { target } = useTaskSession(
@@ -149,8 +99,6 @@ const TaskItemCardContent = ({
   );
 
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
-  // Auto-detect checklist mode from focus_duration = 0
-  const [isChecklistMode, setIsChecklistMode] = useState(item.focus_duration === 0);
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -160,17 +108,6 @@ const TaskItemCardContent = ({
   const { schedules } = useTaskSchedules(item.item_id);
   const totalScheduled = schedules?.reduce((acc, s) => acc + s.session_count, 0) || 0;
   const isScheduled = totalScheduled > 0;
-
-  // Update checklist mode when focus_duration changes
-  useEffect(() => {
-    setIsChecklistMode((item.focus_duration || 0) === 0);
-  }, [item.focus_duration]);
-
-  // Drag HTML5 ke kalender hanya untuk pointer presisi (mouse); di layar sentuh mengganggu drag urutan.
-  const [nativeDrag, setNativeDrag] = useState(false);
-  useEffect(() => {
-    setNativeDrag(window.matchMedia('(hover: hover) and (pointer: fine)').matches);
-  }, []);
 
   // Get active task from timer store
   const { activeTask, timerState } = useTimerStore();
@@ -205,14 +142,10 @@ const TaskItemCardContent = ({
     showMenu,
     setShowMenu,
     menuRef,
-    isChecklistMode,
-    onConvertToChecklist,
-    onConvertToQuest,
     onRemove,
     setShowConfirmModal,
     itemId: item.id,
     itemType: item.item_type,
-    setIsChecklistMode,
     onSchedule: () => {
       setShowMenu(false);
       setShowScheduleModal(true);
@@ -221,19 +154,6 @@ const TaskItemCardContent = ({
 
   return (
     <div
-      draggable={nativeDrag}  // Drag ke kalender: desktop saja; di HP berebut sentuhan dengan urut-ulang
-      onDragStart={(e) => {
-        e.dataTransfer.setData('application/task-schedule', JSON.stringify({
-          dailyPlanItemId: item.id,
-          itemId: item.item_id,
-          title: item.title || 'Task',
-          focusDuration: isChecklistMode ? 30 : (item.focus_duration || 25),  // ✅ Default 30 min for checklist
-          sessionCount: 1,
-          itemType: item.item_type,
-          isChecklist: isChecklistMode,  // ✅ Flag untuk CalendarView handler
-        }));
-        e.dataTransfer.effectAllowed = 'copy';
-      }}
       data-testid={`task-card-${item.id}`}
       className={`rounded-lg py-2.5 px-3 border mb-2 transition-all duration-200 relative ${isVisuallyDisabled
         ? 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 opacity-60'

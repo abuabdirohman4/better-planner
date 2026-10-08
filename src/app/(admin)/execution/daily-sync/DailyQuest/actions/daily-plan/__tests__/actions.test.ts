@@ -53,8 +53,6 @@ import {
   updateDailyPlanItemFocusDuration,
   updateDailyPlanItemAndTaskStatus,
   removeDailyPlanItem,
-  convertToChecklist,
-  convertToQuest,
   updateDailyPlanItemsDisplayOrder,
 } from '../actions';
 import { makeSupabase } from '@/test-utils/supabase-mock';
@@ -166,34 +164,6 @@ describe('removeDailyPlanItem', () => {
 
     expect(deletePlanItem).toHaveBeenCalledWith(expect.anything(), 'dpi-1');
     expect(revalidatePath).toHaveBeenCalled();
-  });
-});
-
-describe('convertToChecklist', () => {
-  it('sets focus_duration=0 and daily_session_target=0', async () => {
-    mockCreateClient();
-    vi.mocked(updatePlanItemField).mockResolvedValue(undefined);
-
-    await convertToChecklist('dpi-1');
-
-    expect(updatePlanItemField).toHaveBeenCalledWith(expect.anything(), 'dpi-1', {
-      focus_duration: 0,
-      daily_session_target: 0,
-    });
-  });
-});
-
-describe('convertToQuest', () => {
-  it('restores focus_duration=25 and daily_session_target=1 by default', async () => {
-    mockCreateClient();
-    vi.mocked(updatePlanItemField).mockResolvedValue(undefined);
-
-    await convertToQuest('dpi-1');
-
-    expect(updatePlanItemField).toHaveBeenCalledWith(expect.anything(), 'dpi-1', {
-      focus_duration: 25,
-      daily_session_target: 1,
-    });
   });
 });
 

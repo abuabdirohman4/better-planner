@@ -50,8 +50,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     handleFocusDurationChange,
     handleReorder,
     handleRemoveItem,
-    handleConvertToChecklist,
-    handleConvertToQuest,
     isDailyQuestModalOpen,
     setIsDailyQuestModalOpen,
     dailyQuests,
@@ -119,8 +117,6 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
     refreshKey: refreshSessionKey?.[item.id],
     forceRefreshTaskId,
     onRemove: handleRemoveItem,
-    onConvertToChecklist: handleConvertToChecklist,
-    onConvertToQuest: handleConvertToQuest,
   });
   const renderSortable = (item: DailyPlanItem) => <SortableTaskItemCard id={item.id} {...cardProps(item)} />;
 
