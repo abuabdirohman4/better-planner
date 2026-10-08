@@ -118,8 +118,9 @@ export default function DailySyncPage() {
             <JournalTab date={selectedDateStr} />
           ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dua kolom sama tinggi: kartu terbawah kolom yang lebih pendek memanjang. */}
-            <div className="flex flex-col">
+            {/* Desktop: dua kolom sama tinggi (kartu terbawah kolom yang lebih pendek memanjang).
+                HP: pembungkus kolom dilebur (contents) dan kartu diurutkan seperti buku lewat `order`. */}
+            <div className="contents md:flex md:flex-col">
               <DailySyncClient
                 year={year}
                 quarter={quarter}
@@ -132,14 +133,16 @@ export default function DailySyncPage() {
                 forceRefreshTaskId={null}
               />
             </div>
-            <div className="flex flex-col gap-6">
-              <WorkCyclesCard
-                date={selectedDateStr}
-                tasks={[...focusSplit.core, ...focusSplit.bonus]}
-                otherTasks={focusSplit.other}
-                plan={dailyPlan?.cycle_plan ?? null}
-              />
-              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="contents md:flex md:flex-col md:gap-6">
+              <div style={{ order: 2 }}>
+                <WorkCyclesCard
+                  date={selectedDateStr}
+                  tasks={[...focusSplit.core, ...focusSplit.bonus]}
+                  otherTasks={focusSplit.other}
+                  plan={dailyPlan?.cycle_plan ?? null}
+                />
+              </div>
+              <div style={{ order: 5 }} className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 pt-5 shadow-sm border border-gray-200 dark:border-gray-700">
                 <ActivityLog date={selectedDateStr} refreshKey={activityLogRefreshKey} />
               </div>
             </div>

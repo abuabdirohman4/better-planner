@@ -172,25 +172,30 @@ const DailySyncClient: React.FC<DailySyncClientProps> = ({
   const existingSideQuestIds = groupedItems.SIDE_QUEST.map(i => i.item_id);
 
   return (
-    <div className="mx-auto relative flex w-full flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-4 md:gap-6">
-        <DailyFocusCard
-          core={core}
-          bonus={bonus}
-          missingHfg={missingHfg}
-          renderItem={renderSortable}
-          onReorder={handleReorder}
-          onAdd={openAdd}
-        />
-        <OtherTasksCard
-          items={other}
-          renderItem={renderSortable}
-          onReorder={handleReorder}
-          onAdd={openAdd}
-          onQuickAddSide={handleAddSideQuest}
-        />
+    // HP: `contents` meleburkan pembungkus supaya urutan kartu (order) diatur grid halaman.
+    <div className="contents md:relative md:flex md:w-full md:flex-1 md:flex-col">
+      <div className="contents md:flex md:flex-1 md:flex-col md:gap-6">
+        <div style={{ order: 1 }}>
+          <DailyFocusCard
+            core={core}
+            bonus={bonus}
+            missingHfg={missingHfg}
+            renderItem={renderSortable}
+            onReorder={handleReorder}
+            onAdd={openAdd}
+          />
+        </div>
+        <div style={{ order: 3 }}>
+          <OtherTasksCard
+            items={other}
+            renderItem={renderSortable}
+            onReorder={handleReorder}
+            onAdd={openAdd}
+            onQuickAddSide={handleAddSideQuest}
+          />
+        </div>
         {/* grid + flex-1: kartu terbawah memanjang supaya rata dengan kolom kanan */}
-        <div className="grid flex-1">
+        <div className="grid flex-1" style={{ order: 4 }}>
           <DailyRitualCard selectedDate={selectedDate} />
         </div>
       </div>
