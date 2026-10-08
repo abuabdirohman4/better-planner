@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hourWIB, visibleHours, validateHour, coveredHours } from '../logic';
+import { hourWIB, visibleHours, validateHour, minuteOfDayWIB, layoutBlocks } from '../logic';
 
 describe('hourWIB', () => {
   it('converts UTC to WIB hour', () => {
@@ -36,15 +36,22 @@ describe('validateHour', () => {
   });
 });
 
-describe('coveredHours', () => {
-  it('90 menit mulai 11:10 WIB melewati jam 11 dan 12', () => {
-    expect(coveredHours('2026-10-08T04:10:00Z', 90)).toEqual([11, 12]);
+describe('minuteOfDayWIB', () => {
+  it('menit sejak 00:00 WIB', () => {
+    expect(minuteOfDayWIB('2026-10-08T04:25:00Z')).toBe(11 * 60 + 25);
+    expect(minuteOfDayWIB('2026-10-08T17:05:00Z')).toBe(5);
   });
-  it('selesai tepat di pergantian jam tidak ikut baris berikutnya', () => {
-    expect(coveredHours('2026-10-08T04:00:00Z', 60)).toEqual([11]);
-    expect(coveredHours('2026-10-08T04:30:00Z', 25)).toEqual([11]);
+});
+
+describe('layoutBlocks', () => {
+  const b = (id: string, start: number, minutes: number) => ({ id, start, minutes });
+  it('blok tidak bertumpuk memakai jalur 0', () => {
+    expect(layoutBlocks([b('a', 600, 60), b('b', 700, 30)])).toEqual({ lanes: 1, lane: { a: 0, b: 0 } });
   });
-  it('lewat tengah malam berhenti di 23', () => {
-    expect(coveredHours('2026-10-08T16:30:00Z', 90)).toEqual([23]);
+  it('blok yang waktunya bertumpuk pindah ke jalur berikutnya', () => {
+    expect(layoutBlocks([b('a', 600, 90), b('b', 630, 30), b('c', 700, 10)])).toEqual({ lanes: 2, lane: { a: 0, b: 1, c: 0 } });
+  });
+  it('kosong = 0 jalur', () => {
+    expect(layoutBlocks([])).toEqual({ lanes: 0, lane: {} });
   });
 });

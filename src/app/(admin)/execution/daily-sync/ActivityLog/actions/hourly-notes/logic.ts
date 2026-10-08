@@ -18,10 +18,21 @@ export function validateHour(hour: number): void {
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) throw new Error('Jam tidak valid');
 }
 
-/** Baris jam (WIB) yang dilewati sebuah siklus; selesai tepat :00 tidak menyentuh baris berikutnya. */
-export function coveredHours(startIso: string, minutes: number): number[] {
-  const first = hourWIB(startIso);
-  const endIso = new Date(new Date(startIso).getTime() + Math.max(1, minutes) * 60_000 - 1).toISOString();
-  const last = Math.max(first, hourWIB(endIso)); // lewat tengah malam: berhenti di jam mulai..23
-  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+/** Menit sejak 00:00 WIB. */
+export function minuteOfDayWIB(iso: string): number {
+  const d = new Date(new Date(iso).getTime() + 7 * 60 * 60_000);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+/** Bagi blok siklus ke jalur (kolom) supaya yang waktunya bertumpuk tampil berdampingan. start/minutes dalam menit. */
+export function layoutBlocks(blocks: { id: string; start: number; minutes: number }[]): { lanes: number; lane: Record<string, number> } {
+  const laneEnds: number[] = [];
+  const lane: Record<string, number> = {};
+  for (const blk of [...blocks].sort((x, y) => x.start - y.start)) {
+    let i = laneEnds.findIndex((end) => end <= blk.start);
+    if (i === -1) i = laneEnds.push(0) - 1;
+    laneEnds[i] = blk.start + blk.minutes;
+    lane[blk.id] = i;
+  }
+  return { lanes: laneEnds.length, lane };
 }
