@@ -9,6 +9,7 @@ import {
   readInstallDismissedAt,
   saveInstallDismissedAt,
 } from "@/lib/pwaInstallDismiss";
+import { reloadIfVersionSkew } from "@/lib/versionSkew";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -27,6 +28,18 @@ export default function PWAComponents() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+
+  // File JS versi lama gagal dimuat di luar React (mis. saat pindah halaman setelah deploy) → muat ulang sekali.
+  useEffect(() => {
+    const onRejection = (e: PromiseRejectionEvent) => reloadIfVersionSkew(e.reason);
+    const onError = (e: ErrorEvent) => reloadIfVersionSkew(e.error ?? { message: e.message });
+    window.addEventListener("unhandledrejection", onRejection);
+    window.addEventListener("error", onError);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.removeEventListener("error", onError);
+    };
+  }, []);
 
   // Check if we're on the landing page or auth pages
   const isLandingPage = pathname === '/' || pathname.startsWith('/(full-width-pages)');
