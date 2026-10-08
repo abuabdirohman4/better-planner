@@ -17,6 +17,10 @@ import CycleRunner from './CycleRunner';
 const timeWIB = (iso: string) =>
   new Date(iso).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
 
+/** Pilihan task baris siklus: yang belum selesai, plus yang sudah terpilih di baris itu. */
+const openTasks = (list: DailyPlanItem[], selected: string | null) =>
+  list.filter((t) => t.status !== 'DONE' || t.item_id === selected);
+
 const formatMinutes = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}j${m % 60 ? `${m % 60}m` : ''}` : `${m}m`);
 
 function Box({ done }: { done: boolean }) {
@@ -134,16 +138,16 @@ export default function WorkCyclesCard({ date, tasks, otherTasks, plan }: WorkCy
                 className="min-w-0 flex-1 appearance-none truncate rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               >
                 <option value="">{altTasks.length ? 'Pilih task' : 'Belum ada Daily Focus'}</option>
-                {tasks.length > 0 && (
+                {openTasks(tasks, row.item_id).length > 0 && (
                   <optgroup label="Daily Focus">
-                    {tasks.map((t) => (
+                    {openTasks(tasks, row.item_id).map((t) => (
                       <option key={t.id} value={t.item_id}>{t.title}</option>
                     ))}
                   </optgroup>
                 )}
-                {otherTasks.length > 0 && (
+                {openTasks(otherTasks, row.item_id).length > 0 && (
                   <optgroup label="Tugas Lain">
-                    {otherTasks.map((t) => (
+                    {openTasks(otherTasks, row.item_id).map((t) => (
                       <option key={t.id} value={t.item_id}>{t.title}</option>
                     ))}
                   </optgroup>

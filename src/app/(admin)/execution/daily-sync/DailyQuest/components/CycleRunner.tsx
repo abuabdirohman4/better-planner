@@ -46,7 +46,8 @@ export default function CycleRunner({ tasks, fixedDuration = false }: { tasks: D
     el.style.height = `${el.scrollHeight}px`;
   }, [notes]);
 
-  const taskOptions = tasks.map((t) => ({ id: t.item_id, title: t.title || 'Task', item_type: t.item_type }));
+  // Task yang sudah selesai tidak ditawarkan lagi; task yang sedang jalan tetap ada (lihat di bawah).
+  const taskOptions = tasks.filter((t) => t.status !== 'DONE' || t.item_id === activeTask?.id).map((t) => ({ id: t.item_id, title: t.title || 'Task', item_type: t.item_type }));
   if (activeTask && !taskOptions.some((t) => t.id === activeTask.id)) {
     taskOptions.unshift({ id: activeTask.id, title: activeTask.title, item_type: activeTask.item_type });
   }
