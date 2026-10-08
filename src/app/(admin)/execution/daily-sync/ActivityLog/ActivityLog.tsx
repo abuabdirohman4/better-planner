@@ -57,6 +57,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
       .map(log => ({
         id: log.id,
         hour: hourWIB(log.start_time),
+        start: log.start_time,
         title: log.task_title || 'Siklus',
         minutes: log.duration_minutes,
       }));
@@ -64,6 +65,7 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ date, refreshKey }) => {
       list.push({
         id: 'live-session',
         hour: hourWIB(timerStartTime),
+        start: timerStartTime,
         title: activeTask.title,
         minutes: Math.max(1, Math.round(secondsElapsed / 60)),
         live: true,

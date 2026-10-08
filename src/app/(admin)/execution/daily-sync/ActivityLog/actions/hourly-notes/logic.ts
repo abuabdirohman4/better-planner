@@ -17,3 +17,11 @@ export function visibleHours(usedHours: number[], from = DEFAULT_FIRST_HOUR, to 
 export function validateHour(hour: number): void {
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) throw new Error('Jam tidak valid');
 }
+
+/** Baris jam (WIB) yang dilewati sebuah siklus; selesai tepat :00 tidak menyentuh baris berikutnya. */
+export function coveredHours(startIso: string, minutes: number): number[] {
+  const first = hourWIB(startIso);
+  const endIso = new Date(new Date(startIso).getTime() + Math.max(1, minutes) * 60_000 - 1).toISOString();
+  const last = Math.max(first, hourWIB(endIso)); // lewat tengah malam: berhenti di jam mulai..23
+  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+}

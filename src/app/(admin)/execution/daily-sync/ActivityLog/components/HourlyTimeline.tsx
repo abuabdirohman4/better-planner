@@ -6,11 +6,13 @@ import { CalendarDays } from 'lucide-react';
 import type { CalendarEvent } from '../actions/calendar/logic';
 import { getLocalDateString } from '@/lib/dateUtils';
 import { getHourlyNotes, saveHourlyNote } from '../actions/hourly-notes/actions';
-import { hourWIB, visibleHours } from '../actions/hourly-notes/logic';
+import { coveredHours, hourWIB, visibleHours } from '../actions/hourly-notes/logic';
 
 export interface CycleChip {
   id: string;
   hour: number;
+  /** Waktu mulai (UTC ISO) untuk menandai baris jam yang dilewati siklus. */
+  start: string;
   title: string;
   minutes: number;
   live?: boolean;
@@ -61,13 +63,15 @@ function Chip({ chip, onDelete }: { chip: CycleChip; onDelete: (id: string) => v
 
 const pad = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
-function HourRow({ hour, saved, plan, chips, events, isNow, onSave, onDeleteChip }: {
+function HourRow({ hour, saved, plan, chips, events, covered, isNow, onSave, onDeleteChip }: {
   hour: number;
   saved: string;
   plan?: string;
   chips: CycleChip[];
   isNow: boolean;
   events: CalendarEvent[];
+  /** Baris ini dilewati siklus (garis kiri). */
+  covered: boolean;
   onSave: (hour: number, content: string) => void;
   onDeleteChip: (logId: string) => void;
 }) {
@@ -81,7 +85,9 @@ function HourRow({ hour, saved, plan, chips, events, isNow, onSave, onDeleteChip
   return (
     <li
       data-testid={`hour-row-${hour}`}
-      className={`flex items-center gap-2 border-b border-gray-100 py-1 last:border-0 dark:border-gray-700 ${isNow ? 'bg-brand-50/60 dark:bg-brand-500/10' : ''}`}
+      className={`flex items-center gap-2 border-b border-gray-100 py-1 pl-2 last:border-b-0 dark:border-gray-700 ${isNow ? 'bg-brand-50/60 dark:bg-brand-500/10' : ''}`}
+      // Garis kiri = baris ini dilewati siklus, sambung-menyambung seperti blok kalender.
+      style={{ borderLeft: '3px solid', borderLeftColor: covered ? 'var(--color-brand-400)' : 'transparent' }}
     >
       <span className={`w-11 flex-shrink-0 text-xs tabular-nums ${isNow ? 'font-semibold text-brand-600' : 'text-gray-400'}`}>
         {pad(hour)}
@@ -127,6 +133,7 @@ export default function HourlyTimeline({ date, chips, plans, onDeleteChip, event
     ...Object.keys(plans).map(Number),
     ...events.map(e => e.hour),
   ], startHour, endHour);
+  const coveredSet = new Set(chips.flatMap(c => coveredHours(c.start, c.minutes)));
   const nowHour = date === getLocalDateString(new Date()) ? hourWIB(new Date().toISOString()) : -1;
 
   const handleSave = async (hour: number, content: string) => {
@@ -151,6 +158,7 @@ export default function HourlyTimeline({ date, chips, plans, onDeleteChip, event
           plan={plans[h]}
           chips={chips.filter(c => c.hour === h)}
           events={events.filter(e => e.hour === h)}
+          covered={coveredSet.has(h)}
           isNow={h === nowHour}
           onSave={handleSave}
           onDeleteChip={onDeleteChip}

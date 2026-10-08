@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hourWIB, visibleHours, validateHour } from '../logic';
+import { hourWIB, visibleHours, validateHour, coveredHours } from '../logic';
 
 describe('hourWIB', () => {
   it('converts UTC to WIB hour', () => {
@@ -33,5 +33,18 @@ describe('validateHour', () => {
     expect(() => validateHour(-1)).toThrow();
     expect(() => validateHour(1.5)).toThrow();
     expect(() => validateHour(0)).not.toThrow();
+  });
+});
+
+describe('coveredHours', () => {
+  it('90 menit mulai 11:10 WIB melewati jam 11 dan 12', () => {
+    expect(coveredHours('2026-10-08T04:10:00Z', 90)).toEqual([11, 12]);
+  });
+  it('selesai tepat di pergantian jam tidak ikut baris berikutnya', () => {
+    expect(coveredHours('2026-10-08T04:00:00Z', 60)).toEqual([11]);
+    expect(coveredHours('2026-10-08T04:30:00Z', 25)).toEqual([11]);
+  });
+  it('lewat tengah malam berhenti di 23', () => {
+    expect(coveredHours('2026-10-08T16:30:00Z', 90)).toEqual([23]);
   });
 });
