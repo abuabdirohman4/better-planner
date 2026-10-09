@@ -1,0 +1,1 @@
+- ![alt text](shot-093302.png) tidak sinkron dengan di hp, di hp ada isinya, di web gak ada, dan kemunculkan timernya sepertinya perlu diberis semacam loading spinner/skeleton agar user tau kalau timer sedang di sinkronkan
